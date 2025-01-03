@@ -5,6 +5,7 @@
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/news/index.html</loc></url>
+<url><loc>/reference/Rglobalflourishing-package.html</loc></url>
 <url><loc>/reference/append_attrition_wgts.html</loc></url>
 <url><loc>/reference/append_pc_to_df.html</loc></url>
 <url><loc>/reference/check_variance.html</loc></url>
@@ -25,6 +26,7 @@
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/keep_variable.html</loc></url>
 <url><loc>/reference/load_packages.html</loc></url>
+<url><loc>/reference/pipe.html</loc></url>
 <url><loc>/reference/quickpred2.html</loc></url>
 <url><loc>/reference/recode_imputed_data.html</loc></url>
 <url><loc>/reference/recode_labels.html</loc></url>

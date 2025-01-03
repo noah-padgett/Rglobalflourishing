@@ -40,7 +40,7 @@ The package is currently not available on CRAN or bioconductor.
 library(Rglobalflourishing)
 
 # load required packages
-load_packages()
+# load_packages()
 
 
 ```
