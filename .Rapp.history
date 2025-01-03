@@ -1,0 +1,4319 @@
+# Script: main.R#
+# Created by: R. Noah Padgett#
+# Last edited on: 2024-12-29#
+#
+source("R/utils.R")source("R/run_impute_data.R")#
+source("R/recoding_imputed_data_2w_test.R")#
+source("R/pca.R")#
+source("R/outcome_variables_2w_test.R")#
+source("R/load_packages.R")#
+source("R/get_raw_data.R")#
+source("R/demo_childhood_variables.R")#
+source("R/country_specific_regression_analyses.R")#
+source("R/attrition_wgts.R")#
+source("R/gfs_svyglm.R")source("R/gfs_evalues.R")source("R/gfs_pca.R")source("R/gfs_pool_estimates.R")#
+source("test/outcomes.R")#
+#
+# WARNING: The package was set up to be user-friendly for researchers part of the GFS core#
+#   team who mainly have experience with other statistical analysis software such as STATA,#
+#   SAS, and SPSS. This package and implementation of the analyses for Wave 2 of the Global#
+#   Flourishing Study does NOT conform to "tidy" principles in general. While some elements of tidy#
+#   evaluation and syntax structure are used throughout, we did not implement everything with#
+#   "tidyness" in mind. As such, we make no guarantees that the package will integrate or#
+#   "play nice" with other packages.#
+#
+# Analysis Set-Up#
+#
+# Add the directory where the dataset is stored on your computer#
+data.dir <-  "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data/"#
+dataset.name <- "gfs_test_2_waves.sav" # "gfs_all_countries_wave1.sav"#
+#
+# Specify where you want to output results#
+# Can be left blank, and the results will output to the same directory as the data.#
+out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing/"#
+#
+# Here is YOUR wave 1 construct variable#
+FOCAL_PREDICTOR  <- "PHYSICAL_HLTH_W1"#
+FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health at wave 1"#
+#
+# IF your predictor is binary/categorical, use the code below to define how you want it to be#
+#	categorized. Categorization must result in a binary variable 0/1 for consistency across studies.#
+#	Please report how you have categorized your variable to Noah (npadgett@hsph.harvard.edu)#
+VALUES_DEFINING_UPPER_CATEGORY <- c(NULL)#
+VALUES_DEFINING_LOWER_CATEGORY <- c(NULL)#
+# Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses#
+#	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful#
+#	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of#
+# feel_anxious and control_worry)  or depression (sum of depressed and interest) that have a#
+#	history of being dichotomized.#
+FORCE_BINARY <- FALSE#
+# Note 2: if your focal predictor is categorical/binary, you can use the responses as if they were continuous.#
+#	This can be done in several ways, but the provided (straightforward-ish) approach is to reverse#
+#	code all ordered-categorical variables (reverse code from what is reported in the codebook), and#
+# standardized as if continuous. This approach is not applicable for variables with nominal#
+# response categories such as employment. This is employed using the option below.#
+FORCE_CONTINUOUS <- FALSE#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+# Data Prep#
+{#
+  if (is.null(out.dir))#
+    out.dir = data.dir#
+#
+  #setwd(out.dir)#
+  # Note:#
+  # The following function loads the required packages for the remainder of the script to work.#
+  load_packages()#
+  # get "raw data"#
+  df.raw <- gfs_get_labelled_raw_data(paste0(data.dir,dataset.name))#
+}#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+# Imputing missing data#
+{#
+  run.imp <- FALSE#
+  if (run.imp) {#
+    df.tmp <- run_attrition_model(#
+      df.raw,#
+      attr.pred = c(#
+        "ANNUAL_WEIGHT1_W1", "MODE_RECRUIT_W1", "AGE_W1", "GENDER_W1", "EDUCATION_3_W1",#
+        "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1"#
+      )#
+    )#
+    df.imp <- run_impute_data(#
+      data = df.tmp,#
+      data.dir = data.dir,#
+      Nimp = 2,#
+      Miter = 2#
+    )#
+  } else {#
+    load(paste0(data.dir,"/gfs_imputed_data_test.RData"))#
+  }#
+#
+  RECODE.DEFAULTS <- list(#
+    FOCAL_PREDICTOR = FOCAL_PREDICTOR,#
+    DEMOGRAPHICS.CHILDHOOD.PRED.VEC = DEMOGRAPHICS.CHILDHOOD.PRED.VEC,#
+    OUTCOME.VEC = OUTCOME.VEC,#
+    FORCE_BINARY = FORCE_BINARY,#
+    FORCE_CONTINUOUS = FORCE_CONTINUOUS,#
+    VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,#
+    VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,#
+    USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)#
+  )#
+  df.imp.long <- recode_imputed_data(#
+    df.imp, list.default = RECODE.DEFAULTS, list.composites = LIST.COMPOSITES#
+  )#
+#
+}#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+DEMO.CHILDHOOD.PRED <-#
+  c(#
+    "COV_AGE_GRP_W1",#
+    "COV_GENDER_W1",#
+    "COV_EDUCATION_3_W1",#
+    "COV_EMPLOYMENT_W1",#
+    "COV_MARITAL_STATUS_W1",#
+    "COV_ATTEND_SVCS_W1",#
+    "COV_BORN_COUNTRY_W1",#
+    "COV_PARENTS_12YRS_W1",#
+    "COV_SVCS_12YRS_W1",#
+    "COV_MOTHER_RELATN_W1",#
+    "COV_FATHER_RELATN_W1",#
+    "COV_OUTSIDER_W1",#
+    "COV_ABUSED_W1",#
+    "COV_HEALTH_GROWUP_W1",#
+    "COV_INCOME_12YRS_W1",#
+    "COV_REL1_W1",#
+    "COV_RACE_PLURALITY",#
+    "COV_MOTHER_NA",#
+    "COV_FATHER_NA"#
+  )#
+CONTEMPORANEOUS.EXPOSURES.VEC <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "COMPOSITE", negate=TRUE)]#
+data = df.imp.long#
+your.pred <- c("PHYSICAL_HLTH_W1") # FOCAL_PREDICTOR#
+your.outcome = OUTCOME.VEC[1]#
+covariates=DEMO.CHILDHOOD.PRED#
+contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC#
+standardize = TRUE # or FALSE - standardize PRIMARY_OUTCOME using the survey-adjusted mean and variance#
+##
+force.linear = FALSE # force.linear is an option for forcing the estimation of a linear model even for#
+#   binary/Likert outcomes. I think this is sometimes called as a "linear probability model."#
+##
+robust.huberM = FALSE # for (approximately) continuous outcomes, you have the option of alternatively#
+#   using a "robust m-estimator" with Huber style robustness weights in addition#
+#   to the complex sampling design adjustments. It's unknown whether this makes a#
+#   meaningful difference, but preliminary testing suggests small differences in#
+#   point estimates but sometimes dramatic changes to standard errors for reasons#
+#   that are unclear to me. Could be due to a strange interaction of robustness#
+#   weights, attrition weights, and post-stratified sampling weights.#
+robust.tune=2#
+pc.cutoff = 7 #0.02 # can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)#
+pc.rule = "constant" # "mincomp" #how should the number of PCs be decided?#
+#	a fixed number "constant" (default);#
+#	minimunm total proportion of variance explained ("mintotal");#
+#	minimum proportion explain by individual PCs ("mincomp");#
+#	exclude PCs from analysis ("omit")#
+res.dir=NULL
+# remove focal predictor from covariate vectors#
+      covariates <- covariates[str_detect(str_remove(covariates,"COV_"), your.pred, negate=TRUE )]#
+      var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate=TRUE)]#
+#
+      # additionally remove variables that are components of the focal predictor#
+      #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the#
+      #   items that make up that score.#
+      if(str_detect(your.pred, "COMPOSITE")){#
+        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(LIST.OUTCOME.COMPOSITES[[your.pred]]))]#
+      }#
+#
+      if(is.null(res.dir)){#
+        res.dir = paste0(getwd(), "/results/")#
+      }#
+      if(!dir.exists(res.dir)){#
+        dir.create(res.dir)#
+      }#
+      # construct "type" indicator#
+      outcome.type = case_when(#
+      	get_outcome_scale(your.outcome) %in% c("cont", "Continuous") ~ "linear",#
+      	get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR"#
+      )#
+      outcome.type = case_when(#
+        force.linear ~ "linear",#
+      	.default = outcome.type#
+      )#
+#
+      # convert to nested survey object#
+      svy.data.imp <- df.imp.long %>% #data %>%#
+        mutate(#
+          COUNTRY = COUNTRY2#
+        ) %>%#
+        group_by(COUNTRY, .imp) %>%#
+        nest() %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            x$PRIMARY_OUTCOME = as.numeric(x[, your.outcome, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x$FOCAL_PREDICTOR = as.numeric(x[, your.pred, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x %>% mutate(#
+              PRIMARY_OUTCOME = case_when(#
+                standardize == FALSE ~ PRIMARY_OUTCOME,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(PRIMARY_OUTCOME, WGT, PSU, STRATA),#
+                .default = PRIMARY_OUTCOME#
+              ),#
+              FOCAL_PREDICTOR = case_when(#
+                standardize == FALSE ~ FOCAL_PREDICTOR,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(FOCAL_PREDICTOR, WGT, PSU, STRATA),#
+                .default = FOCAL_PREDICTOR#
+              )#
+            )#
+          }),#
+          data = map(data, \(tmp.dat){#
+          	tmp.dat %>%#
+          	mutate(across(where(is.factor), \(x) droplevels(x) ))#
+          }),#
+          svy.data = map(data, \(x) {#
+            svydesign(#
+              data = x,#
+              id =  ~ PSU,#
+              strata =  ~ STRATA,#
+              weights = ~ WGT,#
+              calibrate.formula = ~1#
+            )#
+          })#
+        )#
+      # outcomes which need the countries to be subset...#
+      if (your.outcome == "APPROVE_GOVT" | your.pred == "APPROVE_GOVT") {#
+        svy.data.imp <- svy.data.imp %>%#
+          filter(COUNTRY != "Egypt")#
+      }#
+      # conduct PCA and add PCs to data.frames#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          svy.data = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          fit.pca = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            svyprcomp(#
+              reformulate(var.cont.exposures[keep.cont.exposures]),#
+              design = x,#
+              scale = TRUE,#
+              scores = TRUE,#
+              center = TRUE#
+            )#
+          }),#
+          fit.eigen = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])#
+          })#
+        )#
+      # get summary of PCA results to save to output file#
+      fit.pca.summary <- svy.data.imp %>%#
+        mutate(#
+          pc.sdev = map(fit.pca, \(x) x$sdev ),#
+          pc.rotation = map(fit.pca, \(x) x$rotation )#
+        ) %>%#
+        select(.imp, COUNTRY, pc.sdev) %>%#
+        unnest(c(pc.sdev)) %>%#
+        mutate(#
+          PC = 1:n()#
+        ) %>%#
+        ungroup() %>%#
+        group_by(COUNTRY, PC) %>%#
+        summarise(#
+          pc.var = mean(pc.sdev**2, na.rm = TRUE)#
+        ) %>% ungroup() %>%#
+        group_by(COUNTRY) %>%#
+        mutate(#
+          prop.var = pc.var/sum(pc.var),#
+          prop.sum = cumsum(prop.var),#
+          Cumulative_Proportion_Explained = prop.sum#
+        )#
+#
+      # check pc.cutoff to determine which PCs to use#
+      if(pc.cutoff %% 1 == 0){#
+        keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))#
+        names(keep.num.pc) <- unique(data$COUNTRY2)#
+      } else {#
+        # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.#
+        if(str_to_lower(pc.rule) == "mintotal"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.sum >= pc.cutoff) %>%#
+            filter(PC == min(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule) == "mincomp"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.var >= pc.cutoff)#
+          if(nrow(keep.num.pc0) < 22){#
+            # cutoff fails because too stringent, switching to a default of 0.02#
+            keep.num.pc0 <- fit.pca.summary %>%#
+              filter(prop.var >= 0.02)#
+          }#
+          keep.num.pc0 <- keep.num.pc0 %>%#
+            filter(PC == max(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule == "omit")){#
+          # this is just to avoid errors and is not used#
+          keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))#
+          names(keep.num.pc) <- unique(data$COUNTRY2)#
+        }#
+#
+      }#
+      # # test:#
+      # tmp.data <- svy.data.imp %>%#
+      # filter(COUNTRY == "United States", .imp == 1)#
+#
+      # get_aicc_by_pc <- function(keep.num.pc, x){#
+      # #x = tmp.data$svy.data[[1]]#
+      # #keep.num.pc = 1#
+      # # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+      # keep.var <- unlist(lapply(covariates, check.var, dat = x[['variables']]))#
+      # tmp.model <- reformulate(#
+      # response = "PRIMARY_OUTCOME",#
+      # termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:keep.num.pc))#
+      # )#
+      # tmp.fit <-  svyglm(tmp.model, design = x)#
+      # k <- tmp.fit$rank +1 # number of dimensions of design matrix plus residual variance#
+      # n <- sum(tmp.fit$weights)#
+      # # AICC#
+      # tmp.fit$aic + n*(n+k)/(n-k-2)#
+#
+      # }#
+#
+      # est.aicc <- map(1:(length(var.cont.exposures)-1), \(y){#
+      # get_aicc_by_pc(y, tmp.data$svy.data[[1]])#
+      # })#
+      # plot.dat <- data.frame(PC = 1:(length(var.cont.exposures)-1), AICC = unlist(est.aicc))#
+#
+      # ggplot(plot.dat, aes(x=PC, y=AICC))+#
+      # geom_point()+#
+      # geom_line()#
+#
+      # ============================================================================================== ##
+      # RUN REGRESSION ANALYSIS#
+      # svy.data.imp is a nested df by country & .imp#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          fit.tidy = map(svy.data, \(x) {#
+            tmp.fit = NULL#
+            # first check if ANY variance on outomce#
+            run.analysis = ifelse(var(x[['variables']][["PRIMARY_OUTCOME"]]) > 0, TRUE, FALSE)#
+            if (run.analysis) {#
+              cur.country = x[['variables']][["COUNTRY2"]][1]#
+              # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+              keep.var <- keep_variable(covariates, dat = x[['variables']])#
+              if(pc.rule == "omit"){#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var] )#
+                )#
+              } else {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:(keep.num.pc[cur.country])))#
+                )#
+              }#
+              if( outcome.type == "linear" ){#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = gaussian(), #
+              		robust.huberM = robust.huberM,#
+              		robust.tune = robust.tune#
+              	)#
+              }             #
+              if ( outcome.type == "RR" ) {#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = quassipoisson(), #
+              		robust.huberM = FALSE#
+              	)                            #
+              }#
+              tmp.fit$fit.tidy#
+            }#
+          })#
+        ) %>%#
+        ungroup()#
+#
+      # re-estimate basic model with the max number of PCs used to get the variable names#
+      tmp.country = names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]#
+      tmp.dat <- svy.data.imp %>% filter(COUNTRY == "United States" )#
+      keep.var <- keep_variable(covariates,  data =  tmp.dat$data[[1]])#
+      if(pc.rule == "omit"){#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates )#
+        )#
+      } else {#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates, paste0("PC_",1:(keep.num.pc[tmp.country])))#
+        )#
+      }#
+      tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)#
+      # which model doesn't matter for this step, we only need the variable names#
+#
+      coef.order = names(tmp.fit$coefficients)#
+      coef.order = c( coef.order[-1], "COV_REL1_W1Judaism", "COV_RACE_PLURALITY", "(Intercept)")#
+      results.pooled = svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+        	pooled.est = map(data, \(x){#
+        		gfs_pool_estimates(x)#
+        	})#
+        ) %>%#
+        unnest(c(pooled.est))  %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          print.Estimate = .round(estimate.pooled),#
+          print.SE = .round(se.pooled)#
+        ) %>%#
+        mutate(#
+          term = factor(term),#
+          term = fct_relevel(term, coef.order)#
+        ) %>%#
+        arrange(COUNTRY, term) %>%#
+        ungroup()#
+#
+      ## Relabel output#
+      varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = coef.order[-c(length(coef.order))]#
+#
+      base_variable = sapply(termlist[str_detect(termlist, "PC_",negate=TRUE)], function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      if(str_to_lower(pc.rule) == "omit"){#
+        base_variable <- base_variable#
+      } else {#
+        base_variable <- c(base_variable, paste0("PC_",1:max(keep.num.pc)))#
+      }#
+      base_variable = base_variable %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )#
+#
+      termlabels = termlabels %>%#
+        mutate(#
+          Variable = str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )#
+      # compute outcome & predictor SD Only used for continuous/forced continuous models#
+      # - For continuous outcomes, need to use evalue.OLS(.)#
+      # - require approx outcome standard deviation#
+      sd.pooled = svy.data.imp  %>%#
+        mutate(#
+          est = map_dbl(svy.data, \(x) {#
+            svyvar(~ PRIMARY_OUTCOME, design = x)#
+          }),#
+          pred.var = map_dbl(svy.data, \(x) {#
+            svyvar(~ FOCAL_PREDICTOR, design = x)#
+          })#
+        ) %>% ungroup() %>%#
+        select(COUNTRY, .imp, est, pred.var) %>%#
+        group_by(COUNTRY) %>%#
+        summarize(#
+          outcome.sd = sqrt(mean(est)),#
+          predictor.sd = sqrt(mean(pred.var))#
+        ) %>%#
+        select(COUNTRY, outcome.sd, predictor.sd)#
+#
+      # Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s#
+      if(standardize){#
+        sd.pooled$outcome.sd <- 1#
+        sd.pooled$predictor.sd <- 1#
+      }#
+      # Compute Evalues#
+       tmp.output = results.pooled %>%#
+          left_join(sd.pooled, by = "COUNTRY") %>%#
+          ungroup()#
+          # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...#
+# mutate(#
+#   EE  = gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "EE"#
+#  ),#
+#  ECI =  gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "ECI"#
+#   )       #
+# )#
+		  # working version:#
+          tmp.output$EE = 0#
+          tmp.output$ECI = 0#
+          i = 1#
+          for(i in 1:nrow(tmp.output)){#
+          	tmp.output$EE[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "EE"#
+            )#
+            tmp.output$ECI[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "ECI"#
+            )#
+          }#
+      output <- tmp.output %>%#
+        left_join(termlabels,#
+                  by = c("term" = "original"),#
+                  relationship = 'many-to-many') %>%#
+        arrange(Variable)
+source("R/gfs_svyglm.R")
+#' GFS Wrapper for Regression #
+#' Runs relatively simple regression analysis#
+	  #'#
+      #' @param formula a model (linear) as used in glm#
+      #' @param svy.design a data.frame or survey.design object#
+      #' @param family the usual family argument as used in glms see below for more information#
+      #' @param robust.huberM a logical defining whether to use the robsurvey pacakge to estimate the linear regression model instead of the usual svyglm(.) function (default: FALSE)#
+      #' @param robust.tune (default 1) tuning parameter for robsurvey package#
+      #' @return a list of containing resulting fitted object (fit), residuals, a tidied version, and #
+      #' a vector containing the included predictor variables.#
+      #' @description#
+      #' #' When robust.huberM is TRUE, for (approximately) continuous outcomes, you have the option of#
+	  #' alternatively using a "robust m-estimator" with Huber style robustness weights in addition to#
+	  #' the complex sampling design adjustments. It's unknown whether this makes a meaningful difference,#
+	  #' but preliminary testing suggests small differences in point estimates but sometimes dramatic#
+	  #' changes to standard errors for reasons that are unclear to me. Could be due to a strange#
+	  #' interaction of robustness weights, attrition weights, and post-stratified sampling weights.#
+	  #'#
+      #' @examples {#
+      #'  # TODO	#
+      #' }#
+      #' @export#
+      gfs_svyglm <- function(formula, svy.design, family=gaussian(), robust.huberM = FALSE, robust.tune = 1, ...){#
+#
+      is.survey = ifelse(any(class(svy.design) %in% c(#
+        "survey.design2", "survey.design"#
+      )), TRUE, FALSE)#
+      if(is.survey){#
+        tmp.data <- svy.design[['variables']]#
+      } else {#
+        stop("svy.design must be a survey.design or survey.design2 object from the survey package. Please check data object.")#
+      }#
+      # double check predictors for variance#
+      y = paste0(formula)[2]#
+      x = rownames(attr(terms(formula), "factors"))[-1]#
+      keep.pred = keep_variable(x, tmp.data)#
+      tmp.model <- reformulate(#
+        response = y,#
+        termlabels = x[keep.pred]#
+      )#
+#
+      # fit 1: no weights#
+      fit.dof <- glm(tmp.model, data = tmp.data, ...)#
+      vcom = fit.dof$df.residual#
+#
+	  # fit 2: with complex survey adjustments#
+      tmp.fit <-  svyglm(tmp.model, design = svy.design, ...)#
+      tmp.fit.tidy <- tidy(tmp.fit) # contains, estimates & standard errors#
+      tmp.fit.tidy <- tmp.fit.tidy %>%#
+      mutate(#
+      	f.statistic = (estimate**2)/(std.error**2),#
+      	df.num = 1,#
+      	df.dem = vcom,#
+      	p.value = 1 - pf(f.statistic, df.num, df.dem)#
+      	# see: Lumley, T. & Scott, A. Fitting Regression Models to Survey Data. Statistical Science 32, 265–278 (2017). p. 269 left column, middle paragraph#
+      )#
+      if(robust.huberM){#
+        tmp.fit <-  robsurvey::svyreg_huberM(#
+        	tmp.model, #
+        	design = svy.design, #
+        	k = 1, #
+        	maxit = 10000#
+        )#
+        tmp.fit.tidy <- data.frame(#
+        	term = names(tmp.fit$estimate),#
+        	estimate = tmp.fit$estimate,#
+        	std.error = sqrt(diag(vcov(tmp.fit, mode="compound")))#
+        )#
+        tmp.fit.tidy <- tmp.fit.tidy %>%#
+      		mutate(#
+      			f.statistic = (estimate**2)/(std.error**2),#
+      			df.num = 1,#
+      			df.dem = vcom,#
+      			p.value = 1 - pf(f.statistic, df.num, df.dem)#
+      		)#
+      }#
+      # export (1) the fitted object#
+      # and (2) the "tidied" version#
+      tmp.fit.tidy$vcom <- vcom#
+      out <- list(#
+      	fit = tmp.fit,#
+      	residuals = residuals(tmp.fit),#
+      	fit.tidy = tmp.fit.tidy,#
+      	retained.predictors = x[keep.pred],#
+      	design = svy.design#
+      )#
+      out#
+	}
+# remove focal predictor from covariate vectors#
+      covariates <- covariates[str_detect(str_remove(covariates,"COV_"), your.pred, negate=TRUE )]#
+      var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate=TRUE)]#
+#
+      # additionally remove variables that are components of the focal predictor#
+      #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the#
+      #   items that make up that score.#
+      if(str_detect(your.pred, "COMPOSITE")){#
+        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(LIST.OUTCOME.COMPOSITES[[your.pred]]))]#
+      }#
+#
+      if(is.null(res.dir)){#
+        res.dir = paste0(getwd(), "/results/")#
+      }#
+      if(!dir.exists(res.dir)){#
+        dir.create(res.dir)#
+      }#
+      # construct "type" indicator#
+      outcome.type = case_when(#
+      	get_outcome_scale(your.outcome) %in% c("cont", "Continuous") ~ "linear",#
+      	get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR"#
+      )#
+      outcome.type = case_when(#
+        force.linear ~ "linear",#
+      	.default = outcome.type#
+      )#
+#
+      # convert to nested survey object#
+      svy.data.imp <- df.imp.long %>% #data %>%#
+        mutate(#
+          COUNTRY = COUNTRY2#
+        ) %>%#
+        group_by(COUNTRY, .imp) %>%#
+        nest() %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            x$PRIMARY_OUTCOME = as.numeric(x[, your.outcome, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x$FOCAL_PREDICTOR = as.numeric(x[, your.pred, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x %>% mutate(#
+              PRIMARY_OUTCOME = case_when(#
+                standardize == FALSE ~ PRIMARY_OUTCOME,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(PRIMARY_OUTCOME, WGT, PSU, STRATA),#
+                .default = PRIMARY_OUTCOME#
+              ),#
+              FOCAL_PREDICTOR = case_when(#
+                standardize == FALSE ~ FOCAL_PREDICTOR,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(FOCAL_PREDICTOR, WGT, PSU, STRATA),#
+                .default = FOCAL_PREDICTOR#
+              )#
+            )#
+          }),#
+          data = map(data, \(tmp.dat){#
+          	tmp.dat %>%#
+          	mutate(across(where(is.factor), \(x) droplevels(x) ))#
+          }),#
+          svy.data = map(data, \(x) {#
+            svydesign(#
+              data = x,#
+              id =  ~ PSU,#
+              strata =  ~ STRATA,#
+              weights = ~ WGT,#
+              calibrate.formula = ~1#
+            )#
+          })#
+        )#
+      # outcomes which need the countries to be subset...#
+      if (your.outcome == "APPROVE_GOVT" | your.pred == "APPROVE_GOVT") {#
+        svy.data.imp <- svy.data.imp %>%#
+          filter(COUNTRY != "Egypt")#
+      }#
+      # conduct PCA and add PCs to data.frames#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          svy.data = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          fit.pca = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            svyprcomp(#
+              reformulate(var.cont.exposures[keep.cont.exposures]),#
+              design = x,#
+              scale = TRUE,#
+              scores = TRUE,#
+              center = TRUE#
+            )#
+          }),#
+          fit.eigen = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])#
+          })#
+        )#
+      # get summary of PCA results to save to output file#
+      fit.pca.summary <- svy.data.imp %>%#
+        mutate(#
+          pc.sdev = map(fit.pca, \(x) x$sdev ),#
+          pc.rotation = map(fit.pca, \(x) x$rotation )#
+        ) %>%#
+        select(.imp, COUNTRY, pc.sdev) %>%#
+        unnest(c(pc.sdev)) %>%#
+        mutate(#
+          PC = 1:n()#
+        ) %>%#
+        ungroup() %>%#
+        group_by(COUNTRY, PC) %>%#
+        summarise(#
+          pc.var = mean(pc.sdev**2, na.rm = TRUE)#
+        ) %>% ungroup() %>%#
+        group_by(COUNTRY) %>%#
+        mutate(#
+          prop.var = pc.var/sum(pc.var),#
+          prop.sum = cumsum(prop.var),#
+          Cumulative_Proportion_Explained = prop.sum#
+        )#
+#
+      # check pc.cutoff to determine which PCs to use#
+      if(pc.cutoff %% 1 == 0){#
+        keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))#
+        names(keep.num.pc) <- unique(data$COUNTRY2)#
+      } else {#
+        # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.#
+        if(str_to_lower(pc.rule) == "mintotal"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.sum >= pc.cutoff) %>%#
+            filter(PC == min(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule) == "mincomp"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.var >= pc.cutoff)#
+          if(nrow(keep.num.pc0) < 22){#
+            # cutoff fails because too stringent, switching to a default of 0.02#
+            keep.num.pc0 <- fit.pca.summary %>%#
+              filter(prop.var >= 0.02)#
+          }#
+          keep.num.pc0 <- keep.num.pc0 %>%#
+            filter(PC == max(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule == "omit")){#
+          # this is just to avoid errors and is not used#
+          keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))#
+          names(keep.num.pc) <- unique(data$COUNTRY2)#
+        }#
+#
+      }#
+      # # test:#
+      # tmp.data <- svy.data.imp %>%#
+      # filter(COUNTRY == "United States", .imp == 1)#
+#
+      # get_aicc_by_pc <- function(keep.num.pc, x){#
+      # #x = tmp.data$svy.data[[1]]#
+      # #keep.num.pc = 1#
+      # # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+      # keep.var <- unlist(lapply(covariates, check.var, dat = x[['variables']]))#
+      # tmp.model <- reformulate(#
+      # response = "PRIMARY_OUTCOME",#
+      # termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:keep.num.pc))#
+      # )#
+      # tmp.fit <-  svyglm(tmp.model, design = x)#
+      # k <- tmp.fit$rank +1 # number of dimensions of design matrix plus residual variance#
+      # n <- sum(tmp.fit$weights)#
+      # # AICC#
+      # tmp.fit$aic + n*(n+k)/(n-k-2)#
+#
+      # }#
+#
+      # est.aicc <- map(1:(length(var.cont.exposures)-1), \(y){#
+      # get_aicc_by_pc(y, tmp.data$svy.data[[1]])#
+      # })#
+      # plot.dat <- data.frame(PC = 1:(length(var.cont.exposures)-1), AICC = unlist(est.aicc))#
+#
+      # ggplot(plot.dat, aes(x=PC, y=AICC))+#
+      # geom_point()+#
+      # geom_line()#
+#
+      # ============================================================================================== ##
+      # RUN REGRESSION ANALYSIS#
+      # svy.data.imp is a nested df by country & .imp#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          fit.tidy = map(svy.data, \(x) {#
+            tmp.fit = NULL#
+            # first check if ANY variance on outomce#
+            run.analysis = ifelse(var(x[['variables']][["PRIMARY_OUTCOME"]]) > 0, TRUE, FALSE)#
+            if (run.analysis) {#
+              cur.country = x[['variables']][["COUNTRY2"]][1]#
+              # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+              keep.var <- keep_variable(covariates, dat = x[['variables']])#
+              if(pc.rule == "omit"){#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var] )#
+                )#
+              } else {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:(keep.num.pc[cur.country])))#
+                )#
+              }#
+              if( outcome.type == "linear" ){#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = gaussian(), #
+              		robust.huberM = robust.huberM,#
+              		robust.tune = robust.tune#
+              	)#
+              }             #
+              if ( outcome.type == "RR" ) {#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = quassipoisson(), #
+              		robust.huberM = FALSE#
+              	)                            #
+              }#
+              tmp.fit$fit.tidy#
+            }#
+          })#
+        ) %>%#
+        ungroup()#
+#
+      # re-estimate basic model with the max number of PCs used to get the variable names#
+      tmp.country = names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]#
+      tmp.dat <- svy.data.imp %>% filter(COUNTRY == "United States" )#
+      keep.var <- keep_variable(covariates,  data =  tmp.dat$data[[1]])#
+      if(pc.rule == "omit"){#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates )#
+        )#
+      } else {#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates, paste0("PC_",1:(keep.num.pc[tmp.country])))#
+        )#
+      }#
+      tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)#
+      # which model doesn't matter for this step, we only need the variable names#
+#
+      coef.order = names(tmp.fit$coefficients)#
+      coef.order = c( coef.order[-1], "COV_REL1_W1Judaism", "COV_RACE_PLURALITY", "(Intercept)")#
+      results.pooled = svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+        	pooled.est = map(data, \(x){#
+        		gfs_pool_estimates(x)#
+        	})#
+        ) %>%#
+        unnest(c(pooled.est))  %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          print.Estimate = .round(estimate.pooled),#
+          print.SE = .round(se.pooled)#
+        ) %>%#
+        mutate(#
+          term = factor(term),#
+          term = fct_relevel(term, coef.order)#
+        ) %>%#
+        arrange(COUNTRY, term) %>%#
+        ungroup()#
+#
+      ## Relabel output#
+      varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = coef.order[-c(length(coef.order))]#
+#
+      base_variable = sapply(termlist[str_detect(termlist, "PC_",negate=TRUE)], function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      if(str_to_lower(pc.rule) == "omit"){#
+        base_variable <- base_variable#
+      } else {#
+        base_variable <- c(base_variable, paste0("PC_",1:max(keep.num.pc)))#
+      }#
+      base_variable = base_variable %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )#
+#
+      termlabels = termlabels %>%#
+        mutate(#
+          Variable = str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )#
+      # compute outcome & predictor SD Only used for continuous/forced continuous models#
+      # - For continuous outcomes, need to use evalue.OLS(.)#
+      # - require approx outcome standard deviation#
+      sd.pooled = svy.data.imp  %>%#
+        mutate(#
+          est = map_dbl(svy.data, \(x) {#
+            svyvar(~ PRIMARY_OUTCOME, design = x)#
+          }),#
+          pred.var = map_dbl(svy.data, \(x) {#
+            svyvar(~ FOCAL_PREDICTOR, design = x)#
+          })#
+        ) %>% ungroup() %>%#
+        select(COUNTRY, .imp, est, pred.var) %>%#
+        group_by(COUNTRY) %>%#
+        summarize(#
+          outcome.sd = sqrt(mean(est)),#
+          predictor.sd = sqrt(mean(pred.var))#
+        ) %>%#
+        select(COUNTRY, outcome.sd, predictor.sd)#
+#
+      # Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s#
+      if(standardize){#
+        sd.pooled$outcome.sd <- 1#
+        sd.pooled$predictor.sd <- 1#
+      }#
+      # Compute Evalues#
+       tmp.output = results.pooled %>%#
+          left_join(sd.pooled, by = "COUNTRY") %>%#
+          ungroup()#
+          # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...#
+# mutate(#
+#   EE  = gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "EE"#
+#  ),#
+#  ECI =  gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "ECI"#
+#   )       #
+# )#
+		  # working version:#
+          tmp.output$EE = 0#
+          tmp.output$ECI = 0#
+          i = 1#
+          for(i in 1:nrow(tmp.output)){#
+          	tmp.output$EE[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "EE"#
+            )#
+            tmp.output$ECI[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "ECI"#
+            )#
+          }#
+      output <- tmp.output %>%#
+        left_join(termlabels,#
+                  by = c("term" = "original"),#
+                  relationship = 'many-to-many') %>%#
+        arrange(Variable)
+results.pooled = svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+        	pooled.est = map(data, \(x){#
+        		gfs_pool_estimates(x)#
+        	})#
+        ) %>%#
+        unnest(c(pooled.est))  %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          print.Estimate = .round(estimate.pooled),#
+          print.SE = .round(se.pooled)#
+        )
+unique(results.pooled#term)
+unique(results.pooled$term)
+coef.order
+names(tmp.fit$coefficients)
+coef.order = names(tmp.fit$coefficients)#
+      coef.order = c( #
+      	coef.order[!(str_detect(coef.order, '(Intercept)') | str_detect(coef.order, 'COV_REL1'))],#
+      	"COV_GENDER_W1Prefer not to answer",#
+      	"COV_REL1_W1Islam", "COV_REL1_W1Hinduism", "COV_REL1_W1Judaism", "COV_REL1_W1Buddhism",#
+      	"COV_REL1_W1Primal,Animist, or Folk religion", "COV_REL1_W1Chinesefolk/traditional religion",#
+      	"COV_REL1_W1Christianity", "COV_REL1_W1Combined"#
+      	"(Intercept)"#
+      )
+coef.order = names(tmp.fit$coefficients)#
+      coef.order = c( #
+      	coef.order[!(str_detect(coef.order, '(Intercept)') | str_detect(coef.order, 'COV_REL1'))],#
+      	"COV_GENDER_W1Prefer not to answer",#
+      	"COV_REL1_W1Islam", "COV_REL1_W1Hinduism", "COV_REL1_W1Judaism", "COV_REL1_W1Buddhism",#
+      	"COV_REL1_W1Primal,Animist, or Folk religion", "COV_REL1_W1Chinesefolk/traditional religion",#
+      	"COV_REL1_W1Christianity", "COV_REL1_W1Combined",#
+      	"(Intercept)"#
+      )
+coef.order
+varlist
+termlist
+results.pooled = svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+        	pooled.est = map(data, \(x){#
+        		gfs_pool_estimates(x)#
+        	})#
+        ) %>%#
+        unnest(c(pooled.est))  %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          print.Estimate = .round(estimate.pooled),#
+          print.SE = .round(se.pooled)#
+        ) %>%#
+        mutate(#
+          term = factor(term)#
+        ) %>%#
+        arrange(COUNTRY, term) %>%#
+        ungroup()
+unique(results.pooled$term)
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = unique(results.pooled$term)#
+#
+      base_variable = sapply(termlist[str_detect(termlist, "PC_",negate=TRUE)], function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      if(str_to_lower(pc.rule) == "omit"){#
+        base_variable <- base_variable#
+      } else {#
+        base_variable <- c(base_variable, paste0("PC_",1:max(keep.num.pc)))#
+      }
+termlist
+termlist = as.character(unique(results.pooled$term))
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))#
+#
+      base_variable = sapply(termlist[str_detect(termlist, "PC_",negate=TRUE)], function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      if(str_to_lower(pc.rule) == "omit"){#
+        base_variable <- base_variable#
+      } else {#
+        base_variable <- c(base_variable, paste0("PC_",1:max(keep.num.pc)))#
+      }#
+      base_variable = base_variable %>% as.data.frame() %>% pull(.)
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))#
+#
+      base_variable = sapply(termlist[str_detect(termlist, "PC_",negate=TRUE)], function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      if(str_to_lower(pc.rule) == "omit"){#
+        base_variable <- base_variable#
+      } else {#
+        base_variable <- c(base_variable, paste0("PC_",1:max(keep.num.pc)))#
+      }
+varlist
+termlist
+base_variable = base_variable %>% as.data.frame() %>% pull(.)
+base_variable %>% as.data.frame()
+base_variable
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })
+base_variable
+base_variable = base_variable %>% as.data.frame() %>% pull(.)
+base_variable
+base_variable[-1]
+base_variable = base_variable[-1] %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )
+termlabels
+base_variable
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      base_variable = base_variable[-1] %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )
+termlabels
+base_variable
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      base_variable = base_variable[-1] %>% as.data.frame() %>% pull(.)
+base_variable
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })
+base_variable
+base_variable[-1] %>% as.data.frame()
+base_variable[[-1]]
+base_variable
+termlist
+varlist
+as.character(unique(results.pooled$term))[-1]
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))[-1]#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })
+base_variable
+base_variable %>% as.data.frame() %>% pull(.)
+varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))[-1]#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      base_variable = base_variable %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )
+termlabels
+termlabels = termlabels %>%#
+        mutate(#
+          Variable = str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )
+termlabels
+termlabels = termlabels %>%#
+        mutate(#
+          Variable = str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            str_detect(Variable, "PC_") ~ str_remove(str_sub(Variable, -2,-1),"_"),#
+            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )
+termlabels
+sd.pooled = svy.data.imp  %>%#
+        mutate(#
+          est = map_dbl(svy.data, \(x) {#
+            svyvar(~ PRIMARY_OUTCOME, design = x)#
+          }),#
+          pred.var = map_dbl(svy.data, \(x) {#
+            svyvar(~ FOCAL_PREDICTOR, design = x)#
+          })#
+        ) %>% ungroup() %>%#
+        select(COUNTRY, .imp, est, pred.var) %>%#
+        group_by(COUNTRY) %>%#
+        summarize(#
+          outcome.sd = sqrt(mean(est)),#
+          predictor.sd = sqrt(mean(pred.var))#
+        ) %>%#
+        select(COUNTRY, outcome.sd, predictor.sd)#
+#
+      # Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s#
+      if(standardize){#
+        sd.pooled$outcome.sd <- 1#
+        sd.pooled$predictor.sd <- 1#
+      }#
+      # Compute Evalues#
+       tmp.output = results.pooled %>%#
+          left_join(sd.pooled, by = "COUNTRY") %>%#
+          ungroup()#
+          # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...#
+# mutate(#
+#   EE  = gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "EE"#
+#  ),#
+#  ECI =  gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "ECI"#
+#   )       #
+# )#
+		  # working version:#
+          tmp.output$EE = 0#
+          tmp.output$ECI = 0#
+          i = 1#
+          for(i in 1:nrow(tmp.output)){#
+          	tmp.output$EE[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "EE"#
+            )#
+            tmp.output$ECI[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "ECI"#
+            )#
+          }#
+      output <- tmp.output %>%#
+        left_join(termlabels,#
+                  by = c("term" = "original"),#
+                  relationship = 'many-to-many') %>%#
+        arrange(Variable)
+output
+metainput <- output %>%#
+        select(#
+          COUNTRY,#
+          Variable,#
+          Category,#
+          Est,#
+          SE,#
+          p.value#
+        ) %>%#
+        group_by(COUNTRY, Variable) %>%#
+        filter(!(Category == "(Ref:)")) %>%#
+        filter(Variable == "FOCAL_PREDICTOR")#
+      colnames(metainput) <-#
+        c("Country", "Variable", "Category", "Est", "SE", "pvalue", "waldp")#
+      metainput <- meta.input %>%#
+        mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        )
+metainput <- output %>%#
+        select(#
+          COUNTRY,#
+          Variable,#
+          Category,#
+          estimate.pooled,#
+          se.pooled,#
+          p.value#
+        ) %>%#
+        group_by(COUNTRY, Variable) %>%#
+        filter(!(Category == "(Ref:)")) %>%#
+        filter(Variable == "FOCAL_PREDICTOR")#
+      colnames(metainput) <-#
+        c("Country", "Variable", "Category", "Est", "SE", "pvalue")
+metainput
+1e-16
+#' GFS Wrapper for Regression #
+#' Runs relatively simple regression analysis#
+	  #'#
+      #' @param formula a model (linear) as used in glm#
+      #' @param svy.design a data.frame or survey.design object#
+      #' @param family the usual family argument as used in glms see below for more information#
+      #' @param robust.huberM a logical defining whether to use the robsurvey pacakge to estimate the linear regression model instead of the usual svyglm(.) function (default: FALSE)#
+      #' @param robust.tune (default 1) tuning parameter for robsurvey package#
+      #' @return a list of containing resulting fitted object (fit), residuals, a tidied version, and #
+      #' a vector containing the included predictor variables.#
+      #' @description#
+      #' #' When robust.huberM is TRUE, for (approximately) continuous outcomes, you have the option of#
+	  #' alternatively using a "robust m-estimator" with Huber style robustness weights in addition to#
+	  #' the complex sampling design adjustments. It's unknown whether this makes a meaningful difference,#
+	  #' but preliminary testing suggests small differences in point estimates but sometimes dramatic#
+	  #' changes to standard errors for reasons that are unclear to me. Could be due to a strange#
+	  #' interaction of robustness weights, attrition weights, and post-stratified sampling weights.#
+	  #'#
+      #' @examples {#
+      #'  # TODO	#
+      #' }#
+      #' @export#
+      gfs_svyglm <- function(formula, svy.design, family=gaussian(), robust.huberM = FALSE, robust.tune = 1, ...){#
+#
+      is.survey = ifelse(any(class(svy.design) %in% c(#
+        "survey.design2", "survey.design"#
+      )), TRUE, FALSE)#
+      if(is.survey){#
+        tmp.data <- svy.design[['variables']]#
+      } else {#
+        stop("svy.design must be a survey.design or survey.design2 object from the survey package. Please check data object.")#
+      }#
+      # double check predictors for variance#
+      y = paste0(formula)[2]#
+      x = rownames(attr(terms(formula), "factors"))[-1]#
+      keep.pred = keep_variable(x, tmp.data)#
+      tmp.model <- reformulate(#
+        response = y,#
+        termlabels = x[keep.pred]#
+      )#
+#
+      # fit 1: no weights#
+      fit.dof <- glm(tmp.model, data = tmp.data, ...)#
+      vcom = fit.dof$df.residual#
+#
+	  # fit 2: with complex survey adjustments#
+      tmp.fit <-  svyglm(tmp.model, design = svy.design, ...)#
+      tmp.fit.tidy <- tidy(tmp.fit) # contains, estimates & standard errors#
+      tmp.fit.tidy <- tmp.fit.tidy %>%#
+      mutate(#
+      	f.statistic = (estimate**2)/(std.error**2),#
+      	df.num = 1,#
+      	df.dem = vcom,#
+      	p.value = 1 - pf(f.statistic, df.num, df.dem),#
+      	# see: Lumley, T. & Scott, A. Fitting Regression Models to Survey Data. Statistical Science 32, 265–278 (2017). p. 269 left column, middle paragraph#
+      	p.value = case_when(#
+      		p.value == 0 ~ 1e-16,#
+      		.default = p.value#
+      	)#
+      )#
+      if(robust.huberM){#
+        tmp.fit <-  robsurvey::svyreg_huberM(#
+        	tmp.model, #
+        	design = svy.design, #
+        	k = 1, #
+        	maxit = 10000#
+        )#
+        tmp.fit.tidy <- data.frame(#
+        	term = names(tmp.fit$estimate),#
+        	estimate = tmp.fit$estimate,#
+        	std.error = sqrt(diag(vcov(tmp.fit, mode="compound")))#
+        )#
+        tmp.fit.tidy <- tmp.fit.tidy %>%#
+      		mutate(#
+      			f.statistic = (estimate**2)/(std.error**2),#
+      			df.num = 1,#
+      			df.dem = vcom,#
+      			p.value = 1 - pf(f.statistic, df.num, df.dem),#
+      			p.value = case_when(#
+      				p.value == 0 ~ 1e-16,#
+      				.default = p.value#
+      			)#
+      		)#
+      }#
+      # export (1) the fitted object#
+      # and (2) the "tidied" version#
+      tmp.fit.tidy$vcom <- vcom#
+      out <- list(#
+      	fit = tmp.fit,#
+      	residuals = residuals(tmp.fit),#
+      	fit.tidy = tmp.fit.tidy,#
+      	retained.predictors = x[keep.pred],#
+      	design = svy.design#
+      )#
+      out#
+	}
+output
+res.dir
+#' GFS Focal Predictor Analysis#
+#'#
+#' Run regression analyses for specific focal predictor using the core GFS group analysis pathway.#
+#'#
+#' @param data long data.frame must have COUNTRY and .imp columns (default: df.imp.long)#
+#' @param your.pred a character string defining focal predictor (e.g., "PHYSICAL_HLTH_W1")#
+#' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_W2")#
+#' @param covariates a character vector defining core set of covariates (default: NULL)#
+#' @param contemporaneous.exposures a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)#
+#' @param standardize a logical (default: TRUE) of whether to standardized the predictor and outcome#
+#' @param pc.rule principal components analysis use rule (default: "omit")#
+#' @param pc.cutoff a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)#
+#' @param force.linear a logical of whether to force a linear model (default: FALSE)#
+#' @param robust.huberM a  logical of whether to use a robust variant of the linear regression model (default: FALSE), see below for additional details.#
+#' @param robust.tune a numeric value defining the tuning parameter for the robust.huberM option.#
+#' @param res.dir a character string defining directory to save results to.#
+#' @param ... other arguments passed to svyglm or glmrob functions#
+#' @returns a data.frame that contains the meta-analysis input results#
+#' @examples {#
+#'   # none#
+#' }#
+#' @export#
+#' @description#
+#' The `pc.rule` argument determines how should the number of PCs is decided:#
+#' exclude PCs from analysis (default: "omit");#
+#' a fixed number ("constant");#
+#' minimunm total proportion of variance explained ("mintotal"); or#
+#' minimum proportion explain by individual PCs ("mincomp").#
+#' For "constant", `pc.cutoff` must of a number between 1 and length(contemporaneous.exposures) - 1.#
+#' For "mintotal", `pc.cutoff` must be strictly between 0 and 1, e.g. (0.70).#
+#' For "mincomp", `pc.cutoff` must be strictly between 0 and 1, e.g. (0.01).#
+#'#
+#' When standardize is TRUE, standardize the outcome and predictor using the survey-adjusted mean and variance.#
+#'#
+#' When force.linear is TRUE, forces the estimation of a linear model even for binary/Likert outcomes.#
+#' I think this is sometimes called as a "linear probability model."#
+#'#
+#' When robust.huberM is TRUE, for (approximately) continuous outcomes, you have the option of#
+#' alternatively using a "robust m-estimator" with Huber style robustness weights in addition to#
+#' the complex sampling design adjustments. It's unknown whether this makes a meaningful difference,#
+#' but preliminary testing suggests small differences in point estimates but sometimes dramatic#
+#' changes to standard errors for reasons that are unclear to me. Could be due to a strange#
+#' interaction of robustness weights, attrition weights, and post-stratified sampling weights.#
+#'#
+run_regression_single_outcome <- function(#
+    data = NULL,#
+    your.pred = NULL,#
+    your.outcome = NULL,#
+    covariates= NULL,#
+    contemporaneous.exposures= NULL,#
+    # advanced options: only change if you know what you are doing#
+    standardize = TRUE,#
+    pc.cutoff = 7,#
+    pc.rule = "omit",#
+    force.linear = FALSE,#
+    robust.huberM = FALSE,#
+    robust.tune = 1,#
+    res.dir = NULL,...#
+){#
+#
+  suppressMessages({#
+    suppressWarnings({#
+#
+      # remove focal predictor from covariate vectors#
+      covariates <- covariates[str_detect(str_remove(covariates,"COV_"), your.pred, negate=TRUE )]#
+      var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate=TRUE)]#
+#
+      # additionally remove variables that are components of the focal predictor#
+      #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the#
+      #   items that make up that score.#
+      if(str_detect(your.pred, "COMPOSITE")){#
+        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(LIST.OUTCOME.COMPOSITES[[your.pred]]))]#
+      }#
+#
+      if(is.null(res.dir)){#
+        res.dir = paste0(getwd(), "/results/")#
+      }#
+      if(!dir.exists(res.dir)){#
+        dir.create(res.dir)#
+      }#
+      # construct "type" indicator#
+      outcome.type = case_when(#
+      	get_outcome_scale(your.outcome) %in% c("cont", "Continuous") ~ "linear",#
+      	get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR"#
+      )#
+      outcome.type = case_when(#
+        force.linear ~ "linear",#
+      	.default = outcome.type#
+      )#
+#
+      # convert to nested survey object#
+      svy.data.imp <- df.imp.long %>% #data %>%#
+        mutate(#
+          COUNTRY = COUNTRY2#
+        ) %>%#
+        group_by(COUNTRY, .imp) %>%#
+        nest() %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            x$PRIMARY_OUTCOME = as.numeric(x[, your.outcome, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x$FOCAL_PREDICTOR = as.numeric(x[, your.pred, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x %>% mutate(#
+              PRIMARY_OUTCOME = case_when(#
+                standardize == FALSE ~ PRIMARY_OUTCOME,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(PRIMARY_OUTCOME, WGT, PSU, STRATA),#
+                .default = PRIMARY_OUTCOME#
+              ),#
+              FOCAL_PREDICTOR = case_when(#
+                standardize == FALSE ~ FOCAL_PREDICTOR,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(FOCAL_PREDICTOR, WGT, PSU, STRATA),#
+                .default = FOCAL_PREDICTOR#
+              )#
+            )#
+          }),#
+          data = map(data, \(tmp.dat){#
+          	tmp.dat %>%#
+          	mutate(across(where(is.factor), \(x) droplevels(x) ))#
+          }),#
+          svy.data = map(data, \(x) {#
+            svydesign(#
+              data = x,#
+              id =  ~ PSU,#
+              strata =  ~ STRATA,#
+              weights = ~ WGT,#
+              calibrate.formula = ~1#
+            )#
+          })#
+        )#
+      # outcomes which need the countries to be subset...#
+      if (your.outcome == "APPROVE_GOVT" | your.pred == "APPROVE_GOVT") {#
+        svy.data.imp <- svy.data.imp %>%#
+          filter(COUNTRY != "Egypt")#
+      }#
+      # conduct PCA and add PCs to data.frames#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          svy.data = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          fit.pca = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            svyprcomp(#
+              reformulate(var.cont.exposures[keep.cont.exposures]),#
+              design = x,#
+              scale = TRUE,#
+              scores = TRUE,#
+              center = TRUE#
+            )#
+          }),#
+          fit.eigen = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])#
+          })#
+        )#
+      # get summary of PCA results to save to output file#
+      fit.pca.summary <- svy.data.imp %>%#
+        mutate(#
+          pc.sdev = map(fit.pca, \(x) x$sdev ),#
+          pc.rotation = map(fit.pca, \(x) x$rotation )#
+        ) %>%#
+        select(.imp, COUNTRY, pc.sdev) %>%#
+        unnest(c(pc.sdev)) %>%#
+        mutate(#
+          PC = 1:n()#
+        ) %>%#
+        ungroup() %>%#
+        group_by(COUNTRY, PC) %>%#
+        summarise(#
+          pc.var = mean(pc.sdev**2, na.rm = TRUE)#
+        ) %>% ungroup() %>%#
+        group_by(COUNTRY) %>%#
+        mutate(#
+          prop.var = pc.var/sum(pc.var),#
+          prop.sum = cumsum(prop.var),#
+          Cumulative_Proportion_Explained = prop.sum#
+        )#
+#
+      # check pc.cutoff to determine which PCs to use#
+      if(pc.cutoff %% 1 == 0){#
+        keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))#
+        names(keep.num.pc) <- unique(data$COUNTRY2)#
+      } else {#
+        # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.#
+        if(str_to_lower(pc.rule) == "mintotal"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.sum >= pc.cutoff) %>%#
+            filter(PC == min(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule) == "mincomp"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.var >= pc.cutoff)#
+          if(nrow(keep.num.pc0) < 22){#
+            # cutoff fails because too stringent, switching to a default of 0.02#
+            keep.num.pc0 <- fit.pca.summary %>%#
+              filter(prop.var >= 0.02)#
+          }#
+          keep.num.pc0 <- keep.num.pc0 %>%#
+            filter(PC == max(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule == "omit")){#
+          # this is just to avoid errors and is not used#
+          keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))#
+          names(keep.num.pc) <- unique(data$COUNTRY2)#
+        }#
+#
+      }#
+      # # test:#
+      # tmp.data <- svy.data.imp %>%#
+      # filter(COUNTRY == "United States", .imp == 1)#
+#
+      # get_aicc_by_pc <- function(keep.num.pc, x){#
+      # #x = tmp.data$svy.data[[1]]#
+      # #keep.num.pc = 1#
+      # # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+      # keep.var <- unlist(lapply(covariates, check.var, dat = x[['variables']]))#
+      # tmp.model <- reformulate(#
+      # response = "PRIMARY_OUTCOME",#
+      # termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:keep.num.pc))#
+      # )#
+      # tmp.fit <-  svyglm(tmp.model, design = x)#
+      # k <- tmp.fit$rank +1 # number of dimensions of design matrix plus residual variance#
+      # n <- sum(tmp.fit$weights)#
+      # # AICC#
+      # tmp.fit$aic + n*(n+k)/(n-k-2)#
+#
+      # }#
+#
+      # est.aicc <- map(1:(length(var.cont.exposures)-1), \(y){#
+      # get_aicc_by_pc(y, tmp.data$svy.data[[1]])#
+      # })#
+      # plot.dat <- data.frame(PC = 1:(length(var.cont.exposures)-1), AICC = unlist(est.aicc))#
+#
+      # ggplot(plot.dat, aes(x=PC, y=AICC))+#
+      # geom_point()+#
+      # geom_line()#
+#
+      # ============================================================================================== ##
+      # RUN REGRESSION ANALYSIS#
+      # svy.data.imp is a nested df by country & .imp#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          fit.tidy = map(svy.data, \(x) {#
+            tmp.fit = NULL#
+            # first check if ANY variance on outomce#
+            run.analysis = ifelse(var(x[['variables']][["PRIMARY_OUTCOME"]]) > 0, TRUE, FALSE)#
+            if (run.analysis) {#
+              cur.country = x[['variables']][["COUNTRY2"]][1]#
+              # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+              keep.var <- keep_variable(covariates, dat = x[['variables']])#
+              if(pc.rule == "omit"){#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var] )#
+                )#
+              } else {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:(keep.num.pc[cur.country])))#
+                )#
+              }#
+              if( outcome.type == "linear" ){#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = gaussian(), #
+              		robust.huberM = robust.huberM,#
+              		robust.tune = robust.tune#
+              	)#
+              }             #
+              if ( outcome.type == "RR" ) {#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = quassipoisson(), #
+              		robust.huberM = FALSE#
+              	)                            #
+              }#
+              tmp.fit$fit.tidy#
+            }#
+          })#
+        ) %>%#
+        ungroup()#
+#
+      # re-estimate basic model with the max number of PCs used to get the variable names#
+      tmp.country = names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]#
+      tmp.dat <- svy.data.imp %>% filter(COUNTRY == "United States" )#
+      keep.var <- keep_variable(covariates,  data =  tmp.dat$data[[1]])#
+      if(pc.rule == "omit"){#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates )#
+        )#
+      } else {#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates, paste0("PC_",1:(keep.num.pc[tmp.country])))#
+        )#
+      }#
+      tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)#
+      # which model doesn't matter for this step, we only need the variable names#
+#
+      coef.order = names(tmp.fit$coefficients)#
+      coef.order = c( #
+      	coef.order[!(str_detect(coef.order, '(Intercept)') | str_detect(coef.order, 'COV_REL1'))],#
+      	"COV_GENDER_W1Prefer not to answer",#
+      	"COV_REL1_W1Islam", "COV_REL1_W1Hinduism", "COV_REL1_W1Judaism", "COV_REL1_W1Buddhism",#
+      	"COV_REL1_W1Primal,Animist, or Folk religion", "COV_REL1_W1Chinesefolk/traditional religion",#
+      	"COV_REL1_W1Christianity", "COV_REL1_W1Combined",#
+      	"(Intercept)"#
+      )#
+#
+      results.pooled = svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+        	pooled.est = map(data, \(x){#
+        		gfs_pool_estimates(x)#
+        	})#
+        	estimates.by.imp = data#
+        ) %>%#
+        unnest(c(pooled.est))  %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          print.Estimate = .round(estimate.pooled),#
+          print.SE = .round(se.pooled)#
+        ) %>%#
+        mutate(#
+          term = factor(term)#
+        ) %>%#
+        arrange(COUNTRY, term) %>%#
+        ungroup()#
+#
+      ## Relabel output#
+      varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))[-1]#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      base_variable = base_variable %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )#
+#
+      termlabels = termlabels %>%#
+        mutate(#
+          Variable = str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            str_detect(Variable, "PC_") ~ str_remove(str_sub(Variable, -2,-1),"_"),#
+            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )#
+      # compute outcome & predictor SD Only used for continuous/forced continuous models#
+      # - For continuous outcomes, need to use evalue.OLS(.)#
+      # - require approx outcome standard deviation#
+      sd.pooled = svy.data.imp  %>%#
+        mutate(#
+          est = map_dbl(svy.data, \(x) {#
+            svyvar(~ PRIMARY_OUTCOME, design = x)#
+          }),#
+          pred.var = map_dbl(svy.data, \(x) {#
+            svyvar(~ FOCAL_PREDICTOR, design = x)#
+          })#
+        ) %>% ungroup() %>%#
+        select(COUNTRY, .imp, est, pred.var) %>%#
+        group_by(COUNTRY) %>%#
+        summarize(#
+          outcome.sd = sqrt(mean(est)),#
+          predictor.sd = sqrt(mean(pred.var))#
+        ) %>%#
+        select(COUNTRY, outcome.sd, predictor.sd)#
+#
+      # Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s#
+      if(standardize){#
+        sd.pooled$outcome.sd <- 1#
+        sd.pooled$predictor.sd <- 1#
+      }#
+      # Compute Evalues#
+       tmp.output = results.pooled %>%#
+          left_join(sd.pooled, by = "COUNTRY") %>%#
+          ungroup()#
+          # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...#
+# mutate(#
+#   EE  = gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "EE"#
+#  ),#
+#  ECI =  gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "ECI"#
+#   )       #
+# )#
+		  # working version:#
+          tmp.output$EE = 0#
+          tmp.output$ECI = 0#
+          i = 1#
+          for(i in 1:nrow(tmp.output)){#
+          	tmp.output$EE[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "EE"#
+            )#
+            tmp.output$ECI[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "ECI"#
+            )#
+          }#
+      output <- tmp.output %>%#
+        left_join(termlabels,#
+                  by = c("term" = "original"),#
+                  relationship = 'many-to-many') %>%#
+        arrange(Variable)#
+      # Meta analysis input - is a simplified data.frame with only:#
+      #		country, variable, category, estimate, standard error, and global p-value#
+      #		This reduced file is helpful for the meta-analysis app OR internal meta-analysis code#
+      metainput <- output %>%#
+        select(#
+          COUNTRY,#
+          Variable,#
+          Category,#
+          estimate.pooled,#
+          se.pooled,#
+          p.value#
+        ) %>%#
+        group_by(COUNTRY, Variable) %>%#
+        filter(!(Category == "(Ref:)")) %>%#
+        filter(Variable == "FOCAL_PREDICTOR")#
+      colnames(metainput) <-#
+        c("Country", "Variable", "Category", "Est", "SE", "pvalue")#
+      metainput <- metainput %>%#
+        mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        )#
+#
+      # ============================================================================ ##
+      # ============================================================================ ##
+      # Online Supplement Analyses - variable specific#
+#
+      output <- output %>%#
+        group_by(Variable) %>%#
+        fill(Variable) %>% ungroup() %>%#
+        mutate(#
+          Variable = case_when(Variable == "AGE_GRP" ~ "Year of birth", .default = Variable),#
+          Category = case_when(#
+            Variable == "REL1" &#
+              str_detect(Category, "Combined") ~ "Collapsed affiliations with prevalence<3%",#
+            Category == "25-29" ~ "1993-1998; age 25-29",#
+            Category == "30-39" ~ "1983-1993; age 30-39",#
+            Category == "40-49" ~ "1973-1983; age 40-49",#
+            Category == "50-59" ~ "1963-1973; age 50-59",#
+            Category == "60-69" ~ "1953-1963; age 60-69",#
+            Category == "70-79" ~ "1943-1953; age 70-79",#
+            Category == "80 or older" ~ "1943 or earlier; age 80+",#
+            Category == "(Ref:)" &#
+              Variable == "AGE_GRP" ~ "(Ref: 1998-2005; current age: 18-24)",#
+            Category == "(Ref:)" &#
+              Variable == "GENDER" ~ "(Ref: Male)",#
+            Category == "(Ref:)" &#
+              Variable == "PARENTS_12YRS" ~ "(Ref: Parents married)",#
+            Category == "(Ref:)" &#
+              Variable == "SVCS_12YRS" ~ "(Ref: Never)",#
+            #Category == "(Ref:)" & Variable == "SVCS_MOTHER" ~ "(Ref: Never)",#
+            #Category == "(Ref:)" & Variable == "SVCS_FATHER" ~ "(Ref: Never)",#
+            Category == "(Ref:)" &#
+              Variable == "MOTHER_RELATN" ~ "(Ref: Very bad/somewhat bad)",#
+            Category == "(Ref:)" &#
+              Variable == "FATHER_RELATN" ~ "(Ref: Very bad/somewhat bad)",#
+            #Category == "(Ref:)" & Variable == "MOTHER_LOVED" ~ "(Ref: No)",#
+            #Category == "(Ref:)" & Variable == "FATHER_LOVED" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "OUTSIDER" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "ABUSED" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "HEALTH_GROWUP" ~ "(Ref: Good)",#
+            Category == "(Ref:)" &#
+              Variable == "BORN_COUNTRY" ~ "(Ref: Born in this country)",#
+            Category == "(Ref:)" &#
+              Variable == "INCOME_12YRS" ~ "(Ref: Got by)",#
+            Category == "(Ref:)" &#
+              Variable == "RACE_PLURALITY" ~ "(Ref: Plurality group)",#
+            Category == "(Ref:)" &#
+              Variable == "MOTHER_NA" ~ "(Ref: Non-missing Mother Flags)",#
+            Category == "(Ref:)" &#
+              Variable == "FATHER_NA" ~ "(Ref: Non-missing Father Flags)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c(#
+                "Argentina",#
+                "Australia",#
+                "Brazil",#
+                "Germany",#
+                "Hong Kong",#
+                "Japan",#
+                "Mexico",#
+                "Poland",#
+                "South Africa",#
+                "Spain",#
+                "Sweden",#
+                "Tanzania",#
+                "United Kingdom",#
+                "United States"#
+              ) &#
+              Variable == "REL1" ~ "(Ref: No religion/Atheist/Agnostic)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Egypt", "Indonesia", "Turkey") &#
+              Variable == "REL1" ~ "(Ref: Islam)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("India") &#
+              Variable == "REL1" ~ "(Ref: Hinduism)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Israel") &#
+              Variable == "REL1" ~ "(Ref: Judaism)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Kenya", "Nigeria", "Philippines") &#
+              Variable== "REL1" ~ "(Ref: Christianity)",#
+            .default = Category#
+          )#
+        ) %>%#
+        mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        )#
+      # Save & export results for use elsewhere#
+      # reduced results for esay use in meta-analyses (basically to align with wave 1 input to make my life easier)#
+      write.csv(#
+        metainput,#
+        paste0(#
+          res.dir,#
+          your.pred,#
+          "_regressed_on_",#
+          your.outcome, "_meta_analysis_input.csv"#
+        ),#
+        row.names = FALSE#
+      )#
+#
+      save(#
+        output,#
+        metainput,#
+        fit.pca.summary,#
+        file = paste0(#
+          res.dir,#
+          your.pred,#
+          "_regressed_on_",#
+          your.outcome, "_saved_results.RData"#
+        )#
+      )#
+#
+    })#
+  })#
+#
+  # ======================================= ##
+  # ======================================= ##
+  # Only the metainput is DIRECTLY RETURNED ##
+  # ======================================= ##
+  # ======================================= ##
+  metainput#
+}
+#' GFS Focal Predictor Analysis#
+#'#
+#' Run regression analyses for specific focal predictor using the core GFS group analysis pathway.#
+#'#
+#' @param data long data.frame must have COUNTRY and .imp columns (default: df.imp.long)#
+#' @param your.pred a character string defining focal predictor (e.g., "PHYSICAL_HLTH_W1")#
+#' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_W2")#
+#' @param covariates a character vector defining core set of covariates (default: NULL)#
+#' @param contemporaneous.exposures a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)#
+#' @param standardize a logical (default: TRUE) of whether to standardized the predictor and outcome#
+#' @param pc.rule principal components analysis use rule (default: "omit")#
+#' @param pc.cutoff a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)#
+#' @param force.linear a logical of whether to force a linear model (default: FALSE)#
+#' @param robust.huberM a  logical of whether to use a robust variant of the linear regression model (default: FALSE), see below for additional details.#
+#' @param robust.tune a numeric value defining the tuning parameter for the robust.huberM option.#
+#' @param res.dir a character string defining directory to save results to.#
+#' @param ... other arguments passed to svyglm or glmrob functions#
+#' @returns a data.frame that contains the meta-analysis input results#
+#' @examples {#
+#'   # none#
+#' }#
+#' @export#
+#' @description#
+#' The `pc.rule` argument determines how should the number of PCs is decided:#
+#' exclude PCs from analysis (default: "omit");#
+#' a fixed number ("constant");#
+#' minimunm total proportion of variance explained ("mintotal"); or#
+#' minimum proportion explain by individual PCs ("mincomp").#
+#' For "constant", `pc.cutoff` must of a number between 1 and length(contemporaneous.exposures) - 1.#
+#' For "mintotal", `pc.cutoff` must be strictly between 0 and 1, e.g. (0.70).#
+#' For "mincomp", `pc.cutoff` must be strictly between 0 and 1, e.g. (0.01).#
+#'#
+#' When standardize is TRUE, standardize the outcome and predictor using the survey-adjusted mean and variance.#
+#'#
+#' When force.linear is TRUE, forces the estimation of a linear model even for binary/Likert outcomes.#
+#' I think this is sometimes called as a "linear probability model."#
+#'#
+#' When robust.huberM is TRUE, for (approximately) continuous outcomes, you have the option of#
+#' alternatively using a "robust m-estimator" with Huber style robustness weights in addition to#
+#' the complex sampling design adjustments. It's unknown whether this makes a meaningful difference,#
+#' but preliminary testing suggests small differences in point estimates but sometimes dramatic#
+#' changes to standard errors for reasons that are unclear to me. Could be due to a strange#
+#' interaction of robustness weights, attrition weights, and post-stratified sampling weights.#
+#'#
+run_regression_single_outcome <- function(#
+    data = NULL,#
+    your.pred = NULL,#
+    your.outcome = NULL,#
+    covariates= NULL,#
+    contemporaneous.exposures= NULL,#
+    # advanced options: only change if you know what you are doing#
+    standardize = TRUE,#
+    pc.cutoff = 7,#
+    pc.rule = "omit",#
+    force.linear = FALSE,#
+    robust.huberM = FALSE,#
+    robust.tune = 1,#
+    res.dir = NULL,...#
+){#
+#
+  suppressMessages({#
+    suppressWarnings({#
+#
+      # remove focal predictor from covariate vectors#
+      covariates <- covariates[str_detect(str_remove(covariates,"COV_"), your.pred, negate=TRUE )]#
+      var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate=TRUE)]#
+#
+      # additionally remove variables that are components of the focal predictor#
+      #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the#
+      #   items that make up that score.#
+      if(str_detect(your.pred, "COMPOSITE")){#
+        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(LIST.OUTCOME.COMPOSITES[[your.pred]]))]#
+      }#
+#
+      if(is.null(res.dir)){#
+        res.dir = paste0(getwd(), "/results/")#
+      }#
+      if(!dir.exists(res.dir)){#
+        dir.create(res.dir)#
+      }#
+      # construct "type" indicator#
+      outcome.type = case_when(#
+      	get_outcome_scale(your.outcome) %in% c("cont", "Continuous") ~ "linear",#
+      	get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR"#
+      )#
+      outcome.type = case_when(#
+        force.linear ~ "linear",#
+      	.default = outcome.type#
+      )#
+#
+      # convert to nested survey object#
+      svy.data.imp <- df.imp.long %>% #data %>%#
+        mutate(#
+          COUNTRY = COUNTRY2#
+        ) %>%#
+        group_by(COUNTRY, .imp) %>%#
+        nest() %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            x$PRIMARY_OUTCOME = as.numeric(x[, your.outcome, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x$FOCAL_PREDICTOR = as.numeric(x[, your.pred, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x %>% mutate(#
+              PRIMARY_OUTCOME = case_when(#
+                standardize == FALSE ~ PRIMARY_OUTCOME,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(PRIMARY_OUTCOME, WGT, PSU, STRATA),#
+                .default = PRIMARY_OUTCOME#
+              ),#
+              FOCAL_PREDICTOR = case_when(#
+                standardize == FALSE ~ FOCAL_PREDICTOR,#
+                outcome.type == "linear" & standardize == TRUE  ~ svy_scale(FOCAL_PREDICTOR, WGT, PSU, STRATA),#
+                .default = FOCAL_PREDICTOR#
+              )#
+            )#
+          }),#
+          data = map(data, \(tmp.dat){#
+          	tmp.dat %>%#
+          	mutate(across(where(is.factor), \(x) droplevels(x) ))#
+          }),#
+          svy.data = map(data, \(x) {#
+            svydesign(#
+              data = x,#
+              id =  ~ PSU,#
+              strata =  ~ STRATA,#
+              weights = ~ WGT,#
+              calibrate.formula = ~1#
+            )#
+          })#
+        )#
+      # outcomes which need the countries to be subset...#
+      if (your.outcome == "APPROVE_GOVT" | your.pred == "APPROVE_GOVT") {#
+        svy.data.imp <- svy.data.imp %>%#
+          filter(COUNTRY != "Egypt")#
+      }#
+      # conduct PCA and add PCs to data.frames#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          svy.data = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)#
+          }),#
+          fit.pca = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            svyprcomp(#
+              reformulate(var.cont.exposures[keep.cont.exposures]),#
+              design = x,#
+              scale = TRUE,#
+              scores = TRUE,#
+              center = TRUE#
+            )#
+          }),#
+          fit.eigen = map(svy.data, \(x) {#
+            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[['variables']] )#
+            get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])#
+          })#
+        )#
+      # get summary of PCA results to save to output file#
+      fit.pca.summary <- svy.data.imp %>%#
+        mutate(#
+          pc.sdev = map(fit.pca, \(x) x$sdev ),#
+          pc.rotation = map(fit.pca, \(x) x$rotation )#
+        ) %>%#
+        select(.imp, COUNTRY, pc.sdev) %>%#
+        unnest(c(pc.sdev)) %>%#
+        mutate(#
+          PC = 1:n()#
+        ) %>%#
+        ungroup() %>%#
+        group_by(COUNTRY, PC) %>%#
+        summarise(#
+          pc.var = mean(pc.sdev**2, na.rm = TRUE)#
+        ) %>% ungroup() %>%#
+        group_by(COUNTRY) %>%#
+        mutate(#
+          prop.var = pc.var/sum(pc.var),#
+          prop.sum = cumsum(prop.var),#
+          Cumulative_Proportion_Explained = prop.sum#
+        )#
+#
+      # check pc.cutoff to determine which PCs to use#
+      if(pc.cutoff %% 1 == 0){#
+        keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))#
+        names(keep.num.pc) <- unique(data$COUNTRY2)#
+      } else {#
+        # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.#
+        if(str_to_lower(pc.rule) == "mintotal"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.sum >= pc.cutoff) %>%#
+            filter(PC == min(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule) == "mincomp"){#
+          keep.num.pc0 <- fit.pca.summary %>%#
+            filter(prop.var >= pc.cutoff)#
+          if(nrow(keep.num.pc0) < 22){#
+            # cutoff fails because too stringent, switching to a default of 0.02#
+            keep.num.pc0 <- fit.pca.summary %>%#
+              filter(prop.var >= 0.02)#
+          }#
+          keep.num.pc0 <- keep.num.pc0 %>%#
+            filter(PC == max(PC, na.rm=TRUE))#
+          keep.num.pc <- keep.num.pc0$PC#
+          names(keep.num.pc) <- keep.num.pc0$COUNTRY2#
+        }#
+        if(str_to_lower(pc.rule == "omit")){#
+          # this is just to avoid errors and is not used#
+          keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))#
+          names(keep.num.pc) <- unique(data$COUNTRY2)#
+        }#
+#
+      }#
+      # # test:#
+      # tmp.data <- svy.data.imp %>%#
+      # filter(COUNTRY == "United States", .imp == 1)#
+#
+      # get_aicc_by_pc <- function(keep.num.pc, x){#
+      # #x = tmp.data$svy.data[[1]]#
+      # #keep.num.pc = 1#
+      # # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+      # keep.var <- unlist(lapply(covariates, check.var, dat = x[['variables']]))#
+      # tmp.model <- reformulate(#
+      # response = "PRIMARY_OUTCOME",#
+      # termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:keep.num.pc))#
+      # )#
+      # tmp.fit <-  svyglm(tmp.model, design = x)#
+      # k <- tmp.fit$rank +1 # number of dimensions of design matrix plus residual variance#
+      # n <- sum(tmp.fit$weights)#
+      # # AICC#
+      # tmp.fit$aic + n*(n+k)/(n-k-2)#
+#
+      # }#
+#
+      # est.aicc <- map(1:(length(var.cont.exposures)-1), \(y){#
+      # get_aicc_by_pc(y, tmp.data$svy.data[[1]])#
+      # })#
+      # plot.dat <- data.frame(PC = 1:(length(var.cont.exposures)-1), AICC = unlist(est.aicc))#
+#
+      # ggplot(plot.dat, aes(x=PC, y=AICC))+#
+      # geom_point()+#
+      # geom_line()#
+#
+      # ============================================================================================== ##
+      # RUN REGRESSION ANALYSIS#
+      # svy.data.imp is a nested df by country & .imp#
+      svy.data.imp <- svy.data.imp %>%#
+        mutate(#
+          fit.tidy = map(svy.data, \(x) {#
+            tmp.fit = NULL#
+            # first check if ANY variance on outomce#
+            run.analysis = ifelse(var(x[['variables']][["PRIMARY_OUTCOME"]]) > 0, TRUE, FALSE)#
+            if (run.analysis) {#
+              cur.country = x[['variables']][["COUNTRY2"]][1]#
+              # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+              keep.var <- keep_variable(covariates, dat = x[['variables']])#
+              if(pc.rule == "omit"){#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var] )#
+                )#
+              } else {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_",1:(keep.num.pc[cur.country])))#
+                )#
+              }#
+              if( outcome.type == "linear" ){#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = gaussian(), #
+              		robust.huberM = robust.huberM,#
+              		robust.tune = robust.tune#
+              	)#
+              }             #
+              if ( outcome.type == "RR" ) {#
+              	tmp.fit = gfs_svyglm(#
+              		tmp.model, #
+              		svy.design = x, #
+              		family = quassipoisson(), #
+              		robust.huberM = FALSE#
+              	)                            #
+              }#
+              tmp.fit$fit.tidy#
+            }#
+          })#
+        ) %>%#
+        ungroup()#
+#
+      # re-estimate basic model with the max number of PCs used to get the variable names#
+      tmp.country = names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]#
+      tmp.dat <- svy.data.imp %>% filter(COUNTRY == "United States" )#
+      keep.var <- keep_variable(covariates,  data =  tmp.dat$data[[1]])#
+      if(pc.rule == "omit"){#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates )#
+        )#
+      } else {#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates, paste0("PC_",1:(keep.num.pc[tmp.country])))#
+        )#
+      }#
+      tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)#
+      # which model doesn't matter for this step, we only need the variable names#
+#
+      coef.order = names(tmp.fit$coefficients)#
+      coef.order = c( #
+      	coef.order[!(str_detect(coef.order, '(Intercept)') | str_detect(coef.order, 'COV_REL1'))],#
+      	"COV_GENDER_W1Prefer not to answer",#
+      	"COV_REL1_W1Islam", "COV_REL1_W1Hinduism", "COV_REL1_W1Judaism", "COV_REL1_W1Buddhism",#
+      	"COV_REL1_W1Primal,Animist, or Folk religion", "COV_REL1_W1Chinesefolk/traditional religion",#
+      	"COV_REL1_W1Christianity", "COV_REL1_W1Combined",#
+      	"(Intercept)"#
+      )#
+#
+      results.pooled = svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+        	pooled.est = map(data, \(x){#
+        		gfs_pool_estimates(x)#
+        	}),#
+        	estimates.by.imp = data#
+        ) %>%#
+        unnest(c(pooled.est))  %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          print.Estimate = .round(estimate.pooled),#
+          print.SE = .round(se.pooled)#
+        ) %>%#
+        mutate(#
+          term = factor(term)#
+        ) %>%#
+        arrange(COUNTRY, term) %>%#
+        ungroup()#
+#
+      ## Relabel output#
+      varlist  = str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist = as.character(unique(results.pooled$term))[-1]#
+#
+      base_variable = sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      base_variable = base_variable %>% as.data.frame() %>% pull(.)#
+      levels = gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels = data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )#
+#
+      termlabels = termlabels %>%#
+        mutate(#
+          Variable = str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            str_detect(Variable, "PC_") ~ str_remove(str_sub(Variable, -2,-1),"_"),#
+            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )#
+      # compute outcome & predictor SD Only used for continuous/forced continuous models#
+      # - For continuous outcomes, need to use evalue.OLS(.)#
+      # - require approx outcome standard deviation#
+      sd.pooled = svy.data.imp  %>%#
+        mutate(#
+          est = map_dbl(svy.data, \(x) {#
+            svyvar(~ PRIMARY_OUTCOME, design = x)#
+          }),#
+          pred.var = map_dbl(svy.data, \(x) {#
+            svyvar(~ FOCAL_PREDICTOR, design = x)#
+          })#
+        ) %>% ungroup() %>%#
+        select(COUNTRY, .imp, est, pred.var) %>%#
+        group_by(COUNTRY) %>%#
+        summarize(#
+          outcome.sd = sqrt(mean(est)),#
+          predictor.sd = sqrt(mean(pred.var))#
+        ) %>%#
+        select(COUNTRY, outcome.sd, predictor.sd)#
+#
+      # Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s#
+      if(standardize){#
+        sd.pooled$outcome.sd <- 1#
+        sd.pooled$predictor.sd <- 1#
+      }#
+      # Compute Evalues#
+       tmp.output = results.pooled %>%#
+          left_join(sd.pooled, by = "COUNTRY") %>%#
+          ungroup()#
+          # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...#
+# mutate(#
+#   EE  = gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "EE"#
+#  ),#
+#  ECI =  gfs_compute_evalue(#
+#    est = estimate.pooled,#
+#    se = se.pooled,#
+#    sd = sd.pooled,#
+#    ci.low = ci.low,#
+#    ci.up = ci.up, #
+#    type = outcome.type,#
+#    what = "ECI"#
+#   )       #
+# )#
+		  # working version:#
+          tmp.output$EE = 0#
+          tmp.output$ECI = 0#
+          i = 1#
+          for(i in 1:nrow(tmp.output)){#
+          	tmp.output$EE[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "EE"#
+            )#
+            tmp.output$ECI[i] <- gfs_compute_evalue(#
+            	est = tmp.output$estimate.pooled[i],#
+            	se = tmp.output$se.pooled[i],#
+            	sd = tmp.output$outcome.sd[i],#
+            	ci.low = tmp.output$ci.low[i],#
+            	ci.up = tmp.output$ci.up[i], #
+            	type = outcome.type,#
+            	what = "ECI"#
+            )#
+          }#
+      output <- tmp.output %>%#
+        left_join(termlabels,#
+                  by = c("term" = "original"),#
+                  relationship = 'many-to-many') %>%#
+        arrange(Variable)#
+      # Meta analysis input - is a simplified data.frame with only:#
+      #		country, variable, category, estimate, standard error, and global p-value#
+      #		This reduced file is helpful for the meta-analysis app OR internal meta-analysis code#
+      metainput <- output %>%#
+        select(#
+          COUNTRY,#
+          Variable,#
+          Category,#
+          estimate.pooled,#
+          se.pooled,#
+          p.value#
+        ) %>%#
+        group_by(COUNTRY, Variable) %>%#
+        filter(!(Category == "(Ref:)")) %>%#
+        filter(Variable == "FOCAL_PREDICTOR")#
+      colnames(metainput) <-#
+        c("Country", "Variable", "Category", "Est", "SE", "pvalue")#
+      metainput <- metainput %>%#
+        mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        )#
+#
+      # ============================================================================ ##
+      # ============================================================================ ##
+      # Online Supplement Analyses - variable specific#
+#
+      output <- output %>%#
+        group_by(Variable) %>%#
+        fill(Variable) %>% ungroup() %>%#
+        mutate(#
+          Variable = case_when(Variable == "AGE_GRP" ~ "Year of birth", .default = Variable),#
+          Category = case_when(#
+            Variable == "REL1" &#
+              str_detect(Category, "Combined") ~ "Collapsed affiliations with prevalence<3%",#
+            Category == "25-29" ~ "1993-1998; age 25-29",#
+            Category == "30-39" ~ "1983-1993; age 30-39",#
+            Category == "40-49" ~ "1973-1983; age 40-49",#
+            Category == "50-59" ~ "1963-1973; age 50-59",#
+            Category == "60-69" ~ "1953-1963; age 60-69",#
+            Category == "70-79" ~ "1943-1953; age 70-79",#
+            Category == "80 or older" ~ "1943 or earlier; age 80+",#
+            Category == "(Ref:)" &#
+              Variable == "AGE_GRP" ~ "(Ref: 1998-2005; current age: 18-24)",#
+            Category == "(Ref:)" &#
+              Variable == "GENDER" ~ "(Ref: Male)",#
+            Category == "(Ref:)" &#
+              Variable == "PARENTS_12YRS" ~ "(Ref: Parents married)",#
+            Category == "(Ref:)" &#
+              Variable == "SVCS_12YRS" ~ "(Ref: Never)",#
+            #Category == "(Ref:)" & Variable == "SVCS_MOTHER" ~ "(Ref: Never)",#
+            #Category == "(Ref:)" & Variable == "SVCS_FATHER" ~ "(Ref: Never)",#
+            Category == "(Ref:)" &#
+              Variable == "MOTHER_RELATN" ~ "(Ref: Very bad/somewhat bad)",#
+            Category == "(Ref:)" &#
+              Variable == "FATHER_RELATN" ~ "(Ref: Very bad/somewhat bad)",#
+            #Category == "(Ref:)" & Variable == "MOTHER_LOVED" ~ "(Ref: No)",#
+            #Category == "(Ref:)" & Variable == "FATHER_LOVED" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "OUTSIDER" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "ABUSED" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "HEALTH_GROWUP" ~ "(Ref: Good)",#
+            Category == "(Ref:)" &#
+              Variable == "BORN_COUNTRY" ~ "(Ref: Born in this country)",#
+            Category == "(Ref:)" &#
+              Variable == "INCOME_12YRS" ~ "(Ref: Got by)",#
+            Category == "(Ref:)" &#
+              Variable == "RACE_PLURALITY" ~ "(Ref: Plurality group)",#
+            Category == "(Ref:)" &#
+              Variable == "MOTHER_NA" ~ "(Ref: Non-missing Mother Flags)",#
+            Category == "(Ref:)" &#
+              Variable == "FATHER_NA" ~ "(Ref: Non-missing Father Flags)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c(#
+                "Argentina",#
+                "Australia",#
+                "Brazil",#
+                "Germany",#
+                "Hong Kong",#
+                "Japan",#
+                "Mexico",#
+                "Poland",#
+                "South Africa",#
+                "Spain",#
+                "Sweden",#
+                "Tanzania",#
+                "United Kingdom",#
+                "United States"#
+              ) &#
+              Variable == "REL1" ~ "(Ref: No religion/Atheist/Agnostic)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Egypt", "Indonesia", "Turkey") &#
+              Variable == "REL1" ~ "(Ref: Islam)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("India") &#
+              Variable == "REL1" ~ "(Ref: Hinduism)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Israel") &#
+              Variable == "REL1" ~ "(Ref: Judaism)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Kenya", "Nigeria", "Philippines") &#
+              Variable== "REL1" ~ "(Ref: Christianity)",#
+            .default = Category#
+          )#
+        ) %>%#
+        mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        )#
+      # Save & export results for use elsewhere#
+      # reduced results for esay use in meta-analyses (basically to align with wave 1 input to make my life easier)#
+      write.csv(#
+        metainput,#
+        paste0(#
+          res.dir,#
+          your.pred,#
+          "_regressed_on_",#
+          your.outcome, "_meta_analysis_input.csv"#
+        ),#
+        row.names = FALSE#
+      )#
+#
+      save(#
+        output,#
+        metainput,#
+        fit.pca.summary,#
+        file = paste0(#
+          res.dir,#
+          your.pred,#
+          "_regressed_on_",#
+          your.outcome, "_saved_results.RData"#
+        )#
+      )#
+#
+    })#
+  })#
+#
+  # ======================================= ##
+  # ======================================= ##
+  # Only the metainput is DIRECTLY RETURNED ##
+  # ======================================= ##
+  # ======================================= ##
+  metainput#
+}
+getwd()
+# Script: main.R#
+# Created by: R. Noah Padgett#
+# Last edited on: 2024-12-29#
+#
+source("R/utils.R")source("R/run_impute_data.R")#
+source("R/recoding_imputed_data_2w_test.R")#
+source("R/pca.R")#
+source("R/outcome_variables_2w_test.R")#
+source("R/load_packages.R")#
+source("R/get_raw_data.R")#
+source("R/demo_childhood_variables.R")#
+source("R/country_specific_regression_analyses.R")#
+source("R/attrition_wgts.R")#
+source("R/gfs_svyglm.R")source("R/gfs_evalues.R")source("R/gfs_pca.R")source("R/gfs_pool_estimates.R")#
+source("test/outcomes.R")#
+#
+# WARNING: The package was set up to be user-friendly for researchers part of the GFS core#
+#   team who mainly have experience with other statistical analysis software such as STATA,#
+#   SAS, and SPSS. This package and implementation of the analyses for Wave 2 of the Global#
+#   Flourishing Study does NOT conform to "tidy" principles in general. While some elements of tidy#
+#   evaluation and syntax structure are used throughout, we did not implement everything with#
+#   "tidyness" in mind. As such, we make no guarantees that the package will integrate or#
+#   "play nice" with other packages.#
+#
+# Analysis Set-Up#
+#
+# Add the directory where the dataset is stored on your computer#
+data.dir <-  "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data/"#
+dataset.name <- "gfs_test_2_waves.sav" # "gfs_all_countries_wave1.sav"#
+#
+# Specify where you want to output results#
+# Can be left blank, and the results will output to the same directory as the data.#
+out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing/"#
+#
+# Here is YOUR wave 1 construct variable#
+FOCAL_PREDICTOR  <- "PHYSICAL_HLTH_W1"#
+FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health at wave 1"#
+#
+# IF your predictor is binary/categorical, use the code below to define how you want it to be#
+#	categorized. Categorization must result in a binary variable 0/1 for consistency across studies.#
+#	Please report how you have categorized your variable to Noah (npadgett@hsph.harvard.edu)#
+VALUES_DEFINING_UPPER_CATEGORY <- c(NULL)#
+VALUES_DEFINING_LOWER_CATEGORY <- c(NULL)#
+# Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses#
+#	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful#
+#	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of#
+# feel_anxious and control_worry)  or depression (sum of depressed and interest) that have a#
+#	history of being dichotomized.#
+FORCE_BINARY <- FALSE#
+# Note 2: if your focal predictor is categorical/binary, you can use the responses as if they were continuous.#
+#	This can be done in several ways, but the provided (straightforward-ish) approach is to reverse#
+#	code all ordered-categorical variables (reverse code from what is reported in the codebook), and#
+# standardized as if continuous. This approach is not applicable for variables with nominal#
+# response categories such as employment. This is employed using the option below.#
+FORCE_CONTINUOUS <- FALSE#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+# Data Prep#
+{#
+  if (is.null(out.dir))#
+    out.dir = data.dir#
+#
+  #setwd(out.dir)#
+  # Note:#
+  # The following function loads the required packages for the remainder of the script to work.#
+  load_packages()#
+  # get "raw data"#
+  df.raw <- gfs_get_labelled_raw_data(paste0(data.dir,dataset.name))#
+}#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+# Imputing missing data#
+{#
+  run.imp <- FALSE#
+  if (run.imp) {#
+    df.tmp <- run_attrition_model(#
+      df.raw,#
+      attr.pred = c(#
+        "ANNUAL_WEIGHT1_W1", "MODE_RECRUIT_W1", "AGE_W1", "GENDER_W1", "EDUCATION_3_W1",#
+        "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1"#
+      )#
+    )#
+    df.imp <- run_impute_data(#
+      data = df.tmp,#
+      data.dir = data.dir,#
+      Nimp = 2,#
+      Miter = 2#
+    )#
+  } else {#
+    load(paste0(data.dir,"/gfs_imputed_data_test.RData"))#
+  }#
+#
+  RECODE.DEFAULTS <- list(#
+    FOCAL_PREDICTOR = FOCAL_PREDICTOR,#
+    DEMOGRAPHICS.CHILDHOOD.PRED.VEC = DEMOGRAPHICS.CHILDHOOD.PRED.VEC,#
+    OUTCOME.VEC = OUTCOME.VEC,#
+    FORCE_BINARY = FORCE_BINARY,#
+    FORCE_CONTINUOUS = FORCE_CONTINUOUS,#
+    VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,#
+    VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,#
+    USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)#
+  )#
+  df.imp.long <- recode_imputed_data(#
+    df.imp, list.default = RECODE.DEFAULTS, list.composites = LIST.COMPOSITES#
+  )#
+#
+}#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+DEMO.CHILDHOOD.PRED <-#
+  c(#
+    "COV_AGE_GRP_W1",#
+    "COV_GENDER_W1",#
+    "COV_EDUCATION_3_W1",#
+    "COV_EMPLOYMENT_W1",#
+    "COV_MARITAL_STATUS_W1",#
+    "COV_ATTEND_SVCS_W1",#
+    "COV_BORN_COUNTRY_W1",#
+    "COV_PARENTS_12YRS_W1",#
+    "COV_SVCS_12YRS_W1",#
+    "COV_MOTHER_RELATN_W1",#
+    "COV_FATHER_RELATN_W1",#
+    "COV_OUTSIDER_W1",#
+    "COV_ABUSED_W1",#
+    "COV_HEALTH_GROWUP_W1",#
+    "COV_INCOME_12YRS_W1",#
+    "COV_REL1_W1",#
+    "COV_RACE_PLURALITY",#
+    "COV_MOTHER_NA",#
+    "COV_FATHER_NA"#
+  )#
+CONTEMPORANEOUS.EXPOSURES.VEC <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "COMPOSITE", negate=TRUE)]#
+data = df.imp.long#
+your.pred <- c("PHYSICAL_HLTH_W1") # FOCAL_PREDICTOR#
+your.outcome = OUTCOME.VEC[1]#
+covariates=DEMO.CHILDHOOD.PRED#
+contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC#
+standardize = TRUE # or FALSE - standardize PRIMARY_OUTCOME using the survey-adjusted mean and variance#
+##
+force.linear = FALSE # force.linear is an option for forcing the estimation of a linear model even for#
+#   binary/Likert outcomes. I think this is sometimes called as a "linear probability model."#
+##
+robust.huberM = FALSE # for (approximately) continuous outcomes, you have the option of alternatively#
+#   using a "robust m-estimator" with Huber style robustness weights in addition#
+#   to the complex sampling design adjustments. It's unknown whether this makes a#
+#   meaningful difference, but preliminary testing suggests small differences in#
+#   point estimates but sometimes dramatic changes to standard errors for reasons#
+#   that are unclear to me. Could be due to a strange interaction of robustness#
+#   weights, attrition weights, and post-stratified sampling weights.#
+robust.tune=2#
+pc.cutoff = 7 #0.02 # can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)#
+pc.rule = "constant" # "mincomp" #how should the number of PCs be decided?#
+#	a fixed number "constant" (default);#
+#	minimunm total proportion of variance explained ("mintotal");#
+#	minimum proportion explain by individual PCs ("mincomp");#
+#	exclude PCs from analysis ("omit")#
+res.dir=NULL#
+#system.time({#
+#
+#run_regression_single_outcome(#
+#    data = df.imp.long,#
+#    your.pred = "PHYSICAL_HLTH",#
+#    your.outcome = OUTCOME.VEC[1], # happy (continuous)#
+#    covariates=DEMO.CHILDHOOD.PRED,#
+#    contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+#    # advanced options: only change if you know what you are doing#
+#    standardize = TRUE,#
+#    force.linear = FALSE,#
+#    robust_huberM = FALSE,#
+#    robust.tune=2,#
+#    res.dir=NULL,#
+#    pc.cutoff = 7,#
+#    pc.rule = "constant"#
+#)#
+#})#
+# with all 20 imputed datasets...#
+# runtimes: ~6.5 minutes for HAPPY (continuous)#
+# runtimes: ~7.5 minutes for LIFE_BALANCE (binary)#
+#
+# Run country-specific regression analyses for ALL wave 2 outcomes#
+your.outcome <- OUTCOME.VEC[1]#
+OUTCOME0 <- OUTCOME[c(1,8,24)]#
+#
+# Analysis set 1: Run without principal components#
+LIST.RES.1 <- map(OUTCOME.VEC0, \(x){#
+	run_regression_single_outcome(#
+    	data = df.imp.long,#
+    	your.pred = FOCAL_PREDICTOR,#
+    	your.outcome = x,#
+    	covariates=DEMO.CHILDHOOD.PRED,#
+    	contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+    	# advanced options: only change if you know what you are doing#
+    	standardize = TRUE,#
+    	force.linear = FORCE_CONTINUOUS,#
+    	robust_huberM = FALSE,#
+    	robust.tune = 2,#
+    	res.dir = "results-wopc/",#
+    	pc.rule = "omit"#
+	)#
+}, .progress = TRUE)#
+#
+# Analysis set 2: Run with principal components#
+LIST.RES.2 <- map(OUTCOME.VEC0, \(x){#
+	run_regression_single_outcome(#
+    	data = df.imp.long,#
+    	your.pred = FOCAL_PREDICTOR,#
+    	your.outcome = x,#
+    	covariates=DEMO.CHILDHOOD.PRED,#
+    	contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+    	# advanced options: only change if you know what you are doing#
+    	standardize = TRUE,#
+    	force.linear = FORCE_CONTINUOUS,#
+    	robust.huberM = FALSE,#
+    	robust.tune = 2,#
+    	res.dir="results-wpc/",#
+    	pc.cutoff = 7,#
+    	pc.rule = "constant"#
+	)#
+}, .progress = TRUE)
+your.outcome <- OUTCOME.VEC[1]#
+OUTCOME0 <- OUTCOME.VEC[c(1,8,24)]#
+#
+# Analysis set 1: Run without principal components#
+LIST.RES.1 <- map(OUTCOME.VEC0, \(x){#
+	run_regression_single_outcome(#
+    	data = df.imp.long,#
+    	your.pred = FOCAL_PREDICTOR,#
+    	your.outcome = x,#
+    	covariates=DEMO.CHILDHOOD.PRED,#
+    	contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+    	# advanced options: only change if you know what you are doing#
+    	standardize = TRUE,#
+    	force.linear = FORCE_CONTINUOUS,#
+    	robust_huberM = FALSE,#
+    	robust.tune = 2,#
+    	res.dir = "results-wopc/",#
+    	pc.rule = "omit"#
+	)#
+}, .progress = TRUE)#
+#
+# Analysis set 2: Run with principal components#
+LIST.RES.2 <- map(OUTCOME.VEC0, \(x){#
+	run_regression_single_outcome(#
+    	data = df.imp.long,#
+    	your.pred = FOCAL_PREDICTOR,#
+    	your.outcome = x,#
+    	covariates=DEMO.CHILDHOOD.PRED,#
+    	contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+    	# advanced options: only change if you know what you are doing#
+    	standardize = TRUE,#
+    	force.linear = FORCE_CONTINUOUS,#
+    	robust.huberM = FALSE,#
+    	robust.tune = 2,#
+    	res.dir="results-wpc/",#
+    	pc.cutoff = 7,#
+    	pc.rule = "constant"#
+	)#
+}, .progress = TRUE)
+your.outcome <- OUTCOME.VEC[1]#
+OUTCOME.VEC0 <- OUTCOME.VEC[c(1,8,24)]#
+#
+# Analysis set 1: Run without principal components#
+LIST.RES.1 <- map(OUTCOME.VEC0, \(x){#
+	run_regression_single_outcome(#
+    	data = df.imp.long,#
+    	your.pred = FOCAL_PREDICTOR,#
+    	your.outcome = x,#
+    	covariates=DEMO.CHILDHOOD.PRED,#
+    	contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+    	# advanced options: only change if you know what you are doing#
+    	standardize = TRUE,#
+    	force.linear = FORCE_CONTINUOUS,#
+    	robust_huberM = FALSE,#
+    	robust.tune = 2,#
+    	res.dir = "results-wopc/",#
+    	pc.rule = "omit"#
+	)#
+}, .progress = TRUE)#
+#
+# Analysis set 2: Run with principal components#
+LIST.RES.2 <- map(OUTCOME.VEC0, \(x){#
+	run_regression_single_outcome(#
+    	data = df.imp.long,#
+    	your.pred = FOCAL_PREDICTOR,#
+    	your.outcome = x,#
+    	covariates=DEMO.CHILDHOOD.PRED,#
+    	contemporaneous.exposures=CONTEMPORANEOUS.EXPOSURES.VEC,#
+    	# advanced options: only change if you know what you are doing#
+    	standardize = TRUE,#
+    	force.linear = FORCE_CONTINUOUS,#
+    	robust.huberM = FALSE,#
+    	robust.tune = 2,#
+    	res.dir="results-wpc/",#
+    	pc.cutoff = 7,#
+    	pc.rule = "constant"#
+	)#
+}, .progress = TRUE)
+LIST.RES.2
+df.tmp <- LIST.RES.2 %>% #
+	bind_rows()
+df.tmp
+data = df.tmp %>% filter(OUTCOME == "HAPPY_W1")
+data
+type = "rma"
+grp.vars <- "OUTCOME"
+meta.input = df.tmp %>% #
+  	group_by(!(as.name(grp.vars))) %>%#
+  	nest()
+grp.vars <- "OUTCOME"#
+  meta.input = df.tmp %>% #
+  	group_by(as.name(grp.vars)) %>%#
+  	nest()
+grp.vars <- "OUTCOME"#
+  meta.input = df.tmp %>% #
+  	group_by(grp.vars) %>%#
+  	nest()
+meta.input = df.tmp %>% #
+  	group_by(OUTCOME) %>%#
+  	nest()
+interval.method
+interval.method = "normal"
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = yi,#
+                vi = vi,#
+                data = x,#
+                method = estimator#
+              )}),#
+              theta = map_dbl(meta.fit, "beta"),#
+              tau2 = map_dbl(meta.fit, "tau2"),#
+              tau = sqrt(tau2),#
+              I2 = map_dbl(meta.fit, "I2"),#
+              Q_stat = map_dbl(meta.fit, "QE"),#
+              Q_pval = map_dbl(meta.fit, "QEp"),#
+              Qprof_ci = map_chr(meta.fit, \(x) get_q_profile_ci(x)),#
+              calibrated_yi = map(meta.fit, \(x) compute_calibrated(x)),#
+              prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+              ),#
+              prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+              calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              )#
+         )
+estimator = "PM"
+type = "rma"#
+  estimator = "PM"#
+  interval.method = "normal"
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = yi,#
+                vi = vi,#
+                data = x,#
+                method = estimator#
+              )}),#
+              theta = map_dbl(meta.fit, "beta"),#
+              tau2 = map_dbl(meta.fit, "tau2"),#
+              tau = sqrt(tau2),#
+              I2 = map_dbl(meta.fit, "I2"),#
+              Q_stat = map_dbl(meta.fit, "QE"),#
+              Q_pval = map_dbl(meta.fit, "QEp"),#
+              Qprof_ci = map_chr(meta.fit, \(x) get_q_profile_ci(x)),#
+              calibrated_yi = map(meta.fit, \(x) compute_calibrated(x)),#
+              prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+              ),#
+              prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+              calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              )#
+         )
+df.tmp
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+              theta = map_dbl(meta.fit, "beta"),#
+              tau2 = map_dbl(meta.fit, "tau2"),#
+              tau = sqrt(tau2),#
+              I2 = map_dbl(meta.fit, "I2"),#
+              Q_stat = map_dbl(meta.fit, "QE"),#
+              Q_pval = map_dbl(meta.fit, "QEp"),#
+              Qprof_ci = map_chr(meta.fit, \(x) get_q_profile_ci(x)),#
+              calibrated_yi = map(meta.fit, \(x) compute_calibrated(x)),#
+              prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+              ),#
+              prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+              calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              )#
+         )
+compute_calibrated <- function(x) {#
+  mu <- as.numeric(x["b"])#
+  tau2 <- as.numeric(x["tau2"])#
+  yi <- as.numeric(unlist(x["yi"]))#
+  vi <- as.numeric(unlist(x["vi"]))#
+  mu + (yi - mu) * sqrt(tau2 / (tau2 + vi))#
+}#
+proportion_meaningful <- function(x, q = 0, above = TRUE, method="empirical", theta=0, tau=1) {#
+  k = length(x)#
+  out = NA#
+  if(method == "empirical"){#
+    if (above) {#
+      out = sum(x > q) / k#
+    } else {#
+      out = sum(x < q) / k#
+    }#
+  }#
+  if(method == "normal"){#
+    if(above){#
+      out = 1 - pnorm( (q - theta)/tau )#
+    } else {#
+      out = pnorm( (q - theta)/tau )#
+    }#
+  }#
+  out#
+}#
+get_q_profile_ci <- function(fit) {#
+  tmp <- confint(fit, type = "PL")#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  ci#
+}
+#' Meta-Analysis Utility Functions#
+#'#
+#' A set of utility functions used in the post-processing of the meta-analysis results.#
+#'#
+#' @param fit the resulting object from fitting the metafor::rma(.) function.#
+#' @param x vector of calibrated effect sizes#
+#' @param q a numerical values (default = 0) that defines the threshold of meaningful effect size#
+#' @param above a logical indicator of whether to come the proportion above or below the threshold#
+#' @param method a character string defining how the proportion should be computed (default is "normal" but can be "empirical")#
+#' @param theta the population average effect size #
+#' @param tau the population standard deviation#
+#' @return depends on function...#
+#' @examples #
+#' TODO#
+#' @export#
+compute_calibrated <- function(fit) {#
+  mu <- as.numeric(x["b"])#
+  tau2 <- as.numeric(x["tau2"])#
+  yi <- as.numeric(unlist(x["yi"]))#
+  vi <- as.numeric(unlist(x["vi"]))#
+  mu + (yi - mu) * sqrt(tau2 / (tau2 + vi))#
+}#
+proportion_meaningful <- function(x, q = 0, above = TRUE, method="empirical", theta=0, tau=1) {#
+  k = length(x)#
+  out = NA#
+  if(method == "empirical"){#
+    if (above) {#
+      out = sum(x > q) / k#
+    } else {#
+      out = sum(x < q) / k#
+    }#
+  }#
+  if(method == "normal"){#
+  	# follows from Matheur and VanderWeele (2017)?#
+    if(above){#
+      out = 1 - pnorm( (q - theta)/tau )#
+    } else {#
+      out = pnorm( (q - theta)/tau )#
+    }#
+  }#
+  out#
+}#
+get_q_profile_ci <- function(fit) {#
+  tmp <- confint(fit, type = "PL")#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  ci#
+}#
+add_pop_wgts <- function(df) {#
+  df <- df %>%#
+    unnest(c(data))#
+  # add in population sizes#
+  poplist = c(#
+    20329009,#
+    6097316,#
+    964761394,#
+    193828725,#
+    107139250,#
+    73216028,#
+    56059669,#
+    69392175,#
+    6191774,#
+    25639336,#
+    109534481,#
+    30917886,#
+    38728302,#
+    39144781,#
+    8296398,#
+    31482707,#
+    62703653,#
+    53129081,#
+    259759435,#
+    33085830,#
+    156216636,#
+    89518608#
+  )#
+  names(poplist) <-#
+    c(#
+      "Australia",#
+      "Hong Kong",#
+      "India",#
+      "Indonesia",#
+      "Japan",#
+      "Philippines",#
+      "Egypt",#
+      "Germany",#
+      "Israel",#
+      "Kenya",#
+      "Nigeria",#
+      "Poland",#
+      "South Africa",#
+      "Spain",#
+      "Sweden",#
+      "Tanzania",#
+      "Turkiye",#
+      "United Kingdom",#
+      "United States",#
+      "Argentina",#
+      "Brazil",#
+      "Mexico"#
+    )#
+  df$wi <- 1#
+  for (i in names(poplist)) {#
+    df$wi[df$Country == i] <- poplist[i]/sum(poplist)#
+  }#
+  df <- df %>%#
+    group_by(Variable, Category) %>%#
+    nest()#
+  df#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+              theta = map_dbl(meta.fit, "beta"),#
+              tau2 = map_dbl(meta.fit, "tau2"),#
+              tau = sqrt(tau2),#
+              I2 = map_dbl(meta.fit, "I2"),#
+              Q_stat = map_dbl(meta.fit, "QE"),#
+              Q_pval = map_dbl(meta.fit, "QEp"),#
+              Qprof_ci = map_chr(meta.fit, \(x) get_q_profile_ci(x)),#
+              calibrated_yi = map(meta.fit, \(x) compute_calibrated(x)),#
+              prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+              ),#
+              prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+              calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              )#
+         )
+compute_calibrated <- function(fit) {#
+  mu <- as.numeric(x["b"])#
+  tau2 <- as.numeric(x["tau2"])#
+  yi <- as.numeric(unlist(x["yi"]))#
+  vi <- as.numeric(unlist(x["vi"]))#
+  mu + (yi - mu) * sqrt(tau2 / (tau2 + vi))#
+}
+proportion_meaningful <- function(x, q = 0, above = TRUE, method="empirical", theta=0, tau=1) {#
+  k = length(x)#
+  out = NA#
+  if(method == "empirical"){#
+    if (above) {#
+      out = sum(x > q) / k#
+    } else {#
+      out = sum(x < q) / k#
+    }#
+  }#
+  if(method == "normal"){#
+  	# follows from Matheur and VanderWeele (2017)?#
+    if(above){#
+      out = 1 - pnorm( (q - theta)/tau )#
+    } else {#
+      out = pnorm( (q - theta)/tau )#
+    }#
+  }#
+  out#
+}
+get_q_profile_ci <- function(fit) {#
+  tmp <- confint(fit, type = "PL")#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  ci#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"))
+meta.res
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }))
+meta.res
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }),#
+        calibrated_yi = map(meta.fit, \(x){ compute_calibrated(x) }))
+compute_calibrated <- function(fit) {#
+  mu <- as.numeric(fit["b"])#
+  tau2 <- as.numeric(fit["tau2"])#
+  yi <- as.numeric(unlist(fit["yi"]))#
+  vi <- as.numeric(unlist(fit["vi"]))#
+  mu + (yi - mu) * sqrt(tau2 / (tau2 + vi))#
+}
+compute_calibrated <- function(fit) {#
+  mu <- as.numeric(fit["b"])#
+  tau2 <- as.numeric(fit["tau2"])#
+  yi <- as.numeric(unlist(fit["yi"]))#
+  vi <- as.numeric(unlist(fit["vi"]))#
+  mu + (yi - mu) * sqrt(tau2 / (tau2 + vi))#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }),#
+        calibrated_yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              )#
+         )
+meta.res
+meta.res
+compute_harmonic_mean <- function(x, p.min=1e-16){#
+    # Replace all p-values of exactly 0 with p.min#
+    x <- ifelse(x < p.min, p.min, x)#
+    x <- x[!is.na(x)]#
+    L = length(x)#
+    unlist(p.hmp(x, L=L))#
+}
+compute_global_pvalue<- function(x, p.min=1e-16){#
+    # Replace all p-values of exactly 0 with p.min#
+    x <- ifelse(x < p.min, p.min, x)#
+    x <- x[!is.na(x)]#
+    L = length(x)#
+    unlist(p.hmp(x, L=L))#
+}
+compute_global_pvalue <- function(x, p.min=1e-16){#
+    # Replace all p-values of exactly 0 with p.min#
+    x <- ifelse(x < p.min, p.min, x)#
+    x <- x[!is.na(x)]#
+    L = length(x)#
+    unlist(p.hmp(x, L=L))#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }),#
+        calibrated_yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("p.value" %in% cnames){#
+          		out = compute_global_pvalue(x$p.value)#
+          	}#
+          	out#
+          })#
+         )
+meta.res
+meta.res$data[[1]]
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }),#
+        calibrated_yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })#
+         )
+meta.res
+meta.res <- meta.input %>%#
+  	mutate(#
+  		meta.fit = map(data, \(x){rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )}),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }),#
+        calibrated_yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })#
+         )
+meta.res
+is.list(meta.res$data)
+is.list(meta.res$theta)
+meta.res$data[[1]]
+meta.res$data[[1]]$Country
+names(poplist)
+add_pop_wgts <- function(df) {#
+  # add in population sizes#
+  poplist = c(#
+    20329009,#
+    6097316,#
+    964761394,#
+    193828725,#
+    107139250,#
+    73216028,#
+    56059669,#
+    69392175,#
+    6191774,#
+    25639336,#
+    109534481,#
+    30917886,#
+    38728302,#
+    39144781,#
+    8296398,#
+    31482707,#
+    62703653,#
+    53129081,#
+    259759435,#
+    33085830,#
+    156216636,#
+    89518608#
+  )#
+  names(poplist) <-#
+    c(#
+      "Australia",#
+      "Hong Kong",#
+      "India",#
+      "Indonesia",#
+      "Japan",#
+      "Philippines",#
+      "Egypt",#
+      "Germany",#
+      "Israel",#
+      "Kenya",#
+      "Nigeria",#
+      "Poland",#
+      "South Africa",#
+      "Spain",#
+      "Sweden",#
+      "Tanzania",#
+      "Turkiye",#
+      "United Kingdom",#
+      "United States",#
+      "Argentina",#
+      "Brazil",#
+      "Mexico"#
+    )#
+  df$wi <- 1#
+  for (i in names(poplist)) {#
+    df$wi[df$Country == i] <- poplist[i]/sum(poplist)#
+  }#
+  df#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                wi = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+  	    res.pop.wgt = map(meta.pop.wgt, ~tidy(., conf.int = TRUE)),#
+  		meta.fit = map(data, \(x){#
+  			rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )#
+        }),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q_stat = map_dbl(meta.fit, "QE"),#
+        Q_pval = map_dbl(meta.fit, "QEp"),#
+        Qprof_ci = map_chr(meta.fit, \(x){ get_q_profile_ci(x) }),#
+        calibrated_yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob_leqneq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob_geq0.1 = map_dbl(#
+                calibrated_yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated_yi_exp = map(calibrated_yi, \(x) exp(x)),#
+              rr_theta = exp(theta),#
+              rr_tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob_rr0.90 = map_dbl(#
+                calibrated_yi_exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob_rr1.10 = map_dbl(#
+                calibrated_yi_exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          }),#
+         )
+add_pop_wgts <- function(df) {#
+  # add in population sizes#
+  poplist = c(#
+    20329009,#
+    6097316,#
+    964761394,#
+    193828725,#
+    107139250,#
+    73216028,#
+    56059669,#
+    69392175,#
+    6191774,#
+    25639336,#
+    109534481,#
+    30917886,#
+    38728302,#
+    39144781,#
+    8296398,#
+    31482707,#
+    62703653,#
+    53129081,#
+    259759435,#
+    33085830,#
+    156216636,#
+    89518608#
+  )#
+  names(poplist) <-#
+    c(#
+      "Australia",#
+      "Hong Kong",#
+      "India",#
+      "Indonesia",#
+      "Japan",#
+      "Philippines",#
+      "Egypt",#
+      "Germany",#
+      "Israel",#
+      "Kenya",#
+      "Nigeria",#
+      "Poland",#
+      "South Africa",#
+      "Spain",#
+      "Sweden",#
+      "Tanzania",#
+      "Turkiye",#
+      "United Kingdom",#
+      "United States",#
+      "Argentina",#
+      "Brazil",#
+      "Mexico"#
+    )#
+  df$wi <- 1#
+  for (i in names(poplist)) {#
+    df$wi[df$Country == i] <- poplist[i]/sum(poplist)#
+  }#
+  df#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                wi = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }))
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	x#
+  	    }))
+meta.res$meta.pop.wgt[[1]]
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+  	    res.pop.wgt = map(meta.pop.wgt, ~tidy(., conf.int = TRUE)))
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+  	    res.pop.wgt = map(meta.pop.wgt, ~tidy(., conf.int = TRUE)),#
+        Qprof_ci = map_chr(meta.pop.wgt, \(x){ get_q_profile_ci(x) }))
+meta.res$meta.pop.wgt[[1]]
+tmp <- confint(meta.res$meta.pop.wgt[[1]], type = "PL")
+tmp <- confint(meta.res$meta.pop.wgt[[1]])
+tmp <- confint(meta.res$meta.pop.wgt[[1]], type="L")
+tmp <- confint(meta.res$meta.pop.wgt[[1]], type="PL")
+meta.res$meta.pop.wgt[[1]]
+meta.res$res[[1]]
+meta.res$res.pop.wgt[[1]]
+meta.res$res.pop.wgt[[1]]['conf.low']
+get_ci <- function(fit, type='PL') {#
+  if(type == "PL"){#
+  tmp <- confint(fit, type = type)#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  }#
+  if(type = "FE"){#
+  	tmp = tidy(fit)#
+  	ci = paste0("(",#
+              .round(tmp[1,'conf.low',drop=TRUE], 3), ",",#
+              .round(tmp[1,'conf.high',drop=TRUE], 3), ")")#
+  }#
+  ci#
+}
+get_ci <- function(fit, type='PL') {#
+  if(type == "PL"){#
+  tmp <- confint(fit, type = type)#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  }#
+  if(type == "FE"){#
+  	tmp = tidy(fit)#
+  	ci = paste0("(",#
+              .round(tmp[1,'conf.low',drop=TRUE], 3), ",",#
+              .round(tmp[1,'conf.high',drop=TRUE], 3), ")")#
+  }#
+  ci#
+}
+get_ci_by_type <- function(fit, type='PL') {#
+  if(type == "PL"){#
+  tmp <- confint(fit, type = type)#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  }#
+  if(type == "FE"){#
+  	tmp = tidy(fit)#
+  	ci = paste0("(",#
+              .round(tmp[1,'conf.low',drop=TRUE], 3), ",",#
+              .round(tmp[1,'conf.high',drop=TRUE], 3), ")")#
+  }#
+  ci#
+}
+get_outcome_better_name
+gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "normal", ...){#
+  #meta.input = df.tmp %>% #
+  #	group_by(OUTCOME) %>%#
+  # nest()#
+  # estimator = "PM"#
+  # interval.method = "normal"#
+  # a data.format check#
+  cnames <- colnames(meta.input)#
+  if(!("data" %in% cnames) | !is.list(meta.res$data)){#
+  	 stop("meta.input format incorrect. Please ensure that there is a column called 'data' that is a list of tibbles.")#
+  } #
+  meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+        meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x)),#
+        theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){ get_ci_by_type(x, type="FE") }),#
+  		meta.fit = map(data, \(x){#
+  			rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )#
+        }),#
+        meta.rma.tidy = map(meta.fit, \(x) tidy(x)),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q.stat = map_dbl(meta.fit, "QE"),#
+        Q.pval = map_dbl(meta.fit, "QEp"),#
+        Qprof.ci = map_chr(meta.fit, \(x){ get_ci_by_type(x) }),#
+        calibrated.yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob.leqneq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob.geq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),#
+              rr.theta = exp(theta),#
+              rr.tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob.rr0.90 = map_dbl(#
+                calibrated.yi.exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob.rr1.10 = map_dbl(#
+                calibrated.yi.exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })      #
+    )#
+       meta.res#
+       }
+meta.input <- LIST.RES.2 %>% #
+   	bind_rows() %>%#
+   	group_by(OUTCOME) %>%#
+   	nest()#
+   res <- gfs_meta_analysis( meta.input )
+tidy(fit)
+tmp
+meta.res$res.pop.wgt[[1]]['conf.low']
+meta.res$res.pop.wgt[[1]][1,'conf.low']
+meta.res$res.pop.wgt[[1]]
+meta.input
+get_ci_by_type <- function(fit, type='PL') {#
+  if(type == "PL"){#
+  tmp <- confint(fit, type = type)#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  }#
+  if(type == "FE"){#
+  	tmp = tidy(fit)#
+  	ci = paste0("(",#
+              .round(tmp[1,'conf.low',drop=TRUE], 3), ",",#
+              .round(tmp[1,'conf.high',drop=TRUE], 3), ")")#
+  }#
+  ci#
+}
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+        meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x)),#
+        theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){ get_ci_by_type(x, type="FE") }))
+meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }))
+fit <- meta.res$meta.pop.wgt[[1]]
+fit
+tidy(fit)
+tidy(fit, confit=TRUE)
+tidy(fit, ci=TRUE)
+get_ci_by_type <- function(fit, type='PL') {#
+  if(type == "PL"){#
+  tmp <- confint(fit, type = type)#
+  ci = paste0("(",#
+              .round(tmp[['random']][2, 2], 3), ",",#
+              .round(tmp[['random']][2, 3], 3), ")")#
+  }#
+  if(type == "FE"){#
+  	tmp = tidy(fit,conf.int = TRUE)#
+  	ci = paste0("(",#
+              .round(tmp[1,'conf.low',drop=TRUE], 3), ",",#
+              .round(tmp[1,'conf.high',drop=TRUE], 3), ")")#
+  }#
+  ci#
+}
+gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "normal", ...){#
+  #meta.input = df.tmp %>% #
+  #	group_by(OUTCOME) %>%#
+  # nest()#
+  # estimator = "PM"#
+  # interval.method = "normal"#
+  # a data.format check#
+  cnames <- colnames(meta.input)#
+  if(!("data" %in% cnames) | !is.list(meta.res$data)){#
+  	 stop("meta.input format incorrect. Please ensure that there is a column called 'data' that is a list of tibbles.")#
+  } #
+  meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    })),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+        meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),#
+        theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){ get_ci_by_type(x, type="FE") })),#
+  		meta.fit = map(data, \(x){#
+  			rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )#
+        }),#
+        meta.rma.tidy = map(meta.fit, \(x) tidy(x, conf.int = TRUE)),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q.stat = map_dbl(meta.fit, "QE"),#
+        Q.pval = map_dbl(meta.fit, "QEp"),#
+        Qprof.ci = map_chr(meta.fit, \(x){ get_ci_by_type(x) }),#
+        calibrated.yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob.leqneq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob.geq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),#
+              rr.theta = exp(theta),#
+              rr.tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob.rr0.90 = map_dbl(#
+                calibrated.yi.exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob.rr1.10 = map_dbl(#
+                calibrated.yi.exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })      #
+    )#
+       meta.res#
+       }
+gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "normal", ...){#
+  #meta.input = df.tmp %>% #
+  #	group_by(OUTCOME) %>%#
+  # nest()#
+  # estimator = "PM"#
+  # interval.method = "normal"#
+  # a data.format check#
+  cnames <- colnames(meta.input)#
+  if(!("data" %in% cnames) | !is.list(meta.res$data)){#
+  	 stop("meta.input format incorrect. Please ensure that there is a column called 'data' that is a list of tibbles.")#
+  } #
+  meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    })),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+        meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),#
+        theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){ get_ci_by_type(x, type="FE") }),#
+  		meta.fit = map(data, \(x){#
+  			rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )#
+        }),#
+        meta.rma.tidy = map(meta.fit, \(x) tidy(x, conf.int = TRUE)),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q.stat = map_dbl(meta.fit, "QE"),#
+        Q.pval = map_dbl(meta.fit, "QEp"),#
+        Qprof.ci = map_chr(meta.fit, \(x){ get_ci_by_type(x) }),#
+        calibrated.yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob.leqneq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob.geq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),#
+              rr.theta = exp(theta),#
+              rr.tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob.rr0.90 = map_dbl(#
+                calibrated.yi.exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob.rr1.10 = map_dbl(#
+                calibrated.yi.exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })      #
+    )#
+       meta.res#
+       }
+gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "normal", ...){#
+  #meta.input = df.tmp %>% #
+  #	group_by(OUTCOME) %>%#
+  # nest()#
+  # estimator = "PM"#
+  # interval.method = "normal"#
+  # a data.format check#
+  cnames <- colnames(meta.input)#
+  if(!("data" %in% cnames) | !is.list(meta.res$data)){#
+  	 stop("meta.input format incorrect. Please ensure that there is a column called 'data' that is a list of tibbles.")#
+  } #
+  meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+        meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),#
+        theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){ get_ci_by_type(x, type="FE") }),#
+  		meta.fit = map(data, \(x){#
+  			rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )#
+        }),#
+        meta.rma.tidy = map(meta.fit, \(x) tidy(x, conf.int = TRUE)),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q.stat = map_dbl(meta.fit, "QE"),#
+        Q.pval = map_dbl(meta.fit, "QEp"),#
+        Qprof.ci = map_chr(meta.fit, \(x){ get_ci_by_type(x) }),#
+        calibrated.yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob.leqneq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob.geq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),#
+              rr.theta = exp(theta),#
+              rr.tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob.rr0.90 = map_dbl(#
+                calibrated.yi.exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr_theta, rr_tau)#
+              ),#
+              prob.rr1.10 = map_dbl(#
+                calibrated.yi.exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr_theta, rr_tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })      #
+    )#
+       meta.res#
+       }
+meta.input <- LIST.RES.2 %>% #
+   	bind_rows() %>%#
+   	group_by(OUTCOME) %>%#
+   	nest()
+res <- gfs_meta_analysis( meta.input )
+gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "normal", ...){#
+  #meta.input = df.tmp %>% #
+  #	group_by(OUTCOME) %>%#
+  # nest()#
+  # estimator = "PM"#
+  # interval.method = "normal"#
+  # a data.format check#
+  cnames <- colnames(meta.input)#
+  if(!("data" %in% cnames) | !is.list(meta.res$data)){#
+  	 stop("meta.input format incorrect. Please ensure that there is a column called 'data' that is a list of tibbles.")#
+  } #
+  meta.res <- meta.input %>%#
+  	mutate(#
+  	    meta.pop.wgt = map(data, \(x){#
+  	    	x = add_pop_wgts(x)#
+  	    	rma(#
+                yi = Est,#
+                sei = SE,#
+                weights = wi,#
+                data = x,#
+                method = "FE"#
+              )#
+  	    }),#
+  	    theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),#
+        meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),#
+        theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){ get_ci_by_type(x, type="FE") }),#
+  		meta.fit = map(data, \(x){#
+  			rma(#
+                yi = Est,#
+                sei = SE,#
+                data = x,#
+                method = estimator#
+              )#
+        }),#
+        meta.rma.tidy = map(meta.fit, \(x) tidy(x, conf.int = TRUE)),#
+        theta = map_dbl(meta.fit, "beta"),#
+        tau2 = map_dbl(meta.fit, "tau2"),#
+        tau = sqrt(tau2),#
+        I2 = map_dbl(meta.fit, "I2"),#
+        Q.stat = map_dbl(meta.fit, "QE"),#
+        Q.pval = map_dbl(meta.fit, "QEp"),#
+        Qprof.ci = map_chr(meta.fit, \(x){ get_ci_by_type(x) }),#
+        calibrated.yi = map(meta.fit, \(x){ compute_calibrated(x) }),#
+        prob.leqneq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta, tau)#
+        ),#
+        prob.geq0.1 = map_dbl(#
+                calibrated.yi, \(x) proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta, tau)#
+              ),#
+              # compute exponentiated (used only when scale is binary/Likert)#
+        calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),#
+              rr.theta = exp(theta),#
+              rr.tau = sqrt( (exp(tau2) - 1)*exp(2*theta + tau2)),#
+              prob.rr0.90 = map_dbl(#
+                calibrated.yi.exp, \(x)proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr.theta, rr.tau)#
+              ),#
+              prob.rr1.10 = map_dbl(#
+                calibrated.yi.exp, \(x) proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr.theta, rr.tau)#
+              ),#
+          global.pvalue = map_dbl(data, \(x){#
+          	cnames = colnames(x)#
+          	out = NULL#
+          	if("pvalue" %in% cnames){#
+          		out = compute_global_pvalue(x$pvalue)#
+          	}#
+          	out#
+          })      #
+    )#
+       meta.res#
+       }#
+   meta.input <- LIST.RES.2 %>% #
+   	bind_rows() %>%#
+   	group_by(OUTCOME) %>%#
+   	nest()#
+   res <- gfs_meta_analysis( meta.input )
+res
+meta.input <- LIST.RES.1 %>% #
+   	bind_rows() %>%#
+   	group_by(OUTCOME) %>%#
+   	nest()#
+   res <- gfs_meta_analysis( meta.input )
+res
+meta.input <- LIST.RES.2 %>% #
+   	bind_rows() %>%#
+   	group_by(OUTCOME) %>%#
+   	nest()#
+   res <- gfs_meta_analysis( meta.input )
+res
+paste0(out.dir, "/")
