@@ -14,6 +14,7 @@
 #' * ci.low
 #' * ci.up
 #' * p.value
+#' * miss.info
 #' see below for additional information about these statistics
 #' @description
 #' TO-DO
@@ -55,7 +56,9 @@ gfs_pool_estimates <- function(data) {
       p.value = case_when(
         p.value <= 1e-16 ~ 1e-16,
         .default = p.value
-      )
+      ),
+      miss.info = (lambda+2/(vm+3))/(lambda+1)
+      # miss info reported from mitools package (https://github.com/cran/mitools/blob/master/R/MI.R; line 143)
     ) %>%
     select(!c(Vw, Vb, Vt, lambda, vm, vm.obs, vm.adj, vcom))
 }

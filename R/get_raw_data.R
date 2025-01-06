@@ -28,6 +28,9 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, ...) {
     df.original <- haven::zap_labels(df.original0)
   }
 
+  # Restructure to "wide" data
+  df.original <- gsf_data_to_wide(df.original)
+
   df.original <- df.original %>%
     dplyr::mutate(
       COUNTRY = recode_labels(COUNTRY_W1, "COUNTRY_W1"),

@@ -20,6 +20,7 @@ a one-row data.frame with columns
 * ci.low
 * ci.up
 * p.value
+* miss.info
 see below for additional information about these statistics
 }
 \description{
