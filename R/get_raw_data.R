@@ -29,7 +29,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, ...) {
   }
 
   # Restructure to "wide" data
-  df.original <- gsf_data_to_wide(df.original)
+  df.original <- gfs_data_to_wide(df.original, test=TRUE)
 
   df.original <- df.original %>%
     dplyr::mutate(
