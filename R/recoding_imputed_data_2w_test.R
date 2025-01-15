@@ -77,7 +77,7 @@ recode_imputed_data <- function(
 
       # enforce reference group
       COV_AGE_GRP_W1 = relevel(COV_AGE_GRP_W1, ref = "18-24"),
-      COV_GEDNER_W1 = relevel(COV_GENDER_W1, ref = "Male"),
+      COV_GENDER_W1 = relevel(COV_GENDER_W1, ref = "Male"),
       COV_EDUCATION_3_W1 = relevel(COV_EDUCATION_3_W1, ref = "9-15"),
       COV_EMPLOYMENT_W1 = relevel(COV_EMPLOYMENT_W1, ref = "Employed for an employer"),
       COV_MARITAL_STATUS_W1 = relevel(COV_MARITAL_STATUS_W1, ref = "Single/Never been married"),
