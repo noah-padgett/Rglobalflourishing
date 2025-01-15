@@ -42,7 +42,7 @@ svy_scale <- function(x, wgt = NULL, psu = NULL, strata = NULL, design = NULL) {
 #' }
 #' @export
 check_variance <- function(x, data) {
-  ifelse(length(unique(data[[x]])) > 1, TRUE, FALSE)
+  ifelse(length(na.omit(unique(data[[x]]))) > 1, TRUE, FALSE)
 }
 
 #' Create Keep Variable Vector

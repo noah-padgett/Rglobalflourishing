@@ -2,14 +2,21 @@
 % Please edit documentation in R/demo_childhood_variables.R
 \name{get_variable_codes}
 \alias{get_variable_codes}
-\title{INCOME',
-MARITAL_STATUS_W2_2',
-MARITAL_STATUS_W2_4',}
+\title{Get variable codes other}
 \usage{
-get_variable_codes()
+get_variable_codes(...)
+}
+\arguments{
+\item{...}{argument not used}
+}
+\value{
+a character string
 }
 \description{
-INCOME',
-MARITAL_STATUS_W2_2',
-MARITAL_STATUS_W2_4',
+A simple function to get a list of variable codes used throughout the package
+}
+\examples{
+{
+  get_variable_codes()
+}
 }

@@ -19,7 +19,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, ...) {
     df.original <- haven::zap_labels(df.original0)
   }
   if (stringr::str_detect(stringr::str_to_lower(file), ".dta")) {
-    df.original0 <- haven::read_spss(file)
+    df.original0 <- haven::read_dta(file)
     df.original <- haven::zap_labels(df.original0)
   }
 

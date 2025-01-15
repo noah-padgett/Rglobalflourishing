@@ -32,16 +32,16 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = "ID", test = FALSE,...){
       wavevalues <- unique(data[,var,drop=TRUE])
       # wave 1 data
       df.wide <- data %>%
-        dplyr::filter( (!!as.name(var)) == wavevalues[1])
+        dplyr::filter( { var } == wavevalues[1])
       colnames(df.wide) <- paste0(colnames(data),"_W1")
       colnames(df.wide)[stringr::str_detect(colnames(df.wide), paste0(ids, "_W"))] <- ids
       # append additional waves with the tag "_W"
       for(i in 2:Nwaves){
         tmp.data <- data %>%
-          dplyr::filter( (!!as.name(var)) == wavevalues[i])
+          dplyr::filter(  { var } == wavevalues[i])
         colnames(tmp.data) <- paste0(colnames(data),"_W", i)
         colnames(tmp.data)[stringr::str_detect(colnames(tmp.data), paste0(ids, "_W"))] <- ids
-        df.wide <- left_join(df.wide, tmp.data, by = ids)
+        df.wide <- left_join(df.wide, tmp.data, by = { ids })
       }
       }
     })

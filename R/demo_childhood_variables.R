@@ -1,6 +1,15 @@
 # Demographic + childhood predictor variables
 
-get_demo_childhood_variables <- function() {
+#' Get variable codes for demographic and childhood variables
+#'
+#' A simple function to get a list of demographic or childhood predictor variables.
+#' @param ... argument not used
+#' @returns a character string
+#' @examples {
+#'   get_demo_childhood_variables()
+#' }
+#' @export
+get_demo_childhood_variables <- function(...) {
   c(
     "GENDER_W1",
     "MARITAL_STATUS_W1",
@@ -21,7 +30,17 @@ get_demo_childhood_variables <- function() {
   )
 }
 
-get_variable_codes <- function(){
+#' Get variable codes other
+#'
+#' A simple function to get a list of variable codes used throughout the package
+#'
+#' @param ... argument not used
+#' @returns a character string
+#' @examples {
+#'   get_variable_codes()
+#' }
+#' @export
+get_variable_codes <- function(...){
 
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC <- c(
     "GENDER_W1",
@@ -96,8 +115,6 @@ get_variable_codes <- function(){
       "EMPLOYMENT_W",
       "INCOME_FEELINGS_W",
       "OWN_RENT_HOME_W",
-      #' INCOME',
-
 
       "CONNECTED_REL_W",
       "ATTEND_SVCS_W",
@@ -124,8 +141,8 @@ get_variable_codes <- function(){
       "TRAITS9_W",
 
       # marital status is manually replicated...
-      #' MARITAL_STATUS_W2_2',
-      #' MARITAL_STATUS_W2_4',
+      # MARITAL_STATUS_W2_2,
+      # MARITAL_STATUS_W2_4,
       "MARITAL_STATUS_EVER_MARRIED_W",
       "NUM_CHILDREN_W"
     )

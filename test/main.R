@@ -10,11 +10,15 @@
 #   "tidyness" in mind. As such, we make no guarantees that the package will integrate or
 #   "play nice" with other packages.
 
+# install.packages("remotes")
+remotes::install_github("noah-padgett/Rglobalflourishing")
+library(Rglobalflourishing)
+
 # Analysis Set-Up
 
 # Add the directory where the dataset is stored on your computer
 data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data/"
-dataset.name <- "gfs_test_2_waves.sav" # "gfs_all_countries_wave1.sav"
+dataset.name <- "gfs_all_countries_wave1.sav"
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
@@ -66,7 +70,7 @@ FORCE_CONTINUOUS <- FALSE
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC <- get_variable_codes()[['DEMOGRAPHICS.CHILDHOOD.PRED.VEC']]
   # get "raw data"
   df.raw <- gfs_get_labelled_raw_data(
-    paste0(data.dir, dataset.name),
+    here::here(data.dir, dataset.name),
     list.composites = LIST.COMPOSITES
   )
 }
@@ -91,7 +95,7 @@ FORCE_CONTINUOUS <- FALSE
       Miter = 2
     )
   }
-  load(paste0(data.dir, "/gfs_imputed_data_test.RData"))
+  load(here::here(data.dir, "gfs_imputed_data_test.RData"))
 
   RECODE.DEFAULTS <- list(
     FOCAL_PREDICTOR = FOCAL_PREDICTOR,

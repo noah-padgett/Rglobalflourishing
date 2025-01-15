@@ -8,6 +8,7 @@
 #' @param stabilized (logical) default to TRUE, where the estimated attrition weight is the divisor and the numerator is the baseline rate of attrition (if FALSE, then the numerator is fixed to 1)
 #' @param robust (logical) default to FALSE, of whether to use a "robust" variant of probit regression
 #'         (uses the robustbase package instead of the survey package to get weights).
+#' @param wgt.trim.quantile (numeric) default to 0.99, quantile of the distribution of weights to trim to
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a dataset with attrition weights appended
 #' @examples {
@@ -27,7 +28,7 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
   }
 
   tmp.data <- data %>%
-    dpyr::mutate(
+    dplyr::mutate(
       dplyr::across(!(where(is.numeric)), \(x){
         x <- factor(x)
         x <- forcats::fct_infreq(x)
@@ -69,7 +70,13 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
     attr.wgts <- 1 / wgts
   }
 
+  # Weight trimming: avoid highly influential cases
+  wgt.max <- quantile(attr.wgts, wgt.trim.quantile)
+  attr.wgts[ attr.wgts > wgt.max ] <- wgt.max
+
+  # add weights to dataset
   data$ATTR_WGT <- as.numeric(attr.wgts)
+
   # save fitted regression model for use later
   # check if "results-attr" folder exists
   if (!dir.exists("results-attr")) dir.create(paste0(getwd(), "/results-attr"))
@@ -120,3 +127,4 @@ run_attrition_model <- function(data, ...) {
     tidyr::unnest(c(data))
   df.attr
 }
+

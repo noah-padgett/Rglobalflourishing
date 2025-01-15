@@ -24,6 +24,8 @@ attrition weights.}
 (uses the robustbase package instead of the survey package to get weights).}
 
 \item{...}{other arguments passed to svyglm or glmrob functions}
+
+\item{wgt.trim.quantile}{(numeric) default to 0.99, quantile of the distribution of weights to trim to}
 }
 \value{
 a dataset with attrition weights appended
