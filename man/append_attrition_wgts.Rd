@@ -9,6 +9,7 @@ append_attrition_wgts(
   attr.pred = NULL,
   stabilized = TRUE,
   robust = FALSE,
+  wgt.trim.quantile = 0.99,
   ...
 )
 }
@@ -23,9 +24,9 @@ attrition weights.}
 \item{robust}{(logical) default to FALSE, of whether to use a "robust" variant of probit regression
 (uses the robustbase package instead of the survey package to get weights).}
 
-\item{...}{other arguments passed to svyglm or glmrob functions}
-
 \item{wgt.trim.quantile}{(numeric) default to 0.99, quantile of the distribution of weights to trim to}
+
+\item{...}{other arguments passed to svyglm or glmrob functions}
 }
 \value{
 a dataset with attrition weights appended

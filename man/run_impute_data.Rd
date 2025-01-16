@@ -23,6 +23,10 @@ for extraction and recoding.
 }
 \description{
 Additional details forthcoming....
+
+The imputation automatically excludes variables that are 100% in some countries (e.g., APPROVE_GOVT in Egypt) and variables that are conditional on previous questions (e.g, REL3-9 and TEACHINGS1-15).
+
+The imputation method for all variables is predictive mean matching (pmm).
 }
 \details{
 A wrapper function to conducting imputation by country.

@@ -91,8 +91,8 @@ FORCE_CONTINUOUS <- FALSE
     df.imp <- run_impute_data(
       data = df.tmp,
       data.dir = data.dir,
-      Nimp = 20,
-      Miter = 2
+      Nimp = 3,
+      Miter = 1
     )
   }
   load(here::here(data.dir, "gfs_imputed_data_test.RData"))

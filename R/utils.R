@@ -153,7 +153,7 @@ quickpred2 <- function(
   maxc <- pmax(v, u)
   predictorMatrix[maxc > mincor] <- 1
   predictorMatrix[maxc > maxcor] <- 0
-  p <- md.pairs(data)
+  p <- mice::md.pairs(data)
   puc <- p$mr / (p$mr + p$mm)
   predictorMatrix[puc < minpuc] <- 0
   yz <- pmatch(exclude, names(data))

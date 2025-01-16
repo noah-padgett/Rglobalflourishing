@@ -24,7 +24,35 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = "ID", test = FALSE,...){
         colnames(tmp.dat) <- c("ID", paste0(colnames(tmp.dat)[-1], "_W2"))
         colnames(data) <- c("ID", paste0(colnames(data)[-1], "_W1"))
         tmp.dat <- tmp.dat %>% slice_sample(prop=0.75)
-        tmp.dat$ID <- tmp.dat$ID[sample(1:length(tmp.dat$ID), length(tmp.dat$ID), replace=FALSE)]
+
+        tmp.dat <- tmp.dat %>%
+          group_by(COUNTRY_W2) %>%
+          nest() %>%
+          mutate(
+            data = purrr::map(data, \(x){
+              x = x %>%
+                mutate(
+                  across(!(ID | contains("DOI")), \(x){
+                    up <- unique(x)
+                    xi <- rbinom(1,1,0.2)
+                    mi <- -rbinom(1,1,0.5)
+                    ri <- rbinom(1,10,0.2)
+                    xp <- x*(xi == 0) + ri*mi*(xi == 1)
+                    for(i in 1:length(xp)){
+                      if(!(xp[i] %in% up)){
+                        xp[i] <- sample(up, 1)
+                      }
+                    }
+                    xp
+                  })
+                )
+              x
+            })
+
+          ) %>%
+          unnest(c(data))
+
+        #tmp.dat$ID <- tmp.dat$ID[sample(1:length(tmp.dat$ID), length(tmp.dat$ID), replace=FALSE)]
         df.wide <- left_join(data, tmp.dat)
       } else{
 

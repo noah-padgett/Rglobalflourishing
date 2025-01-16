@@ -19,7 +19,7 @@
 #' The default set of predictors: "ANNUAL_WEIGHT1_W1", "MODE_RECRUIT_W1", "AGE_W1", "GENDER_W1",
 #' "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
 #'
-append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, robust = FALSE, ...) {
+append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, robust = FALSE, wgt.trim.quantile = 0.99, ...) {
   if (is.null(attr.pred)) {
     attr.pred <- c(
       "ANNUAL_WEIGHT1_W1", "MODE_RECRUIT_W1",
@@ -71,7 +71,7 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
   }
 
   # Weight trimming: avoid highly influential cases
-  wgt.max <- quantile(attr.wgts, wgt.trim.quantile)
+  wgt.max <- stats::quantile(attr.wgts, wgt.trim.quantile)
   attr.wgts[ attr.wgts > wgt.max ] <- wgt.max
 
   # add weights to dataset
@@ -79,9 +79,9 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
 
   # save fitted regression model for use later
   # check if "results-attr" folder exists
-  if (!dir.exists("results-attr")) dir.create(paste0(getwd(), "/results-attr"))
+  if (!dir.exists("results-attr")) dir.create(here::here(getwd(), "results-attr"))
 
-  save(fit.attr, file = paste0("results-attr/", cur.country, " fitted attrition model.RData"))
+  save(fit.attr, file = here::here("results-attr", paste0(cur.country, " fitted attrition model.RData")))
 
   data
 }
