@@ -33,17 +33,14 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = "ID", test = FALSE,...){
               x = x %>%
                 mutate(
                   across(!(ID | contains("DOI")), \(x){
-                    up <- unique(x)
-                    xi <- rbinom(1,1,0.2)
-                    mi <- -rbinom(1,1,0.5)
-                    ri <- rbinom(1,10,0.2)
-                    xp <- x*(xi == 0) + ri*mi*(xi == 1)
-                    for(i in 1:length(xp)){
-                      if(!(xp[i] %in% up)){
-                        xp[i] <- sample(up, 1)
-                      }
+                    ux <- unique(x)
+                    for(i in 1:length(x)){
+                    	pi0 <- rbinom(1,1,0.25)
+                    	if(pi0 == 1){
+                    		x[i] <- sample(ux, 1)
+                    	}
                     }
-                    xp
+                    x
                   })
                 )
               x

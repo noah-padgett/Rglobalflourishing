@@ -32,7 +32,7 @@ attrition weights.}
 a dataset with attrition weights appended
 }
 \description{
-The default set of predictors: "ANNUAL_WEIGHT1_W1", "MODE_RECRUIT_W1", "AGE_W1", "GENDER_W1",
+The default set of predictors: "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
 "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
 }
 \details{

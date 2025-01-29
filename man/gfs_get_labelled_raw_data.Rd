@@ -4,12 +4,25 @@
 \alias{gfs_get_labelled_raw_data}
 \title{Estimate and Save Attrition Weights}
 \usage{
-gfs_get_labelled_raw_data(file, list.composites = NULL, ...)
+gfs_get_labelled_raw_data(
+  file,
+  list.composites = NULL,
+  wave = 2,
+  method.income = "quintiles.top.fixed",
+  .test = FALSE,
+  ...
+)
 }
 \arguments{
 \item{file}{name of file to get data from}
 
 \item{list.composites}{a lit of lists to construct composite variables}
+
+\item{wave}{(default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)}
+
+\item{method.income}{method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', ''quintiles.top.random', 'numeric'.}
+
+\item{.test}{(for internal use only)}
 
 \item{...}{other arguments}
 }

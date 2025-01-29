@@ -10,7 +10,7 @@ gfs_compute_evalue(
   sd = NULL,
   ci.low = NULL,
   ci.up = NULL,
-  type = "inear",
+  type = "linear",
   rare = 0,
   what = c("EE", "ECI")
 )

@@ -11,22 +11,23 @@
 #   "play nice" with other packages.
 
 # install.packages("remotes")
-remotes::install_github("noah-padgett/Rglobalflourishing")
-library(Rglobalflourishing)
+#remotes::install_github("noah-padgett/Rglobalflourishing")
+#library(Rglobalflourishing)
 
 # Analysis Set-Up
 
 # Add the directory where the dataset is stored on your computer
-data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data/"
+data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data"
 dataset.name <- "gfs_all_countries_wave1.sav"
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing/"
+out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"
 
 # Here is YOUR wave 1 construct variable
 FOCAL_PREDICTOR <- "PHYSICAL_HLTH_W1"
-FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health at wave 1"
+FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health"
+FOCAL_PREDICTOR_REFERENCE_VALE <- "estimate population mean of self rated physical health"
 
 # IF your predictor is binary/categorical, use the code below to define how you want it to be
 # 	categorized. Categorization must result in a binary variable 0/1 for consistency across studies.
@@ -53,28 +54,24 @@ FORCE_CONTINUOUS <- FALSE
   if (is.null(out.dir)) {
     out.dir <- data.dir
   }
-
   # setwd(out.dir)
   # Note:
   # The following function loads the required packages for the remainder of the script to work.
   load_packages()
-
   # global options
   options(
     survey.lonely.psu = "certainty"
   )
-
   # outcome vectors
   OUTCOME.VEC <- get_variable_codes()[['OUTCOME.VEC']]
   LIST.COMPOSITES <- get_variable_codes()[['LIST.COMPOSITES']]
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC <- get_variable_codes()[['DEMOGRAPHICS.CHILDHOOD.PRED.VEC']]
   # get "raw data"
   df.raw <- gfs_get_labelled_raw_data(
-    here::here(data.dir, dataset.name),
-    list.composites = LIST.COMPOSITES
+    file = here::here(data.dir, dataset.name),
+    list.composites = LIST.COMPOSITES, .test=TRUE
   )
 }
-
 # ================================================================================================ #
 # ================================================================================================ #
 # Imputing missing data
@@ -82,21 +79,21 @@ FORCE_CONTINUOUS <- FALSE
   run.imp <- TRUE
   if (run.imp) {
     df.tmp <- run_attrition_model(
-      df.raw,
+      data = df.raw,
       attr.pred = c(
-        "ANNUAL_WEIGHT1_W1", "MODE_RECRUIT_W1", "AGE_W1", "GENDER_W1", "EDUCATION_3_W1",
+        "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1", "EDUCATION_3_W1",
         "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1"
       )
     )
     df.imp <- run_impute_data(
       data = df.tmp,
       data.dir = data.dir,
-      Nimp = 3,
+      Nimp = 5,
       Miter = 1
     )
   }
   load(here::here(data.dir, "gfs_imputed_data_test.RData"))
-
+  # ~~
   RECODE.DEFAULTS <- list(
     FOCAL_PREDICTOR = FOCAL_PREDICTOR,
     DEMOGRAPHICS.CHILDHOOD.PRED.VEC = DEMOGRAPHICS.CHILDHOOD.PRED.VEC,
@@ -109,13 +106,15 @@ FORCE_CONTINUOUS <- FALSE
   )
   df.imp.long <- recode_imputed_data(
     df.imp,
-    list.default = RECODE.DEFAULTS, list.composites = LIST.COMPOSITES
+    list.default = RECODE.DEFAULTS,
+    list.composites = LIST.COMPOSITES
   )
 }
-
+table(df.imp.long$HAPPY_W2, useNA="always")
+table(df.imp.long$HAPPY_W2, df.imp.long$HAPPY_W1, useNA="always")
 # ================================================================================================ #
 # ================================================================================================ #
-
+{
 DEMO.CHILDHOOD.PRED <-
   c(
     "COV_AGE_GRP_W1",
@@ -139,7 +138,7 @@ DEMO.CHILDHOOD.PRED <-
     "COV_FATHER_NA"
   )
 CONTEMPORANEOUS.EXPOSURES.VEC <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "COMPOSITE", negate = TRUE)]
-
+CONTEMPORANEOUS.EXPOSURES.VEC <- CONTEMPORANEOUS.EXPOSURES.VEC[str_detect(CONTEMPORANEOUS.EXPOSURES.VEC, "_W1")]
 
 # system.time({
 # gfs_run_regression_single_outcome(
@@ -163,85 +162,138 @@ CONTEMPORANEOUS.EXPOSURES.VEC <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "COMPOSITE"
 # runtimes: ~7.5 minutes for LIFE_BALANCE (binary)
 
 # Run country-specific regression analyses for ALL wave 2 outcomes
-your.outcome <- OUTCOME.VEC[1]
-OUTCOME.VEC0 <- OUTCOME.VEC[c(1, 8, 24)+76]
+OUTCOME.VEC0 <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "_W2")] # c(1, 8, 24)+76,
+your.outcome <- OUTCOME.VEC0[17]
 
 # Analysis set 1: Run without principal components
-LIST.RES <- map(OUTCOME.VEC0, \(x){
+LIST.RES1 <- map(OUTCOME.VEC0, \(x){
   gfs_run_regression_single_outcome(
     data = df.imp.long,
     your.pred = FOCAL_PREDICTOR,
     your.outcome = x,
     covariates = DEMO.CHILDHOOD.PRED,
     contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+    list.composites = LIST.COMPOSITES[[1]],
     # advanced options: only change if you know what you are doing
     standardize = TRUE,
-    force.linear = FALSE,
-    robust_huberM = FALSE,
-    robust.tune = 2,
-    res.dir = "results-wopc/",
+    res.dir = "results-wopc",
     pc.rule = "omit"
   )
 }, .progress = TRUE)
 
 # Analysis set 2: Run with principal components
-LIST.RES0 <- map(OUTCOME.VEC0, \(x){
+LIST.RES2 <- map(OUTCOME.VEC0, \(x){
   gfs_run_regression_single_outcome(
     data = df.imp.long,
     your.pred = FOCAL_PREDICTOR,
     your.outcome = x,
     covariates = DEMO.CHILDHOOD.PRED,
     contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+    list.composites = LIST.COMPOSITES[[1]],
     # advanced options: only change if you know what you are doing
     standardize = TRUE,
-    force.linear = FALSE,
-    robust.huberM = FALSE,
-    robust.tune = 2,
-    res.dir = "results-wpc/",
+    res.dir = "results-wpc",
     pc.cutoff = 7,
     pc.rule = "constant"
   )
 }, .progress = TRUE)
-
+}
 # ================================================================================================ #
 # ================================================================================================ #
 # run meta-analyses
-
+{
 # Analysis set 1: country-specific results without adjusting for principal components
-LIST.RES <- construct_meta_input_from_saved_results("results-wopc/", OUTCOME.VEC0, FOCAL_PREDICTOR)
-meta.input <- LIST.RES %>%
+LIST.RES1 <- construct_meta_input_from_saved_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
+meta.input <- LIST.RES1 %>%
   bind_rows() %>%
   mutate(OUTCOME0 = OUTCOME) %>%
   group_by(OUTCOME0) %>%
   nest()
 
-res <- gfs_meta_analysis(
+META.RES1 <- gfs_meta_analysis(
   meta.input,
   better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal components excluded"
 )
 readr::write_rds(
-  res,
-  file = paste0(out.dir, "results-wopc/0_meta_analyzed_results_wopc.rds"),
+  META.RES1,
+  file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),
   compress = "gz"
 )
 
 # Analysis set 2: country-specific results adjusting for principal components
-LIST.RES <- construct_meta_input_from_saved_results("results-wpc/", OUTCOME.VEC0, FOCAL_PREDICTOR)
-meta.input <- LIST.RES %>%
+LIST.RES2 <- construct_meta_input_from_saved_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
+meta.input <- LIST.RES2 %>%
   bind_rows() %>%
   mutate(OUTCOME0 = OUTCOME) %>%
   group_by(OUTCOME0) %>%
   nest()
 
-res <- gfs_meta_analysis(
+META.RES2 <- gfs_meta_analysis(
   meta.input,
   better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal components included"
 )
 
 readr::write_rds(
-  res,
-  file = paste0(out.dir, "results-wpc/0_meta_analyzed_results_wpc.rds"),
+  META.RES2,
+  file = here::here(out.dir, "results-wpc","0_meta_analyzed_results_wpc.rds"),
   compress = "gz"
+)
+}
+# ================================================================================================ #
+# ================================================================================================ #
+# Construct manuscript tables
+
+df.raw <- gfs_get_labelled_raw_data(
+  here::here(data.dir, dataset.name),
+  list.composites = LIST.COMPOSITES,
+  add.whitespace = TRUE, .test=TRUE
+)
+COUN.RES.WOPC <- get_country_specific_regression_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
+COUN.RES.WPC <- get_country_specific_regression_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
+FIT.PCA.SUM <- get_country_specific_pca_summary("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
+META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))
+META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
+
+# main text
+gfs_generate_main_doc(
+  df.raw = df.raw,
+  meta.wopc=META.RES1,
+  meta.wpc=META.RES2,
+	focal.predictor=FOCAL_PREDICTOR,
+	focal.better.name=FOCAL_PREDICTOR_BETTER_NAME,
+	focal.predictor.reference.value=FOCAL_PREDICTOR_REFERENCE_VALE,
+	res.dir = "results"
+)
+
+# online supplement 1 (additional meta-analysis tables + country specific results)
+gfs_generate_supplemental_docs(
+  df.raw = df.raw,
+	meta.wopc=META.RES1,
+  meta.wpc=META.RES2,
+	coun.wopc=COUN.RES.WOPC ,
+  coun.wpc=COUN.RES.WPC ,
+	coun.fit.pca = FIT.PCA.SUM ,
+	focal.predictor=FOCAL_PREDICTOR,
+	focal.better.name=FOCAL_PREDICTOR_BETTER_NAME,
+	focal.predictor.reference.value=FOCAL_PREDICTOR_REFERENCE_VALE,
+	res.dir = "results",
+  what = "S1"
+)
+
+
+# online supplement 2 (re-oriented summary tables tables + forest plots)
+gfs_generate_supplemental_docs(
+  df.raw = df.raw,
+  meta.wopc=META.RES1,
+  meta.wpc=META.RES2,
+  coun.wopc=COUN.RES.WOPC ,
+  coun.wpc=COUN.RES.WPC ,
+  coun.fit.pca = FIT.PCA.SUM ,
+  focal.predictor=FOCAL_PREDICTOR,
+  focal.better.name=FOCAL_PREDICTOR_BETTER_NAME,
+  focal.predictor.reference.value=FOCAL_PREDICTOR_REFERENCE_VALE,
+  res.dir = "results",
+  what = "S2"
 )

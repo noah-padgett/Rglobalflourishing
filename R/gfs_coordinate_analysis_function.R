@@ -55,7 +55,8 @@ gfs_run_regression_single_outcome <- function(
     force.linear = FALSE,
     robust.huberM = FALSE,
     robust.tune = 1,
-    res.dir = NULL, ...) {
+    res.dir = NULL,
+    list.composites = NULL, ...) {
   suppressMessages({
     suppressWarnings({
       # remove focal predictor from covariate vectors
@@ -66,11 +67,11 @@ gfs_run_regression_single_outcome <- function(
       #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the
       #   items that make up that score.
       if (str_detect(your.pred, "COMPOSITE")) {
-        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(LIST.OUTCOME.COMPOSITES[[your.pred]]))]
+        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(list.composites[[your.pred]]))]
       }
 
       if (is.null(res.dir)) {
-        res.dir <- paste0(getwd(), "/results/")
+        res.dir <- here::here(getwd(),"results")
       }
       if (!dir.exists(res.dir)) {
         dir.create(res.dir)
@@ -79,15 +80,22 @@ gfs_run_regression_single_outcome <- function(
       # construct "type" indicator
       outcome.type <- case_when(
         get_outcome_scale(your.outcome) %in% c("cont", "Continuous") ~ "linear",
-        get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR"
+        get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR",
+        .default = "linear"
       )
       outcome.type <- case_when(
         force.linear ~ "linear",
         .default = outcome.type
       )
 
+      # outcomes which need the countries to be subset...
+      if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
+        data <- data %>%
+          dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE))
+      }
+
       # convert to nested survey object
-      svy.data.imp <- df.imp.long %>% # data %>%
+      svy.data.imp <- data %>%
         mutate(
           COUNTRY = COUNTRY2
         ) %>%
@@ -130,11 +138,6 @@ gfs_run_regression_single_outcome <- function(
             )
           })
         )
-      # outcomes which need the countries to be subset...
-      if (your.outcome == "APPROVE_GOVT" | your.pred == "APPROVE_GOVT") {
-        svy.data.imp <- svy.data.imp %>%
-          dplyr::filter(COUNTRY != "Egypt")
-      }
 
 
       # conduct PCA and add PCs to data.frames
@@ -169,8 +172,8 @@ gfs_run_regression_single_outcome <- function(
           pc.sdev = map(fit.pca, \(x) x$sdev),
           pc.rotation = map(fit.pca, \(x) x$rotation)
         ) %>%
-        select(.imp, COUNTRY, pc.sdev) %>%
-        unnest(c(pc.sdev)) %>%
+        select(.imp, COUNTRY, pc.sdev, fit.eigen) %>%
+        unnest(c(pc.sdev, fit.eigen)) %>%
         mutate(
           PC = 1:n()
         ) %>%
@@ -219,7 +222,13 @@ gfs_run_regression_single_outcome <- function(
           names(keep.num.pc) <- unique(data$COUNTRY2)
         }
       }
-
+      tmp.df.pca <- data.frame(
+        COUNTRY = names(keep.num.pc),
+        NumPCAkeep = keep.num.pc
+      )
+      tmp.df.pca$Rule <- pc.rule
+      tmp.df.pca$Cutoff <- pc.cutoff
+      fit.pca.summary <- dplyr::left_join(fit.pca.summary, tmp.df.pca)
 
       # # test:
       # tmp.data <- svy.data.imp %>%
@@ -301,17 +310,17 @@ gfs_run_regression_single_outcome <- function(
 
       # re-estimate basic model with the max number of PCs used to get the variable names
       tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
-      tmp.dat <- svy.data.imp %>% dplyr::filter(COUNTRY == "United States")
+      tmp.dat <- svy.data.imp %>% dplyr::filter(str_detect(COUNTRY, "United States"))
       keep.var <- keep_variable(covariates, data = tmp.dat$data[[1]])
       if (pc.rule == "omit") {
         tmp.model <- reformulate(
           response = "PRIMARY_OUTCOME",
-          termlabels = c("FOCAL_PREDICTOR", covariates)
+          termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])
         )
       } else {
         tmp.model <- reformulate(
           response = "PRIMARY_OUTCOME",
-          termlabels = c("FOCAL_PREDICTOR", covariates, paste0("PC_", 1:(keep.num.pc[tmp.country])))
+          termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[tmp.country])))
         )
       }
       tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)
@@ -342,11 +351,6 @@ gfs_run_regression_single_outcome <- function(
         unnest(c(pooled.est)) %>%
         select(-c(data)) %>%
         unique() %>%
-        mutate(
-          print.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
-          print.Estimate = .round(estimate.pooled),
-          print.SE = .round(se.pooled)
-        ) %>%
         mutate(
           term = factor(term)
         ) %>%
@@ -488,13 +492,14 @@ gfs_run_regression_single_outcome <- function(
           p.value,
           ci.low,
           ci.up,
-          df.approx
+          df.approx,
+          outcome.sd
         ) %>%
         group_by(COUNTRY, Variable) %>%
         dplyr::filter(!(Category == "(Ref:)")) %>%
         dplyr::filter(Variable == "FOCAL_PREDICTOR")
       colnames(metainput) <-
-        c("Country", "Variable", "Category", "Est", "SE", "pvalue", "ci.lb", "ci.ub", "df")
+        c("Country", "Variable", "Category", "Est", "SE", "pvalue", "ci.lb", "ci.ub", "df", "outcome.sd")
       metainput <- metainput %>%
         mutate(
           OUTCOME = your.outcome,
@@ -587,21 +592,29 @@ gfs_run_regression_single_outcome <- function(
             .default = Category
           )
         ) %>%
-        mutate(
+        dplyr::mutate(
           OUTCOME = your.outcome,
           FOCAL_PREDICTOR = your.pred,
           .before = Variable
+        ) %>%
+        dplyr::mutate(
+            id.Est = .round(estimate.pooled),
+            id.SE = .round(se.pooled),
+            id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
+            rr.Est = .round(exp(estimate.pooled)),
+            logrr.SE = .round(se.pooled),
+            rr.CI = paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")")
         )
 
       save(
         output,
         metainput,
         fit.pca.summary,
-        file = paste0(
+        file = here::here(
           res.dir,
-          your.pred,
+          paste0(your.pred,
           "_regressed_on_",
-          your.outcome, "_saved_results.RData"
+          your.outcome, "_saved_results.RData")
         )
       )
     })

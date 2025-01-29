@@ -7,7 +7,7 @@
 gfs_meta_analysis(
   meta.input,
   estimator = "PM",
-  interval.method = "normal",
+  interval.method = "empirical",
   better.name = NULL,
   p.subtitle = NULL,
   ...

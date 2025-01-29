@@ -41,7 +41,7 @@ to the labels associated with those levels.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">recode_labels</span><span class="op">(</span><span class="va">x</span>, <span class="va">var</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">recode_labels</span><span class="op">(</span><span class="va">x</span>, <span class="va">var</span>, include.value <span class="op">=</span> <span class="cn">TRUE</span>, add.whitespace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -54,6 +54,14 @@ to the labels associated with those levels.</p>
 
 <dt id="arg-var">var<a class="anchor" aria-label="anchor" href="#arg-var"></a></dt>
 <dd><p>a character string (e.g., 'HAPPY_W1')</p></dd>
+
+
+<dt id="arg-include-value">include.value<a class="anchor" aria-label="anchor" href="#arg-include-value"></a></dt>
+<dd><p>a logical (default = TRUE) of whether to include the numeric value in the returned label. Not applicable for numeric variables.</p></dd>
+
+
+<dt id="arg-add-whitespace">add.whitespace<a class="anchor" aria-label="anchor" href="#arg-add-whitespace"></a></dt>
+<dd><p>a logical (efault = FALSE) of whether to add whitespace to beginning of label (makes summary tables easier to read).</p></dd>
 
 </dl></div>
     <div class="section level2">

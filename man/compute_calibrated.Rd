@@ -7,6 +7,8 @@
 \alias{compute_global_pvalue}
 \alias{add_pop_wgts}
 \alias{construct_meta_input_from_saved_results}
+\alias{get_country_specific_regression_results}
+\alias{get_country_specific_pca_summary}
 \title{Meta-Analysis Utility Functions}
 \usage{
 compute_calibrated(fit)
@@ -20,13 +22,17 @@ proportion_meaningful(
   tau = 1
 )
 
-get_meta_ci(fit, type = "Q")
+get_meta_ci(fit, type = "Q", .digits = 2)
 
 compute_global_pvalue(x, p.min = 1e-16)
 
 add_pop_wgts(df)
 
 construct_meta_input_from_saved_results(res.dir, outcomes, predictors)
+
+get_country_specific_regression_results(res.dir, outcomes, predictors)
+
+get_country_specific_pca_summary(res.dir, outcomes, predictors)
 }
 \arguments{
 \item{fit}{the resulting object from fitting the metafor::rma(.) function.}
@@ -37,7 +43,7 @@ construct_meta_input_from_saved_results(res.dir, outcomes, predictors)
 
 \item{above}{a logical indicator of whether to come the proportion above or below the threshold}
 
-\item{method}{a character string defining how the proportion should be computed (default is "normal" but can be "empirical")}
+\item{method}{a character string defining how the proportion should be computed (default is "empirical" but can be "normal")}
 
 \item{theta}{the population average effect size}
 

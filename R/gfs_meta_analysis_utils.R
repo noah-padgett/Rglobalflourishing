@@ -6,7 +6,7 @@
 #' @param x vector of calibrated effect sizes
 #' @param q a numerical values (default = 0) that defines the threshold of meaningful effect size
 #' @param above a logical indicator of whether to come the proportion above or below the threshold
-#' @param method a character string defining how the proportion should be computed (default is "normal" but can be "empirical")
+#' @param method a character string defining how the proportion should be computed (default is "empirical" but can be "normal")
 #' @param theta the population average effect size
 #' @param tau the population standard deviation
 #' @return depends on function...
@@ -34,7 +34,7 @@ proportion_meaningful <- function(x, q = 0, above = TRUE, method = "empirical", 
     }
   }
   if (method == "normal") {
-    # follows from Matheur and VanderWeele (2017)?
+    # follows from Matheur and VanderWeele (2017)
     if (above) {
       out <- 1 - pnorm((q - theta) / tau)
     } else {
@@ -45,21 +45,37 @@ proportion_meaningful <- function(x, q = 0, above = TRUE, method = "empirical", 
 }
 #' @rdname compute_calibrated
 #' @export
-get_meta_ci <- function(fit, type = "Q") {
+get_meta_ci <- function(fit, type = "Q", .digits=2) {
   if (type == "Q") {
     tmp <- confint(fit, type = "PL")
     ci <- paste0(
       "(",
-      .round(tmp[["random"]][2, 2], 3), ",",
-      .round(tmp[["random"]][2, 3], 3), ")"
+      .round(tmp[["random"]][2, 2], .digits), ",",
+      .round(tmp[["random"]][2, 3], .digits), ")"
+    )
+  }
+  if ( type == "rma") {
+    tmp <- tidy(fit, conf.int = TRUE)
+    ci = paste0(
+      "(",
+      .round(tmp[1, "conf.low", drop = TRUE], .digits), ",",
+      .round(tmp[1, "conf.high", drop = TRUE], .digits), ")"
+    )
+  }
+  if ( type == "rma.rr") {
+    tmp <- tidy(fit, conf.int = TRUE)
+    ci = paste0(
+      "(",
+      .round(exp(tmp[1, "conf.low", drop = TRUE]), .digits), ",",
+      .round(exp(tmp[1, "conf.high", drop = TRUE]), .digits), ")"
     )
   }
   if (type == "FE") {
     tmp <- tidy(fit, conf.int = TRUE)
     ci <- paste0(
       "(",
-      .round(tmp[1, "conf.low", drop = TRUE], 3), ",",
-      .round(tmp[1, "conf.high", drop = TRUE], 3), ")"
+      .round(tmp[1, "conf.low", drop = TRUE], .digits), ",",
+      .round(tmp[1, "conf.high", drop = TRUE], .digits), ")"
     )
   }
   ci
@@ -138,8 +154,36 @@ construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictor
   tmp.list <- list()
   for (your.outcome in outcomes) {
     for (your.pred in predictors) {
-      load(paste0(res.dir, your.pred, "_regressed_on_", your.outcome, "_saved_results.RData"))
+      load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
       tmp.list[[paste0(your.outcome, "_", your.pred)]] <- metainput
+    }
+  }
+  tmp.list
+}
+
+#' @rdname compute_calibrated
+#' @export
+get_country_specific_regression_results <- function(res.dir, outcomes, predictors) {
+  tmp.list <- list()
+  for (your.outcome in outcomes) {
+    for (your.pred in predictors) {
+      load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
+      # create new columns in output to help with constructing tables
+      output <- output  %>%
+        dplyr::filter(Variable == "FOCAL_PREDICTOR")
+      tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
+    }
+  }
+  tmp.list
+}
+#' @rdname compute_calibrated
+#' @export
+get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
+  tmp.list <- list()
+  for (your.outcome in outcomes) {
+    for (your.pred in predictors) {
+      load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
+      tmp.list[[paste0(your.outcome, "_", your.pred)]] <- fit.pca.summary
     }
   }
   tmp.list

@@ -43,16 +43,19 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     )
 
   focal.pred <- tmp.dat$FOCAL_PREDICTOR[1]
-  focal.pred <- get_outcome_better_name_no_code(focal.pred)
+  focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
   if (!is.null(better.name)) {
     focal.pred <- better.name
   }
   tmp.outcome <- tmp.dat$OUTCOME[1]
-  tmp.outcome <- get_outcome_better_name_no_code(tmp.outcome)
+  tmp.outcome <- get_outcome_better_name(tmp.outcome, include.name = FALSE, include.wave = TRUE)
 
   focal.pred <- str_to_sentence(focal.pred)
   tmp.outcome <- str_to_sentence(tmp.outcome)
-
+  
+  for(i in 1:length(tmp.dat$Country)){
+  	tmp.dat$Country[i] <- stringr::str_split_fixed(tmp.dat$Country[i], "\\. ", 2)[,2]
+  }
   # identify countries omitted from meta-analysis
   tmp.included.countries <- tmp.dat$Country
   tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
@@ -64,38 +67,36 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     ""
   )
 
-  xLab <- "Estimate"
+  xLab <- "Standardized Effect"
 
   # construct heterogeneity statement...
   myci <- confint(tmp.fit, type = "PL")
 
   tmp.het <- paste0(
     "τ=", .round(sqrt(tmp.fit$tau2), 3),
+    "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ", .round(myci$random[2, 3], 3), "]",
     "; Q(df=", tmp.fit$k - tmp.fit$QMdf[1], ")=",
-    .round(tmp.fit$QE), ", p",
-    ifelse(tmp.fit$QEp > 0.001, .round(tmp.fit$QEp, 3), "<.001"),
-    "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ",
-    .round(myci$random[2, 3], 3), "]",
+    .round(tmp.fit$QE), ", p", ifelse(tmp.fit$QEp > 0.001, .round(tmp.fit$QEp, 3), "<.001"),
     "; I^2=", .round(tmp.fit$I2),
     ";\n",
     tmp.excluded.countries
   )
 
 
-  xlims <- max(c(abs(tmp.dat$ci.lb), abs(tmp.dat$ci.ub))) + 0.25
+  xlims <- max(c(abs(tmp.dat$ci.lb), abs(tmp.dat$ci.ub))) + 0.20
 
   tmp.dat <- tmp.dat |>
     mutate(
-      est_lab = paste0(.round(yi), " (", .round(ci.lb), ", ", .round(ci.ub), ")"),
+      est_lab = paste0(.round(yi), " (", .round(ci.lb), ", ", .round(ci.ub), ")")
       # update country label for "turkey" to have umlat? or not?
       # Türkiye
-      Country = case_when(
-        (str_detect(Country, "Turkey") |
-          str_detect(Country, "Turkiye") |
-          str_detect(Country, "rkiye") |
-          str_detect(Country, "rkey")) ~ "Turkey",
-        .default = Country
-      )
+      #Country = case_when(
+      #  (str_detect(Country, "Turkey") |
+      #    str_detect(Country, "Turkiye") |
+      #    str_detect(Country, "rkiye") |
+      #    str_detect(Country, "rkey")) ~ "Turkey",
+      #  .default = Country
+      #)
     )
 
   dat.below <- data.frame(

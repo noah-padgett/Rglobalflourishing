@@ -3,3 +3,12 @@
 *.RData
 *.Ruserdata
 docs
+.Rproj.user
+*.docx
+results/*
+results-attr/*
+results-wopc/*
+results-wpc/*
+*results-attr
+*results-wopc
+*results-wpc

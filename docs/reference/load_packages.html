@@ -60,324 +60,378 @@
 <span class="r-in"><span>  <span class="fu">load_packages</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[4]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[5]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[6]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[7]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[8]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[9]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[10]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[11]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[12]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[13]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[14]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[15]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[16]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[17]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[18]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[19]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[20]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "ranger"             "haven"              "fastDummies"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "future"             "tidyselect"         "lubridate"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "forcats"            "stringr"            "dplyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "purrr"              "readr"              "tidyr"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "tibble"             "ggplot2"            "tidyverse"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "patchwork"          "officer"            "flextable"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "knitr"              "robustbase"         "robsurvey"         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "harmonicmeanp"      "FMStable"           "metafor"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "numDeriv"           "metadat"            "EValue"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "mice"               "gtsummary"          "survey"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "survival"           "Matrix"             "grid"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Rglobalflourishing" "stats"              "graphics"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "grDevices"          "utils"              "datasets"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "methods"            "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[21]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[22]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "remotes"            "here"               "ranger"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "haven"              "fastDummies"        "future"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "tidyselect"         "lubridate"          "forcats"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "stringr"            "dplyr"              "purrr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "readr"              "tidyr"              "tibble"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "ggplot2"            "tidyverse"          "patchwork"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "officer"            "flextable"          "knitr"             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "robustbase"         "robsurvey"          "harmonicmeanp"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "FMStable"           "metafor"            "numDeriv"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "metadat"            "EValue"             "mice"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "gtsummary"          "survey"             "survival"          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Matrix"             "grid"               "Rglobalflourishing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] "stats"              "graphics"           "grDevices"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [40] "utils"              "datasets"           "methods"           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] "base"              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

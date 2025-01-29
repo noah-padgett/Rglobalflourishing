@@ -17,6 +17,7 @@ gfs_run_regression_single_outcome(
   robust.huberM = FALSE,
   robust.tune = 1,
   res.dir = NULL,
+  list.composites = NULL,
   ...
 )
 }

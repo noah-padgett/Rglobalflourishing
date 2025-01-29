@@ -25,8 +25,8 @@ packages.
 You can install the development version of Rglobalflourishing like so:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("noah-padgett/Rglobalflourishing")
+# install.packages("remotes")
+remotes::install_github("noah-padgett/Rglobalflourishing")
 ```
 
 The package is currently not available on CRAN or bioconductor.

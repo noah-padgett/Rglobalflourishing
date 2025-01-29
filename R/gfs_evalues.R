@@ -24,7 +24,7 @@
 #' @description
 #' TO-DO
 gfs_compute_evalue <- function(est, se = NULL, sd = NULL, ci.low = NULL, ci.up = NULL,
-                               type = "inear", rare = 0, what = c("EE", "ECI")) {
+                               type = "linear", rare = 0, what = c("EE", "ECI")) {
   suppressMessages({
     fit <- NULL
     if (type == "linear") {

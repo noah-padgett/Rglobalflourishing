@@ -10,13 +10,18 @@
 <url><loc>/reference/append_pc_to_df.html</loc></url>
 <url><loc>/reference/check_variance.html</loc></url>
 <url><loc>/reference/compute_calibrated.html</loc></url>
+<url><loc>/reference/get_demo_childhood_variables.html</loc></url>
 <url><loc>/reference/get_eigenvalues.html</loc></url>
 <url><loc>/reference/get_missing_codes.html</loc></url>
 <url><loc>/reference/get_outcome_better_name.html</loc></url>
 <url><loc>/reference/get_outcome_better_name_no_code.html</loc></url>
 <url><loc>/reference/get_outcome_scale.html</loc></url>
 <url><loc>/reference/get_variable_codes.html</loc></url>
+<url><loc>/reference/gfs_add_variable_labels.html</loc></url>
 <url><loc>/reference/gfs_compute_evalue.html</loc></url>
+<url><loc>/reference/gfs_data_to_wide.html</loc></url>
+<url><loc>/reference/gfs_generate_main_doc.html</loc></url>
+<url><loc>/reference/gfs_generate_supplemental_docs.html</loc></url>
 <url><loc>/reference/gfs_get_labelled_raw_data.html</loc></url>
 <url><loc>/reference/gfs_meta_analysis.html</loc></url>
 <url><loc>/reference/gfs_meta_forest_plot.html</loc></url>
@@ -30,6 +35,7 @@
 <url><loc>/reference/quickpred2.html</loc></url>
 <url><loc>/reference/recode_imputed_data.html</loc></url>
 <url><loc>/reference/recode_labels.html</loc></url>
+<url><loc>/reference/recode_race_to_plurality.html</loc></url>
 <url><loc>/reference/recode_to_numeric.html</loc></url>
 <url><loc>/reference/recode_to_type.html</loc></url>
 <url><loc>/reference/reorder_levels.html</loc></url>
