@@ -41,6 +41,7 @@ recode_imputed_data <- function(
     # TODO
     # add functionality to over-write default provided in list.default(.)
   }
+  drop_created_vars <- c("AGE_GRP_W1", "AGE_GRP_W2", "RACE", "RACE_PLURALITY_W1", "INCOME_QUINTILE_W1", "INCOME_QUINTILE_W2")
   ## ============================================================================================ ##
   ## ====== Initial Setup ======================================================================= ##
   # extract imputed data and coerce into "long format"
@@ -49,6 +50,7 @@ recode_imputed_data <- function(
     select(COUNTRY, imp.complete) %>%
     unnest(imp.complete) %>%
     filter(.imp < 4) %>%
+    select(!any_of(drop_created_vars)) %>%
     mutate(
       across(where(is.factor) | where(is.character), \(x){
         x <- sub("\\..*", "", x)
