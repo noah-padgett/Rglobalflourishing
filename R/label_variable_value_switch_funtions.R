@@ -3192,7 +3192,7 @@ nurse)",
   }
 
   if (is.character(out)) {
-    if (include.value == FALSE & str_detect(var, "AGE_GRP", negate=FALSE) ) {
+    if ( include.value == FALSE & str_detect(var, "AGE_GRP", negate=TRUE) ) {
       for (i in 1:length(out)) {
         if ( str_detect(out[i],". ") ) {
           out[i] = stringr::str_split_fixed(out[i], "\\. ", 2)[,2]
