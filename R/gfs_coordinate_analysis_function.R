@@ -89,9 +89,15 @@ gfs_run_regression_single_outcome <- function(
       )
 
       # outcomes which need the countries to be subset...
-      if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
-        data <- data %>%
-          dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE))
+      {
+        if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
+          data <- data %>%
+            dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE))
+        }
+        if (str_detect(your.outcome,"ABUSED") | str_detect(your.pred,"ABUSED")) {
+          data <- data %>%
+            dplyr::filter(str_detect(COUNTRY2,"Israel", negate=TRUE))
+        }
       }
 
       # convert to nested survey object

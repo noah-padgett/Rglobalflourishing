@@ -49,6 +49,10 @@ get_outcome_better_name <- function(var,
       var = stringr::str_remove(var, paste0("_W", i))
       var.wave = paste0("_W", i)
     }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
+      var.wave = paste0("_R", i)
+    }
   }
   {
     var.tmp = switch(
@@ -61,6 +65,8 @@ get_outcome_better_name <- function(var,
       RECRUIT_TYPE = "Recruit Type",
       DOI_RECRUIT = "End Date of Interview - Recruit Survey",
       DOI_ANNUAL = "End Date of Interview - Annual Survey",
+      DOI_RETENTION = "End Date of Interview - Retention (b/ 1 & 2) Survey",
+      DOI_ANNUAL_2 = "End Date of Interview - Annual Survey 2",
       ABUSED = "Physically or Sexually Abused When Growing Up",
       AFTER_DEATH = "Believe in Life After Death",
       AGE = "Age of Respondent",
@@ -197,11 +203,20 @@ get_outcome_better_name <- function(var,
       WB_TODAY = "Life Evaluation: Today",
       WORRY_SAFETY = "Worry About Safety Food or Housing",
       WORTHWHILE = "The Things You Do in Your Life Are Worthwhile",
-      ANNUAL_WEIGHT1 = "Annual Weight Year 1",
+
+      FULL_PARTIAL = "Completion Status",
       STRATA = "Strata",
       PSU = "PSU",
-      FULL_PARTIAL = "Completion Status:",
 
+      # weights...
+      ANNUAL_WEIGHT1 = "Annual Weight Year 1",
+      ANNUAL_WEIGHT_C2 = "Year 2 cross-section (completed both waves)",
+      ANNUAL_WEIGHT_L2 = "Year 1 & 2 longitudinal (same as above, will differ in subsequent years)",
+      ANNUAL_WEIGHT_R2 = "All records (regardless of participation in year 2)",
+      RETENTION_WEIGHT_C = "Retention cross-section (completed year 1 & retention)",
+      RETENTION_WEIGHT_L = "Retention longitudinal (completed year 1 & retention & year 2)",
+
+      # composites/created scores
       COMPOSITE_FLOURISHING = "Flourishing Index",
       COMPOSITE_FLOURISHING_SECURE = "Secure Flourishing Index",
       COMPOSITE_HAPPI_LIFE_SAT = "Happiness & Life Satisfaction",
@@ -221,6 +236,23 @@ get_outcome_better_name <- function(var,
       COMPOSITE_NEUROTICISM = "Neuroticism",
       INCOME_QUINTILE = "Income Quintiles",
       MARITAL_STATUS_EVER_MARRIED = "Marital Status Ever Married",
+
+      # Retention (b/ 1 & 2)
+      ENGAGE_ARTS = 'ENGAGE_ARTS',
+      BEAUTY = 'BEAUTY',
+      ACHIEVING = 'ACHIEVING',
+      FOOD_INSECURE = 'FOOD_INSECURE',
+      NATURE = 'NATURE',
+      DILIGENT = 'DILIGENT',
+      MIND_FOCUSED = 'MIND_FOCUSED',
+      HAPPY_IMPORT = 'HAPPY_IMPORT',
+      HEALTHY = 'HEALTHY',
+      MEANINGFUL = 'MEANINGFUL',
+      GOOD_PERSON = 'GOOD_PERSON',
+      GOOD_RELATION = 'GOOD_RELATION',
+      REL_LIFE = 'REL_LIFE',
+      GF_MONEY = 'GF_MONEY',
+
       var0
     )
   }
@@ -249,6 +281,9 @@ get_outcome_scale <- function(var) {
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_W", i))) {
       var = stringr::str_remove(var, paste0("_W", i))
+    }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
     }
   }
   {
@@ -452,6 +487,9 @@ get_missing_codes <- function(var) {
     if (stringr::str_detect(var, paste0("_W", i))) {
       var = stringr::str_remove(var, paste0("_W", i))
     }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
+    }
   }
   switch(
     var,
@@ -621,6 +659,9 @@ recode_to_type <- function(x, var) {
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_W", i))) {
       var = stringr::str_remove(var, paste0("_W", i))
+    }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
     }
   }
   out = switch(
@@ -797,7 +838,7 @@ recode_to_type <- function(x, var) {
 #' @param x a vector
 #' @param var a character string (e.g., 'HAPPY_W1')
 #' @param include.value a logical (default = TRUE) of whether to include the numeric value in the returned label. Not applicable for numeric variables.
-#' @param add.whitespace a logical (efault = FALSE) of whether to add whitespace to beginning of label (makes summary tables easier to read).
+#' @param add.whitespace a logical (default = FALSE) of whether to add whitespace to beginning of label (makes summary tables easier to read).
 #' @returns a vector
 #' @examples {
 #'   # TO-DO
@@ -808,7 +849,11 @@ recode_labels <- function(x, var, include.value = TRUE, add.whitespace = FALSE) 
     if (stringr::str_detect(var, paste0("_W", i))) {
       var = stringr::str_remove(var, paste0("_W", i))
     }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
+    }
   }
+  {
   out = switch(
     var,
     ID = x,
@@ -2945,7 +2990,7 @@ nurse)",
       x == 9995 ~ "9995. Prefer not to answer",
       x == 9996 ~ "9996. Other",
       x == 9997 ~ "9997. (No other response)",
-      .default == "(Missing)"
+      .default = "(Missing)"
     ),
     SHOW_LOVE = x,
     SUFFERING = case_when(
@@ -3141,8 +3186,10 @@ nurse)",
       x >= 70 & x < 80 ~ "1943-1953 (current age: 70-79 years)",
       x >= 80 & x < 100 ~ "1943 or earlier (current age: 80+ years)",
       .default = "(Missing)"
-    )
+    ),
+    x
   )
+  }
 
   if (is.character(out)) {
     if (include.value == FALSE & str_detect(var, "AGE_GRP", negate=FALSE) ) {
@@ -3177,6 +3224,9 @@ reorder_levels <- function(x, var) {
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_W", i))) {
       var = stringr::str_remove(var, paste0("_W", i))
+    }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
     }
   }
   switch(
@@ -3309,15 +3359,15 @@ reorder_levels <- function(x, var) {
     TELL_BELIEFS = fct_rev(x),
     THREAT_LIFE = fct_rev(x),
     TRAITS1 = fct_rev(x),
-    TRAITS2 = fct_rev(x),
+    TRAITS2 = x,
     TRAITS3 = fct_rev(x),
-    TRAITS4 = fct_rev(x),
+    TRAITS4 = x,
     TRAITS5 = fct_rev(x),
-    TRAITS6 = fct_rev(x),
+    TRAITS6 = x,
     TRAITS7 = fct_rev(x),
-    TRAITS8 = fct_rev(x),
+    TRAITS8 = x,
     TRAITS9 = fct_rev(x),
-    TRAITS10 = fct_rev(x),
+    TRAITS10 = x,
     TRUST_PEOPLE = fct_rev(x),
     URBAN_RURAL = fct_rev(x),
     VOLUNTEERED = fct_rev(x),
@@ -3353,6 +3403,9 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_W", i))) {
       var = stringr::str_remove(var, paste0("_W", i))
+    }
+    if (stringr::str_detect(var, paste0("_R", i))) {
+      var = stringr::str_remove(var, paste0("_R", i))
     }
   }
   switch(
@@ -3551,6 +3604,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
 #' }
 #' @export
 recode_race_to_plurality <- function(x, country){
+
   case_when(
     str_detect(country, "Argentina") & str_detect(x, "White") ~ 0,
     str_detect(country,"Argentina") & str_detect(x, "White", negate = TRUE) ~ 1,
@@ -3591,7 +3645,216 @@ recode_race_to_plurality <- function(x, country){
     str_detect(country, "United Kingdom") & str_detect(x, "White") ~ 0,
     str_detect(country, "United Kingdom") & str_detect(x, "White", negate = TRUE) ~ 1,
     str_detect(country, "United States") & str_detect(x, "White") ~ 0,
-    str_detect(country, "United States") & str_detect(x, "White", negate = TRUE) ~ 1
+    str_detect(country, "United States") & str_detect(x, "White", negate = TRUE) ~ 1,
+    .default = 0
   )
 
+}
+
+
+#' Get Wave by Item Administered Falg
+#'
+#' A switch function to identify what wave(s) a variable was administered OR to check where a variable was administered in a particular wave.
+#'
+#' @param var a character string of what variable to check (e.g., "HAPPY")
+#' @param wave an optional character string to check against. Must be either one of NULL, 'W1', 'WR1', 'W2'.
+#' @return a character vector or logical
+#' @examples{
+#'  # TO-DO
+#' }
+#' @export
+get_wave_flag <- function(var, wave = NULL){
+  out = var
+  for(j in 1:length(var)){
+    for (i in 1:5) {
+      if (stringr::str_detect(var[j], paste0("_W", i))) {
+        var[j] = stringr::str_remove(var[j], paste0("_W", i))
+      }
+      if (stringr::str_detect(var[j], paste0("_WR", i))) {
+        var[j] = stringr::str_remove(var[j], paste0("_WR", i))
+      }
+    }
+    {
+  out[j] = switch(
+    var[j],
+    ID = 'W1_WR1_W2',
+    COUNTRY = 'W1_WR1_W2',
+    STRATA = 'W1',
+    PSU = 'W1',
+    WAVE = 'W1',
+    MODE_RECRUIT = 'W1',
+    MODE_ANNUAL = 'W1',
+    RECRUIT_TYPE = 'W1',
+    DOI_RECRUIT = 'W1',
+    DOI_ANNUAL = 'W1',
+    DOI_RETENTION = '_WR1',
+    DOI_ANNUAL_2 = '_W2',
+    ABUSED = 'W1',
+    AFTER_DEATH = 'W1_W2',
+    AGE = 'W1_WR1_W2',
+    APPROVE_GOVT = 'W1_W2',
+    ATTEND_SVCS = 'W1_W2',
+    BELIEVE_GOD = 'W1_W2',
+    BELONGING = 'W1_W2',
+    BODILY_PAIN = 'W1_W2',
+    BORN_COUNTRY = 'W1',
+    CAPABLE = 'W1_W2',
+    CIGARETTES = 'W1_W2',
+    CLOSE_TO = 'W1_W2',
+    CNTRY_REL_BUD = 'W1',
+    CNTRY_REL_CHI = 'W1',
+    CNTRY_REL_CHR = 'W1',
+    CNTRY_REL_HIN = 'W1',
+    CNTRY_REL_ISL = 'W1',
+    CNTRY_REL_JUD = 'W1',
+    CNTRY_REL_SHI = 'W1',
+    COMFORT_REL = 'W1_W2',
+    CONNECTED_REL = 'W1_W2',
+    CONTENT = 'W1_W2',
+    CONTROL_WORRY = 'W1_W2',
+    COVID_DEATH = 'W1',
+    CRITICAL = 'W1_W2',
+    DAYS_EXERCISE = 'W1_W2',
+    DEPRESSED = 'W1_W2',
+    DISCRIMINATED = 'W1_W2',
+    DONATED = 'W1_W2',
+    DRINKS = 'W1_W2',
+    EDUCATION = 'W1',
+    EDUCATION_3 = 'W1_W2',
+    EMPLOYMENT = 'W1_W2',
+    EXPECT_GOOD = 'W1_W2',
+    EXPENSES = 'W1_W2',
+    FATHER_LOVED = 'W1',
+    FATHER_RELATN = 'W1',
+    FEEL_ANXIOUS = 'W1_W2',
+    FORGIVE = 'W1_W2',
+    FREEDOM = 'W1_W2',
+    GENDER = 'W1',
+    GIVE_UP = 'W1_W2',
+    GOD_PUNISH = 'W1_W2',
+    GRATEFUL = 'W1_W2',
+    GROUP_NOT_REL = 'W1_W2',
+    HAPPY = 'W1_W2',
+    HEALTH_GROWUP = 'W1',
+    HEALTH_PROB = 'W1_W2',
+    HELP_STRANGER = 'W1_W2',
+    HOPE_FUTURE = 'W1_W2',
+    INCOME = 'W1_W2',
+    INCOME_12YRS = 'W1',
+    INCOME_DIFF = 'W1',
+    INCOME_FEELINGS = 'W1_W2',
+    INTEREST = 'W1_W2',
+    LIFE_APPROACH = 'W1_W2',
+    LIFE_BALANCE = 'W1_W2',
+    LIFE_PURPOSE = 'W1_W2',
+    LIFE_SAT = 'W1_W2',
+    LONELY = 'W1_W2',
+    LOVED_BY_GOD = 'W1_W2',
+    MARITAL_STATUS = 'W1_W2',
+    MENTAL_HEALTH = 'W1_W2',
+    MOTHER_LOVED = 'W1',
+    MOTHER_RELATN = 'W1',
+    NUM_CHILDREN = 'W1_W2',
+    NUM_HOUSEHOLD = 'W1_W2',
+    OBEY_LAW = 'W1',
+    OUTSIDER = 'W1',
+    OWN_RENT_HOME = 'W1_W2',
+    PARENTS_12YRS = 'W1',
+    PEACE = 'W1_W2',
+    PEOPLE_HELP = 'W1_W2',
+    PHYSICAL_HLTH = 'W1_W2',
+    POLITICAL_ID = 'W1_W2',
+    PRAY_MEDITATE = 'W1_W2',
+    PROMOTE_GOOD = 'W1_W2',
+    REGION1 = 'W1_W2',
+    REGION2 = 'W1_W2',
+    REGION3 = 'W1_W2',
+    REL_EXPERIENC = 'W1_W2',
+    REL_IMPORTANT = 'W1',
+    REL1 = 'W1',
+    REL2 = 'W1_W2',
+    REL3 = 'W1_W2',
+    REL4 = 'W1_W2',
+    REL5 = 'W1_W2',
+    REL6 = 'W1_W2',
+    REL7 = 'W1_W2',
+    REL8 = 'W1_W2',
+    REL9 = 'W1_W2',
+    SACRED_TEXTS = 'W1_W2',
+    SAT_LIVE = 'W1_W2',
+    SAT_RELATNSHP = 'W1_W2',
+    SAY_IN_GOVT = 'W1_W2',
+    SELFID1 = 'W1',
+    SELFID2 = 'W1',
+    SHOW_LOVE = 'W1_W2',
+    SUFFERING = 'W1_W2',
+    SVCS_12YRS = 'W1',
+    SVCS_FATHER = 'W1',
+    SVCS_MOTHER = 'W1',
+    TEACHINGS_1 = 'W1',
+    TEACHINGS_2 = 'W1',
+    TEACHINGS_3 = 'W1',
+    TEACHINGS_4 = 'W1',
+    TEACHINGS_5 = 'W1',
+    TEACHINGS_6 = 'W1',
+    TEACHINGS_7 = 'W1',
+    TEACHINGS_8 = 'W1',
+    TEACHINGS_9 = 'W1',
+    TEACHINGS_10 = 'W1',
+    TEACHINGS_11 = 'W1',
+    TEACHINGS_12 = 'W1',
+    TEACHINGS_13 = 'W1',
+    TEACHINGS_14 = 'W1',
+    TEACHINGS_15 = 'W1',
+    TELL_BELIEFS = 'W1_W2',
+    THREAT_LIFE = 'W1_W2',
+    TRAITS1 = 'W1',
+    TRAITS2 = 'W1',
+    TRAITS3 = 'W1',
+    TRAITS4 = 'W1',
+    TRAITS5 = 'W1',
+    TRAITS6 = 'W1',
+    TRAITS7 = 'W1',
+    TRAITS8 = 'W1',
+    TRAITS9 = 'W1',
+    TRAITS10 = 'W1',
+    TRUST_PEOPLE = 'W1_W2',
+    URBAN_RURAL = 'W1_W2',
+    VOLUNTEERED = 'W1_W2',
+    WB_FIVEYRS = 'W1_W2',
+    WB_TODAY = 'W1_W2',
+    WORRY_SAFETY = 'W1_W2',
+    WORTHWHILE = 'W1_W2',
+    ANNUAL_WEIGHT1 = 'W1',
+    ANNUAL_WEIGHT_C2 = '_W2',
+    ANNUAL_WEIGHT_L2 = '_W2',
+    ANNUAL_WEIGHT_R2 = '_W2',
+    RETENTION_WEIGHT_C = '_WR1',
+    RETENTION_WEIGHT_L = '_WR1',
+    FULL_PARTIAL = 'W1_WR1_W2',
+    STUDY_YEAR = 'W1_WR1_W2',
+    MODE = 'W1_WR1_W2',
+    TIME_MEDIA = '_WR1',
+    ENGAGE_ARTS = '_WR1',
+    BEAUTY = '_WR1',
+    ACHIEVING = '_WR1',
+    FOOD_INSECURE = '_WR1',
+    NATURE = '_WR1',
+    DILIGENT = '_WR1',
+    MIND_FOCUSED = '_WR1',
+    HAPPY_IMPORT = '_WR1',
+    HEALTHY = '_WR1',
+    MEANINGFUL = '_WR1',
+    GOOD_PERSON = '_WR1',
+    GOOD_RELATION = '_WR1',
+    REL_LIFE = '_WR1',
+    GF_MONEY = '_WR1',
+    'W1_WR1_W2'
+  )
+  }
+  }
+  if(!is.null(wave)){
+    out = stringr::str_detect(out, wave)
+  }
+  out
 }

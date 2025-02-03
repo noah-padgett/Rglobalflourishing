@@ -9,6 +9,9 @@
 #' @param robust (logical) default to FALSE, of whether to use a "robust" variant of probit regression
 #'         (uses the robustbase package instead of the survey package to get weights).
 #' @param wgt.trim.quantile (numeric) default to 0.99, quantile of the distribution of weights to trim to
+#' @param wgt (character) name of variable containing weights to use as "base-weights"
+#' @param strata (character) name of variable containing strata ids
+#' @param psu (character) name of variable containing primary sampling unit ids
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a dataset with attrition weights appended
 #' @examples {
@@ -16,10 +19,10 @@
 #' }
 #' @export
 #' @description
-#' The default set of predictors: "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
+#' The default set of predictors: "ANNUAL_WEIGHT_R2", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
 #' "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
 #'
-append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, robust = FALSE, wgt.trim.quantile = 0.99, ...) {
+append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, robust = FALSE, wgt.trim.quantile = 0.99, wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU", ...) {
   if (is.null(attr.pred)) {
     attr.pred <- c(
       "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1",
@@ -35,7 +38,10 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
         x
       })
     )
-  svy.data <- survey::svydesign(data = tmp.data, ids = ~PSU_W1, strata = ~STRATA_W1, weights = ~ANNUAL_WEIGHT1_W1)
+  svy.data <- survey::svydesign(data = tmp.data,
+                                ids=~!!sym(psu),
+                                strata=~!!sym(strata),
+                                weights=~!!sym(wgt))
   cur.country <- data$COUNTRY2[1]
 
   cur.country <- stringr::str_remove_all(str_replace(cur.country, "\n", "_"), "_")
@@ -47,9 +53,13 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
 
   if (robust) {
     svy.data <- tmp.data
-    fit.attr <- robustbase::glmrob(mod.form, data = svy.data, family = stats::binomial(link = "probit"), weights = tmp.data$ANNUAL_WEIGHT1_W1)
+    fit.attr <- robustbase::glmrob(mod.form, data = svy.data,
+                                   family = stats::binomial(link = "probit"),
+                                   weights = tmp.data[wgt])
   } else {
-    fit.attr <- survey::svyglm(mod.form, design = svy.data, family = stats::quasibinomial(link = "probit"), control = list(maxit = 1000))
+    fit.attr <- survey::svyglm(mod.form, design = svy.data,
+                               family = stats::quasibinomial(link = "probit"),
+                               control = list(maxit = 1000))
   }
 
   # summary(fit.attr)

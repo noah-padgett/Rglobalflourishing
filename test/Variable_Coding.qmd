@@ -1,0 +1,126 @@
+---
+title: "Check Variable Recoding/Category Collapsing"
+format: 
+  html:
+    page-layout: full
+---
+
+
+```{r}
+#| label: set-up
+#| message: false
+#| warning: false
+#| error: false
+
+devtools::load_all()
+purrr::quietly(load_packages())
+# global options
+  options(
+    survey.lonely.psu = "certainty",
+    width = 1000
+  )
+  # Here is YOUR wave 1 construct variable
+FOCAL_PREDICTOR <- "PHYSICAL_HLTH_W1"
+VALUES_DEFINING_UPPER_CATEGORY <- c(NULL)
+VALUES_DEFINING_LOWER_CATEGORY <- c(NULL)
+FORCE_BINARY <- FALSE
+FORCE_CONTINUOUS <- FALSE
+# Add the directory where the dataset is stored on your computer
+data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data"
+#dataset.name <- "gfs_all_countries_wave1.sav"
+dataset.name <- "gfs_wave_2_test_long_format.sav"
+
+# get "raw data"
+df.raw <- haven::read_spss(here::here(data.dir, dataset.name))
+df.raw <- haven::zap_labels(df.raw)
+
+LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
+df.raw.labelled <- gfs_get_labelled_raw_data(
+  file = here::here(data.dir, dataset.name),
+  list.composites = LIST.COMPOSITES, .test = FALSE
+)
+
+load(here::here(data.dir, "gfs_imputed_data_test.RData"))
+# ~~
+RECODE.DEFAULTS <- list(
+  FOCAL_PREDICTOR = FOCAL_PREDICTOR,
+  DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(
+    get_variable_codes("DEMOGRAPHIC.VARS", appnd="_W1"),
+    get_variable_codes("RETROSPECTIVE.VARS", appnd="_W1")
+  ),
+  VARIABLES.VEC = c(get_variable_codes("VARS.W1"), get_variable_codes("VARS.W2")),
+  FORCE_BINARY = FORCE_BINARY,
+  FORCE_CONTINUOUS = FORCE_CONTINUOUS,
+  VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,
+  VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,
+  USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)
+)
+df.imp.long <- recode_imputed_data(
+  df.imp,
+  list.default = RECODE.DEFAULTS,
+  list.composites = LIST.COMPOSITES
+)
+
+tmp.dat1 <- df.raw %>%
+  arrange(ID) %>%
+  filter(WAVE == 1)
+tmp.dat2 <- df.raw.labelled %>%
+  arrange(ID)
+tmp.dat3 <- df.imp.long %>%
+  filter(.imp == 1) %>%
+  arrange(ID)
+
+
+dnn1 <- c("Raw Data (Labelled)", "Raw Data")
+dnn2 <- c("Raw Data (Labelled)", "Recoded Imputed Data (.imp==1)")
+dnn3 <- c("Raw Data (unlabelled)", "Recoded Imputed Data (.imp==1)")
+
+myvar <- RECODE.DEFAULTS[['VARIABLES.VEC']]
+myvar <- myvar[-c(8,19,45,46,106,117,142,143,148,53)]
+
+```
+
+Next, loop through all single-item variables
+
+```{r}
+#| label: check-items
+#| width: 1000
+tmp.var <- myvar[1]
+for (tmp.var in myvar) {
+  if (str_detect(tmp.var, "COMPOSITE_", negate = TRUE)) {
+    cat("\n\n")
+    cat("\nVariable:\t", tmp.var,"\n")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat1[[str_sub(tmp.var,1,-4)]],  dnn = dnn1))
+    cat("\n")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2))
+  }
+}
+
+```
+
+Finally, check composites
+
+```{r}
+#| label: check-composites
+#| width: 1000
+tmp.var <- myvar[1]
+for (tmp.var in myvar) {
+  if (str_detect(tmp.var, "COMPOSITE_")) {
+    if(str_detect(tmp.var, "COMPOSITE_FLOURISHING", negate=TRUE)){
+      
+    cat("\n\n")
+    cat("\nVariable:\t", tmp.var,"\n")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2))
+    cat("\nTotal score related to each item:")
+    for(item in LIST.COMPOSITES[[1]][[tmp.var]]){
+      cat("\nItem:\t", item,"\n")
+      if(str_sub(item,1,-4) %in% colnames(tmp.dat1)){
+        print(table(tmp.dat1[[str_sub(item,1,-4)]], tmp.dat3[[tmp.var]], dnn = dnn3))
+      }
+      print(table(tmp.dat2[[item]], tmp.dat3[[tmp.var]], dnn = dnn2))
+    }
+    }
+  }
+}
+
+```

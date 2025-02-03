@@ -18,7 +18,8 @@
 
 # Add the directory where the dataset is stored on your computer
 data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data"
-dataset.name <- "gfs_all_countries_wave1.sav"
+#dataset.name <- "gfs_all_countries_wave1.sav"
+dataset.name <- "gfs_wave_2_test_long_format.sav"
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
@@ -50,7 +51,7 @@ FORCE_CONTINUOUS <- FALSE
 # ================================================================================================ #
 # ================================================================================================ #
 # Data Prep
-{
+
   if (is.null(out.dir)) {
     out.dir <- data.dir
   }
@@ -63,15 +64,13 @@ FORCE_CONTINUOUS <- FALSE
     survey.lonely.psu = "certainty"
   )
   # outcome vectors
-  OUTCOME.VEC <- get_variable_codes()[['OUTCOME.VEC']]
-  LIST.COMPOSITES <- get_variable_codes()[['LIST.COMPOSITES']]
-  DEMOGRAPHICS.CHILDHOOD.PRED.VEC <- get_variable_codes()[['DEMOGRAPHICS.CHILDHOOD.PRED.VEC']]
+  LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
   # get "raw data"
   df.raw <- gfs_get_labelled_raw_data(
     file = here::here(data.dir, dataset.name),
-    list.composites = LIST.COMPOSITES, .test=TRUE
+    list.composites = LIST.COMPOSITES, .test=FALSE
   )
-}
+
 # ================================================================================================ #
 # ================================================================================================ #
 # Imputing missing data
@@ -83,7 +82,8 @@ FORCE_CONTINUOUS <- FALSE
       attr.pred = c(
         "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1", "EDUCATION_3_W1",
         "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1"
-      )
+      ),
+      wgt = "ANNUAL_WEIGHT1_W1", strata = "STRATA_W1", psu = "PSU_W1"
     )
     df.imp <- run_impute_data(
       data = df.tmp,
@@ -96,8 +96,11 @@ FORCE_CONTINUOUS <- FALSE
   # ~~
   RECODE.DEFAULTS <- list(
     FOCAL_PREDICTOR = FOCAL_PREDICTOR,
-    DEMOGRAPHICS.CHILDHOOD.PRED.VEC = DEMOGRAPHICS.CHILDHOOD.PRED.VEC,
-    OUTCOME.VEC = OUTCOME.VEC,
+    DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(
+      get_variable_codes("DEMOGRAPHIC.VARS", appnd="_W1"),
+      get_variable_codes("RETROSPECTIVE.VARS", appnd="_W1")
+    ),
+    VARIABLES.VEC = c(get_variable_codes("VARS.W1"), get_variable_codes("VARS.W2")),
     FORCE_BINARY = FORCE_BINARY,
     FORCE_CONTINUOUS = FORCE_CONTINUOUS,
     VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,
@@ -110,8 +113,22 @@ FORCE_CONTINUOUS <- FALSE
     list.composites = LIST.COMPOSITES
   )
 }
+
+# the following checks the imputed data back with the raw data
 table(df.imp.long$HAPPY_W2, useNA="always")
 table(df.imp.long$HAPPY_W2, df.imp.long$HAPPY_W1, useNA="always")
+
+# ADD IN CHECKS
+tmp.dat1 <- df.raw %>%
+  arrange(ID)
+tmp.dat2 <- df.imp.long %>%
+  filter(.imp == 1) %>%
+  arrange(ID)
+
+tmp.dar <- RECODE.DEFAULTS[['VARIABLES.VEC']][1]
+dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
+table(tmp.dat1[[tmp.dar]], tmp.dat2[[tmp.dar]], dnn=dnn0)
+
 # ================================================================================================ #
 # ================================================================================================ #
 {

@@ -398,30 +398,30 @@ recode_imputed_data <- function(
   # Next, make sure all categorical items are recoded as binary
   # 	Must do this last as a few composites are formed from the
   # 	categorical Likert-type items
-  tmp.outcome <- list.default[["OUTCOME.VEC"]][1]
-  for (tmp.outcome in list.default[["OUTCOME.VEC"]]) {
-    # print(tmp.outcome)
-    x <- df.imp.long[, tmp.outcome, drop = TRUE]
-    if ((tmp.outcome == list.default[["FOCAL_PREDICTOR"]]) & !(list.default[["USE_DEFAULT"]])) {
+  tmp.var <- list.default[["VARIABLES.VEC"]][1]
+  for (tmp.var in list.default[["VARIABLES.VEC"]]) {
+    # print(tmp.var)
+    x <- df.imp.long[, tmp.var, drop = TRUE]
+    if ((tmp.var == list.default[["FOCAL_PREDICTOR"]]) & !(list.default[["USE_DEFAULT"]])) {
       # if the focal variable is continous, essential ignore and moe to next
-      if (get_outcome_scale(tmp.outcome) == "cont") {
+      if (get_outcome_scale(tmp.var) == "cont") {
         if (list.default[["FORCE_BINARY"]]) {
           x <- case_when(
             x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]]) ~ 1,
             x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]]) ~ 0
           )
         } else {
-          x <- recode_to_type(x, tmp.outcome)
-          x <- reorder_levels(x, tmp.outcome)
-          x <- recode_to_numeric(x, tmp.outcome)
+          x <- recode_to_type(x, tmp.var)
+          x <- reorder_levels(x, tmp.var)
+          x <- recode_to_numeric(x, tmp.var)
         }
       } else if (list.default[["FORCE_CONTINUOUS"]]) {
-        x <- recode_to_type(x, tmp.outcome)
-        x <- reorder_levels(x, tmp.outcome)
-        if (get_outcome_scale(tmp.outcome) %in% c("bin", "likert")) {
+        x <- recode_to_type(x, tmp.var)
+        x <- reorder_levels(x, tmp.var)
+        if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
           x <- as.numeric(x)
         } else {
-          x <- recode_to_numeric(x, tmp.outcome)
+          x <- recode_to_numeric(x, tmp.var)
         }
       } else {
         # if focal variable is binary/categorical, then collasp as user-specified
@@ -431,24 +431,24 @@ recode_imputed_data <- function(
         )
       }
     } else {
-      if (str_detect(tmp.outcome, "COMPOSITE")) {
+      if (str_detect(tmp.var, "COMPOSITE")) {
         is.sum <- ifelse(
-          str_detect(tmp.outcome, "COMPOSITE_DEPRESSION") |
-            str_detect(tmp.outcome, "COMPOSITE_ANXIETY") |
-            str_detect(tmp.outcome, "COMPOSITE_DEP_ANX_COMBO"),
+          str_detect(tmp.var, "COMPOSITE_DEPRESSION") |
+            str_detect(tmp.var, "COMPOSITE_ANXIETY") |
+            str_detect(tmp.var, "COMPOSITE_DEP_ANX_COMBO"),
           TRUE, FALSE
         )
-        x <- recode_to_numeric(x, tmp.outcome, is.sum)
-      } else if (get_outcome_scale(tmp.outcome) == "cont") {
-        x <- recode_to_type(x, tmp.outcome)
-        x <- reorder_levels(x, tmp.outcome)
-        x <- recode_to_numeric(x, tmp.outcome)
+        x <- recode_to_numeric(x, tmp.var, is.sum)
+      } else if (get_outcome_scale(tmp.var) == "cont") {
+        x <- recode_to_type(x, tmp.var)
+        x <- reorder_levels(x, tmp.var)
+        x <- recode_to_numeric(x, tmp.var)
       } else {
-        x <- recode_to_numeric(x, tmp.outcome)
+        x <- recode_to_numeric(x, tmp.var)
       }
     }
     if (!is.null(x)) {
-      df.imp.long[, tmp.outcome] <- x
+      df.imp.long[, tmp.var] <- x
     }
   }
   ## ============================================================================================ ##
