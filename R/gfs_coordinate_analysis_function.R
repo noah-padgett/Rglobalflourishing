@@ -48,6 +48,9 @@ gfs_run_regression_single_outcome <- function(
     your.outcome = NULL,
     covariates = NULL,
     contemporaneous.exposures = NULL,
+    wgt = "WGT",
+    psu = "PSU_W1", 
+    strata = "STRATA_W1",
     # advanced options: only change if you know what you are doing
     standardize = TRUE,
     pc.cutoff = 7,
@@ -120,12 +123,12 @@ gfs_run_regression_single_outcome <- function(
             x %>% mutate(
               PRIMARY_OUTCOME = case_when(
                 standardize == FALSE ~ PRIMARY_OUTCOME,
-                outcome.type == "linear" & standardize == TRUE ~ svy_scale(PRIMARY_OUTCOME, WGT, PSU, STRATA),
+                outcome.type == "linear" & standardize == TRUE ~ svy_scale(PRIMARY_OUTCOME, {{wgt}}, {{psu}}, {{strata}}),
                 .default = PRIMARY_OUTCOME
               ),
               FOCAL_PREDICTOR = case_when(
                 standardize == FALSE ~ FOCAL_PREDICTOR,
-                outcome.type == "linear" & standardize == TRUE ~ svy_scale(FOCAL_PREDICTOR, WGT, PSU, STRATA),
+                outcome.type == "linear" & standardize == TRUE ~ svy_scale(FOCAL_PREDICTOR, {{wgt}}, {{psu}}, {{strata}}),
                 .default = FOCAL_PREDICTOR
               )
             )
@@ -137,9 +140,9 @@ gfs_run_regression_single_outcome <- function(
           svy.data = map(data, \(x) {
             svydesign(
               data = x,
-              ids = ~PSU,
-              strata = ~STRATA,
-              weights = ~WGT,
+              ids = x[[psu]],
+              strata = x[[strata]],
+              weights = x[[wgt]],
               calibrate.formula = ~1
             )
           })

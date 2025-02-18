@@ -15,7 +15,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.fixed", .test=FALSE, wgt = "ANNUAL_WEIGHT1_W1", strata = "STRATA_W1", psu = "PSU_W1", ...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles", .test=FALSE, wgt = "ANNUAL_WEIGHT1_W1", strata = "STRATA_W1", psu = "PSU_W1", ...) {
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -51,16 +51,20 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         COUNTRY2 = COUNTRY
       )
 
-    ## ============================================================================================ ##
-    ## ====== MISSINGNESS INDICATOR =============================================================== ##
-    ncol_w2 <- length(colnames(df.original)[stringr::str_detect(colnames(df.original), "_W2")])
+    ## ========================================================================================== ##
+    ## ====== MISSINGNESS INDICATOR ============================================================= ##
+    # if the respondent gives a response to at least half the items in wave 2,
+    # that respondent counts as "observed"
+    cnames <- colnames(df.original)[stringr::str_detect(colnames(df.original), "_W2")]
+    cnames <- get_wave_flag(cnames, "W2")
+    ncol_w2 <- length(cnames)
     df.original <- df.original %>%
       dplyr::mutate(
-        CASE_MISSING_W2 = rowSums(across(contains("_W2"), \(x){
-          is.na(x)
+        CASE_OBSERVED_W2 = rowSums(across(any_of(cnames), \(x){
+          !is.na(x)
         })),
-        CASE_MISSING_W2 = CASE_MISSING_W2/ncol_w2,
-        CASE_MISSING_W2 = dplyr::case_when(CASE_MISSING_W2 > 0.75 ~ 1, .default = 0)
+        CASE_OBSERVED_W2 = CASE_OBSERVED_W2/ncol_w2,
+        CASE_OBSERVED_W2 = dplyr::case_when(CASE_OBSERVED_W2 > 0.50 ~ 1, .default = 0)
       )
   }
   ## ============================================================================================ ##
@@ -119,7 +123,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original %>%
       mutate(
         dplyr::across(
-          !(any_of(c("COUNTRY", "CASE_MISSING_W2",
+          !(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_W2",
                      paste0("INCOME",c("","_W1","_W2")),
                      paste0("INCOME_QUINTILE",c("","_W1","_W2")),
                      paste0("SELFID1",c("","_W1","_W2")),
@@ -165,7 +169,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     if(wave == 1 | wave == "W1"){
       income.quintiles <- df.original  %>%
         select(
-          dplyr::all_of(c("COUNTRY", "INCOME", wgt, strata, psu))
+          dplyr::all_of(c("ID", "COUNTRY", "INCOME", wgt, strata, psu))
         ) %>%
         mutate(
           across(INCOME,\(x){
@@ -205,9 +209,9 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
               mutate(
                 INCOME_QUINTILE = case_when(
                   INCOME >= tmp.quintiles.w1["0.8",1] ~ 5,
-                  INCOME >= tmp.quintiles.w1["0.6",1] & INCOME_W1 < tmp.quintiles.w1["0.8",1] ~ 4,
-                  INCOME >= tmp.quintiles.w1["0.4",1] & INCOME_W1 < tmp.quintiles.w1["0.6",1] ~ 3,
-                  INCOME >= tmp.quintiles.w1["0.2",1] & INCOME_W1 < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME >= tmp.quintiles.w1["0.6",1] & INCOME < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME >= tmp.quintiles.w1["0.4",1] & INCOME < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME >= tmp.quintiles.w1["0.2",1] & INCOME < tmp.quintiles.w1["0.4",1] ~ 2,
                   INCOME < tmp.quintiles.w1["0.2",1] ~ 1
                 )
               )
@@ -236,7 +240,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
 
     income.quintiles <- df.original  %>%
       select(
-        dplyr::all_of(c("COUNTRY", "INCOME_W1", "INCOME_W2", wgt, strata, psu))
+        dplyr::all_of(c("ID", "COUNTRY", "INCOME_W1", "INCOME_W2", wgt, strata, psu))
       ) %>%
       mutate(
         across(contains("INCOME"),\(x){
@@ -312,7 +316,11 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           x %>%
             mutate(
               INCOME_W1 = recode_labels(INCOME_W1, "INCOME_W1"),
-              INCOME_W2 = recode_labels(INCOME_W2, "INCOME_W2")
+              INCOME_W2 = recode_labels(INCOME_W2, "INCOME_W2"),
+              INCOME_QUINTILE_W1 = recode_labels(INCOME_QUINTILE_W1, "INCOME_QUINTILE"),
+              INCOME_QUINTILE_W2 = recode_labels(INCOME_QUINTILE_W2, "INCOME_QUINTILE"),
+              INCOME_QUINTILE_W1 = factor(INCOME_QUINTILE_W1),
+              INCOME_QUINTILE_W2 = factor(INCOME_QUINTILE_W2)              
             )
         })
       ) %>%

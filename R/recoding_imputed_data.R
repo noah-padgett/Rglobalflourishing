@@ -49,7 +49,6 @@ recode_imputed_data <- function(
     mutate(imp.complete = map(imp.res, ~ complete(., action = "long"))) %>%
     select(COUNTRY, imp.complete) %>%
     unnest(imp.complete) %>%
-    filter(.imp < 4) %>%
     select(!any_of(drop_created_vars)) %>%
     mutate(
       across(where(is.factor) | where(is.character), \(x){
@@ -60,12 +59,12 @@ recode_imputed_data <- function(
     )
   #options(warn=2)
   #for(i in 1:ncol(df.imp.long)){
-  #  x = df.imp.long[[i]]
-  #  if(is.factor(x) | is.character(x)){
-  #    x <- sub("\\..*", "", x)
-  #    x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-  #      as.numeric()
-  #  }
+  # x = df.imp.long[[i]]
+  # if(is.factor(x) | is.character(x)){
+  #   x <- sub("\\..*", "", x)
+  #   x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+  #     as.numeric()
+  # }
   #}
   ## ============================================================================================ ##
   ## ====== WAVE SPECIFIC CODE ================================================================== ##
@@ -81,8 +80,7 @@ recode_imputed_data <- function(
           "MOTHER_LOVED",
           "FATHER_RELATN",
           "FATHER_LOVED",
-          "MARITAL_STATUS",
-          "MARITAL_STATUS_W2"
+          "MARITAL_STATUS"
         ),
         ignore_na = T
       ) %>%
@@ -92,9 +90,9 @@ recode_imputed_data <- function(
         across(any_of(c(list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
           x <- recode_labels(x, cur_column(), include.value = FALSE)
           x <- case_when(x == "(Missing)" ~ NA, .default = x) # needed for Abused and other 100% missing variable sin some countries
-          x <- str_sub(x, 4, -1) # removed the numbers
-          x <- str_replace_all(x, "\\n", "")
-          x <- str_trim(x)
+          #x <- str_sub(x, 4, -1) # removed the numbers
+          #x <- str_replace_all(x, "\\n", "")
+          #x <- str_trim(x)
           x <- recode_to_type(x, cur_column())
           x
         }, .names = "COV_{.col}"),
@@ -150,9 +148,9 @@ recode_imputed_data <- function(
         across(any_of(c(list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
           x <- recode_labels(x, cur_column(), include.value = FALSE)
           x <- case_when(x == "(Missing)" ~ NA, .default = x) # needed for Abused and other 100% missing variable sin some countries
-          x <- str_sub(x, 4, -1) # removed the numbers
-          x <- str_replace_all(x, "\\n", "")
-          x <- str_trim(x)
+          #x <- str_sub(x, 4, -1) # removed the numbers
+          #x <- str_replace_all(x, "\\n", "")
+          #x <- str_trim(x)
           x <- recode_to_type(x, cur_column())
           x
         }, .names = "COV_{.col}"),
@@ -191,10 +189,16 @@ recode_imputed_data <- function(
   ## ====== CREATE COMPOSITES =================================================================== ##
   # Create composites IF any have been specified in the outcome_variables file
   if (!is.null(list.composites)) {
-    LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
-    LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
-    COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
-
+    if(wave == 1 | wave == "W1"){
+      LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES0"]]
+      LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD0"]]
+      COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC0"]]
+    }
+    if(is.null(wave) | wave == 2 | wave == "W2"){
+      LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
+      LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
+      COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
+    }
     for (i in 1:length(LIST.OUTCOME.COMPOSITES)) {
       # create a temporary variable then rename
       if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "mean") {
@@ -284,11 +288,11 @@ recode_imputed_data <- function(
     # recodes religion variable to either use "No religion" as reference group if that grp contains at least 3% of the total sample.
     # 	else, recodes such that the most prominant religion is the reference grp.
     # 	combines all religious grps with less than 3% of the smaple into a single combined grp.
-    recode_REL <- function(data, var) {
+    recode_REL <- function(data, var, wgt) {
       # re-level REL2 based on most prominent religion as reference
       rel.prominence <- data %>%
         group_by((!!as.name(var)), .drop = FALSE) %>%
-        summarise(N = sum(WGT)) %>%
+        summarise(N = sum({wgt})) %>%
         ungroup() %>%
         mutate(N = N / sum(N))
       rel.prominence.tab <- rel.prominence[, 2, drop = T]
@@ -311,89 +315,181 @@ recode_imputed_data <- function(
       nest() %>%
       mutate(
         data = map(data, \(x){
-          recode_REL(x, "COV_REL1_W1")
+          recode_REL(x, paste0("COV_REL1", ifelse(wave == 2, "_W1", "")), wgt = wgt)
         }),
         data = map(data, \(x){
-          recode_REL(x, "COV_REL2_W1")
+          recode_REL(x, paste0("COV_REL2", ifelse(wave == 2, "_W1", "")), wgt = wgt)
         })
       ) %>%
-      unnest(c(data)) %>%
-      mutate(
-        PSU = PSU_W1,
-        STRATA = STRATA_W1,
-        WGT = WGT
-      )
+      unnest(c(data))
   }
   ## ============================================================================================ ##
-  ## ====== RECODING INCOME DATA =============================================================== ##
+  ## ====== RECODING INCOME DATA ================================================================ ##
   {
-
-    income.quintiles <- df.imp.long  %>%
-      select(.imp, COUNTRY, INCOME_W1, INCOME_W2, WGT, STRATA_W1, PSU_W1) %>%
-      mutate(
-        across(INCOME_W1:INCOME_W2,\(x){
-          case_when( x == 9900 ~ 0, .default=x)
-        })
-      ) %>%
-      group_by(.imp, COUNTRY) %>%
-      nest() %>%
-      mutate(
-        svy.data = map(data, \(x){
-          svydesign(data=x, ids=~PSU_W1, strata=~STRATA_W1, weight=~WGT)
-        }),
-        quintiles_w1 = map(svy.data, \(x){
-          svyquantile(~INCOME_W1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm=TRUE)
-        }),
-        quintiles_w2 = map(svy.data, \(x){
-          svyquantile(~INCOME_W2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm=TRUE)
-        }),
-      ) %>%
-      select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
-
-    df.imp.long <- df.imp.long %>%
-      mutate(.imp2 = .imp) %>%
-      group_by(COUNTRY2, .imp2) %>%
-      nest() %>%
-      mutate(
-        data = map(data, \(x){
-          cur.country = x$COUNTRY[1]
-          cur.imp = x$.imp[1]
-
-          tmp.quintiles <- income.quintiles %>%
-            filter(COUNTRY == cur.country, .imp == cur.imp)
-
-          tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
-          tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
-
-          x <- x %>%
-            mutate(
-              INCOME_QUINTILE_W1 = case_when(
-                INCOME_W1 >= tmp.quintiles.w1["0.8",1] ~ 5,
-                INCOME_W1 >= tmp.quintiles.w1["0.6",1] & INCOME_W1 < tmp.quintiles.w1["0.8",1] ~ 4,
-                INCOME_W1 >= tmp.quintiles.w1["0.4",1] & INCOME_W1 < tmp.quintiles.w1["0.6",1] ~ 3,
-                INCOME_W1 >= tmp.quintiles.w1["0.2",1] & INCOME_W1 < tmp.quintiles.w1["0.4",1] ~ 2,
-                INCOME_W1 < tmp.quintiles.w1["0.2",1] ~ 1
-              ),
-              INCOME_QUINTILE_W2 = case_when(
-                INCOME_W2 >= tmp.quintiles.w2["0.8",1] ~ 5,
-                INCOME_W2 >= tmp.quintiles.w2["0.6",1] & INCOME_W2 < tmp.quintiles.w2["0.8",1] ~ 4,
-                INCOME_W2 >= tmp.quintiles.w2["0.4",1] & INCOME_W2 < tmp.quintiles.w2["0.6",1] ~ 3,
-                INCOME_W2 >= tmp.quintiles.w2["0.2",1] & INCOME_W2 < tmp.quintiles.w2["0.4",1] ~ 2,
-                INCOME_W2 < tmp.quintiles.w2["0.2",1] ~ 1
-              )
+    if(wave == 1 | wave == "W1"){
+      income.quintiles <- df.imp.long  %>%
+        select(
+          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME", wgt, strata, psu))
+        ) %>%
+        mutate(
+          across(INCOME,\(x){
+            case_when(
+              x < 0 ~ NA,
+              x > 9900 ~ NA,
+              x == 9900 ~ 0,
+              .default=x
             )
-          if(method.income=="quintiles.top.fixed"){
+          })
+        ) %>%
+        group_by(.imp, COUNTRY) %>%
+        nest() %>%
+        mutate(
+          svy.data = map(data, \(x){
+            svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
+          }),
+          quintiles = map(svy.data, \(x){
+            svyquantile(~INCOME, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          })
+        ) %>%
+        select(.imp, COUNTRY, quintiles_w1)
+
+      df.imp.long <- df.imp.long %>%
+        group_by(.imp, COUNTRY2) %>%
+        nest() %>%
+        mutate(
+          data = map(data, \(x){
+            cur.country = x$COUNTRY[1]
+            cur.imp = x$.imp[1]
+
+            tmp.quintiles <- income.quintiles %>%
+              filter(COUNTRY == cur.country, .imp == cur.imp)
+
+            tmp.quintiles.w1 <- tmp.quintiles$quintiles[[1]][[1]]
+
             x <- x %>%
               mutate(
-                INCOME_QUINTILE_W1 = case_when(INCOME_QUINTILE_W1 == 5 ~ 1, .default=0),
-                INCOME_QUINTILE_W2 = case_when(INCOME_QUINTILE_W2 == 5 ~ 1, .default=0)
+                INCOME_QUINTILE = case_when(
+                  INCOME >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME >= tmp.quintiles.w1["0.6",1] & INCOME < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME >= tmp.quintiles.w1["0.4",1] & INCOME < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME >= tmp.quintiles.w1["0.2",1] & INCOME < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME < tmp.quintiles.w1["0.2",1] ~ 1
+                )
               )
-          }
-          x
-        })
-      ) %>%
-      unnest(c(data)) %>%
-      ungroup()
+            if(method.income == "quintiles.top.fixed"){
+              x <- x %>%
+                mutate(
+                  INCOME_QUINTILE = case_when(
+                    INCOME_QUINTILE == 5 ~ 1,
+                    INCOME_QUINTILE %in% 1:4 ~ 0
+                  )
+                )
+            }
+            x
+          }),
+          data = map(data, \(x){
+            x %>%
+              mutate(
+                INCOME = recode_labels(INCOME, "INCOME", ...)
+              )
+          })
+        ) %>%
+        unnest(c(data)) %>%
+        ungroup()
+    }
+    if(is.null(wave) | wave == 2 | wave == "W2"){
+
+      income.quintiles <-  df.imp.long  %>%
+        select(
+          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME_W1", "INCOME_W2", wgt, strata, psu))
+        ) %>%
+        mutate(
+          across(contains("INCOME"),\(x){
+            case_when(
+              x < 0 ~ NA,
+              x > 9900 ~ NA,
+              x == 9900 ~ 0,
+              .default=x
+            )
+          })
+        ) %>%
+        group_by(.imp, COUNTRY2) %>%
+        nest() %>%
+        mutate(
+          svy.data = map(data, \(x){
+            svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
+          }),
+          quintiles_w1 = map(svy.data, \(x){
+            svyquantile(~INCOME_W1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+          quintiles_w2 = map(svy.data, \(x){
+            svyquantile(~INCOME_W2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+        ) %>%
+        select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
+
+      df.original <- df.original %>%
+        mutate(.imp2 = .imp) %>%
+        group_by(.imp2, COUNTRY2) %>%
+        nest() %>%
+        mutate(
+          data = map(data, \(x){
+            cur.country = x$COUNTRY[1]
+            cur.imp = x$.imp[1]
+
+            tmp.quintiles <- income.quintiles %>%
+              filter(COUNTRY == cur.country, .imp == cur.imp)
+
+            tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
+            tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
+
+            x <- x %>%
+              mutate(
+                INCOME_QUINTILE_W1 = case_when(
+                  INCOME_W1 >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME_W1 >= tmp.quintiles.w1["0.6",1] & INCOME_W1 < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME_W1 >= tmp.quintiles.w1["0.4",1] & INCOME_W1 < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME_W1 >= tmp.quintiles.w1["0.2",1] & INCOME_W1 < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME_W1 < tmp.quintiles.w1["0.2",1] ~ 1
+                ),
+                INCOME_QUINTILE_W2 = case_when(
+                  INCOME_W2 >= tmp.quintiles.w2["0.8",1] ~ 5,
+                  INCOME_W2 >= tmp.quintiles.w2["0.6",1] & INCOME_W2 < tmp.quintiles.w2["0.8",1] ~ 4,
+                  INCOME_W2 >= tmp.quintiles.w2["0.4",1] & INCOME_W2 < tmp.quintiles.w2["0.6",1] ~ 3,
+                  INCOME_W2 >= tmp.quintiles.w2["0.2",1] & INCOME_W2 < tmp.quintiles.w2["0.4",1] ~ 2,
+                  INCOME_W2 < tmp.quintiles.w2["0.2",1] ~ 1
+                )
+              )
+            if(method.income=="quintiles.top.fixed"){
+              x <- x %>%
+                mutate(
+                  INCOME_QUINTILE_W1 = case_when(
+                    INCOME_QUINTILE_W1 == 5 ~ 1,
+                    INCOME_QUINTILE_W1 %in% 1:4 ~ 0
+                  ),
+                  INCOME_QUINTILE_W2 = case_when(
+                    INCOME_QUINTILE_W2 == 5 ~ 1,
+                    INCOME_QUINTILE_W2 %in% 1:4 ~ 0
+                  )
+                )
+            }
+            x
+          }),
+          data = map(data, \(x){
+            x %>%
+              mutate(
+                INCOME_W1 = recode_labels(INCOME_W1, "INCOME_W1"),
+                INCOME_W2 = recode_labels(INCOME_W2, "INCOME_W2"),
+                INCOME_QUINTILE_W1 = recode_labels(INCOME_QUINTILE_W1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_W2 = recode_labels(INCOME_QUINTILE_W2, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_W1 = factor(INCOME_QUINTILE_W1),
+                INCOME_QUINTILE_W2 = factor(INCOME_QUINTILE_W2)
+              )
+          })
+        ) %>%
+        unnest(c(data)) %>%
+        ungroup()
+    }
   }
   ## ============================================================================================ ##
   ## ====== CATEGORICAL LEVELS CHECK ============================================================ ##

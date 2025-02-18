@@ -61,6 +61,24 @@ df.imp.long <- recode_imputed_data(
   list.composites = LIST.COMPOSITES
 )
 
+
+
+dnn1 <- c("Raw Data (Labelled)", "Raw Data")
+dnn2 <- c("Raw Data (Labelled)", "Recoded Imputed Data (.imp==1)")
+dnn3 <- c("Raw Data (unlabelled)", "Recoded Imputed Data (.imp==1)")
+
+myvar <- RECODE.DEFAULTS[['VARIABLES.VEC']]
+myvar <- myvar[-c(148,53)] # exclude political id
+
+```
+
+Next, loop through all single-item variables
+
+# Wave 1 Variables
+
+```{r}
+#| label: prep-w1
+
 tmp.dat1 <- df.raw %>%
   arrange(ID) %>%
   filter(WAVE == 1)
@@ -70,54 +88,115 @@ tmp.dat3 <- df.imp.long %>%
   filter(.imp == 1) %>%
   arrange(ID)
 
-
-dnn1 <- c("Raw Data (Labelled)", "Raw Data")
-dnn2 <- c("Raw Data (Labelled)", "Recoded Imputed Data (.imp==1)")
-dnn3 <- c("Raw Data (unlabelled)", "Recoded Imputed Data (.imp==1)")
-
-myvar <- RECODE.DEFAULTS[['VARIABLES.VEC']]
-myvar <- myvar[-c(8,19,45,46,106,117,142,143,148,53)]
-
+myvar0 <- myvar[str_detect(myvar,"_W1")]
 ```
 
-Next, loop through all single-item variables
-
 ```{r}
-#| label: check-items
-#| width: 1000
+#| label: check-items-w1
+#| width: 10000
 tmp.var <- myvar[1]
-for (tmp.var in myvar) {
+for (tmp.var in myvar0) {
   if (str_detect(tmp.var, "COMPOSITE_", negate = TRUE)) {
     cat("\n\n")
     cat("\nVariable:\t", tmp.var,"\n")
-    print(table(tmp.dat2[[tmp.var]], tmp.dat1[[str_sub(tmp.var,1,-4)]],  dnn = dnn1))
+    print(table(tmp.dat2[[tmp.var]], tmp.dat1[[str_sub(tmp.var,1,-4)]],  dnn = dnn1, useNA = "ifany"))
     cat("\n")
-    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2))
+    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2, useNA = "ifany"))
   }
 }
 
 ```
 
-Finally, check composites
+Next, check composites.
+
+The first bivariate table presents the total scores on extraversion for the raw data compared to the first imputed dataset, this should highlighter whether the scores align and whether missing values were imputed correctly. I see I need to update to make sure the missing values get printed out for the raw data. 
+
+Then, a table is presented for each variable making up the composite. The individual variables should be completely unaltered, but the composite uses any recoding. 
+The second compared the labeled raw data to help see which categories of each item are mapped to the total score. I intended this to be used as a sanity check if any individual items making up the composite needed to be reverse coded or not. 
+This table has the category "missing" to help see how missingness mapped to the total score.
 
 ```{r}
-#| label: check-composites
-#| width: 1000
-tmp.var <- myvar[1]
-for (tmp.var in myvar) {
+#| label: check-composites-w1
+#| width: 10000
+tmp.var <- myvar0[1]
+for (tmp.var in myvar0) {
   if (str_detect(tmp.var, "COMPOSITE_")) {
     if(str_detect(tmp.var, "COMPOSITE_FLOURISHING", negate=TRUE)){
-      
     cat("\n\n")
     cat("\nVariable:\t", tmp.var,"\n")
-    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2))
-    cat("\nTotal score related to each item:")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2, useNA = "ifany"))
+    cat("\nTotal score related to each item without recoding/collapsing/reversing orientation:")
     for(item in LIST.COMPOSITES[[1]][[tmp.var]]){
       cat("\nItem:\t", item,"\n")
-      if(str_sub(item,1,-4) %in% colnames(tmp.dat1)){
-        print(table(tmp.dat1[[str_sub(item,1,-4)]], tmp.dat3[[tmp.var]], dnn = dnn3))
-      }
-      print(table(tmp.dat2[[item]], tmp.dat3[[tmp.var]], dnn = dnn2))
+      print(table(tmp.dat2[[item]], tmp.dat3[[tmp.var]], dnn = dnn2, useNA = "ifany"))
+    }
+    }
+  }
+}
+
+```
+
+
+# Wave 2 Variables
+
+
+```{r}
+#| label: prep-w2
+
+tmp.dat1 <- df.raw %>%
+  arrange(ID) %>%
+  filter(WAVE == 2)
+tmp.dat2 <- df.raw.labelled %>%
+  arrange(ID)
+tmp.dat3 <- df.imp.long %>%
+  filter(.imp == 1) %>%
+  arrange(ID)
+
+tmp.dat1 <- tmp.dat1 %>%
+  full_join(tmp.dat3 %>% select(ID)) %>%
+  arrange(ID)
+
+myvar0 <- myvar[str_detect(myvar,"_W2")]
+```
+
+```{r}
+#| label: check-items-w2
+#| width: 10000
+tmp.var <- myvar0[1]
+for (tmp.var in myvar0) {
+  if (str_detect(tmp.var, "COMPOSITE_", negate = TRUE)) {
+    cat("\n\n")
+    cat("\nVariable:\t", tmp.var,"\n")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat1[[str_sub(tmp.var,1,-4)]],  dnn = dnn1, useNA = "ifany"))
+    cat("\n")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2, useNA = "ifany"))
+  }
+}
+
+```
+
+Next, check composites.
+
+The first bivariate table presents the total scores on extraversion for the raw data compared to the first imputed dataset, this should highlighter whether the scores align and whether missing values were imputed correctly. I see I need to update to make sure the missing values get printed out for the raw data. 
+
+Then, a table is presented for each variable making up the composite. The individual variables should be completely unaltered, but the composite uses any recoding. 
+The second compared the labeled raw data to help see which categories of each item are mapped to the total score. I intended this to be used as a sanity check if any individual items making up the composite needed to be reverse coded or not. 
+This table has the category "missing" to help see how missingness mapped to the total score.
+
+```{r}
+#| label: check-composites-w2
+#| width: 10000
+tmp.var <- myvar0[1]
+for (tmp.var in myvar0) {
+  if (str_detect(tmp.var, "COMPOSITE_")) {
+    if(str_detect(tmp.var, "COMPOSITE_FLOURISHING", negate=TRUE)){
+    cat("\n\n")
+    cat("\nVariable:\t", tmp.var,"\n")
+    print(table(tmp.dat2[[tmp.var]], tmp.dat3[[tmp.var]], dnn = dnn2, useNA = "ifany"))
+    cat("\nTotal score related to each item without recoding/collapsing/reversing orientation:")
+    for(item in LIST.COMPOSITES[[1]][[tmp.var]]){
+      cat("\nItem:\t", item,"\n")
+      print(table(tmp.dat2[[item]], tmp.dat3[[tmp.var]], dnn = dnn2, useNA = "ifany"))
     }
     }
   }

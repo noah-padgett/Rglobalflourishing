@@ -3187,17 +3187,32 @@ nurse)",
       x >= 80 & x < 100 ~ "1943 or earlier (current age: 80+ years)",
       .default = "(Missing)"
     ),
+    INCOME_QUINTILE = case_when(
+      x == 1 ~ "Q1 Low Income",
+      x == 2 ~ "Q2",
+      x == 3 ~ "Q3",
+      x == 4 ~ "Q4",
+      x == 5 ~ "Q5 High Income",
+      .default = "(Missing)"
+
+    ),
     x
   )
   }
-
   if (is.character(out)) {
-    if ( include.value == FALSE & str_detect(var, "AGE_GRP", negate=TRUE) ) {
-      for (i in 1:length(out)) {
-        if ( str_detect(out[i],". ") ) {
-          out[i] = stringr::str_split_fixed(out[i], "\\. ", 2)[,2]
-        }
-      }
+
+    if (include.value == FALSE & str_detect(var, "AGE_GRP", negate=TRUE) ) {
+      out = stringr::str_split_fixed(out, "\\. ", 2)[,2]
+      out = case_when(
+        out == "" | is.na(out) ~ "(Missing)",
+        .default = out
+      )
+      #for (i in 1:length(out)) {
+      #  if ( str_detect(out[i],"\\. ") ) {
+      #    out[i] = stringr::str_split_fixed(out[i], "\\. ", 2)[,2]
+      #  }
+      #}
+
     }
     if(add.whitespace == TRUE){
       out = paste0("    ", out)
@@ -3298,7 +3313,7 @@ reorder_levels <- function(x, var) {
     LIFE_BALANCE = fct_rev(x),
     LIFE_PURPOSE = x,
     LIFE_SAT = x,
-    LONELY = x,
+    LONELY = as.factor(x) |> fct_rev() |> as.numeric() - 1,
     LOVED_BY_GOD = fct_rev(x),
     MARITAL_STATUS = fct_rev(x),
     MENTAL_HEALTH = x,
@@ -3381,7 +3396,9 @@ reorder_levels <- function(x, var) {
     FULL_PARTIAL = x,
     AGE_GRP = x,
     RACE = x,
-    RACE_PLURALTY = x
+    RACE_PLURALTY = x,
+    INCOME_QUINTILE = x,
+    x
   )
 }
 
@@ -3429,6 +3446,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     BORN_COUNTRY = as.numeric(x),
     CAPABLE = case_when(x %in% c(1, 2) ~ 1, x %in% c(3, 4) ~ 0),
     CIGARETTES = as.numeric(x),
+    CIGARETTES_PREV = case_when(x >= 1 ~ 1, x == 0 ~ 0),
     CLOSE_TO = case_when(x %in% c(1) ~ 1, x %in% c(2) ~ 0),
     CNTRY_REL_BUD = as.numeric(x),
     CNTRY_REL_CHI = as.numeric(x),
@@ -3454,6 +3472,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     DISCRIMINATED = case_when(x %in% c(1, 2) ~ 1, x %in% c(3, 4) ~ 0),
     DONATED = case_when(x %in% c(1) ~ 1, x %in% c(2) ~ 0),
     DRINKS = as.numeric(x),
+    DRINKS_PREV = case_when(x >= 1 ~ 1, x == 0 ~ 0),
     EDUCATION = as.numeric(x),
     EDUCATION_3 = case_when(x %in% c(3) ~ 1, x %in% c(1, 2) ~ 0),
     EMPLOYMENT = case_when(x %in% c(1, 2) ~ 1, x %in% c(3, 4, 5, 6, 7) ~ 0),
@@ -3511,7 +3530,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     REGION2 = as.numeric(x),
     REGION3 = as.numeric(x),
     REL_EXPERIENC = case_when(x %in% c(1) ~ 1, x %in% c(2) ~ 0),
-    REL_IMPORTANT = as.numeric(x),
+    REL_IMPORTANT = case_when(x %in% c(1) ~ 1, x %in% c(2) ~ 0),
     REL1 = as.numeric(x),
     REL2 = as.numeric(x),
     REL3 = as.numeric(x),
@@ -3522,7 +3541,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     REL8 = as.numeric(x),
     REL9 = as.numeric(x),
     SACRED_TEXTS = case_when(x %in% c(1, 2) ~ 1, x %in% c(3, 4) ~ 0),
-    SAT_LIVE = as.numeric(x),
+    SAT_LIVE = case_when(x %in% c(1) ~ 1, x %in% c(2, 3) ~ 0),
     SAT_RELATNSHP = as.numeric(x),
     SAY_IN_GOVT = case_when(x %in% c(1) ~ 1, x %in% c(2, 3) ~ 0),
     SELFID1 = as.numeric(x),
@@ -3559,7 +3578,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     TRAITS8 = as.numeric(x),
     TRAITS9 = as.numeric(x),
     TRAITS10 = as.numeric(x),
-    TRUST_PEOPLE = case_when(x %in% c(1, 2) ~ 1, x %in% c(3, 4, 5) ~ 0),
+    TRUST_PEOPLE = case_when(x %in% c(1, 2, 3) ~ 1, x %in% c(4, 5) ~ 0),
     URBAN_RURAL = as.numeric(x),
     VOLUNTEERED = case_when(x %in% c(1) ~ 1, x %in% c(2) ~ 0),
     WB_FIVEYRS = as.numeric(x),
@@ -3588,7 +3607,8 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     COMPOSITE_MEANING_PURPOSE = as.numeric(x),
     COMPOSITE_CHARACTER = as.numeric(x),
     COMPOSITE_SUBJECTIVE_SOC_CONN = as.numeric(x),
-    COMPOSITE_FINL_MAT_WORRY = as.numeric(x)
+    COMPOSITE_FINL_MAT_WORRY = as.numeric(x),
+    x
   )
 }
 
@@ -3664,6 +3684,7 @@ recode_race_to_plurality <- function(x, country){
 #' }
 #' @export
 get_wave_flag <- function(var, wave = NULL){
+  var0 = var
   out = var
   for(j in 1:length(var)){
     for (i in 1:5) {
@@ -3854,7 +3875,7 @@ get_wave_flag <- function(var, wave = NULL){
   }
   }
   if(!is.null(wave)){
-    out = stringr::str_detect(out, wave)
+    out = var0[stringr::str_detect(out, wave)]
   }
   out
 }

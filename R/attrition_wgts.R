@@ -22,7 +22,10 @@
 #' The default set of predictors: "ANNUAL_WEIGHT_R2", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
 #' "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
 #'
-append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, robust = FALSE, wgt.trim.quantile = 0.99, wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU", ...) {
+append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, stabilized = TRUE, robust = FALSE, wgt.trim.quantile = 0.99, wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU", ...) {
+  if (is.null(obs.id.var)) {
+  	obs.id.var = "CASE_OBSERVED_W2"
+  }
   if (is.null(attr.pred)) {
     attr.pred <- c(
       "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1",
@@ -38,17 +41,20 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
         x
       })
     )
-  svy.data <- survey::svydesign(data = tmp.data,
-                                ids=~!!sym(psu),
-                                strata=~!!sym(strata),
-                                weights=~!!sym(wgt))
+  svy.data <- survey::svydesign(
+  	data = tmp.data,
+    ids= tmp.data[[psu]],
+    strata= tmp.data[[strata]],
+    weights= tmp.data[[wgt]],
+    calibrate.formula = ~1
+  )
   cur.country <- data$COUNTRY2[1]
 
   cur.country <- stringr::str_remove_all(str_replace(cur.country, "\n", "_"), "_")
 
   keep.var <- keep_variable(attr.pred, svy.data[["variables"]])
 
-  mod.form <- stats::reformulate(attr.pred[keep.var], response = "CASE_MISSING_W2")
+  mod.form <- stats::reformulate(attr.pred[keep.var], response = obs.id.var)
 
 
   if (robust) {
@@ -74,7 +80,7 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
 
   attr.wgts <- 1
   if (stabilized) {
-    baseline.wgt <- mean(data$CASE_MISSING_W2)
+    baseline.wgt <- mean(data[[obs.id.var]])
     attr.wgts <- baseline.wgt / wgts
   } else {
     attr.wgts <- 1 / wgts
@@ -102,13 +108,14 @@ append_attrition_wgts <- function(data, attr.pred = NULL, stabilized = TRUE, rob
 #'
 #' @param data a pre-cleaned and mostly ready for analysis data.frame that will be used to construct
 #'   attrition weights.
+#' @param wgt a character identifying the baseline weight used as the baseline for adjustments.
 #' @param ... additional arguments passed to append_attrition_wgts(.)
 #' @returns a dataset with attrition weights appended
 #' @examples {
 #'   # TO-DO
 #' }
 #' @export
-run_attrition_model <- function(data, ...) {
+run_attrition_model <- function(data, wgt = "ANNUAL_WEIGHT1",...) {
   df.attr <- data %>%
     dplyr::mutate(
       COUNTRY2 = COUNTRY
@@ -128,7 +135,7 @@ run_attrition_model <- function(data, ...) {
       data = purrr::map(data, \(tmp.dat){
         tmp.dat %>%
           dplyr::mutate(
-            WGT = ATTR_WGT * ANNUAL_WEIGHT1_W1,
+            WGT = ATTR_WGT * .data[[{wgt}]] ,
             # WGT must sum to sample size
             WGT = n() * (WGT / sum(WGT))
           )

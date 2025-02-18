@@ -4,8 +4,11 @@
 #'
 #' @param data data.frame with raw data with missing coded as "(missing)"
 #' @param data.dir directory where to save the imputed data
-#' @param Nimp number of imputed datasets to generated
-#' @param Miter number of iteration per imputed dataset to use during imputatiuon (uses mice default)
+#' @param Nimp number of imputed datasets to generated (default of 20)
+#' @param Miter number of iteration per imputed dataset to use during imputatiuon (uses mice default of 5)
+#' @param pred.vars (optional) character vector of variable names to to as potential predictors in missing data model (see details for more information)
+#' @param file.name (optional) character string of the file name, must end in ".RData"
+#' @param use.log.poly (FALSE) whether to use logistic/mutlinomial logistic regression for factor variables.
 #' @param ... other arguments passed to mice
 #' @returns a nested (by country) data.frame of mice objects with completed imputed datasets ready
 #' for extraction and recoding.
@@ -17,14 +20,19 @@
 #'
 #' The imputation automatically excludes variables that are 100% in some countries (e.g., APPROVE_GOVT in Egypt) and variables that are conditional on previous questions (e.g, REL3-9 and TEACHINGS1-15).
 #'
-#' The imputation method for all variables is predictive mean matching (pmm).
+#' The imputation method for most variables is predictive mean matching (pmm). You can change this by using the use.log.poly option to use logistic & multinomial logistic regression for all factor (categorical) variables. Some variables use CART (classification and regression tree) method to help avoid singularities and errors in during the imputation stage. Such as factor/nominal variables with a lot of categories.
 #'
 #' @export
 run_impute_data <- function(data,
                             data.dir,
                             Nimp = 20,
                             Miter = 5,
+                            pred.vars = NULL,
+                            file.name = NULL,
+                            use.log.poly = FALSE,
                             ...) {
+
+
   df.imp <- data %>%
     # need to remove all "composite"
     dplyr::select(!contains("COMPOSITE_")) %>%
@@ -34,15 +42,17 @@ run_impute_data <- function(data,
     dplyr::mutate(data = purrr::map(data, \(tmp.dat) {
       tmp.dat %>%
         dplyr::mutate(dplyr::across(
-          !c(
-            ATTR_WGT,
-            WGT,
-            COUNTRY2,
-            AGE_GRP_W1,
-            RACE,
-            RACE_PLURALITY_W1,
-            CASE_MISSING_W2
-          ),
+          !any_of(c(
+            "ATTR_WGT",
+            "WGT",
+            "COUNTRY2",
+            "AGE_GRP",
+            "AGE_GRP_W1",
+            "RACE",
+            "RACE_PLURALITY",
+            "RACE_PLURALITY_W1",
+            "CASE_MISSING_W2"
+          )),
           \(x) {
             x <- dplyr::case_when(x %in% get_missing_codes(dplyr::cur_column()) ~ NA,
                                   .default = x)
@@ -78,7 +88,13 @@ run_impute_data <- function(data,
         "STRATA",
         "PSU",
         "FULL_PARTIAL",
-        "ANNUAL_WEIGHT1",
+        #"ANNUAL_WEIGHT1",
+        #"ANNUAL_WEIGHT_C2",
+        #"ANNUAL_WEIGHT_L2",
+        #"ANNUAL_WEIGHT_R2",
+        #"RETENTION_WEIGHT_C",
+        #"RETENTION_WEIGHT_L",
+
         "AGE_GRP",
         "CNTRY_REL_BUD",
         "CNTRY_REL_CHI",
@@ -96,7 +112,7 @@ run_impute_data <- function(data,
         "ATTR_WGT",
         "WGT",
         "COUNTRY2",
-        "CASE_MISSING_W2",
+        "CASE_OBSERVED_W2",
         "RACE",
         var.ignore0,
         paste0(var.ignore0, "_W1"),
@@ -106,45 +122,59 @@ run_impute_data <- function(data,
       var.class <- x %>%
         summarise(across(everything(), \(x) class(x)))
       var.n.unique <- x %>%
-        summarise(across(everything(), \(x) length(na.omit(unique(
-          x
-        )))))
+        summarise(across(everything(), \(x) length(na.omit(unique( x )))))
       tmp.meth[!(names(tmp.meth) %in% var.ignore)] <- "pmm"
-      tmp.meth[!(names(tmp.meth) %in% var.ignore) &
+      ## If you want to change to usine logreg/polyreg (much slower) change use.log.poly = TRUE
+      if(!use.log.poly){
+      	tmp.meth[!(names(tmp.meth) %in% var.ignore) &
                  (names(tmp.meth) %in% colnames(var.n.unique)[var.n.unique == 2]) &
-                 (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "pmm" # "logreg"
-      tmp.meth[!(names(tmp.meth) %in% var.ignore) &
+                 (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "logreg"
+      	tmp.meth[!(names(tmp.meth) %in% var.ignore) &
                  (names(tmp.meth) %in% colnames(var.n.unique)[var.n.unique > 2]) &
-                 (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "pmm" # "polyreg"
+                 (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "polyreg"
+      }
+      # IF
       tmp.meth[!(names(tmp.meth) %in% var.ignore) &
                  (names(tmp.meth) %in% colnames(var.n.unique)[var.n.unique > 7]) &
                  (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "cart"
-      tmp.meth[c("NUM_CHILDREN_W1", "NUM_CHILDREN_W2")] <- "cart"
+      # tmp.meth[names(tmp.meth) %in% c("NUM_CHILDREN", "NUM_CHILDREN_W1", "NUM_CHILDREN_W2")] <- "cart"
       tmp.meth[(names(tmp.meth) %in% var.ignore | names(tmp.meth) %in% comp.miss)] <- ""
       # Minimal set of missingness predictors (**TODO**)
-      pred.vars <- c(
-        "WGT",
-        "ATTR_WGT",
-        "ANNUAL_WEIGHT1_W1",
-        "MODE_RECRUIT_W1",
-        "MODE_ANNUAL_W1",
-        "AGE_W1",
-        "GENDER_W1",
-        "EDUCATION_3_W1",
-        "EMPLOYMENT_W1",
-        "MARITAL_STATUS_W1",
-        "RACE_PLURALITY_W1" ,
-        "BORN_COUNTRY_W1",
-        "URBAN_RURAL_W1"
-      )
+      if(is.null(pred.vars)){
+      	vars0 <- c(
+      	"ANNUAL_WEIGHT1",
+        "MODE_RECRUIT",
+        "MODE_ANNUAL",
+        "AGE",
+        "GENDER",
+        "EDUCATION_3",
+        "EMPLOYMENT",
+        "MARITAL_STATUS",
+        "RACE_PLURALITY" ,
+        "BORN_COUNTRY",
+        "URBAN_RURAL",
+        "INCOME_QUINTILE"
+        )
+
+        pred.vars <- c(
+          "WGT",
+          "ATTR_WGT",
+          "ANNUAL_WEIGHT_R2",
+          vars0,
+          paste0(vars0,"_W1")
+        )
+      }
       keep.var <- keep_variable(pred.vars, tmp.dat)
+
+      exclude.var <- c(
+      	var.ignore[var.ignore %in% colnames(tmp.dat)],
+      	colnames(tmp.dat)[!(colnames(tmp.dat) %in% pred.vars[keep.var])]
+      ) |> unique()
+
       tmp.pred <- quickpred2(
         tmp.dat,
-        mincor = 0.225,
-        maxcor = 0.99,
-        minpuc = 0.33,
         include = pred.vars[keep.var],
-        exclude = var.ignore[var.ignore %in% colnames(tmp.dat)]
+        exclude = exclude.var
       )
       # difficult variables: INCOME, EDUCATION (not edu_3), REGION, SELFID
 
@@ -154,16 +184,31 @@ run_impute_data <- function(data,
 
       fit.imp <- NULL
       try({
-        fit.imp <- mice::mice(
+      	# use futuremice if number of imputation is greater than 5 (speed boost)
+      	if(Nimp > 5){
+        fit.imp <- mice::futuremice(
           tmp.dat,
           m = Nimp,
           maxit = Miter,
           method = tmp.meth,
           predictorMatrix = tmp.pred,
-          visitSequence = "monotone",
           donors = 10,
-          threshold = 2
+          threshold = 2,
+          n.core = round(future::availableCores()/2,0), # use half of available cores
+          seed = 31415
         )
+        } else {
+        	fit.imp <- mice::mice(
+          tmp.dat,
+          m = Nimp,
+          maxit = Miter,
+          method = tmp.meth,
+          predictorMatrix = tmp.pred,
+          donors = 10,
+          threshold = 2,
+          seed = 31415
+        )
+        }
       })
       # the following is used just in case the above fails
       if (is.null(fit.imp)) {
@@ -173,8 +218,8 @@ run_impute_data <- function(data,
             m = Nimp,
             maxit = Miter,
             method = "cart",
-            visitSequence = "monotone",
-            predictorMatrix = tmp.pred
+            predictorMatrix = tmp.pred,
+          	seed = 31415
           )
         })
       }
@@ -182,8 +227,10 @@ run_impute_data <- function(data,
       fit.imp
     }))
 
-
+  if(is.null(file.name)){
+  	file.name = "gfs_imputed_data_test.RData"
+  }
   save(df.imp,
-       file = here::here(data.dir, "gfs_imputed_data_test.RData"))
+       file = here::here(data.dir, file.name))
   df.imp
 }
