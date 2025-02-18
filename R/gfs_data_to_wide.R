@@ -78,13 +78,7 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = c("ID", "COUNTRY"), test 
         df.w2 <- data %>%
           filter(WAVE == 2) %>%
           select(all_of(get_wave_flag(colnames(data), "W2")))
-        # The following forces missingness - attrition by country
-        {
-          df.w2 <- df.w2 %>%
-            group_by(COUNTRY) %>%
-            slice_sample(prop = 0.75) %>%
-            ungroup()
-        }
+
         colnames(df.w1) <- paste0(colnames(df.w1), "_W1")
         colnames(df.w2) <- paste0(colnames(df.w2), "_W2")
         df.wide <- left_join(df.w1, df.w2, by = c("ID_W1" = "ID_W2", "COUNTRY_W1" = "COUNTRY_W2"))
