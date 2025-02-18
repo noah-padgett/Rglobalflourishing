@@ -22,6 +22,8 @@
 #'
 #' The imputation method for most variables is predictive mean matching (pmm). You can change this by using the use.log.poly option to use logistic & multinomial logistic regression for all factor (categorical) variables. Some variables use CART (classification and regression tree) method to help avoid singularities and errors in during the imputation stage. Such as factor/nominal variables with a lot of categories.
 #'
+#' For more information about pmm see https://stefvanbuuren.name/fimd/sec-pmm.html
+#'
 #' @export
 run_impute_data <- function(data,
                             data.dir,
@@ -44,7 +46,7 @@ run_impute_data <- function(data,
         dplyr::mutate(dplyr::across(
           !any_of(c(
             "ATTR_WGT",
-            "WGT",
+            "COMPOSITE_WGT",
             "COUNTRY2",
             "AGE_GRP",
             "AGE_GRP_W1",
@@ -110,7 +112,7 @@ run_impute_data <- function(data,
       var.ignore <- c(
         "ID",
         "ATTR_WGT",
-        "WGT",
+        "COMPOSITE_WGT",
         "COUNTRY2",
         "CASE_OBSERVED_W2",
         "RACE",
@@ -133,7 +135,7 @@ run_impute_data <- function(data,
                  (names(tmp.meth) %in% colnames(var.n.unique)[var.n.unique > 2]) &
                  (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "polyreg"
       }
-      # IF
+      #
       tmp.meth[!(names(tmp.meth) %in% var.ignore) &
                  (names(tmp.meth) %in% colnames(var.n.unique)[var.n.unique > 7]) &
                  (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "cart"
@@ -157,9 +159,8 @@ run_impute_data <- function(data,
         )
 
         pred.vars <- c(
-          "WGT",
+          "COMPOSITE_WGT",
           "ATTR_WGT",
-          "ANNUAL_WEIGHT_R2",
           vars0,
           paste0(vars0,"_W1")
         )
@@ -193,7 +194,7 @@ run_impute_data <- function(data,
           method = tmp.meth,
           predictorMatrix = tmp.pred,
           donors = 10,
-          threshold = 2,
+          threshold = 1.0, # see https://github.com/amices/mice/issues/314 for threshold information
           n.core = round(future::availableCores()/2,0), # use half of available cores
           seed = 31415
         )
@@ -205,7 +206,7 @@ run_impute_data <- function(data,
           method = tmp.meth,
           predictorMatrix = tmp.pred,
           donors = 10,
-          threshold = 2,
+          threshold = 1.0,
           seed = 31415
         )
         }

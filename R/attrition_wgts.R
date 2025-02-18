@@ -28,7 +28,7 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
   }
   if (is.null(attr.pred)) {
     attr.pred <- c(
-      "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1",
+      "ANNUAL_WEIGHT1", "MODE_ANNUAL_W1",
       "AGE_GRP_W1", "GENDER_W1", "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1"
     )
   }
@@ -114,8 +114,11 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
 #' @examples {
 #'   # TO-DO
 #' }
+#' @description
+#' TO-DO
+#'
 #' @export
-run_attrition_model <- function(data, wgt = "ANNUAL_WEIGHT1",...) {
+run_attrition_model <- function(data, wgt = "ANNUAL_WEIGHT1", ...) {
   df.attr <- data %>%
     dplyr::mutate(
       COUNTRY2 = COUNTRY
@@ -135,9 +138,9 @@ run_attrition_model <- function(data, wgt = "ANNUAL_WEIGHT1",...) {
       data = purrr::map(data, \(tmp.dat){
         tmp.dat %>%
           dplyr::mutate(
-            WGT = ATTR_WGT * .data[[{wgt}]] ,
-            # WGT must sum to sample size
-            WGT = n() * (WGT / sum(WGT))
+            COMPOSITE_WGT = ATTR_WGT * .data[[{wgt}]] ,
+            # COMPOSITE_WGT must sum to sample size
+            COMPOSITE_WGT = n() * (COMPOSITE_WGT / sum(COMPOSITE_WGT))
           )
       })
     ) %>%

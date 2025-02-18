@@ -33,6 +33,7 @@ recode_imputed_data <- function(
     list.manual = NULL,
     wave = 2,
     method.income = "quintiles.top.fixed",
+    wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU",
     ...) {
   if (is.null(list.default)) {
     stop("'list.default' was not supplied. Check input for recode_imputed data.")
@@ -51,20 +52,28 @@ recode_imputed_data <- function(
     unnest(imp.complete) %>%
     select(!any_of(drop_created_vars)) %>%
     mutate(
-      across(where(is.factor) | where(is.character), \(x){
-        x <- sub("\\..*", "", x)
-        case_when(x == "(Missing)" ~ NA, .default = x) |>
-          as.numeric()
+      across(where(is.factor), \(x){
+      	if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
+        	x <- sub("\\..*", "", x)
+        	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+          		as.numeric()
+        } 
+        if(str_detect(cur_column(), "BORN_COUNTRY")){
+        	x <- sub("\\..*", "", x)
+        	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+          		as.numeric()
+        }
+        x
       })
     )
   #options(warn=2)
   #for(i in 1:ncol(df.imp.long)){
-  # x = df.imp.long[[i]]
-  # if(is.factor(x) | is.character(x)){
-  #   x <- sub("\\..*", "", x)
-  #   x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-  #     as.numeric()
-  # }
+  #x = df.imp.long[[i]]
+  #if(is.factor(x) & str_detect(colnames(df.imp.long)[i],"COUNTRY", negate=TRUE)){
+  #  x <- sub("\\..*", "", x)
+  #  x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+  #    as.numeric()
+  #}
   #}
   ## ============================================================================================ ##
   ## ====== WAVE SPECIFIC CODE ================================================================== ##
@@ -292,7 +301,7 @@ recode_imputed_data <- function(
       # re-level REL2 based on most prominent religion as reference
       rel.prominence <- data %>%
         group_by((!!as.name(var)), .drop = FALSE) %>%
-        summarise(N = sum({wgt})) %>%
+        summarise(N = sum(.data[[wgt]])) %>%
         ungroup() %>%
         mutate(N = N / sum(N))
       rel.prominence.tab <- rel.prominence[, 2, drop = T]
@@ -413,7 +422,7 @@ recode_imputed_data <- function(
             )
           })
         ) %>%
-        group_by(.imp, COUNTRY2) %>%
+        group_by(.imp, COUNTRY) %>%
         nest() %>%
         mutate(
           svy.data = map(data, \(x){
@@ -428,7 +437,7 @@ recode_imputed_data <- function(
         ) %>%
         select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
 
-      df.original <- df.original %>%
+       df.imp.long <-  df.imp.long %>%
         mutate(.imp2 = .imp) %>%
         group_by(.imp2, COUNTRY2) %>%
         nest() %>%

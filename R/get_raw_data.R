@@ -15,7 +15,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles", .test=FALSE, wgt = "ANNUAL_WEIGHT1_W1", strata = "STRATA_W1", psu = "PSU_W1", ...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles", .test=FALSE, wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU", ...) {
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -61,7 +61,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original %>%
       dplyr::mutate(
         CASE_OBSERVED_W2 = rowSums(across(any_of(cnames), \(x){
-          !is.na(x)
+          !(is.na(x) | x %in% c(-98, 98, 99) )
         })),
         CASE_OBSERVED_W2 = CASE_OBSERVED_W2/ncol_w2,
         CASE_OBSERVED_W2 = dplyr::case_when(CASE_OBSERVED_W2 > 0.50 ~ 1, .default = 0)
@@ -320,7 +320,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
               INCOME_QUINTILE_W1 = recode_labels(INCOME_QUINTILE_W1, "INCOME_QUINTILE"),
               INCOME_QUINTILE_W2 = recode_labels(INCOME_QUINTILE_W2, "INCOME_QUINTILE"),
               INCOME_QUINTILE_W1 = factor(INCOME_QUINTILE_W1),
-              INCOME_QUINTILE_W2 = factor(INCOME_QUINTILE_W2)              
+              INCOME_QUINTILE_W2 = factor(INCOME_QUINTILE_W2)
             )
         })
       ) %>%

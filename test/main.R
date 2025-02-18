@@ -17,7 +17,7 @@
 # Analysis Set-Up
 
 # Add the directory where the dataset is stored on your computer
-data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave1-data"
+data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-data"
 #dataset.name <- "gfs_all_countries_wave1.sav"
 dataset.name <- "df_w2_sim_long.sav"
 
@@ -82,11 +82,11 @@ FORCE_CONTINUOUS <- FALSE
       data = df.raw,
       obs.id.var = "CASE_OBSERVED_W2",
       attr.pred = c(
-        "ANNUAL_WEIGHT1", "STRATA", "MODE_ANNUAL_W1",
+        "ANNUAL_WEIGHT_R1", "STRATA", "MODE_ANNUAL_W1",
         "AGE_W1", "GENDER_W1", "EDUCATION_3_W1", "INCOME_QUINTILE_W1",
         "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1"
       ),
-      wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU"
+      wgt = "ANNUAL_WEIGHT_R1", strata = "STRATA", psu = "PSU"
     )
     df.imp <- run_impute_data(
       data = df.tmp,
@@ -113,7 +113,8 @@ FORCE_CONTINUOUS <- FALSE
   df.imp.long <- recode_imputed_data(
     df.imp,
     list.default = RECODE.DEFAULTS,
-    list.composites = LIST.COMPOSITES
+    list.composites = LIST.COMPOSITES,
+    wgt = "ANNUAL_WEIGHT_R1"
   )
 }
 # ================================================================================================ #

@@ -327,7 +327,7 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
       "FEEL_ANXIOUS_W2",
       "CONTROL_WORRY_W2"
     ),
-    COMPOSITE_FLOURISHING__W2 = c(
+    COMPOSITE_FLOURISHING_W2 = c(
       "LIFE_SAT_W2",
       "HAPPY_W2",
       "PHYSICAL_HLTH_W2",
@@ -411,7 +411,7 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
     COMPOSITE_DEPRESSION_W2 = "sum",
     COMPOSITE_ANXIETY_W2 = "sum",
     COMPOSITE_DEP_ANX_COMBO_W2 = "sum",
-    COMPOSITE_FLOURISHING__W2 = "mean",
+    COMPOSITE_FLOURISHING_W2 = "mean",
     COMPOSITE_FLOURISHING_SECURE_W2 = "mean",
     COMPOSITE_HAPPI_LIFE_SAT_W2 = "mean",
     COMPOSITE_HEALTH_W2 = "mean",
