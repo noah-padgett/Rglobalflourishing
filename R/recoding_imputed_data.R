@@ -189,8 +189,8 @@ recode_imputed_data <- function(
         COV_INCOME_12YRS_Y1 = relevel(COV_INCOME_12YRS_Y1, ref = "Got by"),
 
         # Other basic setup to make things easier later...
-        MODE_RECRUIT_Y1 = recode_labels( MODE_RECRUIT_Y1, "MODE_RECRUIT_Y1", include.value = FALSE),
-        MODE_RECRUIT_Y1 = recode_to_type(MODE_RECRUIT_Y1, "MODE_RECRUIT_Y1"),
+        MODE_RECRUIT = recode_labels( MODE_RECRUIT, "MODE_RECRUIT", include.value = FALSE),
+        MODE_RECRUIT = recode_to_type(MODE_RECRUIT, "MODE_RECRUIT"),
         RACE = COV_SELFID1_Y1,
         MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
