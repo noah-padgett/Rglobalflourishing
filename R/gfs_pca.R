@@ -44,6 +44,7 @@ append_pc_to_df <- function(data, var = NULL, std = FALSE) {
   }
   # get raw data for combining
   if (is.survey) {
+  	df.svy <- data
     df.x <- data$variables
   } else {
     df.x <- data
@@ -58,12 +59,9 @@ append_pc_to_df <- function(data, var = NULL, std = FALSE) {
   }
   df <- cbind(df.x, df.pc)
   if (is.survey) {
-    df <- survey::svydesign(
-      data = df,
-      ids = ~PSU,
-      strata = ~STRATA,
-      weights = ~WGT
-    )
+  	# append PCs to "variables" component of survey object
+  	df.svy[['variables']] <- df
+  	df <- df.svy
   }
   df
 }
@@ -88,7 +86,7 @@ append_pc_to_df <- function(data, var = NULL, std = FALSE) {
 get_eigenvalues <- function(data, var, cor = FALSE) {
   # get class of data
   is.survey <- ifelse(any(class(data) %in% c(
-    "survey.design2", "survey.design"
+    "survey.design2", "survey.design", "tbl_svy"
   )), TRUE, FALSE)
   if (is.survey) {
     wgt <- data$prob

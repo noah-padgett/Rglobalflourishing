@@ -4,16 +4,31 @@
 \alias{run_impute_data}
 \title{Impute Missing GFS Data}
 \usage{
-run_impute_data(data, data.dir, Nimp = 20, Miter = 5, ...)
+run_impute_data(
+  data,
+  data.dir,
+  Nimp = 20,
+  Miter = 5,
+  pred.vars = NULL,
+  file.name = NULL,
+  use.log.poly = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{data.frame with raw data with missing coded as "(missing)"}
 
 \item{data.dir}{directory where to save the imputed data}
 
-\item{Nimp}{number of imputed datasets to generated}
+\item{Nimp}{number of imputed datasets to generated (default of 20)}
 
-\item{Miter}{number of iteration per imputed dataset to use during imputatiuon (uses mice default)}
+\item{Miter}{number of iteration per imputed dataset to use during imputatiuon (uses mice default of 5)}
+
+\item{pred.vars}{(optional) character vector of variable names to to as potential predictors in missing data model (see details for more information)}
+
+\item{file.name}{(optional) character string of the file name, must end in ".RData"}
+
+\item{use.log.poly}{(FALSE) whether to use logistic/mutlinomial logistic regression for factor variables.}
 
 \item{...}{other arguments passed to mice}
 }
@@ -24,9 +39,11 @@ for extraction and recoding.
 \description{
 Additional details forthcoming....
 
-The imputation automatically excludes variables that are 100% in some countries (e.g., APPROVE_GOVT in Egypt) and variables that are conditional on previous questions (e.g, REL3-9 and TEACHINGS1-15).
+The imputation automatically excludes variables that are 100% in some countries (e.g., APPROVE_GOVT in Egypt, ABUSED in Israel) and variables that are conditional on previous questions (e.g, REL3-9 and TEACHINGS1-15).
 
-The imputation method for all variables is predictive mean matching (pmm).
+The imputation method for most variables is predictive mean matching (pmm). You can change this by using the use.log.poly option to use logistic & multinomial logistic regression for all factor (categorical) variables. Some variables use CART (classification and regression tree) method to help avoid singularities and errors in during the imputation stage. Such as factor/nominal variables with a lot of categories.
+
+For more information about pmm see https://stefvanbuuren.name/fimd/sec-pmm.html
 }
 \details{
 A wrapper function to conducting imputation by country.

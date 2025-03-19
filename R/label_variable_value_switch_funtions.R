@@ -3,7 +3,7 @@
 #' A relatively simple switch function to get a better name for each variable
 #'
 #' @param df data.frame with column (var)
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @param ... other parameters passes to get_outcome_better_name(.)
 #' @returns the df with label attribute updated
 #' @examples {
@@ -29,25 +29,27 @@ gfs_add_variable_labels <- function(df, vars, ...){
 #'
 #' A relatively simple switch function to get a better name for each variable
 #'
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @param include.label (logical) whether to include variable name (var) in returned string
 #' @param include.wave (logical) whether to include wave identifier (Wave 1) in returned string, not applicable when include.name is true
+#' @param include.fid (logical) whether to include a flag (a-e) for designating which flourishing index domain each an item belongs to
 #' @returns a character string
 #' @examples {
-#'   get_outcome_better_name("HAPPY_W1")
-#'   get_outcome_better_name("HAPPY_W1", include.name = FALSE)
-#'   get_outcome_better_name("HAPPY_W1", include.name = FALSE, include.wave = TRUE)
+#'   get_outcome_better_name("HAPPY_Y1")
+#'   get_outcome_better_name("HAPPY_Y1", include.name = FALSE)
+#'   get_outcome_better_name("HAPPY_Y1", include.name = FALSE, include.wave = TRUE)
 #' }
 #' @export
 get_outcome_better_name <- function(var,
                                     include.name = TRUE,
-                                    include.wave = FALSE) {
+                                    include.wave = FALSE,
+                                    include.fid = FALSE) {
   var0 = var
   var.wave = ""
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
-      var.wave = paste0("_W", i)
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
+      var.wave = paste0("_Y", i)
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -68,17 +70,17 @@ get_outcome_better_name <- function(var,
       DOI_RETENTION = "End Date of Interview - Retention (b/ 1 & 2) Survey",
       DOI_ANNUAL_2 = "End Date of Interview - Annual Survey 2",
       ABUSED = "Physically or Sexually Abused When Growing Up",
-      AFTER_DEATH = "Believe in Life After Death",
+      AFTER_DEATH = "Life after Death Belief",
       AGE = "Age of Respondent",
-      APPROVE_GOVT = "Job Performance of National Government",
-      ATTEND_SVCS = "How Often You Attend Religious Services",
-      BELIEVE_GOD = "Believe in One God More Than One God an Impersonal Spiritual Force or None of These",
-      BELONGING = "Sense of Belonging in Your Country",
-      BODILY_PAIN = "Bodily Pain in Past 4 Weeks",
+      APPROVE_GOVT = "Government Approval",
+      ATTEND_SVCS = "Weekly+ Religious Service Attendance",
+      BELIEVE_GOD = "Belief in God",
+      BELONGING = "Belonging",
+      BODILY_PAIN = "Pain in Past 4 Weeks",
       BORN_COUNTRY = "Born in This Country",
-      CAPABLE = "Feel Very Capable in Most Things You Do in Life",
-      CIGARETTES = "Number of Cigarettes Smoked Each Day",
-      CLOSE_TO = "Know One Special Person You Feel Very Close To",
+      CAPABLE = "Mastery",
+      CIGARETTES = "Smoking - Number of Cigarettes",
+      CLOSE_TO = "Intimate Friend",
       CNTRY_REL_BUD = "The Teachings of Buddhism Are Very Important in Your Life (Buddhism is Common Religion in Country Yet Not Identified as Current Religion)",
       CNTRY_REL_CHI = "The Teachings of Chinese Folk/Traditional Religion are Very Important in Your Life (Chinese Folk/Traditional Religion is Common Religion in Country Yet Not Identified as Current Religion)",
       CNTRY_REL_CHR = "The Teachings of Christianity Are Very Important in Your Life (Christianity is Common Religion in Country Yet Not Identified as Current Religion)",
@@ -86,68 +88,68 @@ get_outcome_better_name <- function(var,
       CNTRY_REL_ISL = "The Teachings of Islam Are Very Important in Your Life (Islam is Common Religion in Country Yet Not Identified as Current Religion)",
       CNTRY_REL_JUD = "The Teachings of Judaism Are Very Important in Your Life (Judaism is Common Religion in Country Yet Not Identified as Current Religion)",
       CNTRY_REL_SHI = "The Teachings of Shinto Are Very Important in Your Life (Shinto is Common Religion in Country Yet Not Identified as Current Religion)",
-      COMFORT_REL = "Find Strength or Comfort in Your Religion or Spirituality",
-      CONNECTED_REL = "Feel Connected to a Religion or Form of Spirituality",
-      CONTENT = "Relational Contentment",
-      CONTROL_WORRY = "Been Bothered in Last Two Weeks By: Not Being Able to Stop or Control Worrying",
+      COMFORT_REL = "Religious/Spiritual Comfort",
+      CONNECTED_REL = "Religious Connection",
+      CONTENT = "Relationship Contentment",
+      CONTROL_WORRY = "Anxiety Symptoms -- Cannot stop worrying",
       COVID_DEATH = "Family Member or Close Friend Died From Coronavirus",
-      CRITICAL = "People in Your Religious Community are Critical of You or Your Lifestyle",
-      DAYS_EXERCISE = "Number of Days You Exercised in the Past Week",
-      DEPRESSED = "Been Bothered in Last Two Weeks By: Feeling Down Depressed or Hopeless",
-      DISCRIMINATED = "Feel Discriminated Against Because of Any Group You Are Part of",
+      CRITICAL = "Critical Interaction",
+      DAYS_EXERCISE = "Days Exercise",
+      DEPRESSED = "Depression Symptoms -- Feel Hopeless",
+      DISCRIMINATED = "Perceived Discrimination",
       DONATED = "Charitable Giving",
-      DRINKS = "Number of Alcoholic Drinks You Drank in Past Seven Days",
+      DRINKS = "Drinking - Number of Drinks",
       EDUCATION = "Highest Completed Level of Education",
-      EDUCATION_3 = "Highest Completed Level of Education (Three Levels)",
-      EMPLOYMENT = "Employment Status",
-      EXPECT_GOOD = "You Expect More Good Things to Happen to You Than Bad",
-      EXPENSES = "Worry About Being Able to Meet Normal Monthly Living Expenses",
-      FATHER_LOVED = "Felt Loved by Your Father When Growing Up",
-      FATHER_RELATN = "Relationship With Your Father When Growing Up",
-      FEEL_ANXIOUS = "Been Bothered in Last Two Weeks By: Feeling Nervous Anxious or on Edge",
-      FORGIVE = "How Often You Have Forgiven Those Who Have Hurt You",
-      FREEDOM = "You Have Freedom in Your Life to Pursue the Things Most Important to You",
+      EDUCATION_3 = "Educational Attainment",
+      EMPLOYMENT = "Currently Employed",
+      EXPECT_GOOD = "Optimism",
+      EXPENSES = "Financial Security",
+      FATHER_LOVED = "Felt Loved by Your Father Growing Up",
+      FATHER_RELATN = "Relationship With Your Father Growing Up",
+      FEEL_ANXIOUS = "Anxiety Symptoms -- Feel on Edge",
+      FORGIVE = "Forgivingness",
+      FREEDOM = "Freedom in Life",
       GENDER = "Gender of Respondent",
-      GIVE_UP = "You Are Always Able to Give Up Some Happiness Now For Greater Happiness Later",
-      GOD_PUNISH = "You feel God a God or a Spiritual Force Is Punishing You",
-      GRATEFUL = "If You Listed Everything You Felt Grateful For It Would Be a Long List",
-      GROUP_NOT_REL = "Participate in Groups That Are Not Religious",
-      HAPPY = "How Happy You Usually Feel",
+      GIVE_UP = "Delayed Gratification",
+      GOD_PUNISH = "God Punish",
+      GRATEFUL = "Gratitude ",
+      GROUP_NOT_REL = "Weekly+ Secular Community Participation",
+      HAPPY = "Happiness",
       HEALTH_GROWUP = "Your Health When Growing Up",
-      HEALTH_PROB = "Health Problems Prevent You From Doing Things People Your Age Normally Do",
-      HELP_STRANGER = "Helped a Stranger or Someone You Didnt Know in the Past Month",
-      HOPE_FUTURE = "You Always Remain Hopeful About the Future",
+      HEALTH_PROB = "Health Problems",
+      HELP_STRANGER = "Helping Strangers",
+      HOPE_FUTURE = "Hope",
       INCOME = "Monthly Household Income (Annual Household Income in U.S. and Australia)",
       INCOME_12YRS = "Feelings About Familys Household Income When Growing Up",
       INCOME_DIFF = "Government Should Take Measures to Reduce Differences in Income Levels",
-      INCOME_FEELINGS = "Feelings About Household Income",
-      INTEREST = "Been Bothered in Last Two Weeks By: Little Interest or Pleasure in Doing Things",
-      LIFE_APPROACH = "Your Religious Beliefs and Practices Are What Lie Behind Your Whole Approach to Life",
-      LIFE_BALANCE = "The Various Aspects of Your Life Are in Balance",
-      LIFE_PURPOSE = "You Understand Your Purpose in Life",
-      LIFE_SAT = "How Satisfied Are You With Life as a Whole These Days",
-      LONELY = "How Often You Feel Lonely",
-      LOVED_BY_GOD = "You Feel Loved by God the Main God You Worship or the Spiritual Force That Guides Your Life",
+      INCOME_FEELINGS = "Subjective Financial Status",
+      INTEREST = "Depression Symptoms -- Loss of Interest",
+      LIFE_APPROACH = "Religious Practices",
+      LIFE_BALANCE = "Life Balance",
+      LIFE_PURPOSE = "Purpose in Life",
+      LIFE_SAT = "Life Satisfaction",
+      LONELY = "Loneliness",
+      LOVED_BY_GOD = "Love by God",
       MARITAL_STATUS = "Marital Status",
-      MENTAL_HEALTH = "Mental Health",
-      MOTHER_LOVED = "Felt Loved by Your Mother When Growing Up",
-      MOTHER_RELATN = "Relationship With Your Mother When Growing Up",
-      NUM_CHILDREN = "Number of Children Under 18 Years of Age in Household",
+      MENTAL_HEALTH = "Self-Rated Mental Health",
+      MOTHER_LOVED = "Felt Loved by Your Mother Growing Up",
+      MOTHER_RELATN = "Relationship With Your Mother Growing Up",
+      NUM_CHILDREN = "Number of Children",
       NUM_HOUSEHOLD = "Number of People 18 or Older Who Currently Live In Household",
       OBEY_LAW = "Whatever The Circumstances The Law Should Always Be Obeyed",
       OUTSIDER = "Felt Like an Outsider in Your Family When Growing Up",
-      OWN_RENT_HOME = "Rent or Own the Home You Live in",
+      OWN_RENT_HOME = "Own Home",
       PARENTS_12YRS = "Parents Married to Each Other When You Were Around 12 Years Old",
-      PEACE = "You Feel You Are at Peace With Your Thoughts and Feelings",
-      PEOPLE_HELP = "You Could Count on People in Your Life to Help You if You Were in Trouble",
-      PHYSICAL_HLTH = "Physical Health",
+      PEACE = "Inner Peace",
+      PEOPLE_HELP = "Social Support",
+      PHYSICAL_HLTH = "Self-Rated Physical Health",
       POLITICAL_ID = "Political Party",
-      PRAY_MEDITATE = "How Often You Pray or Meditate",
-      PROMOTE_GOOD = "You Always Act to Promote Good in All Circumstances",
+      PRAY_MEDITATE = "Pray or Meditate",
+      PROMOTE_GOOD = "Orientation to Promote Good",
       REGION1 = "Regional Level 1",
       REGION2 = "Regional Level 2",
       REGION3 = "Regional Level 3",
-      REL_EXPERIENC = "Had a Profound Religious or Spiritual Awakening or Experience",
+      REL_EXPERIENC = "Religious Experience",
       REL_IMPORTANT = "Religion an Important Part of Your Daily Life",
       REL1 = "Religion When Twelve Years Old",
       REL2 = "Current Religion",
@@ -158,14 +160,14 @@ get_outcome_better_name <- function(var,
       REL7 = "Best Described as Atheist Agnostic or Neither",
       REL8 = "Are You Spiritual Religious Both or Neither",
       REL9 = "Buddhist Sect You Most Identify With",
-      SACRED_TEXTS = "Read or Listen to Sacred Texts/Religious Literature",
-      SAT_LIVE = "Satisfaction With City or Area Where You Live",
-      SAT_RELATNSHP = "Your Relationships Are as Satisfying As You Want Them to Be",
-      SAY_IN_GOVT = "People Like You Have a Say About What the Government Does",
+      SACRED_TEXTS = "Religious Reading and Listening",
+      SAT_LIVE = "Place Satisfaction",
+      SAT_RELATNSHP = "Relationship Satisfaction",
+      SAY_IN_GOVT = "Say in Government",
       SELFID1 = "First Identified Race/Ethnicity/Nationality of Respondent",
       SELFID2 = "Second Identified Race/Ethnicity/Nationality of Respondent",
-      SHOW_LOVE = "You Show Someone in Your Life You Love or Care for Them",
-      SUFFERING = "The Extent to Which You Are Suffering",
+      SHOW_LOVE = "Showing Love/Care",
+      SUFFERING = "Suffering",
       SVCS_12YRS = "How Often You Attended Religious Services or Worshiped When You Were Around 12 Years Old",
       SVCS_FATHER = "How Often Your Father Attended Religious Services or Worshiped When You Were Around 12 Years Old",
       SVCS_MOTHER = "How Often Your Mother Attended Religious Services or Worshiped When You Were Around 12 Years Old",
@@ -184,8 +186,8 @@ get_outcome_better_name <- function(var,
       TEACHINGS_13 = "The Teachings of Spiritism Are Very Important in Your Life (Spiritism Identified as Current Religion)",
       TEACHINGS_14 = "The Teachings of African-Derived Religions Are Very Important in Your Life (African-Derived Religions Identified as Current Religion)",
       TEACHINGS_15 = "The Teachings of Chinese Folk/Traditional Religion are Very Important in Your Life (Chinese Folk/Traditional Religion Identified as Current Religion)",
-      TELL_BELIEFS = "You Tell Other People About Your Religion or Spirituality Even When They Have Different Beliefs",
-      THREAT_LIFE = "How Much Youve Been Bothered by the Biggest Threat to Life Youve Witnessed or Experienced",
+      TELL_BELIEFS = "Evangilism",
+      THREAT_LIFE = "Threat Life",
       TRAITS1 = "Pair of Traits Applies To You: Extroverted Enthusiastic",
       TRAITS2 = "Pair of Traits Applies To You: Critical Quarrelsome",
       TRAITS3 = "Pair of Traits Applies To You: Dependable Self-disciplined",
@@ -196,17 +198,20 @@ get_outcome_better_name <- function(var,
       TRAITS8 = "Pair of Traits Applies To You: Disorganized Careless",
       TRAITS9 = "Pair of Traits Applies To You: Calm Emotionally Stable",
       TRAITS10 = "Pair of Traits Applies To You: Conventional Uncreative",
-      TRUST_PEOPLE = "People in This Country Trust One Another",
+      TRUST_PEOPLE = "Trust",
       URBAN_RURAL = "Urban/Rural",
-      VOLUNTEERED = "Volunteered Your Time to an Organization in Past Month",
-      WB_FIVEYRS = "Life Evaluation: Five Years From Now",
-      WB_TODAY = "Life Evaluation: Today",
-      WORRY_SAFETY = "Worry About Safety Food or Housing",
-      WORTHWHILE = "The Things You Do in Your Life Are Worthwhile",
+      VOLUNTEERED = "Volunteering",
+      WB_FIVEYRS = "Future Life Evaluation",
+      WB_TODAY = "Life Evaluation Today",
+      WORRY_SAFETY = "Material Security",
+      WORTHWHILE = "Meaning in Life",
 
       FULL_PARTIAL = "Completion Status",
       STRATA = "Strata",
       PSU = "PSU",
+
+      AGE_GRP = "Year of birth (age group)",
+      RACE_PLURALITY = "Race Plurality (Prominent race/ethnic group [0] or not [1])",
 
       # weights...
       ANNUAL_WEIGHT1 = "Annual Weight Year 1",
@@ -234,8 +239,10 @@ get_outcome_better_name <- function(var,
       COMPOSITE_AGREEABLENESS = "Agreeableness",
       COMPOSITE_CONSCIENTIOUSNESS = "Conscientiousness",
       COMPOSITE_NEUROTICISM = "Neuroticism",
-      INCOME_QUINTILE = "Income Quintiles",
-      MARITAL_STATUS_EVER_MARRIED = "Marital Status Ever Married",
+
+      INCOME_QUINTILE = "Income -- Top Quintile within Country",
+      MARITAL_STATUS_EVER_MARRIED = "Ever been Married",
+      MARITAL_STATUS_DIVORCED = "Currently Divorced",
 
       # Retention (b/ 1 & 2)
       ENGAGE_ARTS = 'ENGAGE_ARTS',
@@ -256,6 +263,17 @@ get_outcome_better_name <- function(var,
       var0
     )
   }
+  if (include.fid){
+    var.tmp <- case_when(
+      var0 %in% c("LIFE_SAT", "HAPPY") ~ paste0(var.tmp, "^(a)"),
+      var0 %in% c("PHYSICAL_HLTH", "MENTAL_HEALTH") ~ paste0(var.tmp, "^(b)"),
+      var0 %in% c("WORTHWHILE", "LIFE_PURPOSE") ~ paste0(var.tmp, "^(c)"),
+      var0 %in% c("PROMOTE_GOOD", "GIVE_UP") ~ paste0(var.tmp, "^(d)"),
+      var0 %in% c("CONTENT", "SAT_RELATNSHP") ~ paste0(var.tmp, "^(e)"),
+      var0 %in% c("EXPENSES", "WORRY_SAFETY") ~ paste0(var.tmp, "^(f)"),
+      .default = var.tmp
+    )
+  }
   if (include.name) {
     var.tmp = paste0(var.tmp, " (", var0, ")")
   } else if (include.wave) {
@@ -264,6 +282,7 @@ get_outcome_better_name <- function(var,
                      stringr::str_sub(var.wave, start = -1, end = -1),
                      ")")
   }
+
   var.tmp
 }
 
@@ -271,16 +290,16 @@ get_outcome_better_name <- function(var,
 #'
 #' A relatively simple switch function to get the scale ('bin', 'cont')
 #'
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @returns a character string (by default returns 'cont')
 #' @examples {
-#'   get_outcome_scale("HAPPY_W1")
+#'   get_outcome_scale("HAPPY_Y1")
 #' }
 #' @export
 get_outcome_scale <- function(var) {
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -476,16 +495,16 @@ get_outcome_scale <- function(var) {
 #'
 #' A relatively simple switch function to get the missingness codes (-98, 98, 99, etc.)
 #'
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @returns a character string
 #' @examples {
-#'   get_missing_codes("HAPPY_W1")
+#'   get_missing_codes("HAPPY_Y1")
 #' }
 #' @export
 get_missing_codes <- function(var) {
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -649,7 +668,7 @@ get_missing_codes <- function(var) {
 #' A relatively simple switch function to transform variables to factors, numeric, etc.
 #'
 #' @param x a vector
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @returns a vector
 #' @examples {
 #'   # to-do
@@ -657,8 +676,8 @@ get_missing_codes <- function(var) {
 #' @export
 recode_to_type <- function(x, var) {
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -836,7 +855,7 @@ recode_to_type <- function(x, var) {
 #' to the labels associated with those levels.
 #'
 #' @param x a vector
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @param include.value a logical (default = TRUE) of whether to include the numeric value in the returned label. Not applicable for numeric variables.
 #' @param add.whitespace a logical (default = FALSE) of whether to add whitespace to beginning of label (makes summary tables easier to read).
 #' @returns a vector
@@ -846,8 +865,8 @@ recode_to_type <- function(x, var) {
 #' @export
 recode_labels <- function(x, var, include.value = TRUE, add.whitespace = FALSE) {
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -3229,7 +3248,7 @@ nurse)",
 #' coding or otherwise).
 #'
 #' @param x a vector
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @returns a vector
 #' @examples {
 #'   # to-do
@@ -3237,8 +3256,8 @@ nurse)",
 #' @export
 reorder_levels <- function(x, var) {
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -3408,7 +3427,7 @@ reorder_levels <- function(x, var) {
 #' for accuracy.
 #'
 #' @param x a vector
-#' @param var a character string (e.g., 'HAPPY_W1')
+#' @param var a character string (e.g., 'HAPPY_Y1')
 #' @param is.sum (default FALSE) a logical determining whether to change how a variable is treated.
 #' Currently only applies to certain composite variables.
 #' @returns a vector
@@ -3418,8 +3437,8 @@ reorder_levels <- function(x, var) {
 #' @export
 recode_to_numeric <- function(x, var, is.sum = FALSE) {
   for (i in 1:5) {
-    if (stringr::str_detect(var, paste0("_W", i))) {
-      var = stringr::str_remove(var, paste0("_W", i))
+    if (stringr::str_detect(var, paste0("_Y", i))) {
+      var = stringr::str_remove(var, paste0("_Y", i))
     }
     if (stringr::str_detect(var, paste0("_R", i))) {
       var = stringr::str_remove(var, paste0("_R", i))
@@ -3688,192 +3707,192 @@ get_wave_flag <- function(var, wave = NULL){
   out = var
   for(j in 1:length(var)){
     for (i in 1:5) {
-      if (stringr::str_detect(var[j], paste0("_W", i))) {
-        var[j] = stringr::str_remove(var[j], paste0("_W", i))
+      if (stringr::str_detect(var[j], paste0("_Y", i))) {
+        var[j] = stringr::str_remove(var[j], paste0("_Y", i))
       }
-      if (stringr::str_detect(var[j], paste0("_WR", i))) {
-        var[j] = stringr::str_remove(var[j], paste0("_WR", i))
+      if (stringr::str_detect(var[j], paste0("_YR", i))) {
+        var[j] = stringr::str_remove(var[j], paste0("_YR", i))
       }
     }
     {
   out[j] = switch(
     var[j],
-    ID = 'W1_WR1_W2',
-    COUNTRY = 'W1_WR1_W2',
-    STRATA = 'W1',
-    PSU = 'W1',
-    WAVE = 'W1',
-    MODE_RECRUIT = 'W1',
-    MODE_ANNUAL = 'W1',
-    RECRUIT_TYPE = 'W1',
-    DOI_RECRUIT = 'W1',
-    DOI_ANNUAL = 'W1',
-    DOI_RETENTION = '_WR1',
-    DOI_ANNUAL_2 = '_W2',
-    ABUSED = 'W1',
-    AFTER_DEATH = 'W1_W2',
-    AGE = 'W1_WR1_W2',
-    APPROVE_GOVT = 'W1_W2',
-    ATTEND_SVCS = 'W1_W2',
-    BELIEVE_GOD = 'W1_W2',
-    BELONGING = 'W1_W2',
-    BODILY_PAIN = 'W1_W2',
-    BORN_COUNTRY = 'W1',
-    CAPABLE = 'W1_W2',
-    CIGARETTES = 'W1_W2',
-    CLOSE_TO = 'W1_W2',
-    CNTRY_REL_BUD = 'W1',
-    CNTRY_REL_CHI = 'W1',
-    CNTRY_REL_CHR = 'W1',
-    CNTRY_REL_HIN = 'W1',
-    CNTRY_REL_ISL = 'W1',
-    CNTRY_REL_JUD = 'W1',
-    CNTRY_REL_SHI = 'W1',
-    COMFORT_REL = 'W1_W2',
-    CONNECTED_REL = 'W1_W2',
-    CONTENT = 'W1_W2',
-    CONTROL_WORRY = 'W1_W2',
-    COVID_DEATH = 'W1',
-    CRITICAL = 'W1_W2',
-    DAYS_EXERCISE = 'W1_W2',
-    DEPRESSED = 'W1_W2',
-    DISCRIMINATED = 'W1_W2',
-    DONATED = 'W1_W2',
-    DRINKS = 'W1_W2',
-    EDUCATION = 'W1',
-    EDUCATION_3 = 'W1_W2',
-    EMPLOYMENT = 'W1_W2',
-    EXPECT_GOOD = 'W1_W2',
-    EXPENSES = 'W1_W2',
-    FATHER_LOVED = 'W1',
-    FATHER_RELATN = 'W1',
-    FEEL_ANXIOUS = 'W1_W2',
-    FORGIVE = 'W1_W2',
-    FREEDOM = 'W1_W2',
-    GENDER = 'W1',
-    GIVE_UP = 'W1_W2',
-    GOD_PUNISH = 'W1_W2',
-    GRATEFUL = 'W1_W2',
-    GROUP_NOT_REL = 'W1_W2',
-    HAPPY = 'W1_W2',
-    HEALTH_GROWUP = 'W1',
-    HEALTH_PROB = 'W1_W2',
-    HELP_STRANGER = 'W1_W2',
-    HOPE_FUTURE = 'W1_W2',
-    INCOME = 'W1_W2',
-    INCOME_12YRS = 'W1',
-    INCOME_DIFF = 'W1',
-    INCOME_FEELINGS = 'W1_W2',
-    INTEREST = 'W1_W2',
-    LIFE_APPROACH = 'W1_W2',
-    LIFE_BALANCE = 'W1_W2',
-    LIFE_PURPOSE = 'W1_W2',
-    LIFE_SAT = 'W1_W2',
-    LONELY = 'W1_W2',
-    LOVED_BY_GOD = 'W1_W2',
-    MARITAL_STATUS = 'W1_W2',
-    MENTAL_HEALTH = 'W1_W2',
-    MOTHER_LOVED = 'W1',
-    MOTHER_RELATN = 'W1',
-    NUM_CHILDREN = 'W1_W2',
-    NUM_HOUSEHOLD = 'W1_W2',
-    OBEY_LAW = 'W1',
-    OUTSIDER = 'W1',
-    OWN_RENT_HOME = 'W1_W2',
-    PARENTS_12YRS = 'W1',
-    PEACE = 'W1_W2',
-    PEOPLE_HELP = 'W1_W2',
-    PHYSICAL_HLTH = 'W1_W2',
-    POLITICAL_ID = 'W1_W2',
-    PRAY_MEDITATE = 'W1_W2',
-    PROMOTE_GOOD = 'W1_W2',
-    REGION1 = 'W1_W2',
-    REGION2 = 'W1_W2',
-    REGION3 = 'W1_W2',
-    REL_EXPERIENC = 'W1_W2',
-    REL_IMPORTANT = 'W1',
-    REL1 = 'W1',
-    REL2 = 'W1_W2',
-    REL3 = 'W1_W2',
-    REL4 = 'W1_W2',
-    REL5 = 'W1_W2',
-    REL6 = 'W1_W2',
-    REL7 = 'W1_W2',
-    REL8 = 'W1_W2',
-    REL9 = 'W1_W2',
-    SACRED_TEXTS = 'W1_W2',
-    SAT_LIVE = 'W1_W2',
-    SAT_RELATNSHP = 'W1_W2',
-    SAY_IN_GOVT = 'W1_W2',
-    SELFID1 = 'W1',
-    SELFID2 = 'W1',
-    SHOW_LOVE = 'W1_W2',
-    SUFFERING = 'W1_W2',
-    SVCS_12YRS = 'W1',
-    SVCS_FATHER = 'W1',
-    SVCS_MOTHER = 'W1',
-    TEACHINGS_1 = 'W1',
-    TEACHINGS_2 = 'W1',
-    TEACHINGS_3 = 'W1',
-    TEACHINGS_4 = 'W1',
-    TEACHINGS_5 = 'W1',
-    TEACHINGS_6 = 'W1',
-    TEACHINGS_7 = 'W1',
-    TEACHINGS_8 = 'W1',
-    TEACHINGS_9 = 'W1',
-    TEACHINGS_10 = 'W1',
-    TEACHINGS_11 = 'W1',
-    TEACHINGS_12 = 'W1',
-    TEACHINGS_13 = 'W1',
-    TEACHINGS_14 = 'W1',
-    TEACHINGS_15 = 'W1',
-    TELL_BELIEFS = 'W1_W2',
-    THREAT_LIFE = 'W1_W2',
-    TRAITS1 = 'W1',
-    TRAITS2 = 'W1',
-    TRAITS3 = 'W1',
-    TRAITS4 = 'W1',
-    TRAITS5 = 'W1',
-    TRAITS6 = 'W1',
-    TRAITS7 = 'W1',
-    TRAITS8 = 'W1',
-    TRAITS9 = 'W1',
-    TRAITS10 = 'W1',
-    TRUST_PEOPLE = 'W1_W2',
-    URBAN_RURAL = 'W1_W2',
-    VOLUNTEERED = 'W1_W2',
-    WB_FIVEYRS = 'W1_W2',
-    WB_TODAY = 'W1_W2',
-    WORRY_SAFETY = 'W1_W2',
-    WORTHWHILE = 'W1_W2',
-    ANNUAL_WEIGHT1 = 'W1',
-    ANNUAL_WEIGHT_C2 = '_W2',
-    ANNUAL_WEIGHT_L2 = '_W2',
-    ANNUAL_WEIGHT_R2 = '_W2',
-    ANNUAL_WEIGHT_C1 = '_W2',
-    ANNUAL_WEIGHT_L1 = '_W2',
-    ANNUAL_WEIGHT_R1 = '_W2',
-    RETENTION_WEIGHT_C = '_WR1',
-    RETENTION_WEIGHT_L = '_WR1',
-    FULL_PARTIAL = 'W1_WR1_W2',
-    STUDY_YEAR = 'W1_WR1_W2',
-    MODE = 'W1_WR1_W2',
-    TIME_MEDIA = '_WR1',
-    ENGAGE_ARTS = '_WR1',
-    BEAUTY = '_WR1',
-    ACHIEVING = '_WR1',
-    FOOD_INSECURE = '_WR1',
-    NATURE = '_WR1',
-    DILIGENT = '_WR1',
-    MIND_FOCUSED = '_WR1',
-    HAPPY_IMPORT = '_WR1',
-    HEALTHY = '_WR1',
-    MEANINGFUL = '_WR1',
-    GOOD_PERSON = '_WR1',
-    GOOD_RELATION = '_WR1',
-    REL_LIFE = '_WR1',
-    GF_MONEY = '_WR1',
-    'W1_WR1_W2'
+    ID = 'Y1_YR1_Y2',
+    COUNTRY = 'Y1_YR1_Y2',
+    STRATA = 'Y1',
+    PSU = 'Y1',
+    WAVE = 'Y1',
+    MODE_RECRUIT = 'Y1',
+    MODE_ANNUAL = 'Y1',
+    RECRUIT_TYPE = 'Y1',
+    DOI_RECRUIT = 'Y1',
+    DOI_ANNUAL = 'Y1',
+    DOI_RETENTION = '_YR1',
+    DOI_ANNUAL_2 = '_Y2',
+    ABUSED = 'Y1',
+    AFTER_DEATH = 'Y1_Y2',
+    AGE = 'Y1_YR1_Y2',
+    APPROVE_GOVT = 'Y1_Y2',
+    ATTEND_SVCS = 'Y1_Y2',
+    BELIEVE_GOD = 'Y1_Y2',
+    BELONGING = 'Y1_Y2',
+    BODILY_PAIN = 'Y1_Y2',
+    BORN_COUNTRY = 'Y1',
+    CAPABLE = 'Y1_Y2',
+    CIGARETTES = 'Y1_Y2',
+    CLOSE_TO = 'Y1_Y2',
+    CNTRY_REL_BUD = 'Y1',
+    CNTRY_REL_CHI = 'Y1',
+    CNTRY_REL_CHR = 'Y1',
+    CNTRY_REL_HIN = 'Y1',
+    CNTRY_REL_ISL = 'Y1',
+    CNTRY_REL_JUD = 'Y1',
+    CNTRY_REL_SHI = 'Y1',
+    COMFORT_REL = 'Y1_Y2',
+    CONNECTED_REL = 'Y1_Y2',
+    CONTENT = 'Y1_Y2',
+    CONTROL_WORRY = 'Y1_Y2',
+    COVID_DEATH = 'Y1',
+    CRITICAL = 'Y1_Y2',
+    DAYS_EXERCISE = 'Y1_Y2',
+    DEPRESSED = 'Y1_Y2',
+    DISCRIMINATED = 'Y1_Y2',
+    DONATED = 'Y1_Y2',
+    DRINKS = 'Y1_Y2',
+    EDUCATION = 'Y1',
+    EDUCATION_3 = 'Y1_Y2',
+    EMPLOYMENT = 'Y1_Y2',
+    EXPECT_GOOD = 'Y1_Y2',
+    EXPENSES = 'Y1_Y2',
+    FATHER_LOVED = 'Y1',
+    FATHER_RELATN = 'Y1',
+    FEEL_ANXIOUS = 'Y1_Y2',
+    FORGIVE = 'Y1_Y2',
+    FREEDOM = 'Y1_Y2',
+    GENDER = 'Y1',
+    GIVE_UP = 'Y1_Y2',
+    GOD_PUNISH = 'Y1_Y2',
+    GRATEFUL = 'Y1_Y2',
+    GROUP_NOT_REL = 'Y1_Y2',
+    HAPPY = 'Y1_Y2',
+    HEALTH_GROWUP = 'Y1',
+    HEALTH_PROB = 'Y1_Y2',
+    HELP_STRANGER = 'Y1_Y2',
+    HOPE_FUTURE = 'Y1_Y2',
+    INCOME = 'Y1_Y2',
+    INCOME_12YRS = 'Y1',
+    INCOME_DIFF = 'Y1',
+    INCOME_FEELINGS = 'Y1_Y2',
+    INTEREST = 'Y1_Y2',
+    LIFE_APPROACH = 'Y1_Y2',
+    LIFE_BALANCE = 'Y1_Y2',
+    LIFE_PURPOSE = 'Y1_Y2',
+    LIFE_SAT = 'Y1_Y2',
+    LONELY = 'Y1_Y2',
+    LOVED_BY_GOD = 'Y1_Y2',
+    MARITAL_STATUS = 'Y1_Y2',
+    MENTAL_HEALTH = 'Y1_Y2',
+    MOTHER_LOVED = 'Y1',
+    MOTHER_RELATN = 'Y1',
+    NUM_CHILDREN = 'Y1_Y2',
+    NUM_HOUSEHOLD = 'Y1_Y2',
+    OBEY_LAW = 'Y1',
+    OUTSIDER = 'Y1',
+    OWN_RENT_HOME = 'Y1_Y2',
+    PARENTS_12YRS = 'Y1',
+    PEACE = 'Y1_Y2',
+    PEOPLE_HELP = 'Y1_Y2',
+    PHYSICAL_HLTH = 'Y1_Y2',
+    POLITICAL_ID = 'Y1_Y2',
+    PRAY_MEDITATE = 'Y1_Y2',
+    PROMOTE_GOOD = 'Y1_Y2',
+    REGION1 = 'Y1_Y2',
+    REGION2 = 'Y1_Y2',
+    REGION3 = 'Y1_Y2',
+    REL_EXPERIENC = 'Y1_Y2',
+    REL_IMPORTANT = 'Y1',
+    REL1 = 'Y1',
+    REL2 = 'Y1_Y2',
+    REL3 = 'Y1_Y2',
+    REL4 = 'Y1_Y2',
+    REL5 = 'Y1_Y2',
+    REL6 = 'Y1_Y2',
+    REL7 = 'Y1_Y2',
+    REL8 = 'Y1_Y2',
+    REL9 = 'Y1_Y2',
+    SACRED_TEXTS = 'Y1_Y2',
+    SAT_LIVE = 'Y1_Y2',
+    SAT_RELATNSHP = 'Y1_Y2',
+    SAY_IN_GOVT = 'Y1_Y2',
+    SELFID1 = 'Y1',
+    SELFID2 = 'Y1',
+    SHOW_LOVE = 'Y1_Y2',
+    SUFFERING = 'Y1_Y2',
+    SVCS_12YRS = 'Y1',
+    SVCS_FATHER = 'Y1',
+    SVCS_MOTHER = 'Y1',
+    TEACHINGS_1 = 'Y1',
+    TEACHINGS_2 = 'Y1',
+    TEACHINGS_3 = 'Y1',
+    TEACHINGS_4 = 'Y1',
+    TEACHINGS_5 = 'Y1',
+    TEACHINGS_6 = 'Y1',
+    TEACHINGS_7 = 'Y1',
+    TEACHINGS_8 = 'Y1',
+    TEACHINGS_9 = 'Y1',
+    TEACHINGS_10 = 'Y1',
+    TEACHINGS_11 = 'Y1',
+    TEACHINGS_12 = 'Y1',
+    TEACHINGS_13 = 'Y1',
+    TEACHINGS_14 = 'Y1',
+    TEACHINGS_15 = 'Y1',
+    TELL_BELIEFS = 'Y1_Y2',
+    THREAT_LIFE = 'Y1_Y2',
+    TRAITS1 = 'Y1',
+    TRAITS2 = 'Y1',
+    TRAITS3 = 'Y1',
+    TRAITS4 = 'Y1',
+    TRAITS5 = 'Y1',
+    TRAITS6 = 'Y1',
+    TRAITS7 = 'Y1',
+    TRAITS8 = 'Y1',
+    TRAITS9 = 'Y1',
+    TRAITS10 = 'Y1',
+    TRUST_PEOPLE = 'Y1_Y2',
+    URBAN_RURAL = 'Y1_Y2',
+    VOLUNTEERED = 'Y1_Y2',
+    WB_FIVEYRS = 'Y1_Y2',
+    WB_TODAY = 'Y1_Y2',
+    WORRY_SAFETY = 'Y1_Y2',
+    WORTHWHILE = 'Y1_Y2',
+    ANNUAL_WEIGHT1 = 'Y1',
+    ANNUAL_WEIGHT_C2 = '_Y2',
+    ANNUAL_WEIGHT_L2 = '_Y2',
+    ANNUAL_WEIGHT_R2 = '_Y2',
+    ANNUAL_WEIGHT_C1 = '_Y2',
+    ANNUAL_WEIGHT_L1 = '_Y2',
+    ANNUAL_WEIGHT_R1 = '_Y2',
+    RETENTION_WEIGHT_C = '_YR1',
+    RETENTION_WEIGHT_L = '_YR1',
+    FULL_PARTIAL = 'Y1_YR1_Y2',
+    STUDY_YEAR = 'Y1_YR1_Y2',
+    MODE = 'Y1_YR1_Y2',
+    TIME_MEDIA = '_YR1',
+    ENGAGE_ARTS = '_YR1',
+    BEAUTY = '_YR1',
+    ACHIEVING = '_YR1',
+    FOOD_INSECURE = '_YR1',
+    NATURE = '_YR1',
+    DILIGENT = '_YR1',
+    MIND_FOCUSED = '_YR1',
+    HAPPY_IMPORT = '_YR1',
+    HEALTHY = '_YR1',
+    MEANINGFUL = '_YR1',
+    GOOD_PERSON = '_YR1',
+    GOOD_RELATION = '_YR1',
+    REL_LIFE = '_YR1',
+    GF_MONEY = '_YR1',
+    'Y1_YR1_Y2'
   )
   }
   }

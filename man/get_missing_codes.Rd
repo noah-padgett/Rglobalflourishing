@@ -7,7 +7,7 @@
 get_missing_codes(var)
 }
 \arguments{
-\item{var}{a character string (e.g., 'HAPPY_W1')}
+\item{var}{a character string (e.g., 'HAPPY_Y1')}
 }
 \value{
 a character string
@@ -17,6 +17,6 @@ A relatively simple switch function to get the missingness codes (-98, 98, 99, e
 }
 \examples{
 {
-  get_missing_codes("HAPPY_W1")
+  get_missing_codes("HAPPY_Y1")
 }
 }

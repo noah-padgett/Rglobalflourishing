@@ -11,6 +11,9 @@ recode_imputed_data(
   list.manual = NULL,
   wave = 2,
   method.income = "quintiles.top.fixed",
+  wgt = "ANNUAL_WEIGHT1",
+  strata = "STRATA",
+  psu = "PSU",
   ...
 )
 }

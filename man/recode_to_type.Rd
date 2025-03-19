@@ -9,7 +9,7 @@ recode_to_type(x, var)
 \arguments{
 \item{x}{a vector}
 
-\item{var}{a character string (e.g., 'HAPPY_W1')}
+\item{var}{a character string (e.g., 'HAPPY_Y1')}
 }
 \value{
 a vector

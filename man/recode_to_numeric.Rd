@@ -9,7 +9,7 @@ recode_to_numeric(x, var, is.sum = FALSE)
 \arguments{
 \item{x}{a vector}
 
-\item{var}{a character string (e.g., 'HAPPY_W1')}
+\item{var}{a character string (e.g., 'HAPPY_Y1')}
 
 \item{is.sum}{(default FALSE) a logical determining whether to change how a variable is treated.
 Currently only applies to certain composite variables.}

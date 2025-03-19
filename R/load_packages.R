@@ -14,7 +14,7 @@ load_packages <- function(...) {
         # list of packages
   packages <- c(
     # Core packages
-    "survey",
+    "survey", "srvyr",
     "gtsummary",
     "mice",
     "EValue",

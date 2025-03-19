@@ -9,11 +9,11 @@ recode_labels(x, var, include.value = TRUE, add.whitespace = FALSE)
 \arguments{
 \item{x}{a vector}
 
-\item{var}{a character string (e.g., 'HAPPY_W1')}
+\item{var}{a character string (e.g., 'HAPPY_Y1')}
 
 \item{include.value}{a logical (default = TRUE) of whether to include the numeric value in the returned label. Not applicable for numeric variables.}
 
-\item{add.whitespace}{a logical (efault = FALSE) of whether to add whitespace to beginning of label (makes summary tables easier to read).}
+\item{add.whitespace}{a logical (default = FALSE) of whether to add whitespace to beginning of label (makes summary tables easier to read).}
 }
 \value{
 a vector

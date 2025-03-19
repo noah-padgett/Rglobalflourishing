@@ -8,6 +8,7 @@ gfs_meta_forest_plot(
   fit,
   better.name = NULL,
   p.subtitle = "GFS Forest Plot",
+  p.title = NULL,
   ...
 )
 }
@@ -17,6 +18,8 @@ gfs_meta_forest_plot(
 \item{better.name}{a manually supplied name for the focal predictor}
 
 \item{p.subtitle}{a string passed to subtitle of the forest plot.}
+
+\item{p.title}{a string passed to title of the forest plot}
 
 \item{...}{additional arguments as needed}
 }

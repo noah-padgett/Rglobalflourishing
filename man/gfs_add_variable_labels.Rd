@@ -11,7 +11,7 @@ gfs_add_variable_labels(df, vars, ...)
 
 \item{...}{other parameters passes to get_outcome_better_name(.)}
 
-\item{var}{a character string (e.g., 'HAPPY_W1')}
+\item{var}{a character string (e.g., 'HAPPY_Y1')}
 }
 \value{
 the df with label attribute updated

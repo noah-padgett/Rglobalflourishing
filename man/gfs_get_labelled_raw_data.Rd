@@ -8,8 +8,11 @@ gfs_get_labelled_raw_data(
   file,
   list.composites = NULL,
   wave = 2,
-  method.income = "quintiles.top.fixed",
-  .test = FALSE,
+  method.income = "quintiles",
+  wgt = "ANNUAL_WEIGHT1",
+  strata = "STRATA",
+  psu = "PSU",
+  data.is.wide = FALSE,
   ...
 )
 }
@@ -22,7 +25,7 @@ gfs_get_labelled_raw_data(
 
 \item{method.income}{method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', ''quintiles.top.random', 'numeric'.}
 
-\item{.test}{(for internal use only)}
+\item{data.is.wide}{(FALSE) change to TRUE only if the data are in long format}
 
 \item{...}{other arguments}
 }

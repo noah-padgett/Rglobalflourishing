@@ -4,7 +4,13 @@
 \alias{gfs_data_to_wide}
 \title{Transform Data to Wide Format}
 \usage{
-gfs_data_to_wide(data, var = "WAVE", ids = "ID", test = FALSE, ...)
+gfs_data_to_wide(
+  data,
+  var = "WAVE",
+  ids = c("ID", "COUNTRY"),
+  test = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{name of file to get data from}

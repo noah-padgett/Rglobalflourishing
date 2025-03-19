@@ -203,3 +203,16 @@ get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
   }
   tmp.list
 }
+
+#' @rdname compute_calibrated
+#' @export
+get_fitted_attrition_models <- function(res.dir) {
+  tmp.list <- list()
+  tmp.attr.files <- list.files(res.dir)
+  i = 1
+  for ( i in 1:length(tmp.attr.files)){
+  	load(here::here(res.dir, tmp.attr.files[i]))
+     tmp.list[[str_split_i(tmp.attr.files[i], " fitted", 1)]] <- fit.attr
+  }
+  tmp.list
+}

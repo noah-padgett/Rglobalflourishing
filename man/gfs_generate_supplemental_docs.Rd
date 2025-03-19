@@ -10,17 +10,27 @@ gfs_generate_supplemental_docs(
   meta.wpc = NULL,
   coun.wopc = NULL,
   coun.wpc = NULL,
+  supp.meta.wopc = NULL,
+  supp.meta.wpc = NULL,
+  supp.coun.wopc = NULL,
+  supp.coun.wpc = NULL,
   coun.fit.pca = NULL,
+  attr.models = NULL,
   focal.predictor = NULL,
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",
-  p.bonferroni = NULL,
+  p.bonferroni = 0.00068,
   baseline.pred = NULL,
   outcome.vec = NULL,
   mylabels = NULL,
+  wgt = as.name("WGT"),
+  wgt1 = as.name("ANNUAL_WEIGHT_R1"),
+  wgt2 = as.name("ANNUAL_WEIGHT_R1"),
+  psu = as.name("PSU"),
+  strata = as.name("STRATA"),
   res.dir = "results",
   included.countries = NULL,
-  what = "both"
+  what = "all"
 )
 }
 \arguments{
@@ -44,7 +54,7 @@ gfs_generate_supplemental_docs(
 
 \item{baseline.pred}{a vector of characters defining which baseline characteristics were used as control variables. This can be used to force the inclusion some variable into the main text summary table.}
 
-\item{outcome.vec}{a character vector of outcomes names (e.g., "HAPPY_W2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the coun.wopc (coun.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.}
+\item{outcome.vec}{a character vector of outcomes names (e.g., "HAPPY_Y2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the coun.wopc (coun.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.}
 
 \item{mylabels}{an optional character vector that will be printed out in specific rows of tables 2/3 depending on the specification pf outcome.vec}
 
@@ -52,7 +62,7 @@ gfs_generate_supplemental_docs(
 
 \item{included.countries}{a character vector of which countries to include in output -- defaults to all.}
 
-\item{what}{(character) options include: "both", "S1", "S2"}
+\item{what}{(character) options include: "all", "S1", "S2", "S3".}
 
 \item{...}{other arguments as needed}
 }
@@ -60,25 +70,30 @@ gfs_generate_supplemental_docs(
 a word document saved to the current 'results/' directory
 }
 \description{
-Generates two online supplements.
+Generates three online supplements.
 
-Supplement 1:
+Supplement 1: Supplemental main-text results
 
-(1) Summary statistics of OUTCOMES by wave (raw data)
-(2) Country-specific results
+(1) Summary statistics of outcomes by wave (raw data)
+(2) Supplemental meta-analyzed results
+   - Compare attrition weights results with multiple-imputation results (one for each model)
+
+Supplement 2: Country-specific results
+
    - Summary statistics by wave for demographics (similar to main text Table 1)
    - Summary statistics by wave for outcomes (similar to Table S1)
+  - Summary of attrition model and distribution of attrition weights
    - Summary statistics of principal components by outcome (# retained, % prop explained, cumsum % prop explained)
-   - Outcome-wide results (similar to main text Table 2)
+   - Outcome-wide results-attrition weights & multiple imputation (similar to main text Table 2-extra-wide p. format)
    - Outcome-wide E-values (similar to main text Table 3)
 
-Supplement 2:
+Supplement 3: Restructured country-specific results + forest plots
 
 (1) Summary statistics of demographics by country (raw data)
-(2) Summary statistics of OUTCOMES by country (raw data)
+(2) Summary statistics of outcomes by country (raw data)
 (3) Forest plots of all effects
-    - Model 1 (No PCs)
-    - Model 2 (w/ PCs)
+    - Model 1 (No PCs -- attrition weights)
+    - Model 2 (w/ PCs -- attrition weights)
 }
 \details{
 Generated two word documents containing the supplemental results for the outcome wide results for the GFS coordinated analyses.

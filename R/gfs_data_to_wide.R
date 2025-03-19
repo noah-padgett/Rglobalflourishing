@@ -30,7 +30,7 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = c("ID", "COUNTRY"), test 
         #   )  %>%
         #   dplyr::rename_with(
         #     .cols = ! (dplyr::any_of(c(ids))),
-        #     .fn = ~paste0(.x,"_W2", recycle0 = TRUE)
+        #     .fn = ~paste0(.x,"_Y2", recycle0 = TRUE)
         #   )
         # tmp.dat <- tmp.dat %>% slice_sample(prop=0.75)
         # tmp.dat <- tmp.dat %>%
@@ -66,7 +66,7 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = c("ID", "COUNTRY"), test 
         #   ) %>%
         #   dplyr::rename_with(
         #     .cols = ! (dplyr::any_of(ids)),
-        #     .fn = ~paste0(.x,"_W1", recycle0 = TRUE)
+        #     .fn = ~paste0(.x,"_Y1", recycle0 = TRUE)
         #   )
         #
         # df.wide <- left_join(data, tmp.dat)
@@ -74,21 +74,21 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = c("ID", "COUNTRY"), test 
         # reformat to "long" for saving and internal testing
         df.w1 <- data %>%
           filter(WAVE == 1) %>%
-          select(all_of(get_wave_flag(colnames(data), "W1")))
+          select(all_of(get_wave_flag(colnames(data), "Y1")))
         df.w2 <- data %>%
           filter(WAVE == 2) %>%
-          select(all_of(get_wave_flag(colnames(data), "W2")))
+          select(all_of(get_wave_flag(colnames(data), "Y2")))
 
-        colnames(df.w1) <- paste0(colnames(df.w1), "_W1")
-        colnames(df.w2) <- paste0(colnames(df.w2), "_W2")
-        df.wide <- left_join(df.w1, df.w2, by = c("ID_W1" = "ID_W2", "COUNTRY_W1" = "COUNTRY_W2"))
+        colnames(df.w1) <- paste0(colnames(df.w1), "_Y1")
+        colnames(df.w2) <- paste0(colnames(df.w2), "_Y2")
+        df.wide <- left_join(df.w1, df.w2, by = c("ID_Y1" = "ID_Y2", "COUNTRY_Y1" = "COUNTRY_Y2"))
 
         colnames(df.wide)[str_detect(colnames(df.wide), "ANNUAL_WEIGHT")] <- str_sub(
           colnames(df.wide)[str_detect(colnames(df.wide), "ANNUAL_WEIGHT")],
           start = 1, end = -4
         )
-        colnames(df.wide)[colnames(df.wide) %in% c("ID_W1", "COUNTRY_W1", "STRATA_W1", "PSU_W1")] <- str_sub(
-          colnames(df.wide)[colnames(df.wide) %in% c("ID_W1", "COUNTRY_W1", "STRATA_W1", "PSU_W1")],
+        colnames(df.wide)[colnames(df.wide) %in% c("ID_Y1", "COUNTRY_Y1", "STRATA_Y1", "PSU_Y1")] <- str_sub(
+          colnames(df.wide)[colnames(df.wide) %in% c("ID_Y1", "COUNTRY_Y1", "STRATA_Y1", "PSU_Y1")],
           start = 1, end = -4
         )
 
@@ -107,10 +107,11 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = c("ID", "COUNTRY"), test 
         ) %>%
         dplyr::rename_with(
           .cols = ! (dplyr::any_of(c(ids))),
-          .fn = ~paste0(.x,"_W1", recycle0 = TRUE)
+          .fn = ~paste0(.x,"_Y1", recycle0 = TRUE)
         )
+       
 
-        # append additional waves with the tag "_W"
+        # append additional waves with the tag "_Y"
         i=2
         for(i in 2:Nwaves){
           tmp.data <- data %>%
@@ -122,10 +123,18 @@ gfs_data_to_wide <- function(data, var = "WAVE", ids = c("ID", "COUNTRY"), test 
             ) %>%
             dplyr::rename_with(
               .cols = ! (dplyr::any_of(c(ids))),
-              .fn = ~paste0(.x,paste0("_W",i), recycle0 = TRUE)
+              .fn = ~paste0(.x,paste0("_Y",i), recycle0 = TRUE)
             )
           df.wide <- left_join(df.wide, tmp.data, by = { ids })
         }
+        colnames(df.wide)[str_detect(colnames(df.wide), "ANNUAL_WEIGHT")] <- str_sub(
+          colnames(df.wide)[str_detect(colnames(df.wide), "ANNUAL_WEIGHT")],
+          start = 1, end = -4
+        )
+        colnames(df.wide)[colnames(df.wide) %in% c("ID_Y1", "COUNTRY_Y1", "STRATA_Y1", "PSU_Y1")] <- str_sub(
+          colnames(df.wide)[colnames(df.wide) %in% c("ID_Y1", "COUNTRY_Y1", "STRATA_Y1", "PSU_Y1")],
+          start = 1, end = -4
+        )
       }
     })
   })

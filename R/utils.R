@@ -40,6 +40,7 @@ svy_scale <- function(x, wgt = NULL, psu = NULL, strata = NULL, design = NULL) {
 #'   check_variance("A", df)
 #'   check_variance("B", df)
 #' }
+#' @rdname svy_scale
 #' @export
 check_variance <- function(x, data) {
   ifelse(length(na.omit(unique(data[[x]]))) > 1, TRUE, FALSE)
@@ -63,11 +64,26 @@ check_variance <- function(x, data) {
 #' have any variance. The inverse selection, 'x[!(keep_variable(x, data))]', can be used to identify
 #' which variables were excluded.
 #'
+#' @rdname svy_scale
 #' @export
-keep_variable <- function(x, data) {
-  unlist(lapply(x, function(y) {
+keep_variable <- function(x, data, reason = "variance") {
+
+  r.var = unlist(lapply(x, function(y) {
     check_variance(y, data)
   }))
+  r.miss = unlist(lapply(x, function(y) {
+     !anyNA(data[[y]])
+  }))
+  if(reason == "variance"){
+  	out = r.var
+  }
+  if(reason == "miss"){
+  	out = r.miss
+  }
+  if(reason == "any"){
+  	out = as.logical(r.var * r.miss)
+  }
+  out
 }
 
 #' Create Predictor Matrix (modified)
@@ -95,6 +111,7 @@ keep_variable <- function(x, data) {
 #' threshold(s) against which the absolute correlation in the data is compared.
 #' this is used to help troubleshoot and resolve non-invertible predictor matrices
 #' @return a predictor matrix for use in mice
+#' @rdname svy_scale
 #' @export
 quickpred2 <- function(
     data, mincor = 0.1, minpuc = 0, include = "", exclude = "",
@@ -165,7 +182,8 @@ quickpred2 <- function(
   predictorMatrix
 }
 
-
+#' @rdname svy_scale
+#' @export
 format_flex_table <- function(xtb, pg.width = 6.5) {
   tb.temp <- xtb %>%
     theme_apa() %>%
@@ -189,9 +207,18 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
 }
 
 # A better rounding function for printing/concatenating results
+#' @rdname svy_scale
+#' @export
 .round <- function(x, digits = 2) {
   sprintf(paste0("%.", digits, "f"), x)
 }
+
+#' @rdname svy_scale
+#' @export
+.round_p <- function(x, .sci=TRUE, .digits=3, .eps = 1e-16){
+  format.pval(x, scientific=.sci, digits=.digits, eps = .eps)
+}
+
 
 # functions needed for forest plots
 .geom_stripes <- function(mapping = NULL,

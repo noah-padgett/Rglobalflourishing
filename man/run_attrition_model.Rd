@@ -11,11 +11,16 @@ run_attrition_model(data, ...)
 attrition weights.}
 
 \item{...}{additional arguments passed to append_attrition_wgts(.)}
+
+\item{wgt}{a character identifying the baseline weight used as the baseline for adjustments.}
 }
 \value{
 a dataset with attrition weights appended
 }
 \description{
+TO-DO
+}
+\details{
 Wrapper function to use the data.set specific attrition weights function.
 }
 \examples{

@@ -11,11 +11,16 @@ gfs_generate_main_doc(
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",
   focal.predictor = NULL,
-  p.bonferroni = NULL,
+  p.bonferroni = 0.00081,
   baseline.pred = NULL,
   outcome.vec = NULL,
   mylabels = NULL,
-  res.dir = "results"
+  res.dir = "results",
+  wgt = as.name("WGT"),
+  wgt1 = as.name("ANNUAL_WEIGHT_R1"),
+  wgt2 = as.name("ANNUAL_WEIGHT_R1"),
+  psu = as.name("PSU"),
+  strata = as.name("STRATA")
 )
 }
 \arguments{
@@ -29,11 +34,11 @@ gfs_generate_main_doc(
 
 \item{focal.predictor.reference.value}{(character) describing the baseline/reference group for the focal predictor.}
 
-\item{p.bonferroni}{a number (e.g., 0.007), is internally determined based on number of rows in meta.wopc}
+\item{p.bonferroni}{a number (e.g., 0.00081), is internally determined based on number of rows in meta.wopc if not provided}
 
 \item{baseline.pred}{a vector of characters defining which baseline characteristics were used as control variables. This can be used to force the inclusion some variable into the main text summary table.}
 
-\item{outcome.vec}{a character vector of outcomes names (e.g., "HAPPY_W2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the meta.wopc (meta.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.}
+\item{outcome.vec}{a character vector of outcomes names (e.g., "HAPPY_Y2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the meta.wopc (meta.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.}
 
 \item{mylabels}{an optional character vector that will be printed out in specific rows of tables 2/3 depending on the specification pf outcome.vec}
 

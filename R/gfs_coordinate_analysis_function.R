@@ -3,8 +3,8 @@
 #' Run regression analyses for specific focal predictor using the core GFS group analysis pathway.
 #'
 #' @param data long data.frame must have COUNTRY and .imp columns (default: df.imp.long)
-#' @param your.pred a character string defining focal predictor (e.g., "PHYSICAL_HLTH_W1")
-#' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_W2")
+#' @param your.pred a character string defining focal predictor (e.g., "PHYSICAL_HLTH_Y1")
+#' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_Y2")
 #' @param covariates a character vector defining core set of covariates (default: NULL)
 #' @param contemporaneous.exposures a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)
 #' @param standardize a logical (default: TRUE) of whether to standardized the predictor and outcome
@@ -48,9 +48,9 @@ gfs_run_regression_single_outcome <- function(
     your.outcome = NULL,
     covariates = NULL,
     contemporaneous.exposures = NULL,
-    wgt = "WGT",
-    psu = "PSU_W1", 
-    strata = "STRATA_W1",
+    wgt = ANNUAL_WEIGHT_R1,
+    psu = PSU,
+    strata = STRATA,
     # advanced options: only change if you know what you are doing
     standardize = TRUE,
     pc.cutoff = 7,
@@ -95,11 +95,21 @@ gfs_run_regression_single_outcome <- function(
       {
         if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
           data <- data %>%
-            dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE))
+            dplyr::filter(str_detect(COUNTRY,"Egypt", negate=TRUE)) %>%
+            dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE)) %>%
+            mutate(
+              COUNTRY = fct_drop(COUNTRY),
+              COUNTRY2 = fct_drop(COUNTRY2)
+            )
         }
         if (str_detect(your.outcome,"ABUSED") | str_detect(your.pred,"ABUSED")) {
           data <- data %>%
-            dplyr::filter(str_detect(COUNTRY2,"Israel", negate=TRUE))
+            dplyr::filter(str_detect(COUNTRY,"Israel", negate=TRUE)) %>%
+            dplyr::filter(str_detect(COUNTRY2,"Israel", negate=TRUE)) %>%
+            mutate(
+              COUNTRY = fct_drop(COUNTRY),
+              COUNTRY2 = fct_drop(COUNTRY2)
+            )
         }
       }
 
@@ -138,106 +148,117 @@ gfs_run_regression_single_outcome <- function(
               mutate(across(where(is.factor), \(x) droplevels(x)))
           }),
           svy.data = map(data, \(x) {
-            svydesign(
-              data = x,
-              ids = x[[psu]],
-              strata = x[[strata]],
-              weights = x[[wgt]],
-              calibrate.formula = ~1
-            )
+                x %>%
+                as_survey_design(
+                  ids = {{psu}},
+                  strata = {{strata}},
+                  weights = {{wgt}},
+                  calibrate.formula = ~1
+                )
+            # svydesign(
+            #   data = x,
+            #   ids = ~{{psu}},
+            #   strata = ~{{strata}},
+            #   weights = ~{{wgt}},
+            #   calibrate.formula = ~1
+            # )
           })
         )
 
 
-      # conduct PCA and add PCs to data.frames
-      svy.data.imp <- svy.data.imp %>%
-        mutate(
-          data = map(data, \(x) {
-            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x)
-            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-          }),
-          svy.data = map(svy.data, \(x) {
-            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-            append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-          }),
-          fit.pca = map(svy.data, \(x) {
-            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-            svyprcomp(
-              reformulate(var.cont.exposures[keep.cont.exposures]),
-              design = x,
-              scale. = TRUE,
-              scores = TRUE,
-              center = TRUE
-            )
-          }),
-          fit.eigen = map(svy.data, \(x) {
-            keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-            get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])
-          })
-        )
-      # get summary of PCA results to save to output file
-      fit.pca.summary <- svy.data.imp %>%
-        mutate(
-          pc.sdev = map(fit.pca, \(x) x$sdev),
-          pc.rotation = map(fit.pca, \(x) x$rotation)
-        ) %>%
-        select(.imp, COUNTRY, pc.sdev, fit.eigen) %>%
-        unnest(c(pc.sdev, fit.eigen)) %>%
-        mutate(
-          PC = 1:n()
-        ) %>%
-        ungroup() %>%
-        group_by(COUNTRY, PC) %>%
-        summarise(
-          pc.var = mean(pc.sdev**2, na.rm = TRUE)
-        ) %>%
-        ungroup() %>%
-        group_by(COUNTRY) %>%
-        mutate(
-          prop.var = pc.var / sum(pc.var),
-          prop.sum = cumsum(prop.var),
-          Cumulative_Proportion_Explained = prop.sum
-        )
+      # IF: pc.rule NOT omit
+      # Conduct PCA and add PCs to data.frames
+      fit.pca.summary = NULL # need to initialize object to not throw error when saving data
+      if( str_to_lower(pc.rule) != "omit"){
+        svy.data.imp <- svy.data.imp %>%
+          mutate(
+            data = map(data, \(x) {
+              keep.cont.exposures <- keep_variable(var.cont.exposures, data = x)
+              append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
+            }),
+            svy.data = map(svy.data, \(x) {
+              keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
+              append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
+            }),
+            fit.pca = map(svy.data, \(x) {
+              keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
+              svyprcomp(
+                reformulate(var.cont.exposures[keep.cont.exposures]),
+                design = x,
+                scale. = TRUE,
+                scores = TRUE,
+                center = TRUE
+              )
+            }),
+            fit.eigen = map(svy.data, \(x) {
+              keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
+              get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])
+            })
+          )
+        # get summary of PCA results to save to output file
+        fit.pca.summary <- svy.data.imp %>%
+          mutate(
+            pc.sdev = map(fit.pca, \(x) x$sdev),
+            pc.rotation = map(fit.pca, \(x) x$rotation)
+          ) %>%
+          select(.imp, COUNTRY, pc.sdev, fit.eigen) %>%
+          unnest(c(pc.sdev, fit.eigen)) %>%
+          mutate(
+            PC = 1:n()
+          ) %>%
+          ungroup() %>%
+          group_by(COUNTRY, PC) %>%
+          summarise(
+            pc.var = mean(pc.sdev**2, na.rm = TRUE)
+          ) %>%
+          ungroup() %>%
+          group_by(COUNTRY) %>%
+          mutate(
+            prop.var = pc.var / sum(pc.var),
+            prop.sum = cumsum(prop.var),
+            Cumulative_Proportion_Explained = prop.sum
+          )
 
-      # check pc.cutoff to determine which PCs to use
-      if (pc.cutoff %% 1 == 0) {
-        keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))
-        names(keep.num.pc) <- unique(data$COUNTRY2)
-      } else {
-        # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
-        if (str_to_lower(pc.rule) == "mintotal") {
-          keep.num.pc0 <- fit.pca.summary %>%
-            dplyr::filter(prop.sum >= pc.cutoff) %>%
-            dplyr::filter(PC == min(PC, na.rm = TRUE))
-          keep.num.pc <- keep.num.pc0$PC
-          names(keep.num.pc) <- keep.num.pc0$COUNTRY2
-        }
-        if (str_to_lower(pc.rule) == "mincomp") {
-          keep.num.pc0 <- fit.pca.summary %>%
-            dplyr::filter(prop.var >= pc.cutoff)
-          if (nrow(keep.num.pc0) < 22) {
-            # cutoff fails because too stringent, switching to a default of 0.02
-            keep.num.pc0 <- fit.pca.summary %>%
-              dplyr::filter(prop.var >= 0.02)
-          }
-          keep.num.pc0 <- keep.num.pc0 %>%
-            dplyr::filter(PC == max(PC, na.rm = TRUE))
-          keep.num.pc <- keep.num.pc0$PC
-          names(keep.num.pc) <- keep.num.pc0$COUNTRY2
-        }
-        if (str_to_lower(pc.rule == "omit")) {
-          # this is just to avoid errors and is not used
-          keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))
+        # check pc.cutoff to determine which PCs to use
+        if (pc.cutoff %% 1 == 0) {
+          keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))
           names(keep.num.pc) <- unique(data$COUNTRY2)
+        } else {
+          # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
+          if (str_to_lower(pc.rule) == "mintotal") {
+            keep.num.pc0 <- fit.pca.summary %>%
+              dplyr::filter(prop.sum >= pc.cutoff) %>%
+              dplyr::filter(PC == min(PC, na.rm = TRUE))
+            keep.num.pc <- keep.num.pc0$PC
+            names(keep.num.pc) <- keep.num.pc0$COUNTRY2
+          }
+          if (str_to_lower(pc.rule) == "mincomp") {
+            keep.num.pc0 <- fit.pca.summary %>%
+              dplyr::filter(prop.var >= pc.cutoff)
+            if (nrow(keep.num.pc0) < 22) {
+              # cutoff fails because too stringent, switching to a default of 0.02
+              keep.num.pc0 <- fit.pca.summary %>%
+                dplyr::filter(prop.var >= 0.02)
+            }
+            keep.num.pc0 <- keep.num.pc0 %>%
+              dplyr::filter(PC == max(PC, na.rm = TRUE))
+            keep.num.pc <- keep.num.pc0$PC
+            names(keep.num.pc) <- keep.num.pc0$COUNTRY2
+          }
+          if (str_to_lower(pc.rule) == "omit") {
+            # this is just to avoid errors and is not used
+            keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))
+            names(keep.num.pc) <- unique(data$COUNTRY2)
+          }
         }
+        tmp.df.pca <- data.frame(
+          COUNTRY = names(keep.num.pc),
+          NumPCAkeep = keep.num.pc
+        )
+        tmp.df.pca$Rule <- pc.rule
+        tmp.df.pca$Cutoff <- pc.cutoff
+        fit.pca.summary <- dplyr::left_join(fit.pca.summary, tmp.df.pca)
       }
-      tmp.df.pca <- data.frame(
-        COUNTRY = names(keep.num.pc),
-        NumPCAkeep = keep.num.pc
-      )
-      tmp.df.pca$Rule <- pc.rule
-      tmp.df.pca$Cutoff <- pc.cutoff
-      fit.pca.summary <- dplyr::left_join(fit.pca.summary, tmp.df.pca)
 
       # # test:
       # tmp.data <- svy.data.imp %>%
@@ -277,12 +298,12 @@ gfs_run_regression_single_outcome <- function(
           fit.tidy = purrr::map(svy.data, \(x) {
             tmp.fit <- NULL
             # first check if ANY variance on outomce
-            run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]]) > 0, TRUE, FALSE)
+            run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)
             if (run.analysis) {
               cur.country <- x[["variables"]][["COUNTRY2"]][1]
               # Next check each variable to make sure all have at least 2 levels, if only 1, exclude
               keep.var <- keep_variable(covariates, data = x[["variables"]])
-              if (pc.rule == "omit") {
+              if (str_to_lower(pc.rule) == "omit") {
                 tmp.model <- reformulate(
                   response = "PRIMARY_OUTCOME",
                   termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])
@@ -318,15 +339,15 @@ gfs_run_regression_single_outcome <- function(
         ungroup()
 
       # re-estimate basic model with the max number of PCs used to get the variable names
-      tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
       tmp.dat <- svy.data.imp %>% dplyr::filter(str_detect(COUNTRY, "United States"))
       keep.var <- keep_variable(covariates, data = tmp.dat$data[[1]])
-      if (pc.rule == "omit") {
+      if (str_to_lower(pc.rule) == "omit") {
         tmp.model <- reformulate(
           response = "PRIMARY_OUTCOME",
           termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])
         )
       } else {
+        tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
         tmp.model <- reformulate(
           response = "PRIMARY_OUTCOME",
           termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[tmp.country])))
@@ -338,10 +359,10 @@ gfs_run_regression_single_outcome <- function(
       coef.order <- names(tmp.fit$coefficients)
       coef.order <- c(
         coef.order[!(stringr::str_detect(coef.order, "(Intercept)") | stringr::str_detect(coef.order, "COV_REL1"))],
-        "COV_GENDER_W1Prefer not to answer",
-        "COV_REL1_W1Islam", "COV_REL1_W1Hinduism", "COV_REL1_W1Judaism", "COV_REL1_W1Buddhism",
-        "COV_REL1_W1Primal,Animist, or Folk religion", "COV_REL1_W1Chinesefolk/traditional religion",
-        "COV_REL1_W1Christianity", "COV_REL1_W1Combined",
+        "COV_GENDER_Y1Prefer not to answer",
+        "COV_REL1_Y1Islam", "COV_REL1_Y1Hinduism", "COV_REL1_Y1Judaism", "COV_REL1_Y1Buddhism",
+        "COV_REL1_Y1Primal,Animist, or Folk religion", "COV_REL1_Y1Chinesefolk/traditional religion",
+        "COV_REL1_Y1Christianity", "COV_REL1_Y1Combined",
         "(Intercept)"
       )
 
@@ -391,8 +412,8 @@ gfs_run_regression_single_outcome <- function(
           Variable = stringr::str_remove(Variable, "COV_"),
           Category = case_when(
             stringr::str_detect(Variable, "PC_") ~ stringr::str_remove(stringr::str_sub(Variable, -2, -1), "_"),
-            Variable == "MOTHER_RELATN_W1" ~ "Very good/somewhat good",
-            Variable == "FATHER_RELATN_W1" ~ "Very good/somewhat good",
+            Variable == "MOTHER_RELATN_Y1" ~ "Very good/somewhat good",
+            Variable == "FATHER_RELATN_Y1" ~ "Very good/somewhat good",
             Variable == "RACE_PLURALITY" ~ "Non-plurality groups",
             Variable == "MOTHER_NA" ~ "Mother NA flag",
             Variable == "FATHER_NA" ~ "Father NA flag",
@@ -406,18 +427,18 @@ gfs_run_regression_single_outcome <- function(
       sd.pooled <- svy.data.imp %>%
         mutate(
           est = purrr::map_dbl(svy.data, \(x) {
-            survey::svyvar(~PRIMARY_OUTCOME, design = x)
+          	survey::svyvar(~PRIMARY_OUTCOME, design = x, na.rm=TRUE)
           }),
           pred.var = purrr::map_dbl(svy.data, \(x) {
-            survey::svyvar(~FOCAL_PREDICTOR, design = x)
+          	survey::svyvar(~FOCAL_PREDICTOR, design = x, na.rm=TRUE)
           })
         ) %>%
         ungroup() %>%
         select(COUNTRY, .imp, est, pred.var) %>%
         group_by(COUNTRY) %>%
         summarize(
-          outcome.sd = sqrt(mean(est)),
-          predictor.sd = sqrt(mean(pred.var))
+          outcome.sd = sqrt(mean(est, na.rm=TRUE)),
+          predictor.sd = sqrt(mean(pred.var, na.rm=TRUE))
         ) %>%
         select(COUNTRY, outcome.sd, predictor.sd)
 
@@ -482,8 +503,8 @@ gfs_run_regression_single_outcome <- function(
 
       output <- tmp.output %>%
         left_join(termlabels,
-          by = c("term" = "original"),
-          relationship = "many-to-many"
+                  by = c("term" = "original"),
+                  relationship = "many-to-many"
         ) %>%
         arrange(Variable)
 
@@ -607,12 +628,12 @@ gfs_run_regression_single_outcome <- function(
           .before = Variable
         ) %>%
         dplyr::mutate(
-            id.Est = .round(estimate.pooled),
-            id.SE = .round(se.pooled),
-            id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
-            rr.Est = .round(exp(estimate.pooled)),
-            logrr.SE = .round(se.pooled),
-            rr.CI = paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")")
+          id.Est = .round(estimate.pooled),
+          id.SE = .round(se.pooled),
+          id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
+          rr.Est = .round(exp(estimate.pooled)),
+          logrr.SE = .round(se.pooled),
+          rr.CI = paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")")
         )
 
       save(
@@ -622,8 +643,8 @@ gfs_run_regression_single_outcome <- function(
         file = here::here(
           res.dir,
           paste0(your.pred,
-          "_regressed_on_",
-          your.outcome, "_saved_results.RData")
+                 "_regressed_on_",
+                 your.outcome, "_saved_results.RData")
         )
       )
     })

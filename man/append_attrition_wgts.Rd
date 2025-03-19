@@ -6,10 +6,17 @@
 \usage{
 append_attrition_wgts(
   data,
+  obs.id.var = NULL,
   attr.pred = NULL,
   stabilized = TRUE,
   robust = FALSE,
   wgt.trim.quantile = 0.99,
+  wgt = "ANNUAL_WEIGHT1",
+  strata = "STRATA",
+  psu = "PSU",
+  composite.wgt.name = NULL,
+  attr.wgt.name = NULL,
+  replace = FALSE,
   ...
 )
 }
@@ -26,13 +33,19 @@ attrition weights.}
 
 \item{wgt.trim.quantile}{(numeric) default to 0.99, quantile of the distribution of weights to trim to}
 
+\item{wgt}{(character) name of variable containing weights to use as "base-weights"}
+
+\item{strata}{(character) name of variable containing strata ids}
+
+\item{psu}{(character) name of variable containing primary sampling unit ids}
+
 \item{...}{other arguments passed to svyglm or glmrob functions}
 }
 \value{
 a dataset with attrition weights appended
 }
 \description{
-The default set of predictors: "ANNUAL_WEIGHT1_W1", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
+The default set of predictors: "ANNUAL_WEIGHT_R2", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
 "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
 }
 \details{

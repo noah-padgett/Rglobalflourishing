@@ -7,7 +7,7 @@
 get_outcome_scale(var)
 }
 \arguments{
-\item{var}{a character string (e.g., 'HAPPY_W1')}
+\item{var}{a character string (e.g., 'HAPPY_Y1')}
 }
 \value{
 a character string (by default returns 'cont')
@@ -17,6 +17,6 @@ A relatively simple switch function to get the scale ('bin', 'cont')
 }
 \examples{
 {
-  get_outcome_scale("HAPPY_W1")
+  get_outcome_scale("HAPPY_Y1")
 }
 }

@@ -4,14 +4,15 @@
 #'
 #' @param fit fitted results object from the metafor package (rma)
 #' @param better.name a manually supplied name for the focal predictor
-#' @param  p.subtitle a string passed to subtitle of the forest plot.
+#' @param p.title a string passed to title of the forest plot
+#' @param p.subtitle a string passed to subtitle of the forest plot.
 #' @param ... additional arguments as needed
 #' @return a ggplot object
 #' @examples
 #' # TO-DO
 #'
 #' @export
-gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Forest Plot", ...) {
+gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Forest Plot", p.title = NULL, ...) {
   ALL.COUNTRIES <- c(
     "Australia",
     "Hong Kong",
@@ -42,21 +43,30 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
       yi = Est
     )
 
-  focal.pred <- tmp.dat$FOCAL_PREDICTOR[1]
-  focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
-  if (!is.null(better.name)) {
-    focal.pred <- better.name
-  }
-  tmp.outcome <- tmp.dat$OUTCOME[1]
-  tmp.outcome <- get_outcome_better_name(tmp.outcome, include.name = FALSE, include.wave = TRUE)
+  if("FOCAL_PREDICTOR" %in% colnames(tmp.dat)){
+  	
+  	focal.pred <- tmp.dat$FOCAL_PREDICTOR[1]
+  	focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
+  	if (!is.null(better.name)) {
+   	 focal.pred <- better.name
+  	}
+  	tmp.outcome <- tmp.dat$OUTCOME[1]
+  	tmp.outcome <- get_outcome_better_name(tmp.outcome, include.name = FALSE, include.wave = TRUE)
 
-  focal.pred <- str_to_sentence(focal.pred)
-  tmp.outcome <- str_to_sentence(tmp.outcome)
-  
-  for(i in 1:length(tmp.dat$Country)){
-  	tmp.dat$Country[i] <- stringr::str_split_fixed(tmp.dat$Country[i], "\\. ", 2)[,2]
+  	focal.pred <- str_to_sentence(focal.pred)
+  	tmp.outcome <- str_to_sentence(tmp.outcome)
+  	
   }
+  
+  if(is.null(p.title)){
+  	p.title = paste0("`", focal.pred, "` predicts `", tmp.outcome, "`")
+  }
+  #for(i in 1:length(tmp.dat$Country)){
+  #	tmp.dat$Country[i] <- stringr::str_split_fixed(tmp.dat$Country[i], "\\. ", 2)[,2]
+  #}
   # identify countries omitted from meta-analysis
+  tmp.included.countries = ""
+  if("Country" %in% colnames(tmp.dat)){
   tmp.included.countries <- tmp.dat$Country
   tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
   tmp.included.countries <- str_trim(tmp.included.countries, "both")
@@ -66,6 +76,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
     ""
   )
+  }
 
   xLab <- "Standardized Effect"
 
@@ -169,9 +180,8 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     ) +
     plot_annotation(
       # title=str_wrap(paste0("Figure S",k+k.shift,f.tag," Forest plot for `", tmp.var,"`-`", tmp.cat, "` effect"), 75),
-      title = str_wrap(paste0("`", focal.pred, "` predicts `", tmp.outcome, "`"), 75),
+      title = str_wrap(p.title, 80),
       subtitle = p.subtitle,
-      # subtitle = paste0(tmp.var, tmp.ref),
       caption = tmp.het
     )
 

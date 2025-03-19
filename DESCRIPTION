@@ -23,11 +23,13 @@ RoxygenNote: 7.3.2
 Imports: 
     dplyr,
     forcats,
+    glue,
     haven,
     magrittr,
     metafor,
     mice,
     purrr,
+    rlang,
     stats,
     stringr,
     survey,

@@ -2,12 +2,38 @@
 % Please edit documentation in R/utils.R
 \name{svy_scale}
 \alias{svy_scale}
+\alias{check_variance}
+\alias{keep_variable}
+\alias{quickpred2}
+\alias{format_flex_table}
+\alias{.round}
+\alias{.round_p}
 \title{Standardized with Complex Survey Adjusted Mean and Variance}
 \usage{
 svy_scale(x, wgt = NULL, psu = NULL, strata = NULL, design = NULL)
+
+check_variance(x, data)
+
+keep_variable(x, data, reason = "variance")
+
+quickpred2(
+  data,
+  mincor = 0.1,
+  minpuc = 0,
+  include = "",
+  exclude = "",
+  method = "pearson",
+  maxcor = 0.71
+)
+
+format_flex_table(xtb, pg.width = 6.5)
+
+.round(x, digits = 2)
+
+.round_p(x, .sci = TRUE, .digits = 3, .eps = 1e-16)
 }
 \arguments{
-\item{x}{(character) a variable name in data}
+\item{x}{(character vector) of a vector of variable names in data}
 
 \item{wgt}{(character) variable name of weights}
 
@@ -16,16 +42,72 @@ svy_scale(x, wgt = NULL, psu = NULL, strata = NULL, design = NULL)
 \item{strata}{(character) variable name of stratum ids}
 
 \item{design}{(survey.design or survey.design2 object)}
+
+\item{data}{Matrix or data frame with incomplete data.}
+
+\item{mincor}{A scalar, numeric vector (of size \code{ncol(data))} or numeric
+matrix (square, of size \code{ncol(data)} specifying the minimum
+threshold(s) against which the absolute correlation in the data is compared.}
+
+\item{minpuc}{A scalar, vector (of size \code{ncol(data))} or matrix (square,
+of size \code{ncol(data)} specifying the minimum threshold(s) for the
+proportion of usable cases.}
+
+\item{include}{A string or a vector of strings containing one or more
+variable names from \code{names(data)}. Variables specified are always
+included as a predictor.}
+
+\item{exclude}{A string or a vector of strings containing one or more
+variable names from \code{names(data)}. Variables specified are always
+excluded as a predictor.}
+
+\item{method}{A string specifying the type of correlation. Use
+\code{'pearson'} (default), \code{'kendall'} or \code{'spearman'}. Can be
+abbreviated.}
+
+\item{maxcor}{A scalar, numeric vector (of size \code{ncol(data))} or numeric
+matrix (square, of size \code{ncol(data)} specifying the MAXIMUM
+threshold(s) against which the absolute correlation in the data is compared.
+this is used to help troubleshoot and resolve non-invertible predictor matrices}
 }
 \value{
 a vector of standardized scores
+
+a logical (TRUE/FALSE)
+
+a logical vector of length equal to the length of 'x'
+
+a predictor matrix for use in mice
 }
 \description{
 Standardizes a variable x based on the weights and design. A better replacement for scale(.).
+
+checks the variances of the predictor variable, identifies whether the variable "x" have any
+variance (works w/ any variable type, continuous, binary, nominal,...).
+
+keep_variable(.), a wrapper around the function 'check_variance(.)' to create a logical
+vector of length(x) of the results of the check_variance function. The result can then be used to
+to subset the vector 'x', e.g., 'x[keep_variable(x, data)]', to only include predictors 'x' that
+have any variance. The inverse selection, 'x[!(keep_variable(x, data))]', can be used to identify
+which variables were excluded.
+
+Function copied and modified from mice pacakge (https://github.com/amices/mice/blob/master/R/quickpred.R)
+}
+\details{
+Creates a logical vector to keep or delete variables for use in a regression model.
 }
 \examples{
 {
   library(survey)
   # TODO
+}
+{
+  df <- data.frame(A = c(1, 1, 0, 0), B = c("B", "B", "B", "B"))
+  check_variance("A", df)
+  check_variance("B", df)
+}
+{
+  df <- data.frame(A = c(1, 1, 0, 0), B = c("B", "B", "B", "B"))
+  keep_variable(c("A", "B"), df)
 }
 }

@@ -42,7 +42,7 @@ recode_imputed_data <- function(
     # TODO
     # add functionality to over-write default provided in list.default(.)
   }
-  drop_created_vars <- c("AGE_GRP_W1", "AGE_GRP_W2", "RACE", "RACE_PLURALITY_W1", "INCOME_QUINTILE_W1", "INCOME_QUINTILE_W2")
+  drop_created_vars <- c("AGE_GRP_Y1", "AGE_GRP_Y2", "RACE", "RACE_PLURALITY_Y1", "INCOME_QUINTILE_Y1", "INCOME_QUINTILE_Y2")
   ## ============================================================================================ ##
   ## ====== Initial Setup ======================================================================= ##
   # extract imputed data and coerce into "long format"
@@ -57,7 +57,7 @@ recode_imputed_data <- function(
         	x <- sub("\\..*", "", x)
         	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
           		as.numeric()
-        } 
+        }
         if(str_detect(cur_column(), "BORN_COUNTRY")){
         	x <- sub("\\..*", "", x)
         	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
@@ -79,7 +79,7 @@ recode_imputed_data <- function(
   ## ====== WAVE SPECIFIC CODE ================================================================== ##
   ## TO-DO: develop a generalized approach...
   ## Wave 1
-  if(wave == 1 | wave == "W1" | wave == "w1"){
+  if(wave == 1 | wave == "W1" | wave == "w1" | wave == "Y1"){
     df.imp.long <- df.imp.long %>%
       dummy_cols(
         select_columns = c(
@@ -132,29 +132,30 @@ recode_imputed_data <- function(
         # Other basic setup to make things easier later...
         RACE = recode_labels(SELFID1, "SELFID1", include.value = FALSE),
         MARITAL_STATUS_EVER_MARRIED = case_when(MARITAL_STATUS %in% c(2:5) ~ 1, .default = 0),
+        MARITAL_STATUS_DIVORCED = case_when(MARITAL_STATUS == 4 ~ 1, .default = 0),
         COUNTRY2 = recode_labels(COUNTRY2, "COUNTRY", include.value = FALSE)
       )
   }
   ## Wave 2
-  if(is.null(wave) | wave == 2 | wave == "W2" | wave == "w2"){
+  if(is.null(wave) | wave == 2 | wave == "W2" | wave == "w2" | wave == "Y2"){
     df.imp.long <- df.imp.long %>%
       dummy_cols(
         select_columns = c(
-          "SVCS_MOTHER_W1",
-          "SVCS_FATHER_W1",
-          "MOTHER_RELATN_W1",
-          "MOTHER_LOVED_W1",
-          "FATHER_RELATN_W1",
-          "FATHER_LOVED_W1",
-          "MARITAL_STATUS_W1",
-          "MARITAL_STATUS_W2"
+          "SVCS_MOTHER_Y1",
+          "SVCS_FATHER_Y1",
+          "MOTHER_RELATN_Y1",
+          "MOTHER_LOVED_Y1",
+          "FATHER_RELATN_Y1",
+          "FATHER_LOVED_Y1",
+          "MARITAL_STATUS_Y1",
+          "MARITAL_STATUS_Y2"
         ),
         ignore_na = T
       ) %>%
       mutate(
-        COV_AGE_GRP_W1 = recode_labels(AGE_W1, "AGE_GRP_W1"),
-        COV_AGE_GRP_W1 = recode_to_type(COV_AGE_GRP_W1, "AGE_GRP_W1"),
-        across(any_of(c(list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
+        COV_AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1"),
+        COV_AGE_GRP_Y1 = recode_to_type(COV_AGE_GRP_Y1, "AGE_GRP_Y1"),
+        across(any_of(c("URBAN_RURAL_Y1", list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
           x <- recode_labels(x, cur_column(), include.value = FALSE)
           x <- case_when(x == "(Missing)" ~ NA, .default = x) # needed for Abused and other 100% missing variable sin some countries
           #x <- str_sub(x, 4, -1) # removed the numbers
@@ -163,35 +164,39 @@ recode_imputed_data <- function(
           x <- recode_to_type(x, cur_column())
           x
         }, .names = "COV_{.col}"),
-        COV_MOTHER_RELATN_W1 = case_when(MOTHER_RELATN_W1_1 == 1 | MOTHER_RELATN_W1_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
-        COV_MOTHER_RELATN_W1 = factor(COV_MOTHER_RELATN_W1),
-        COV_FATHER_RELATN_W1 = case_when(FATHER_RELATN_W1_1 == 1 | FATHER_RELATN_W1_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
-        COV_FATHER_RELATN_W1 = factor(COV_FATHER_RELATN_W1),
-        COV_MOTHER_NA = case_when(SVCS_MOTHER_W1_97 == 1 | MOTHER_RELATN_W1_97 == 1 | MOTHER_LOVED_W1_97 == 1 ~ 1, .default = 0),
-        COV_FATHER_NA = case_when(SVCS_FATHER_W1_97 == 1 | FATHER_RELATN_W1_97 == 1 | FATHER_LOVED_W1_97 == 1 ~ 1, .default = 0),
+        COV_MOTHER_RELATN_Y1 = case_when(MOTHER_RELATN_Y1_1 == 1 | MOTHER_RELATN_Y1_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
+        COV_MOTHER_RELATN_Y1 = factor(COV_MOTHER_RELATN_Y1),
+        COV_FATHER_RELATN_Y1 = case_when(FATHER_RELATN_Y1_1 == 1 | FATHER_RELATN_Y1_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
+        COV_FATHER_RELATN_Y1 = factor(COV_FATHER_RELATN_Y1),
+        COV_MOTHER_NA = case_when(SVCS_MOTHER_Y1_97 == 1 | MOTHER_RELATN_Y1_97 == 1 | MOTHER_LOVED_Y1_97 == 1 ~ 1, .default = 0),
+        COV_FATHER_NA = case_when(SVCS_FATHER_Y1_97 == 1 | FATHER_RELATN_Y1_97 == 1 | FATHER_LOVED_Y1_97 == 1 ~ 1, .default = 0),
 
         # enforce reference group
-        COV_AGE_GRP_W1 = relevel(COV_AGE_GRP_W1, ref = levels(COV_AGE_GRP_W1)[str_detect(levels(COV_AGE_GRP_W1),"18-24")]),
-        COV_GENDER_W1 = relevel(COV_GENDER_W1, ref = "Male"),
-        COV_EDUCATION_3_W1 = relevel(COV_EDUCATION_3_W1, ref = "9-15"),
-        COV_EMPLOYMENT_W1 = relevel(COV_EMPLOYMENT_W1, ref = "Employed for an employer"),
-        COV_MARITAL_STATUS_W1 = relevel(COV_MARITAL_STATUS_W1, ref = "Single/Never been married"),
-        COV_ATTEND_SVCS_W1 = relevel(COV_ATTEND_SVCS_W1, ref = "Never"),
-        COV_BORN_COUNTRY_W1 = relevel(COV_BORN_COUNTRY_W1, ref = "Born in this country"),
-        COV_PARENTS_12YRS_W1 = relevel(COV_PARENTS_12YRS_W1, ref = "Yes, married"),
-        COV_MOTHER_RELATN_W1 = relevel(COV_MOTHER_RELATN_W1, ref = "Very/somewhat bad"),
-        COV_FATHER_RELATN_W1 = relevel(COV_FATHER_RELATN_W1, ref = "Very/somewhat bad"),
-        COV_SVCS_12YRS_W1 = relevel(COV_SVCS_12YRS_W1, ref = "Never"),
-        COV_OUTSIDER_W1 = relevel(COV_OUTSIDER_W1, ref = "No"),
-        COV_ABUSED_W1 = relevel(COV_ABUSED_W1, ref = "No"),
-        COV_HEALTH_GROWUP_W1 = relevel(COV_HEALTH_GROWUP_W1, ref = "Good"),
-        COV_INCOME_12YRS_W1 = relevel(COV_INCOME_12YRS_W1, ref = "Got by"),
+        COV_AGE_GRP_Y1 = relevel(COV_AGE_GRP_Y1, ref = levels(COV_AGE_GRP_Y1)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
+        COV_GENDER_Y1 = relevel(COV_GENDER_Y1, ref = "Male"),
+        COV_EDUCATION_3_Y1 = relevel(COV_EDUCATION_3_Y1, ref = "9-15"),
+        COV_EMPLOYMENT_Y1 = relevel(COV_EMPLOYMENT_Y1, ref = "Employed for an employer"),
+        COV_MARITAL_STATUS_Y1 = relevel(COV_MARITAL_STATUS_Y1, ref = "Single/Never been married"),
+        COV_ATTEND_SVCS_Y1 = relevel(COV_ATTEND_SVCS_Y1, ref = "Never"),
+        COV_BORN_COUNTRY_Y1 = relevel(COV_BORN_COUNTRY_Y1, ref = "Born in this country"),
+        COV_PARENTS_12YRS_Y1 = relevel(COV_PARENTS_12YRS_Y1, ref = "Yes, married"),
+        COV_MOTHER_RELATN_Y1 = relevel(COV_MOTHER_RELATN_Y1, ref = "Very/somewhat bad"),
+        COV_FATHER_RELATN_Y1 = relevel(COV_FATHER_RELATN_Y1, ref = "Very/somewhat bad"),
+        COV_SVCS_12YRS_Y1 = relevel(COV_SVCS_12YRS_Y1, ref = "Never"),
+        COV_OUTSIDER_Y1 = relevel(COV_OUTSIDER_Y1, ref = "No"),
+        COV_ABUSED_Y1 = relevel(COV_ABUSED_Y1, ref = "No"),
+        COV_HEALTH_GROWUP_Y1 = relevel(COV_HEALTH_GROWUP_Y1, ref = "Good"),
+        COV_INCOME_12YRS_Y1 = relevel(COV_INCOME_12YRS_Y1, ref = "Got by"),
 
         # Other basic setup to make things easier later...
-        RACE = recode_labels(SELFID1_W1, "SELFID1_W1", include.value = FALSE),
-        MARITAL_STATUS_EVER_MARRIED_W1 = case_when(MARITAL_STATUS_W1 %in% c(2:5) ~ 1, .default = 0),
-        MARITAL_STATUS_EVER_MARRIED_W2 = case_when(MARITAL_STATUS_W2 %in% c(2:5) ~ 1, .default = 0),
-        COUNTRY2 = recode_labels(COUNTRY2, "COUNTRY_W1", include.value = FALSE)
+        MODE_RECRUIT_Y1 = recode_labels( MODE_RECRUIT_Y1, "MODE_RECRUIT_Y1", include.value = FALSE),
+        MODE_RECRUIT_Y1 = recode_to_type(MODE_RECRUIT_Y1, "MODE_RECRUIT_Y1"),
+        RACE = COV_SELFID1_Y1,
+        MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, .default = 0),
+        MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
+        MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, .default = 0),
+        MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, .default = 0),
+        COUNTRY2 = COUNTRY #recode_labels(COUNTRY2, "COUNTRY_Y1", include.value = FALSE)
       )
   }
   ## ============================================================================================ ##
@@ -284,7 +289,8 @@ recode_imputed_data <- function(
         COUNTRY2 == "United Kingdom" & str_detect(RACE, "White") ~ 0,
         COUNTRY2 == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
         COUNTRY2 == "United States" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1
+        COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+        .default = 0
       )
     )
   }
@@ -324,10 +330,10 @@ recode_imputed_data <- function(
       nest() %>%
       mutate(
         data = map(data, \(x){
-          recode_REL(x, paste0("COV_REL1", ifelse(wave == 2, "_W1", "")), wgt = wgt)
+          recode_REL(x, paste0("COV_REL1", ifelse(wave == 2, "_Y1", "")), wgt = wgt)
         }),
         data = map(data, \(x){
-          recode_REL(x, paste0("COV_REL2", ifelse(wave == 2, "_W1", "")), wgt = wgt)
+          recode_REL(x, paste0("COV_REL2", ifelse(wave == 2, "_Y1", "")), wgt = wgt)
         })
       ) %>%
       unnest(c(data))
@@ -410,7 +416,7 @@ recode_imputed_data <- function(
 
       income.quintiles <-  df.imp.long  %>%
         select(
-          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME_W1", "INCOME_W2", wgt, strata, psu))
+          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME_Y1", "INCOME_Y2", wgt, strata, psu))
         ) %>%
         mutate(
           across(contains("INCOME"),\(x){
@@ -429,10 +435,10 @@ recode_imputed_data <- function(
             svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
           }),
           quintiles_w1 = map(svy.data, \(x){
-            svyquantile(~INCOME_W1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+            svyquantile(~INCOME_Y1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
           }),
           quintiles_w2 = map(svy.data, \(x){
-            svyquantile(~INCOME_W2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+            svyquantile(~INCOME_Y2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
           }),
         ) %>%
         select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
@@ -454,31 +460,31 @@ recode_imputed_data <- function(
 
             x <- x %>%
               mutate(
-                INCOME_QUINTILE_W1 = case_when(
-                  INCOME_W1 >= tmp.quintiles.w1["0.8",1] ~ 5,
-                  INCOME_W1 >= tmp.quintiles.w1["0.6",1] & INCOME_W1 < tmp.quintiles.w1["0.8",1] ~ 4,
-                  INCOME_W1 >= tmp.quintiles.w1["0.4",1] & INCOME_W1 < tmp.quintiles.w1["0.6",1] ~ 3,
-                  INCOME_W1 >= tmp.quintiles.w1["0.2",1] & INCOME_W1 < tmp.quintiles.w1["0.4",1] ~ 2,
-                  INCOME_W1 < tmp.quintiles.w1["0.2",1] ~ 1
+                INCOME_QUINTILE_Y1 = case_when(
+                  INCOME_Y1 >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.6",1] & INCOME_Y1 < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.4",1] & INCOME_Y1 < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.2",1] & INCOME_Y1 < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME_Y1 < tmp.quintiles.w1["0.2",1] ~ 1
                 ),
-                INCOME_QUINTILE_W2 = case_when(
-                  INCOME_W2 >= tmp.quintiles.w2["0.8",1] ~ 5,
-                  INCOME_W2 >= tmp.quintiles.w2["0.6",1] & INCOME_W2 < tmp.quintiles.w2["0.8",1] ~ 4,
-                  INCOME_W2 >= tmp.quintiles.w2["0.4",1] & INCOME_W2 < tmp.quintiles.w2["0.6",1] ~ 3,
-                  INCOME_W2 >= tmp.quintiles.w2["0.2",1] & INCOME_W2 < tmp.quintiles.w2["0.4",1] ~ 2,
-                  INCOME_W2 < tmp.quintiles.w2["0.2",1] ~ 1
+                INCOME_QUINTILE_Y2 = case_when(
+                  INCOME_Y2 >= tmp.quintiles.w2["0.8",1] ~ 5,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.6",1] & INCOME_Y2 < tmp.quintiles.w2["0.8",1] ~ 4,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.4",1] & INCOME_Y2 < tmp.quintiles.w2["0.6",1] ~ 3,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.2",1] & INCOME_Y2 < tmp.quintiles.w2["0.4",1] ~ 2,
+                  INCOME_Y2 < tmp.quintiles.w2["0.2",1] ~ 1
                 )
               )
             if(method.income=="quintiles.top.fixed"){
               x <- x %>%
                 mutate(
-                  INCOME_QUINTILE_W1 = case_when(
-                    INCOME_QUINTILE_W1 == 5 ~ 1,
-                    INCOME_QUINTILE_W1 %in% 1:4 ~ 0
+                  INCOME_QUINTILE_Y1 = case_when(
+                    INCOME_QUINTILE_Y1 == 5 ~ 1,
+                    INCOME_QUINTILE_Y1 %in% 1:4 ~ 0
                   ),
-                  INCOME_QUINTILE_W2 = case_when(
-                    INCOME_QUINTILE_W2 == 5 ~ 1,
-                    INCOME_QUINTILE_W2 %in% 1:4 ~ 0
+                  INCOME_QUINTILE_Y2 = case_when(
+                    INCOME_QUINTILE_Y2 == 5 ~ 1,
+                    INCOME_QUINTILE_Y2 %in% 1:4 ~ 0
                   )
                 )
             }
@@ -487,12 +493,14 @@ recode_imputed_data <- function(
           data = map(data, \(x){
             x %>%
               mutate(
-                INCOME_W1 = recode_labels(INCOME_W1, "INCOME_W1"),
-                INCOME_W2 = recode_labels(INCOME_W2, "INCOME_W2"),
-                INCOME_QUINTILE_W1 = recode_labels(INCOME_QUINTILE_W1, "INCOME_QUINTILE"),
-                INCOME_QUINTILE_W2 = recode_labels(INCOME_QUINTILE_W2, "INCOME_QUINTILE"),
-                INCOME_QUINTILE_W1 = factor(INCOME_QUINTILE_W1),
-                INCOME_QUINTILE_W2 = factor(INCOME_QUINTILE_W2)
+                INCOME_Y1 = recode_labels(INCOME_Y1, "INCOME_Y1"),
+                INCOME_Y2 = recode_labels(INCOME_Y2, "INCOME_Y2"),
+                INCOME_QUINTILE_Y1 = recode_labels(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y2 = recode_labels(INCOME_QUINTILE_Y2, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y1 = factor(INCOME_QUINTILE_Y1),
+                INCOME_QUINTILE_Y2 = factor(INCOME_QUINTILE_Y2),
+                INCOME_QUINTILE_Y1 = recode_to_numeric(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y2 = recode_to_numeric(INCOME_QUINTILE_Y2, "INCOME_QUINTILE")
               )
           })
         ) %>%

@@ -10,6 +10,9 @@ gfs_run_regression_single_outcome(
   your.outcome = NULL,
   covariates = NULL,
   contemporaneous.exposures = NULL,
+  wgt = ANNUAL_WEIGHT_R1,
+  psu = PSU,
+  strata = STRATA,
   standardize = TRUE,
   pc.cutoff = 7,
   pc.rule = "omit",
@@ -24,9 +27,9 @@ gfs_run_regression_single_outcome(
 \arguments{
 \item{data}{long data.frame must have COUNTRY and .imp columns (default: df.imp.long)}
 
-\item{your.pred}{a character string defining focal predictor (e.g., "PHYSICAL_HLTH_W1")}
+\item{your.pred}{a character string defining focal predictor (e.g., "PHYSICAL_HLTH_Y1")}
 
-\item{your.outcome}{a character string defining outcome variable (e.g., "HAPPY_W2")}
+\item{your.outcome}{a character string defining outcome variable (e.g., "HAPPY_Y2")}
 
 \item{covariates}{a character vector defining core set of covariates (default: NULL)}
 
