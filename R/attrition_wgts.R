@@ -80,11 +80,12 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
   if (robust) {
     svy.data <- tmp.data
     fit.attr <- robustbase::glmrob(mod.form, data = svy.data,
-                                   family = stats::binomial(link = "probit"),
+                                   family = stats::binomial(link = "logit"),
                                    weights = tmp.data[wgt])
   } else {
     fit.attr <- survey::svyglm(mod.form, design = svy.data,
-                               family = stats::quasipoisson(link = "log"),
+                               family = stats::binomial(link = "logit"),
+                               #family = stats::quasipoisson(link = "log"),
                                control = list(maxit = 1000))
   }
 
