@@ -469,6 +469,7 @@ get_outcome_scale <- function(var) {
       MARITAL_STATUS_6 = "bin",
       MARITAL_STATUS_7 = "bin",
       MARITAL_STATUS_EVER_MARRIED = "bin",
+      CIGARETTES_BINARY = "bin",
 
       COMPOSITE_DEPRESSION = "cont",
       COMPOSITE_ANXIETY = "cont",
@@ -837,6 +838,7 @@ recode_to_type <- function(x, var) {
     AGE_GRP = factor(x),
     RACE = factor(x),
     RACE_PLURALTY = factor(x),
+    CIGARETTES_BINARY = x,
     c(x)
   )
 
@@ -3214,7 +3216,11 @@ nurse)",
       x == 4 ~ "Q4",
       x == 5 ~ "Q5 High Income",
       .default = "(Missing)"
-
+    ),
+    CIGARETTES_BINARY = case_when(
+      CIGARETTES_BINARY == 0 ~ "Non-smoker",
+      CIGARETTES_BINARY == 1 ~ "Smoker",
+      .default = "(Missing)"
     ),
     x
   )
@@ -3418,6 +3424,7 @@ reorder_levels <- function(x, var) {
     RACE = x,
     RACE_PLURALTY = x,
     INCOME_QUINTILE = x,
+    CIGARETTES_BINARY = x,
     x
   )
 }
@@ -3611,6 +3618,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     FULL_PARTIAL = as.numeric(x),
 
     AGE_GRP = as.numeric(x),
+    CIGARETTES_BINARY = as.numeric(CIGARETTES_BINARY),
 
     COMPOSITE_DEPRESSION = case_when(x >= 3 ~ 1, x < 3 ~ 0),
     COMPOSITE_ANXIETY = case_when(x >= 3 ~ 1, x < 3 ~ 0),
