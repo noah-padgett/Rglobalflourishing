@@ -200,7 +200,7 @@ append_attrition_weights_to_df <- function(data, attr.wgt.file = NULL, composite
     attr.wgt.name = as.name("ATTR.WGT")
   }
   if (is.null(wgt)) {
-    wgt = as.name("ANNUAL_WEIGHT_R1")
+    wgt = as.name("ANNUAL_WEIGHT_R2")
   }
   if (is.null(strata)) {
     strata = as.name("STRATA")

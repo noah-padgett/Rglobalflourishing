@@ -15,7 +15,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles", wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU", data.is.wide = FALSE, ...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, ...) {
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -42,7 +42,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
   ## ============================================================================================ ##
   ## ====== Restructure to "wide" data ========================================================== ##
   if(is.null(wave) | wave == 2 | wave == "Y2"| wave == "W2"){
-    if(data.is.wide){
+    if(data.is.long){
       df.original <- gfs_data_to_wide(df.original,...)
     }
 

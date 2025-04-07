@@ -8,7 +8,7 @@
 #' @param list.composites (optional) a named list with elements LIST.OUTCOME.COMPOSITES, LIST.COMPOSITE.COMBINE.METHOD and COMPOSITE.VEC.
 #' @param list.manual (optional) a list like list.default (to-do)
 #' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
-#' @param method.income (optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', ''quintiles.top.random', 'numeric'.
+#' @param method.income (optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'. Defaults to 'quintiles.top.random'.
 #' @param ... other arguments passed to mice
 #' @returns a long data.frame for use in analyses
 #' @examples {
@@ -133,6 +133,7 @@ recode_imputed_data <- function(
         RACE = recode_labels(SELFID1, "SELFID1", include.value = FALSE),
         MARITAL_STATUS_EVER_MARRIED = case_when(MARITAL_STATUS %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED = case_when(MARITAL_STATUS == 4 ~ 1, .default = 0),
+        CIGARETTES_BINARY = case_when(CIGARETTES > 0 ~ 1, .default = 0),
         COUNTRY2 = recode_labels(COUNTRY2, "COUNTRY", include.value = FALSE)
       )
   }
@@ -196,6 +197,8 @@ recode_imputed_data <- function(
         MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, .default = 0),
+        CIGARETTES_BINARY_Y1 = case_when(CIGARETTES_Y1 > 0 ~ 1, .default = 0),
+        CIGARETTES_BINARY_Y2 = case_when(CIGARETTES_Y2 > 0 ~ 1, .default = 0),
         COUNTRY2 = COUNTRY #recode_labels(COUNTRY2, "COUNTRY_Y1", include.value = FALSE)
       )
   }
@@ -391,13 +394,44 @@ recode_imputed_data <- function(
                   INCOME < tmp.quintiles.w1["0.2",1] ~ 1
                 )
               )
-            if(method.income == "quintiles.top.fixed"){
+            if(method.income=="quintiles.top.fixed"){
               x <- x %>%
                 mutate(
-                  INCOME_QUINTILE = case_when(
-                    INCOME_QUINTILE == 5 ~ 1,
-                    INCOME_QUINTILE %in% 1:4 ~ 0
-                  )
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y
+                  })
+                )
+            }
+            if(method.income == "quintiles.top.random"){
+              set.seed(314150)
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y.mean = mean(y)
+                    if(y.mean > 0.20){
+                      n0 <- length(y)
+                      nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                      y[y==1][sample(1:(length(y[y==1])), nq, replace = FALSE)] <- 0
+                    }
+                    if(y.mean < 0.20){
+                      n0 <- length(y)
+                      nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                      x[x==4][sample(1:(length(x[x==4])), nq, replace = FALSE)] <- 5
+                      y <- case_when(
+                        x == 5 ~ 1,
+                        x %in% 1:4 ~ 0
+                      )
+                    }
+                    y
+                  })
                 )
             }
             x
@@ -405,7 +439,10 @@ recode_imputed_data <- function(
           data = map(data, \(x){
             x %>%
               mutate(
-                INCOME = recode_labels(INCOME, "INCOME", ...)
+                INCOME = recode_labels(INCOME, "INCOME"),
+                INCOME_QUINTILE = recode_labels(INCOME_QUINTILE, "INCOME_QUINTILE"),
+                INCOME_QUINTILE = factor(INCOME_QUINTILE),
+                INCOME_QUINTILE = recode_to_numeric(INCOME_QUINTILE, "INCOME_QUINTILE")
               )
           })
         ) %>%
@@ -478,14 +515,41 @@ recode_imputed_data <- function(
             if(method.income=="quintiles.top.fixed"){
               x <- x %>%
                 mutate(
-                  INCOME_QUINTILE_Y1 = case_when(
-                    INCOME_QUINTILE_Y1 == 5 ~ 1,
-                    INCOME_QUINTILE_Y1 %in% 1:4 ~ 0
-                  ),
-                  INCOME_QUINTILE_Y2 = case_when(
-                    INCOME_QUINTILE_Y2 == 5 ~ 1,
-                    INCOME_QUINTILE_Y2 %in% 1:4 ~ 0
-                  )
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y
+                  })
+                )
+            }
+            if(method.income == "quintiles.top.random"){
+              set.seed(314150)
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y.mean = mean(y)
+                    if(y.mean > 0.20){
+                      n0 <- length(y)
+                      nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                      y[y==1][sample(1:(length(y[y==1])), nq, replace = FALSE)] <- 0
+                    }
+                    if(y.mean < 0.20){
+                      n0 <- length(y)
+                      nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                      x[x==4][sample(1:(length(x[x==4])), nq, replace = FALSE)] <- 5
+                      y <- case_when(
+                        x == 5 ~ 1,
+                        x %in% 1:4 ~ 0
+                      )
+                    }
+                    y
+                  })
                 )
             }
             x

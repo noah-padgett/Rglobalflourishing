@@ -2,10 +2,10 @@
 # Created by: R. Noah Padgett & Chris Felton
 # Last edited on: 2024-03-13
 
-# WARNING: The package was set up to be as user-friendly as possible for researchers 
-#	part of the GFS core team who mainly have experience with other statistical analysis 
-#	software such as STATA, SAS, and SPSS. 
-#	This package and implementation of the analyses for Wave 2 of the Global Flourishing 
+# WARNING: The package was set up to be as user-friendly as possible for researchers
+#	part of the GFS core team who mainly have experience with other statistical analysis
+#	software such as STATA, SAS, and SPSS.
+#	This package and implementation of the analyses for Wave 2 of the Global Flourishing
 #	Study does NOT conform to "tidy" principles in general. While some elements of tidy
 #   evaluation and syntax structure are used throughout, we did not implement everything with
 #   "tidyness" in mind. As such, we make no guarantees that the package will integrate or
@@ -83,8 +83,7 @@ RECODE.DEFAULTS <- list(
 # get "raw data"
 df.raw <- gfs_get_labelled_raw_data(
   file = here::here(data.dir, dataset.name),
-  list.composites = LIST.COMPOSITES,
-  .test = FALSE
+  list.composites = LIST.COMPOSITES
 )
 
 # ================================================================================================ #
@@ -153,7 +152,7 @@ df.imp.long <- run_attrition_model(
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
-  wgt = "ANNUAL_WEIGHT_R1", strata = "STRATA", psu = "PSU"
+  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU"
 )
 
 # ================================================================================================ #
