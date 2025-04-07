@@ -3218,8 +3218,8 @@ nurse)",
       .default = "(Missing)"
     ),
     CIGARETTES_BINARY = case_when(
-      CIGARETTES_BINARY == 0 ~ "Non-smoker",
-      CIGARETTES_BINARY == 1 ~ "Smoker",
+      x == 0 ~ "Non-smoker",
+      x== 1 ~ "Smoker",
       .default = "(Missing)"
     ),
     x
