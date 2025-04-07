@@ -3618,7 +3618,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     FULL_PARTIAL = as.numeric(x),
 
     AGE_GRP = as.numeric(x),
-    CIGARETTES_BINARY = as.numeric(CIGARETTES_BINARY),
+    CIGARETTES_BINARY = as.numeric(x),
 
     COMPOSITE_DEPRESSION = case_when(x >= 3 ~ 1, x < 3 ~ 0),
     COMPOSITE_ANXIETY = case_when(x >= 3 ~ 1, x < 3 ~ 0),
