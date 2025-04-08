@@ -3619,6 +3619,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
 
     AGE_GRP = as.numeric(x),
     CIGARETTES_BINARY = as.numeric(x),
+    INCOME_QUINTILE = as.numeric(x),
 
     COMPOSITE_DEPRESSION = case_when(x >= 3 ~ 1, x < 3 ~ 0),
     COMPOSITE_ANXIETY = case_when(x >= 3 ~ 1, x < 3 ~ 0),
@@ -3636,7 +3637,7 @@ recode_to_numeric <- function(x, var, is.sum = FALSE) {
     COMPOSITE_CHARACTER = as.numeric(x),
     COMPOSITE_SUBJECTIVE_SOC_CONN = as.numeric(x),
     COMPOSITE_FINL_MAT_WORRY = as.numeric(x),
-    x
+    as.numeric(x)
   )
 }
 
