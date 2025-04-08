@@ -470,6 +470,7 @@ get_outcome_scale <- function(var) {
       MARITAL_STATUS_7 = "bin",
       MARITAL_STATUS_EVER_MARRIED = "bin",
       CIGARETTES_BINARY = "bin",
+      INCOME_QUINTILE = "bin",
 
       COMPOSITE_DEPRESSION = "cont",
       COMPOSITE_ANXIETY = "cont",

@@ -20,7 +20,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = 0.00081, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = as.name("WGT"), wgt1 = as.name("ANNUAL_WEIGHT_R1"), wgt2 = as.name("ANNUAL_WEIGHT_R1"), psu = as.name("PSU"), strata = as.name("STRATA")){
+gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = 0.00081, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = as.name("WGT"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("ANNUAL_WEIGHT_R2"), psu = as.name("PSU"), strata = as.name("STRATA"), n.print="202,898"){
 
   if(is.null(p.bonferroni)){
     p.bonferroni = 0.05/nrow(meta.wopc)
@@ -223,7 +223,10 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
     colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
     colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
     df.w2$WAVE0 <- "Wave 2"
-    df.raw.long <- full_join(df.w1, df.w2)
+
+    df.raw.long <- suppressMessages({
+      full_join(df.w1, df.w2)
+    })
 
     focal.predictor0 <- str_remove(focal.predictor,"_Y1")
     OUTCOME.VEC0 <- str_remove(OUTCOME.VEC,"_Y2")
@@ -245,7 +248,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
             relvls <- lvls
             for (i in 1:length(lvls)) {
               if ( str_detect(lvls[i],"\\. ") ) {
-                relvls[i] = stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]
+                relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
               }
             }
             x = factor(x, levels = lvls, labels = relvls)
@@ -284,7 +287,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
           all_continuous() ~ "continuous2"
         ),
         statistic = list(
-          all_continuous() ~ c("{mean}", "{sd}", "{min}, {max}"),
+          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
           all_categorical() ~ "{n} ({p}%)"
         ),
         label = list(
@@ -312,7 +315,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
           all_continuous() ~ 2,
           all_categorical() ~ 1
         ),
-        missing_text = "(Missing)",
+        missing_text = "    (Missing)",
         missing_stat = "{N_miss} ({p_miss}%)"
       ) %>%
       italicize_labels()
@@ -324,7 +327,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
       autofit() %>%
       format_flex_table(pg.width = 21 / 2.54 - 2) %>%
       set_caption(
-        paste0("Table 1. Summary statistics of the observed data (weighted).")
+        paste0("Table 1. Weighted sample demographic and childhood predictor summary statistics.")
       ) %>%
       add_footer_row(
         values = tb.note.summarytab, top = FALSE,colwidths=3
@@ -414,7 +417,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
 
 
     # footnote information:
-    tb.note.meta.outcomewide <- as_paragraph(paste0("_Notes_. Reference for focal predictor: ", focal.predictor.reference.value,"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; Pr(|y|>c), the estimated proportion of effects [below / above] a threshold based on the calibrated effect sizes (Mathur & VanderWeele, 2020); τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+    tb.note.meta.outcomewide <- as_paragraph(paste0("_Notes_. N=", n.print, "); Reference for focal predictor: ", focal.predictor.reference.value,"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; Pr(|y|>c), the estimated proportion of effects [below / above] a threshold based on the calibrated effect sizes (Mathur & VanderWeele, 2020); τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and family factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Models with PC (principal components), the first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at wave 2.
 
@@ -499,7 +502,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
 
 
     # footnote information:
-    tb.note.evalues <-as_paragraph("_Notes_. EE, E-value for Estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for Estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")
+    tb.note.evalues <-as_paragraph("_Notes_. N=", n.print, "; EE, E-value for Estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for Estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")
 
     meta.evalues.toprint <- meta.evalues %>%
       flextable() %>%
@@ -531,7 +534,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
   ## ============================================================================================ ##
   ## ====== Forest plot for Secure Flourishing Index ============================================ ##
   {
-    tb.cap.fig1 <- paste0("Figure 1. Heterogeneity in the effects of ", focal.better.name ," on composite Secure Flourishing Index scores across countries.")
+    tb.cap.fig1 <- paste0("Figure 1. Heterogeneity in the effects of ", focal.better.name ," on composite Secure Flourishing Index scores across countries (N=", n.print, ").")
     p1 <- meta.wpc %>% ungroup() %>%
       filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_Y2") %>%
       select(forest.plot)
@@ -541,7 +544,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
       plot=p1[[1]], units="in", width=6, height=5
     )
 
-    tb.cap.fig2 <- paste0("Figure 2. Heterogeneity in the effects of ", focal.better.name ," on composite Flourishing Index (excludes financial indicators) scores across countries.")
+    tb.cap.fig2 <- paste0("Figure 2. Heterogeneity in the effects of ", focal.better.name ," on composite Flourishing Index (excludes financial indicators) scores across countries (N=", n.print, ").")
     p2 <- meta.wpc %>% ungroup() %>%
       filter(OUTCOME0 == "COMPOSITE_FLOURISHING_Y2") %>%
       select(forest.plot)
@@ -644,7 +647,7 @@ gfs_generate_supplemental_docs <- function(
     p.bonferroni = 0.00068, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL,
     wgt = as.name("WGT"), wgt1 = as.name("ANNUAL_WEIGHT_R1"), wgt2 = as.name("ANNUAL_WEIGHT_R1"),
     psu = as.name("PSU"), strata = as.name("STRATA"),
-    res.dir = "results", included.countries=NULL, what = "all"){
+    res.dir = "results", included.countries=NULL, what = "all", n.print="202,898"){
 
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
 
