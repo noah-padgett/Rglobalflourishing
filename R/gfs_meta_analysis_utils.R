@@ -197,8 +197,10 @@ get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
   tmp.list <- list()
   for (your.outcome in outcomes) {
     for (your.pred in predictors) {
-      load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
-      tmp.list[[paste0(your.outcome, "_", your.pred)]] <- fit.pca.summary
+      try({
+        load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
+        tmp.list[[paste0(your.outcome, "_", your.pred)]] <- fit.pca.summary
+      })
     }
   }
   tmp.list

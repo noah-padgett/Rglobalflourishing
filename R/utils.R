@@ -14,6 +14,7 @@
 #'   library(survey)
 #'   # TODO
 #' }
+#' @rdname utils
 #' @export
 svy_scale <- function(x, wgt = NULL, psu = NULL, strata = NULL, design = NULL) {
   if (is.null(design)) {
@@ -40,7 +41,7 @@ svy_scale <- function(x, wgt = NULL, psu = NULL, strata = NULL, design = NULL) {
 #'   check_variance("A", df)
 #'   check_variance("B", df)
 #' }
-#' @rdname svy_scale
+#' @rdname utils
 #' @export
 check_variance <- function(x, data) {
   ifelse(length(na.omit(unique(data[[x]]))) > 1, TRUE, FALSE)
@@ -64,7 +65,7 @@ check_variance <- function(x, data) {
 #' have any variance. The inverse selection, 'x[!(keep_variable(x, data))]', can be used to identify
 #' which variables were excluded.
 #'
-#' @rdname svy_scale
+#' @rdname utils
 #' @export
 keep_variable <- function(x, data, reason = "variance") {
 
@@ -111,7 +112,7 @@ keep_variable <- function(x, data, reason = "variance") {
 #' threshold(s) against which the absolute correlation in the data is compared.
 #' this is used to help troubleshoot and resolve non-invertible predictor matrices
 #' @return a predictor matrix for use in mice
-#' @rdname svy_scale
+#' @rdname utils
 #' @export
 quickpred2 <- function(
     data, mincor = 0.1, minpuc = 0, include = "", exclude = "",
@@ -182,7 +183,7 @@ quickpred2 <- function(
   predictorMatrix
 }
 
-#' @rdname svy_scale
+#' @rdname utils
 #' @export
 format_flex_table <- function(xtb, pg.width = 6.5) {
   tb.temp <- xtb %>%
@@ -207,13 +208,13 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
 }
 
 # A better rounding function for printing/concatenating results
-#' @rdname svy_scale
+#' @rdname utils
 #' @export
 .round <- function(x, digits = 2) {
   sprintf(paste0("%.", digits, "f"), x)
 }
 
-#' @rdname svy_scale
+#' @rdname utils
 #' @export
 .round_p <- function(x, .sci=TRUE, .digits=3, .eps = 1e-16){
   format.pval(x, scientific=.sci, digits=.digits, eps = .eps)
@@ -221,6 +222,8 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
 
 
 # functions needed for forest plots
+#' @rdname utils
+#' @export
 .geom_stripes <- function(mapping = NULL,
                           data = NULL,
                           stat = "identity",
@@ -239,7 +242,8 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
     params = list(...)
   )
 }
-
+#' @rdname utils
+#' @export
 .GeomStripes <- ggplot2::ggproto(
   "GeomStripes", ggplot2::Geom,
   required_aes = c("y"),
@@ -286,3 +290,36 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
     )
   }
 )
+
+#' @rdname utils
+#' @export
+theme_Publication <- function(base_size=14) {
+  library(grid)
+  library(ggthemes)
+  (theme_foundation(base_size=base_size)
+    + theme(plot.title = element_text(face = "bold",
+                                      size = rel(1.2), hjust = 0.5),
+            text = element_text(),
+            panel.background = element_rect(colour = NA),
+            plot.background = element_rect(colour = NA),
+            panel.border = element_rect(colour = NA),
+            axis.title = element_text(face = "bold",size = rel(1)),
+            axis.title.y = element_text(angle=90,vjust =2),
+            axis.title.x = element_text(vjust = -0.2),
+            axis.text = element_text(),
+            axis.line = element_line(colour="black"),
+            axis.ticks = element_line(),
+            panel.grid.major = element_line(colour="#f0f0f0"),
+            panel.grid.minor = element_blank(),
+            legend.key = element_rect(colour = NA),
+            legend.position = "bottom",
+            legend.direction = "horizontal",
+            legend.key.size= unit(0.2, "cm"),
+            legend.spacing = unit(0, "cm"),
+            legend.title = element_text(face="italic"),
+            plot.margin=unit(c(10,5,5,5),"mm"),
+            strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+            strip.text = element_text(face="bold")
+    ))
+
+}

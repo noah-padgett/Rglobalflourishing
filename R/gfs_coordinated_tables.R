@@ -873,34 +873,32 @@ gfs_generate_supplemental_docs <- function(
   suppressMessages({
     suppressWarnings({
 
-    tmp.vec <- c(paste0(OUTCOME.VEC0, "_Y2"), paste0(OUTCOME.VEC0, "_Y1"))
-    df.raw <- gfs_add_variable_labels(
-      df = df.raw,
-      vars = tmp.vec,
-      include.wave = TRUE
-    )
+      df.raw <- gfs_add_variable_labels(df.raw, OUTCOME.VEC)
 
-    tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "Y1"]
-    tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
-    df.w1 <- df.raw %>%
-      select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, contains("_Y1")) %>%
-      mutate(
-        {{wgt}} := {{wgt1}}
-      )
-    colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
-    df.w1$WAVE0 <- "Wave 1"
-    df.w2 <- df.raw %>%
-      filter(CASE_OBSERVED_Y2 == 1) %>%
-      select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, contains("_Y2"), any_of(tmp00)) %>%
-      mutate(
-        {{wgt}} := {{wgt2}}
-      )
-    colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
-    colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
-    df.w2$WAVE0 <- "Wave 2"
-    df.raw.long <- full_join(df.w1, df.w2)
-    n1.print <- rnow(df.w1)
-    n2.print <- rnow(df.w2)
+      tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "W1"]
+      tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
+      df.w1 <- df.raw %>%
+        select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, contains("_Y1")) %>%
+        mutate(
+          "{{wgt}}" := {{wgt1}}
+        )
+      colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
+      df.w1$WAVE0 <- "Wave 1"
+      df.w2 <- df.raw %>%
+        filter(CASE_OBSERVED_Y2 == 1) %>%
+        select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, contains("_Y2"), any_of(tmp00)) %>%
+        mutate(
+          "{{wgt}}" := {{wgt2}}
+        )
+      colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
+      colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
+      df.w2$WAVE0 <- "Wave 2"
+
+      df.raw.long <- suppressMessages({
+        full_join(df.w1, df.w2)
+      })
+    n1.print <- nrow(df.w1)
+    n2.print <- nrow(df.w2)
 
     focal.predictor0 <- str_remove(focal.predictor,"_Y1")
     OUTCOME.VEC0 <- str_remove(OUTCOME.VEC,"_Y2")
@@ -989,6 +987,8 @@ gfs_generate_supplemental_docs <- function(
             type == "Std. Est" ~ exp(0.91*Est)
           )
         )
+      minY <- min(plot.dat$est.rr,na.rm=TRUE) - 0.10
+      maxY <- max(plot.dat$est.rr,na.rm=TRUE) + 0.10
       p <- plot.dat %>%
         group_by(Country) %>%
         mutate(
@@ -996,13 +996,13 @@ gfs_generate_supplemental_docs <- function(
           var.rr = var(est.rr, na.rm=TRUE)
         ) %>% ungroup() %>%
         ggplot(aes(x=reorder(Country, avg.rr), y = est.rr)) +
-        geom_point() +
+        geom_jitter(position = position_jitter(width = 0.25, height = 0, seed = 31415)) +
         geom_hline(yintercept = c(0.90, 1.10), linetype="dashed") +
         labs(y="Estimated Risk-Ratio", x="",
-             title="Heterogenetiy in estimated effects within and between countries",
+             title=stringr::str_wrap("Heterogenetiy in estimated effects within and between countries",50),
              subtitle="Model estimated controlling for 7 principal components") +
         scale_x_discrete(guide = guide_axis(angle = 60)) +
-        scale_y_continuous(limits = c(0.25,4))+
+        scale_y_continuous(limits = c(minY,maxY))+
         theme_Publication()
 
       ggsave(
@@ -1010,7 +1010,7 @@ gfs_generate_supplemental_docs <- function(
         plot=p, units="in", width=6, height=5
       )
 
-      tb.cap.figS1 <- paste0("Figure S1. Heterogeneity in the effects of ", focal.better.name ," on composite wellbeing and other outcomes across countries (N=", n1.print, ").")
+      tb.cap.figS1 <- paste0("Figure S1. Heterogeneity in the effects of ", focal.better.name ," on composite wellbeing and other outcomes across countries (N=", n1.print, "). The estimated effects of focal predictor on all wave 2 outcomes are reported after converting to risk-ratios (RR). For continuous outcome, the standardized beta is converted to RR using `exp(0.91*est)` to approximate a RR. The displayed estimates are based on the multiple-imputation results controlling for demographics, childhood predictors, and the first 7 principal components of contemporaneous confounders. Points in scatterplot are jittered horizontally (`position_jitter(width = 0.25, height = 0, seed = 31415)`) to avoid overlap.")
 
 
 
@@ -1061,6 +1061,8 @@ gfs_generate_supplemental_docs <- function(
       sumtab.toprint <- sumtab %>%
         as_flex_table() %>%
         autofit() %>%
+        width(j=2,width=1.25)%>%
+        width(j=3,width=1.25)%>%
         format_flex_table(pg.width = 21 / 2.54 - 2) %>%
         set_caption(
           paste0("Table S1. Summary statistics of the observed data (weighted).")
@@ -1514,11 +1516,11 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         country.n1.print <- df.w1 %>%
           mutate(COUNTRY = str_trim(COUNTRY)) %>%
           filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
-          rnow()
+          nrow()
         country.n2.print <- df.w2 %>%
           mutate(COUNTRY = str_trim(COUNTRY)) %>%
           filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
-          rnow()
+          nrow()
 
       ## ======================================================================================== ##
       ## ====== Table Sia. summary statistics -- demographics variables ========================= ##
@@ -1603,6 +1605,8 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           tbia.toprint <- sumtab %>%
             as_flex_table() %>%
             autofit() %>%
+            width(j=2,width=1.5)%>%
+            width(j=3,width=1.5)%>%
             format_flex_table(pg.width = 21 / 2.54 - 2) %>%
             set_caption(
               paste0("Table S",i+tb.num.shift,"a. Summary statistics of the observed data (weighted) in ", COUNTRY_LABELS[i])
@@ -1661,6 +1665,8 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           tbib.toprint <- sumtab %>%
             as_flex_table() %>%
             autofit() %>%
+            width(j=2,width=1.5)%>%
+            width(j=3,width=1.5)%>%
             format_flex_table(pg.width = 21 / 2.54 - 2) %>%
             set_caption(
               paste0("Table S",i+tb.num.shift,"b. Summary statistics of outcomes (weighted) in ", COUNTRY_LABELS[i])
@@ -1685,6 +1691,13 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
 
         attr.fit.toprint <- tbl_regression(
           tmp.attr.mod, exponentiate = TRUE,
+          pvalue_fun = function(x) {
+            if_else(
+              is.na(x),
+              NA_character_,
+              if_else(x < 0.001, format(x, digits = 3, scientific = TRUE), format(round(x, 3), scientific = F))
+            )
+          },
           label = lab.list
         ) |>
           modify_header(estimate = "**Odds Ratio**") |>
