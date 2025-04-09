@@ -563,7 +563,7 @@ get_missing_codes <- function(var) {
     FEEL_ANXIOUS = c(-98, 98, 99),
     FORGIVE = c(-98, 98, 99),
     FREEDOM = c(-98, 98, 99),
-    GENDER = c(-98, 98, 99),
+    GENDER = c(-98, 4, 98, 99),
     GIVE_UP = c(-98, 98, 99),
     GOD_PUNISH = c(-98, 99),
     GRATEFUL = c(-98, 98, 99),
