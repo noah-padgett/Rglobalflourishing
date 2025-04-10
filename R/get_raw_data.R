@@ -5,7 +5,7 @@
 #' @param file name of file to get data from
 #' @param list.composites a lit of lists to construct composite variables
 #' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
-#' @param method.income method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', ''quintiles.top.random', 'numeric'.
+#' @param method.income method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'.
 #' @param data.is.wide (FALSE) change to TRUE only if the data are in long format
 #' @param ... other arguments
 #' @returns a dataset with attrition weights appended
@@ -15,7 +15,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, ...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, ...) {
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -135,10 +135,10 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           !(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_Y2",
                      paste0("INCOME",c("","_Y1","_Y2")),
                      paste0("INCOME_QUINTILE",c("","_Y1","_Y2")),
-                     paste0("SELFID1",c("","_Y1","_Y2")),
-                     paste0("SELFID2",c("","_Y1","_Y2")),
+                     paste0("SELFID1",c("")),
+                     paste0("SELFID2",c("")),
                      paste0("DOI_RECRUIT",c("","_Y1","_Y2")),
-                     paste0("DOI_ANNUAL",c("","_Y1","_Y2"))
+                     paste0("DOI_ANNUAL",c("","_Y1"))
                      ))
           ), \(x){
             x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
@@ -167,10 +167,10 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           AGE_GRP_Y1 = recode_to_type(AGE_GRP_Y1, "AGE_GRP_Y1"),
           AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y2",...),
           AGE_GRP_Y2 = recode_to_type(AGE_GRP_Y2, "AGE_GRP_Y2"),
-          RACE1_Y1 = recode_labels(SELFID1_Y1, "SELFID1_Y1",...),
-          RACE2_Y1 = recode_labels(SELFID2_Y1, "SELFID2_Y1",...),
-          RACE_PLURALITY1_Y1 = recode_race_to_plurality(RACE1_Y1, COUNTRY2),
-          RACE_PLURALITY2_Y1 = recode_race_to_plurality(RACE2_Y1, COUNTRY2)
+          RACE1 = recode_labels(SELFID1, "SELFID1",...),
+          RACE2 = recode_labels(SELFID2, "SELFID2",...),
+          RACE_PLURALITY1 = recode_race_to_plurality(RACE1, COUNTRY2),
+          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY2)
         )
     }
   }
