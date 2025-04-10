@@ -903,6 +903,7 @@ recode_labels <- function(x, var, include.value = TRUE, add.whitespace = FALSE) 
       x == 22 ~ "United States",
       x == 23 ~ "Sweden",
       x == 24 ~ "Hong Kong",
+      x == 25 ~ "China",
       .default = "(Missing)"
     ),
     WAVE = x,
