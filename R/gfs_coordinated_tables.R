@@ -254,6 +254,9 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
               if ( str_detect(lvls[i],"Missing") ) {
                 relvls[i] = "    (Missing)"  
               }
+              if(cur_column() == "COUNTRY"){
+              	relvls[i] = paste0("    ",lvls[i])
+              }
             }
             x = factor(x, levels = lvls, labels = relvls)
           }
@@ -283,6 +286,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         include = c(
           {focal.predictor0},
           AGE,
+          AGE_GRP,
           GENDER,
           #any_of(baseline.pred0),
           COUNTRY
@@ -920,7 +924,9 @@ gfs_generate_supplemental_docs <- function(
         INCOME, RACE1
       ) %>%
       mutate(
-        across(any_of(c("COUNTRY", focal.predictor0, OUTCOME.VEC0, baseline.pred0)), \(x){
+        INCOME = forcats::fct(INCOME),
+        RACE1 = forcats::fct(RACE1),
+        across(any_of(c("COUNTRY", focal.predictor0, OUTCOME.VEC0, baseline.pred0, "INCOME", "RACE1")), \(x){
           if ( is.factor(x) & str_detect(cur_column(), "AGE_GRP", negate = TRUE) ) {
             lvls <- levels(x)
             relvls <- lvls
@@ -1467,7 +1473,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         flextable() %>%
         #autofit() %>%
         set_caption(
-          paste0("Table S5. Comparing estimated E-values across models and how missingnes at wave 2 was handled.")
+          paste0("Table S5. Comparing estimated E-values across models and how missingness at wave 2 was handled.")
         ) %>%
         # uncomment when using all outcomes
         italic(part = "body",
@@ -1487,7 +1493,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           values = tb.note.evalues, top = FALSE, colwidths = ncol(meta.evalues)
         ) %>%
         width(j=1,width=2.5)%>%
-        format_flex_table(pg.width = 21 / 2.54 - 2) %>%
+        format_flex_table(pg.width = 29.7/2.54 - 2) %>%
         align(i = 1, j = NULL, align = "center", part = "header") %>%
         align(part = "footer", align = "left", j = 1:ncol(meta.evalues)) %>%
         border_remove()  %>%
@@ -1610,13 +1616,13 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             mutate(COUNTRY = str_trim(COUNTRY)) %>%
             filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
             mutate(
-              RACE1 = factor(RACE1),
+              #RACE1 = factor(RACE1),
               RACE1 = droplevels(RACE1),
               RACE1 = case_when(is.na(RACE1) ~ "    (Missing)", .default = RACE1),
               RACE1 = factor(RACE1, levels = sort(unique(RACE1))),
               RACE1 = fct_relevel(RACE1, "    (Missing)", after = Inf),
-              INCOME = case_when(INCOME == "(Missing)" ~ "    (Missing)", .default = INCOME),
-              INCOME = factor(INCOME),
+              #INCOME = case_when(INCOME == "(Missing)" ~ "    (Missing)", .default = INCOME),
+              #INCOME = factor(INCOME),
               INCOME = droplevels(INCOME),
               INCOME = factor(INCOME, levels = sort(unique(INCOME))),
               INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME),
@@ -2151,7 +2157,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             paste0("Table S1. Summary statistics of the observed demographic data (weighted) across countries.")
           ) %>%
           add_footer_row(
-            values = tb.note.summarytab, top = FALSE,colwidths=23+22
+            values = tb.note.summarytab, top = FALSE,colwidths=23+24
           )
       })
     })
