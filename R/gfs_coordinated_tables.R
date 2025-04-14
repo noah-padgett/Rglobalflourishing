@@ -20,7 +20,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = 0.00081, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = as.name("WGT"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("ANNUAL_WEIGHT_R2"), psu = as.name("PSU"), strata = as.name("STRATA"), n.print="202,898"){
+gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = 0.00081, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = as.name("WGT0"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("SAMP.ATTR.WGT"), psu = as.name("PSU"), strata = as.name("STRATA"), n.print="202,898"){
 
   if(is.null(p.bonferroni)){
     p.bonferroni = 0.05/nrow(meta.wopc)
@@ -29,7 +29,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
     baseline.pred = str_remove(
       c(
         "COV_AGE_GRP_Y1",
-        "COV_GENDER_Y1",
+        "COV_GENDER",
         "COV_EDUCATION_3_Y1",
         "COV_EMPLOYMENT_Y1",
         "COV_MARITAL_STATUS_Y1",
@@ -206,10 +206,10 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
 
     df.raw <- gfs_add_variable_labels(df.raw, OUTCOME.VEC)
 
-    tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "W1"]
+    tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "Y1"]
     tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
     df.w1 <- df.raw %>%
-      select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, contains("_Y1")) %>%
+      select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, contains("_Y1")) %>%
       mutate(
         "{{wgt}}" := {{wgt1}}
       )
@@ -217,7 +217,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
     df.w1$WAVE0 <- "Wave 1"
     df.w2 <- df.raw %>%
       filter(CASE_OBSERVED_Y2 == 1) %>%
-      select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, contains("_Y2"), any_of(tmp00)) %>%
+      select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, GENDER, contains("_Y2"), any_of(tmp00)) %>%
       mutate(
         "{{wgt}}" := {{wgt2}}
       )
@@ -314,7 +314,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         ),
         digits = list(
           all_continuous() ~ 2,
-          all_categorical() ~ 1
+          all_categorical() ~ 0
         ),
         missing_text = "    (Missing)",
         missing_stat = "{N_miss} ({p_miss}%)"
@@ -660,7 +660,7 @@ gfs_generate_supplemental_docs <- function(
     baseline.pred = str_remove(
       c(
         "COV_AGE_GRP_Y1",
-        "COV_GENDER_Y1",
+        "COV_GENDER",
         "COV_EDUCATION_3_Y1",
         "COV_EMPLOYMENT_Y1",
         "COV_MARITAL_STATUS_Y1",
@@ -878,7 +878,7 @@ gfs_generate_supplemental_docs <- function(
       tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "W1"]
       tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
       df.w1 <- df.raw %>%
-        select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, contains("_Y1")) %>%
+        select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, contains("_Y1")) %>%
         mutate(
           "{{wgt}}" := {{wgt1}}
         )
@@ -886,7 +886,7 @@ gfs_generate_supplemental_docs <- function(
       df.w1$WAVE0 <- "Wave 1"
       df.w2 <- df.raw %>%
         filter(CASE_OBSERVED_Y2 == 1) %>%
-        select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, contains("_Y2"), any_of(tmp00)) %>%
+        select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, GENDER, contains("_Y2"), any_of(tmp00)) %>%
         mutate(
           "{{wgt}}" := {{wgt2}}
         )

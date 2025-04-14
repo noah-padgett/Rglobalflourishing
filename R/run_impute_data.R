@@ -139,10 +139,12 @@ run_impute_data <- function(data,
       tmp.meth[!(names(tmp.meth) %in% var.ignore) &
                  (names(tmp.meth) %in% colnames(var.n.unique)[var.n.unique > 7]) &
                  (names(tmp.meth) %in% colnames(var.class)[var.class == "factor"])] <- "cart"
-      # tmp.meth[names(tmp.meth) %in% c("NUM_CHILDREN", "NUM_CHILDREN_Y1", "NUM_CHILDREN_Y2")] <- "cart"
+      tmp.meth[names(tmp.meth) %in%
+                 c("NUM_CHILDREN", "NUM_CHILDREN_Y1", "NUM_CHILDREN_Y2", paste0("INCOME",c("","_Y1","_Y2")))
+               ] <- "cart"
       tmp.meth[(names(tmp.meth) %in% var.ignore | names(tmp.meth) %in% comp.miss)] <- ""
       ## =================================================================== ##
-      # Set up base predictor matrix 
+      # Set up base predictor matrix
       # Minimal set of missingness predictors (**TO-DO**)
       if(is.null(pred.vars)){
       	vars0 <- c(
@@ -169,7 +171,7 @@ run_impute_data <- function(data,
         include = pred.vars[keep.var],
         exclude = exclude.var
       )
-      # predictor matrix: 
+      # predictor matrix:
       # rows: designate variable being imputed
       # cols: designate what variable(s) are used to predict row
       ## =================================================================== ##
@@ -198,7 +200,7 @@ run_impute_data <- function(data,
           		donors = 10,
           		threshold = 2.0, # see https://github.com/amices/mice/issues/314 for threshold information
           		n.core = round(future::availableCores()/2,0), # use half of available cores
-          		seed = 31415
+          		parallelseed = 31415
         	)
         } else {
         	fit.imp <- mice::mice(

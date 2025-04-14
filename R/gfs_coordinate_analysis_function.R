@@ -14,6 +14,7 @@
 #' @param robust.huberM a  logical of whether to use a robust variant of the linear regression model (default: FALSE), see below for additional details.
 #' @param robust.tune a numeric value defining the tuning parameter for the robust.huberM option.
 #' @param res.dir a character string defining directory to save results to.
+#' @param compute.vif (optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a data.frame that contains the meta-analysis input results
 #' @examples {
@@ -48,7 +49,7 @@ gfs_run_regression_single_outcome <- function(
     your.outcome = NULL,
     covariates = NULL,
     contemporaneous.exposures = NULL,
-    wgt = ANNUAL_WEIGHT_R1,
+    wgt = ANNUAL_WEIGHT_R2,
     psu = PSU,
     strata = STRATA,
     # advanced options: only change if you know what you are doing
@@ -59,7 +60,9 @@ gfs_run_regression_single_outcome <- function(
     robust.huberM = FALSE,
     robust.tune = 1,
     res.dir = NULL,
-    list.composites = NULL, ...) {
+    list.composites = NULL,
+    compute.vif = FALSE, 
+    .return.all = FALSE, ...) {
   suppressMessages({
     suppressWarnings({
       # remove focal predictor from covariate vectors
@@ -91,12 +94,12 @@ gfs_run_regression_single_outcome <- function(
         .default = outcome.type
       )
 
-      # outcomes which need the countries to be subset...
+      # outcomes/predictor combinations in which the countries must be subset...
       {
         if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
           data <- data %>%
-            dplyr::filter(str_detect(COUNTRY,"Egypt", negate=TRUE)) %>%
-            dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE)) %>%
+            dplyr::filter( !(COUNTRY %in% c("China","Egypt")) ) %>%
+            dplyr::filter( !(COUNTRY2 %in% c("China","Egypt"))) %>%
             mutate(
               COUNTRY = fct_drop(COUNTRY),
               COUNTRY2 = fct_drop(COUNTRY2)
@@ -111,12 +114,40 @@ gfs_run_regression_single_outcome <- function(
               COUNTRY2 = fct_drop(COUNTRY2)
             )
         }
+        if(str_detect(your.outcome,"BELIEVE_GOD") | str_detect(your.pred,"BELIEVE_GOD")) {
+          data <- data %>%
+            dplyr::filter(str_detect(COUNTRY,"Egypt", negate=TRUE)) %>%
+            dplyr::filter(str_detect(COUNTRY2,"Egypt", negate=TRUE)) %>%
+            mutate(
+              COUNTRY = fct_drop(COUNTRY),
+              COUNTRY2 = fct_drop(COUNTRY2)
+            )
+         }
+         if (str_detect(your.outcome,"BELONGING") | str_detect(your.pred,"BELONGING")) {
+          data <- data %>%
+            dplyr::filter( !(COUNTRY %in% c("China")) ) %>%
+            dplyr::filter( !(COUNTRY2 %in% c("China"))) %>%
+            mutate(
+              COUNTRY = fct_drop(COUNTRY),
+              COUNTRY2 = fct_drop(COUNTRY2)
+            )
+        }
+        if (str_detect(your.outcome,"SAY_IN_GOVT") | str_detect(your.pred,"SAY_IN_GOVT")) {
+          data <- data %>%
+            dplyr::filter( !(COUNTRY %in% c("China")) ) %>%
+            dplyr::filter( !(COUNTRY2 %in% c("China"))) %>%
+            mutate(
+              COUNTRY = fct_drop(COUNTRY),
+              COUNTRY2 = fct_drop(COUNTRY2)
+            )
+        }
       }
 
       # convert to nested survey object
       svy.data.imp <- data %>%
         mutate(
-          COUNTRY = COUNTRY2
+          COUNTRY = COUNTRY2,
+          .imp00 = .imp
         ) %>%
         group_by(COUNTRY, .imp) %>%
         nest() %>%
@@ -235,7 +266,7 @@ gfs_run_regression_single_outcome <- function(
           if (str_to_lower(pc.rule) == "mincomp") {
             keep.num.pc0 <- fit.pca.summary %>%
               dplyr::filter(prop.var >= pc.cutoff)
-            if (nrow(keep.num.pc0) < 22) {
+            if (nrow(keep.num.pc0) < 23) {
               # cutoff fails because too stringent, switching to a default of 0.02
               keep.num.pc0 <- fit.pca.summary %>%
                 dplyr::filter(prop.var >= 0.02)
@@ -295,7 +326,7 @@ gfs_run_regression_single_outcome <- function(
       # svy.data.imp is a nested df by country & .imp
       svy.data.imp <- svy.data.imp %>%
         dplyr::mutate(
-          fit.tidy = purrr::map(svy.data, \(x) {
+          svy.fit = purrr::map(svy.data, \(x) {
             tmp.fit <- NULL
             # first check if ANY variance on outomce
             run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)
@@ -332,8 +363,18 @@ gfs_run_regression_single_outcome <- function(
                   robust.huberM = FALSE
                 )
               }
-              tmp.fit$fit.tidy
+              tmp.fit
             }
+          }),
+          fit.tidy = map(svy.fit, \(x) x$fit.tidy),
+          fit.vif = map(svy.fit, \(x){
+          	out = NULL
+          	if(compute.vif){
+          		mm <- model.matrix(x$fit)
+          		tmp = svydiags::svyvif(mobj = x$fit, X=mm[,-1], w=x$fit$weights)
+           		out = as.data.frame(tmp[['Intercept adjusted']]) %>% rowid_to_column(var="Predictor")
+          	}
+          	out
           })
         ) %>%
         ungroup()
@@ -594,6 +635,7 @@ gfs_run_regression_single_outcome <- function(
                 "Argentina",
                 "Australia",
                 "Brazil",
+                "China",
                 "Germany",
                 "Hong Kong",
                 "Japan",
@@ -631,9 +673,16 @@ gfs_run_regression_single_outcome <- function(
           id.Est = .round(estimate.pooled),
           id.SE = .round(se.pooled),
           id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
-          rr.Est = .round(exp(estimate.pooled)),
+          ## make sure to apply RR approximation is outcome is actually linear
+          rr.Est = case_when(
+          	outcome.type == "RR" ~ .round(exp(estimate.pooled)),
+          	outcome.type == "linear" ~ .round(exp(0.91*estimate.pooled))
+          ),
           logrr.SE = .round(se.pooled),
-          rr.CI = paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")")
+          rr.CI = case_when(
+          	outcome.type == "RR" ~ paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")"),
+          	outcome.type == "linear" ~ paste0("(", .round(exp(0.91*ci.low)), ",", .round(exp(0.91*ci.up)), ")")
+          )
         )
 
       save(
@@ -646,7 +695,23 @@ gfs_run_regression_single_outcome <- function(
                  "_regressed_on_",
                  your.outcome, "_saved_results.RData")
         )
+        
       )
+      
+      if( .return.all ){
+       	save(
+       	svy.data.imp, ## this object includes ALL the imputation, fitted regression models, diagnostics, etc., is memory intensive.
+        output,
+        metainput,
+        fit.pca.summary,
+        file = here::here(
+          res.dir,
+          paste0(your.pred,
+                 "_regressed_on_",
+                 your.outcome, "_saved_results.RData")
+        )
+        )
+       }
     })
   })
 

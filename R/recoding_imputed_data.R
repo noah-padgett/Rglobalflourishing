@@ -32,8 +32,8 @@ recode_imputed_data <- function(
     list.composites = NULL,
     list.manual = NULL,
     wave = 2,
-    method.income = "quintiles.top.fixed",
-    wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU",
+    method.income = "quintiles.top.random",
+    wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",
     ...) {
   if (is.null(list.default)) {
     stop("'list.default' was not supplied. Check input for recode_imputed data.")
@@ -70,9 +70,9 @@ recode_imputed_data <- function(
   #for(i in 1:ncol(df.imp.long)){
   #x = df.imp.long[[i]]
   #if(is.factor(x) & str_detect(colnames(df.imp.long)[i],"COUNTRY", negate=TRUE)){
-  #  x <- sub("\\..*", "", x)
-  #  x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-  #    as.numeric()
+  # x <- sub("\\..*", "", x)
+  # x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+  #   as.numeric()
   #}
   #}
   ## ============================================================================================ ##
@@ -174,7 +174,7 @@ recode_imputed_data <- function(
 
         # enforce reference group
         COV_AGE_GRP_Y1 = relevel(COV_AGE_GRP_Y1, ref = levels(COV_AGE_GRP_Y1)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
-        COV_GENDER_Y1 = relevel(COV_GENDER_Y1, ref = "Male"),
+        COV_GENDER = relevel(COV_GENDER, ref = "Male"),
         COV_EDUCATION_3_Y1 = relevel(COV_EDUCATION_3_Y1, ref = "9-15"),
         COV_EMPLOYMENT_Y1 = relevel(COV_EMPLOYMENT_Y1, ref = "Employed for an employer"),
         COV_MARITAL_STATUS_Y1 = relevel(COV_MARITAL_STATUS_Y1, ref = "Single/Never been married"),
@@ -192,7 +192,7 @@ recode_imputed_data <- function(
         # Other basic setup to make things easier later...
         MODE_RECRUIT = recode_labels( MODE_RECRUIT, "MODE_RECRUIT", include.value = FALSE),
         MODE_RECRUIT = recode_to_type(MODE_RECRUIT, "MODE_RECRUIT"),
-        RACE = COV_SELFID1_Y1,
+        RACE = COV_SELFID1,
         MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, .default = 0),
@@ -533,7 +533,7 @@ recode_imputed_data <- function(
                       x == 5 ~ 1,
                       x %in% 1:4 ~ 0
                     )
-                    y.mean = mean(y)
+                    y.mean = mean(y, na.rm=TRUE)
                     if(y.mean > 0.20){
                       n0 <- length(y)
                       nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0

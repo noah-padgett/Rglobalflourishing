@@ -1,88 +1,26 @@
-0.1**2
 devtools::load_all()
-# Specify where you want to output results#
-# Can be left blank, and the results will output to the same directory as the data.#
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"#
-#
-# Here is YOUR wave 1 construct variable#
-FOCAL_PREDICTOR <- "PHYSICAL_HLTH_Y1"#
-FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health"#
-FOCAL_PREDICTOR_REFERENCE_VALE <- "estimate within country mean of self rated physical health"#
-#
-# IF your predictor (focal exposure) is binary/categorical, use the code below to define how you#
-#   want it to be categorized. Categorization must result in a binary variable 0/1 for#
-#   consistency across studies.#
-VALUES_DEFINING_UPPER_CATEGORY <- c(NULL)#
-VALUES_DEFINING_LOWER_CATEGORY <- c(NULL)#
-# Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses#
-# 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful#
-# 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of#
-#   feel_anxious and control_worry)  or depression (sum of depressed and interest) that have a#
-# 	history of being dichotomized.#
-FORCE_BINARY <- FALSE#
-# Note 2: if your focal predictor is categorical/binary, you can use the responses as if they were continuous.#
-# 	The provided (straightforward-ish) approach implemented is to reverse code all#
-#   ordered-categorical variables (reverse code from what is reported in the codebook), and#
-#   standardized as if continuous. This approach is not applicable for variables with nominal#
-#   response categories such as employment. This is employed using the option below.#
-FORCE_CONTINUOUS <- FALSE#
-#
-# ================================================================================================ ##
-# ================================================================================================ ##
-# Data Prep#
-#
-if (is.null(out.dir)) {#
-  out.dir <- data.dir#
-}#
-setwd(out.dir)#
-# Note:#
-# The following function loads the required packages for the remainder of the script to work.#
-load_packages()#
-# global options#
-options(#
-  survey.lonely.psu = "certainty"#
-)#
-# outcome vectors#
-LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')#
-RECODE.DEFAULTS <- list(#
-  FOCAL_PREDICTOR = FOCAL_PREDICTOR,#
-  DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(#
-    get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),#
-    get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")#
-  ),#
-  VARIABLES.VEC = c(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2")),#
-  FORCE_BINARY = FORCE_BINARY,#
-  FORCE_CONTINUOUS = FORCE_CONTINUOUS,#
-  VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,#
-  VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,#
-  USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)#
-)#
-#
-# get "raw data"#
-df.raw <- gfs_get_labelled_raw_data(#
-  file = here::here(data.dir, dataset.name),#
-  list.composites = LIST.COMPOSITES,#
-  .test = FALSE#
-)
+devtools::load_all()
+devtools::load_all()
+devtools::load_all()
+devtools::load_all()
 # Add the directory where the dataset is stored on your computer#
 data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-data"#
-#dataset.name <- "gfs_all_countries_wave1.sav"#
-dataset.name <- "df_w2_sim_wide.sav"#
+ dataset.name <- "gfs_all_countries_wave2.sav"#
 #
 # Specify where you want to output results#
 # Can be left blank, and the results will output to the same directory as the data.#
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"#
+out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-GFS-Core-Wave-2/test-package"#
 #
 # Here is YOUR wave 1 construct variable#
-FOCAL_PREDICTOR <- "PHYSICAL_HLTH_Y1"#
-FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health"#
-FOCAL_PREDICTOR_REFERENCE_VALE <- "estimate within country mean of self rated physical health"#
+FOCAL_PREDICTOR <- "EDUCATION_3_Y1"#
+FOCAL_PREDICTOR_BETTER_NAME <- "Educational Attainment"#
+FOCAL_PREDICTOR_REFERENCE_VALUE <- "up to 15 years of education"#
 #
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you#
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for#
 #   consistency across studies.#
-VALUES_DEFINING_UPPER_CATEGORY <- c(NULL)#
-VALUES_DEFINING_LOWER_CATEGORY <- c(NULL)#
+VALUES_DEFINING_UPPER_CATEGORY <- c(3)#
+VALUES_DEFINING_LOWER_CATEGORY <- c(1,2)#
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses#
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful#
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of#
@@ -116,6 +54,7 @@ LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')#
 RECODE.DEFAULTS <- list(#
   FOCAL_PREDICTOR = FOCAL_PREDICTOR,#
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(#
+    get_variable_codes("GENDER.RACE", appnd=""),#
     get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),#
     get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")#
   ),#
@@ -125,38 +64,819 @@ RECODE.DEFAULTS <- list(#
   VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,#
   VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,#
   USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)#
+)
+df.imp.long <- readr::read_rds(here::here(data.dir, "gfs_imputed_data_formatted_wwgts.RData"))#
+#
+VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]#
+OUTCOME.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]#
+CONTEMPORANEOUS.EXPOSURES.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "COMPOSITE", negate = TRUE)]#
+CONTEMPORANEOUS.EXPOSURES.VEC <- CONTEMPORANEOUS.EXPOSURES.VEC[str_detect(CONTEMPORANEOUS.EXPOSURES.VEC, "_Y1")]#
+DEMO.CHILDHOOD.PRED <- c(#
+  "COV_AGE_GRP_Y1",#
+  "COV_GENDER_Y1",#
+  "COV_EDUCATION_3_Y1",#
+  "COV_EMPLOYMENT_Y1",#
+  "COV_MARITAL_STATUS_Y1",#
+  "COV_ATTEND_SVCS_Y1",#
+  "COV_BORN_COUNTRY_Y1",#
+  "COV_PARENTS_12YRS_Y1",#
+  "COV_SVCS_12YRS_Y1",#
+  "COV_MOTHER_RELATN_Y1",#
+  "COV_FATHER_RELATN_Y1",#
+  "COV_OUTSIDER_Y1",#
+  "COV_ABUSED_Y1",#
+  "COV_HEALTH_GROWUP_Y1",#
+  "COV_INCOME_12YRS_Y1",#
+  "COV_REL1_Y1",#
+  "COV_RACE_PLURALITY",#
+  "COV_MOTHER_NA",#
+  "COV_FATHER_NA"#
+)#
+# Run country-specific regression analyses for ALL wave 2 outcomes#
+OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,#
+your.outcome <- OUTCOME.VEC0[1]#
+#
+# Model 1: Run without principal components#
+LIST.RES1 <- map(OUTCOME.VEC0, \(x){#
+  gfs_run_regression_single_outcome(#
+    your.outcome = x,#
+    data = df.imp.long,#
+    wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT1")#
+    psu = PSU, #psu = as.name("PSU")#
+    strata = STRATA, # strata = as.name("STRATA")#
+    your.pred = FOCAL_PREDICTOR,#
+    covariates = DEMO.CHILDHOOD.PRED,#
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+    list.composites = LIST.COMPOSITES[[1]],#
+    standardize = TRUE,#
+    res.dir = "results-wopc",#
+    pc.rule = "omit"#
+  )#
+}, .progress = TRUE)#
+#LIST.RES1 <- construct_meta_input_from_saved_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+meta.input <- LIST.RES1 %>%#
+  bind_rows() %>%#
+  mutate(OUTCOME0 = OUTCOME) %>%#
+  group_by(OUTCOME0) %>%#
+  nest()#
+#
+META.RES1 <- gfs_meta_analysis(#
+  meta.input,#
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+  p.subtitle = "Principal Components Excluded -- Full Imputation Approach"#
+)#
+readr::write_rds(#
+  META.RES1,#
+  file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),#
+  compress = "gz"#
 )#
 #
-# get "raw data"#
+# Model 2: Run with principal components#
+LIST.RES2 <- map(OUTCOME.VEC0, \(x){#
+  gfs_run_regression_single_outcome(#
+    data = df.imp.long,#
+    wgt = as.name("ANNUAL_WEIGHT_R2"),#
+    psu = as.name("PSU"),#
+    strata = as.name("STRATA"),#
+    your.pred = FOCAL_PREDICTOR,#
+    your.outcome = x,#
+    covariates = DEMO.CHILDHOOD.PRED,#
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+    list.composites = LIST.COMPOSITES[[1]],#
+    standardize = TRUE,#
+    res.dir = "results-wpc",#
+    pc.cutoff = 7,#
+    pc.rule = "constant"#
+  )#
+}, .progress = TRUE)#
+#
+#LIST.RES2 <- construct_meta_input_from_saved_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+meta.input <- LIST.RES2 %>%#
+  bind_rows() %>%#
+  mutate(OUTCOME0 = OUTCOME) %>%#
+  group_by(OUTCOME0) %>%#
+  nest()#
+#
+META.RES2 <- gfs_meta_analysis(#
+  meta.input,#
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+  p.subtitle = "Principal Components Included -- Full Imputation Approach"#
+)#
+#
+readr::write_rds(#
+  META.RES2,#
+  file = here::here(out.dir, "results-wpc","0_meta_analyzed_results_wpc.rds"),#
+  compress = "gz"#
+)#
+#
+# ================================================================================================ ##
+# ================================================================================================ ##
+# Run supplemental country-wise analyses -- attrition-weight adjusted sampling weights#
+{#
+#
+  # Supplemental analysis set 1: Run without principal components#
+  SUPP.LIST.RES1 <- map(OUTCOME.VEC0, \(x){#
+    gfs_run_regression_single_outcome(#
+      your.outcome = x,#
+      data = df.imp.long %>% filter(CASE_OBSERVED_Y2 == 1),#
+      wgt = SAMP.ATTR.WGT,#
+      psu = PSU,#
+      strata = STRATA,#
+      your.pred = FOCAL_PREDICTOR,#
+      covariates = DEMO.CHILDHOOD.PRED,#
+      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+      list.composites = LIST.COMPOSITES[[1]],#
+      standardize = TRUE,#
+      res.dir = "supp-results-wopc",#
+      pc.rule = "omit"#
+    )#
+  }, .progress = TRUE)#
+  SUPP.LIST.RES1 <- construct_meta_input_from_saved_results("supp-results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+  meta.input <- SUPP.LIST.RES1 %>%#
+    bind_rows() %>%#
+    mutate(OUTCOME0 = OUTCOME) %>%#
+    group_by(OUTCOME0) %>%#
+    nest()#
+  SUPP.META.RES1 <- gfs_meta_analysis(#
+    meta.input,#
+    better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+    p.subtitle = "Principal Components Excluded -- Attrition Weights"#
+  )#
+  readr::write_rds(#
+    SUPP.META.RES1,#
+    file = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"),#
+    compress = "gz"#
+  )#
+#
+  # Analysis set 2: Run with principal components#
+  SUPP.LIST.RES2 <- map(OUTCOME.VEC0, \(x){#
+    gfs_run_regression_single_outcome(#
+      your.outcome = x,#
+      data = df.imp.long %>% filter(CASE_OBSERVED_Y2 == 1),#
+      wgt = SAMP.ATTR.WGT,#
+      psu = PSU,#
+      strata = STRATA,#
+      your.pred = FOCAL_PREDICTOR,#
+      covariates = DEMO.CHILDHOOD.PRED,#
+      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+      list.composites = LIST.COMPOSITES[[1]],#
+      standardize = TRUE,#
+      res.dir = "supp-results-wpc",#
+      pc.cutoff = 7,#
+      pc.rule = "constant"#
+    )#
+  }, .progress = TRUE)#
+  SUPP.LIST.RES2 <- construct_meta_input_from_saved_results("supp-results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+  meta.input <- SUPP.LIST.RES2 %>%#
+    bind_rows() %>%#
+    mutate(OUTCOME0 = OUTCOME) %>%#
+    group_by(OUTCOME0) %>%#
+    nest()#
+  SUPP.META.RES2 <- gfs_meta_analysis(#
+    meta.input,#
+    better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+    p.subtitle = "Principal Components Included -- Attrition Weights"#
+  )#
+  readr::write_rds(#
+    SUPP.META.RES2,#
+    file = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"),#
+    compress = "gz"#
+  )#
+}#
+# ================================================================================================ ##
+# ================================================================================================ ##
+# Construct manuscript tables#
+#
+LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')#
+RECODE.DEFAULTS <- list(#
+  FOCAL_PREDICTOR = FOCAL_PREDICTOR,#
+  DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(#
+    get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),#
+    get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")#
+  ),#
+  VARIABLES.VEC = c(get_variable_codes("VARS.W1"), get_variable_codes("VARS.W2")),#
+  FORCE_BINARY = FORCE_BINARY,#
+  FORCE_CONTINUOUS = FORCE_CONTINUOUS,#
+  VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,#
+  VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,#
+  USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)#
+)#
+#
+# needed results#
 df.raw <- gfs_get_labelled_raw_data(#
-  file = here::here(data.dir, dataset.name),#
+  here::here(data.dir, dataset.name),#
   list.composites = LIST.COMPOSITES,#
-  .test = FALSE#
+  add.whitespace = TRUE#
+)#
+#
+df.raw <- append_attrition_weights_to_df(df.raw)#
+VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]#
+OUTCOME.VEC0 <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]#
+COUN.RES.WOPC <- get_country_specific_regression_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+COUN.RES.WPC <- get_country_specific_regression_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+SUPP.COUN.RES.WOPC <- get_country_specific_regression_results("supp-results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+SUPP.COUN.RES.WPC <- get_country_specific_regression_results("supp-results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)#
+FIT.PCA.SUM <- get_country_specific_pca_summary("results-wpc", paste0(OUTCOME.VEC0,"_Y2"), FOCAL_PREDICTOR)#
+FIT.ATTR <- get_fitted_attrition_models("results-attr")#
+META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))#
+META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))#
+SUPP.META.RES1 <- readr::read_rds(file = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"))#
+SUPP.META.RES2 <- readr::read_rds(file = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"))#
+#
+# main text#
+gfs_generate_main_doc(#
+  df.raw = df.raw,#
+  meta.wopc = META.RES1,#
+  meta.wpc = META.RES2,#
+  focal.predictor = FOCAL_PREDICTOR,#
+  focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,#
+  res.dir = "results",#
+  wgt = WGT0,#
+  wgt1 = ANNUAL_WEIGHT_R2,#
+  wgt2 = SAMP.ATTR.WGT,#
+  psu = PSU,#
+  strata = STRATA,#
+  n.print="207,919"#
+)#
+#
+# online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)#
+gfs_generate_supplemental_docs(#
+  df.raw = df.raw,#
+  meta.wopc = META.RES1, meta.wpc = META.RES2,#
+  coun.wopc =  COUN.RES.WOPC , coun.wpc = COUN.RES.WPC , coun.fit.pca = FIT.PCA.SUM ,#
+  attr.models = FIT.ATTR,#
+  supp.meta.wopc = SUPP.META.RES1, supp.meta.wpc = SUPP.META.RES2,#
+  supp.coun.wopc = SUPP.COUN.RES.WOPC , supp.coun.wpc = SUPP.COUN.RES.WPC ,#
+  focal.predictor = FOCAL_PREDICTOR,#
+  focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,#
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,#
+  res.dir = "results",#
+  wgt = as.name("WGT0"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("SAMP.ATTR.WGT"),#
+  psu = as.name("PSU"), strata = as.name("STRATA"),#
+  what = "all",#
+  n.print="207,919"#
 )
-file = here::here(data.dir, dataset.name)
-list.composites = LIST.COMPOSITES
-wgt = "ANNUAL_WEIGHT_R2"
-method.income="quintiles"
-data.is.wide = FALSE
-psu = "PSU"
-strata = "STRATA"
-data.is.wide = TRUE
-df.original <- haven::read_spss(file)#
-    df.original <- haven::zap_labels(df.original)
-gfs_data_to_wide
-data.is.long = FALSE
-df.original <- df.original %>%#
-      dplyr::mutate(#
-        COUNTRY = recode_labels(COUNTRY, "COUNTRY"),#
-        COUNTRY = factor(COUNTRY),#
-        COUNTRY2 = COUNTRY#
+data = df.imp.long
+wgt = ANNUAL_WEIGHT_R2
+wgt = as.name("ANNUAL_WEIGHT_R2")
+psu = as.name("PSU")
+strata = as.name("STRATA")
+your.pred = FOCAL_PREDICTOR
+covariates = DEMO.CHILDHOOD.PRED
+contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC
+list.composites = LIST.COMPOSITES[[1]]
+standardize = TRUE
+res.dir = "results-wopc"
+pc.rule = "omit"
+your.outcome <- OUTCOME.VEC0[1]
+force.linear = FALS
+force.linear = FALSE
+robust.huberM = FALSE
+compute.vif = T
+.return.all = FALSE
+covariates
+covariates <- covariates[str_detect(str_remove(covariates, "COV_"), your.pred, negate = TRUE)]
+var.cont.exposures
+var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate = TRUE)]
+var.cont.exposures
+your.outcome
+your.outcome
+your.outcome <- OUTCOME.VEC0[1]
+your.outcome
+OUTCOME.VEC0
+OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,
+OUTCOME.VEC
+your.outcome <- OUTCOME.VEC0[1]
+your.outcome
+covariates <- covariates[str_detect(str_remove(covariates, "COV_"), your.pred, negate = TRUE)]
+var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate = TRUE)]
+var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(list.composites[[your.pred]]))]
+res.dir
+dir.exists(res.dir)
+outcome.type <- case_when(
+get_outcome_scale(your.outcome) %in% c("cont", "Continuous") ~ "linear",
+get_outcome_scale(your.outcome) %in% c("bin", "likert") ~ "RR",
+.default = "linear"
+)
+outcome.type <- case_when(#
+        force.linear ~ "linear",#
+        .default = outcome.type#
+      )
+outcome.type
+your.outcome
+get_outcome_scale(your.outcome)
+table(df.imp.long[,c("COUNTRY", your.outcome)])
+table(df.imp.long[,c("COUNTRY", your.outcome)],useNA="always")
+svy.data.imp <- data %>%#
+        mutate(#
+          COUNTRY = COUNTRY2,#
+          .imp00 = .imp#
+        ) %>%#
+        group_by(COUNTRY, .imp) %>%#
+        nest() %>%#
+        mutate(#
+          data = map(data, \(x) {#
+            x$PRIMARY_OUTCOME <- as.numeric(x[, your.outcome, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x$FOCAL_PREDICTOR <- as.numeric(x[, your.pred, drop = TRUE])#
+            x#
+          }),#
+          data = map(data, \(x) {#
+            x %>% mutate(#
+              PRIMARY_OUTCOME = case_when(#
+                standardize == FALSE ~ PRIMARY_OUTCOME,#
+                outcome.type == "linear" & standardize == TRUE ~ svy_scale(PRIMARY_OUTCOME, {{wgt}}, {{psu}}, {{strata}}),#
+                .default = PRIMARY_OUTCOME#
+              ),#
+              FOCAL_PREDICTOR = case_when(#
+                standardize == FALSE ~ FOCAL_PREDICTOR,#
+                outcome.type == "linear" & standardize == TRUE ~ svy_scale(FOCAL_PREDICTOR, {{wgt}}, {{psu}}, {{strata}}),#
+                .default = FOCAL_PREDICTOR#
+              )#
+            )#
+          }),#
+          data = map(data, \(tmp.dat){#
+            tmp.dat %>%#
+              mutate(across(where(is.factor), \(x) droplevels(x)))#
+          }),#
+          svy.data = map(data, \(x) {#
+                x %>%#
+                as_survey_design(#
+                  ids = {{psu}},#
+                  strata = {{strata}},#
+                  weights = {{wgt}},#
+                  calibrate.formula = ~1#
+                )#
+            # svydesign(#
+            #   data = x,#
+            #   ids = ~{{psu}},#
+            #   strata = ~{{strata}},#
+            #   weights = ~{{wgt}},#
+            #   calibrate.formula = ~1#
+            # )#
+          })#
+        )
+table(df.imp.long[,c("COUNTRY", your.pred, your.outcome)],useNA="always")
+str_to_lower(pc.rule) != "omit"
+svy.data.imp <- svy.data.imp %>%#
+        dplyr::mutate(#
+          svy.fit = purrr::map(svy.data, \(x) {#
+            tmp.fit <- NULL#
+            # first check if ANY variance on outomce#
+            run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)#
+            if (run.analysis) {#
+              cur.country <- x[["variables"]][["COUNTRY2"]][1]#
+              # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+              keep.var <- keep_variable(covariates, data = x[["variables"]])#
+              if (str_to_lower(pc.rule) == "omit") {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])#
+                )#
+              } else {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))#
+                )#
+              }#
+#
+              if (outcome.type == "linear") {#
+                tmp.fit <- gfs_svyglm(#
+                  tmp.model,#
+                  svy.design = x,#
+                  family = stats::gaussian(),#
+                  robust.huberM = robust.huberM,#
+                  robust.tune = robust.tune#
+                )#
+              }#
+              if (outcome.type == "RR") {#
+                tmp.fit <- gfs_svyglm(#
+                  tmp.model,#
+                  svy.design = x,#
+                  family = stats::quassipoisson(),#
+                  robust.huberM = FALSE#
+                )#
+              }#
+              tmp.fit#
+            }#
+          }),#
+          fit.tidy = map(svy.fit, \(x) x$fit.tidy),#
+          fit.vif = map(svy.fit, \(x){#
+          	out = NULL#
+          	if(compute.vif){#
+          		mm <- model.matrix(x$fit)#
+          		tmp = svydiags::svyvif(mobj = x$fit, X=mm[,-1], w=x$fit$weights)#
+           		out = as.data.frame(tmp[['Intercept adjusted']]) %>% rowid_to_column(var="Predictor")#
+          	}#
+          	out#
+          })#
+        ) %>%#
+        ungroup()
+compute.vif=FALSE
+svy.data.imp <- svy.data.imp %>%#
+        dplyr::mutate(#
+          svy.fit = purrr::map(svy.data, \(x) {#
+            tmp.fit <- NULL#
+            # first check if ANY variance on outomce#
+            run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)#
+            if (run.analysis) {#
+              cur.country <- x[["variables"]][["COUNTRY2"]][1]#
+              # Next check each variable to make sure all have at least 2 levels, if only 1, exclude#
+              keep.var <- keep_variable(covariates, data = x[["variables"]])#
+              if (str_to_lower(pc.rule) == "omit") {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])#
+                )#
+              } else {#
+                tmp.model <- reformulate(#
+                  response = "PRIMARY_OUTCOME",#
+                  termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))#
+                )#
+              }#
+#
+              if (outcome.type == "linear") {#
+                tmp.fit <- gfs_svyglm(#
+                  tmp.model,#
+                  svy.design = x,#
+                  family = stats::gaussian(),#
+                  robust.huberM = robust.huberM,#
+                  robust.tune = robust.tune#
+                )#
+              }#
+              if (outcome.type == "RR") {#
+                tmp.fit <- gfs_svyglm(#
+                  tmp.model,#
+                  svy.design = x,#
+                  family = stats::quassipoisson(),#
+                  robust.huberM = FALSE#
+                )#
+              }#
+              tmp.fit#
+            }#
+          }),#
+          fit.tidy = map(svy.fit, \(x) x$fit.tidy),#
+          fit.vif = map(svy.fit, \(x){#
+          	out = NULL#
+          	if(compute.vif){#
+          		mm <- model.matrix(x$fit)#
+          		tmp = svydiags::svyvif(mobj = x$fit, X=mm[,-1], w=x$fit$weights)#
+           		out = as.data.frame(tmp[['Intercept adjusted']]) %>% rowid_to_column(var="Predictor")#
+          	}#
+          	out#
+          })#
+        ) %>%#
+        ungroup()
+# re-estimate basic model with the max number of PCs used to get the variable names#
+      tmp.dat <- svy.data.imp %>% dplyr::filter(str_detect(COUNTRY, "United States"))#
+      keep.var <- keep_variable(covariates, data = tmp.dat$data[[1]])#
+      if (str_to_lower(pc.rule) == "omit") {#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])#
+        )#
+      } else {#
+        tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]#
+        tmp.model <- reformulate(#
+          response = "PRIMARY_OUTCOME",#
+          termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[tmp.country])))#
+        )#
+      }#
+      tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)#
+      # which model doesn't matter for this step, we only need the variable names
+coef.order <- names(tmp.fit$coefficients)#
+      coef.order <- c(#
+        coef.order[!(stringr::str_detect(coef.order, "(Intercept)") | stringr::str_detect(coef.order, "COV_REL1"))],#
+        "COV_GENDER_Y1Prefer not to answer",#
+        "COV_REL1_Y1Islam", "COV_REL1_Y1Hinduism", "COV_REL1_Y1Judaism", "COV_REL1_Y1Buddhism",#
+        "COV_REL1_Y1Primal,Animist, or Folk religion", "COV_REL1_Y1Chinesefolk/traditional religion",#
+        "COV_REL1_Y1Christianity", "COV_REL1_Y1Combined",#
+        "(Intercept)"#
+      )#
+#
+      results.pooled <- svy.data.imp %>%#
+        select(COUNTRY, .imp, fit.tidy) %>%#
+        unnest(c(fit.tidy)) %>%#
+        ungroup() %>%#
+        group_by(term, COUNTRY) %>%#
+        nest() %>%#
+        mutate(#
+          pooled.est = map(data, \(x){#
+            gfs_pool_estimates(x)#
+          }),#
+          estimates.by.imp = data#
+        ) %>%#
+        unnest(c(pooled.est)) %>%#
+        select(-c(data)) %>%#
+        unique() %>%#
+        mutate(#
+          term = factor(term)#
+        ) %>%#
+        arrange(COUNTRY, term) %>%#
+        ungroup()
+## Relabel output#
+      varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")#
+      termlist <- as.character(unique(results.pooled$term))[-1]#
+#
+      base_variable <- sapply(termlist, function(b) {#
+        match <- sapply(varlist, function(a) {#
+          startsWith(b, a)#
+        })#
+        varlist[which(match)]#
+      })#
+      base_variable <- base_variable %>%#
+        as.data.frame() %>%#
+        pull(.)#
+      levels <- gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)#
+      termlabels <- data.frame(#
+        original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),#
+        Variable = c(rep(base_variable, 2), "(Intercept)"),#
+        Category = c(rep(levels, 2), "(Intercept)")#
+      )
+termlabels <- termlabels %>%#
+        mutate(#
+          Variable = stringr::str_remove(Variable, "COV_"),#
+          Category = case_when(#
+            stringr::str_detect(Variable, "PC_") ~ stringr::str_remove(stringr::str_sub(Variable, -2, -1), "_"),#
+            Variable == "MOTHER_RELATN_Y1" ~ "Very good/somewhat good",#
+            Variable == "FATHER_RELATN_Y1" ~ "Very good/somewhat good",#
+            Variable == "RACE_PLURALITY" ~ "Non-plurality groups",#
+            Variable == "MOTHER_NA" ~ "Mother NA flag",#
+            Variable == "FATHER_NA" ~ "Father NA flag",#
+            .default = Category#
+          )#
+        )
+sd.pooled <- svy.data.imp %>%#
+        mutate(#
+          est = purrr::map_dbl(svy.data, \(x) {#
+          	survey::svyvar(~PRIMARY_OUTCOME, design = x, na.rm=TRUE)#
+          }),#
+          pred.var = purrr::map_dbl(svy.data, \(x) {#
+          	survey::svyvar(~FOCAL_PREDICTOR, design = x, na.rm=TRUE)#
+          })#
+        ) %>%#
+        ungroup() %>%#
+        select(COUNTRY, .imp, est, pred.var) %>%#
+        group_by(COUNTRY) %>%#
+        summarize(#
+          outcome.sd = sqrt(mean(est, na.rm=TRUE)),#
+          predictor.sd = sqrt(mean(pred.var, na.rm=TRUE))#
+        ) %>%#
+        select(COUNTRY, outcome.sd, predictor.sd)
+# Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s#
+      if (standardize) {#
+        sd.pooled$outcome.sd <- 1#
+        sd.pooled$predictor.sd <- 1#
+      }
+# Compute Evalues#
+      tmp.output <- results.pooled %>%#
+        left_join(sd.pooled, by = "COUNTRY") %>%#
+        ungroup()
+# working version:#
+      tmp.output$EE <- 0#
+      tmp.output$ECI <- 0#
+      i <- 1#
+      for (i in 1:nrow(tmp.output)) {#
+        tmp.output$EE[i] <- gfs_compute_evalue(#
+          est = tmp.output$estimate.pooled[i],#
+          se = tmp.output$se.pooled[i],#
+          sd = tmp.output$outcome.sd[i],#
+          ci.low = tmp.output$ci.low[i],#
+          ci.up = tmp.output$ci.up[i],#
+          type = outcome.type,#
+          what = "EE"#
+        )#
+        tmp.output$ECI[i] <- gfs_compute_evalue(#
+          est = tmp.output$estimate.pooled[i],#
+          se = tmp.output$se.pooled[i],#
+          sd = tmp.output$outcome.sd[i],#
+          ci.low = tmp.output$ci.low[i],#
+          ci.up = tmp.output$ci.up[i],#
+          type = outcome.type,#
+          what = "ECI"#
+        )#
+      }
+output <- tmp.output %>%#
+        left_join(termlabels,#
+                  by = c("term" = "original"),#
+                  relationship = "many-to-many"#
+        ) %>%#
+        arrange(Variable)
+metainput <- output %>%#
+        select(#
+          COUNTRY,#
+          Variable,#
+          Category,#
+          estimate.pooled,#
+          se.pooled,#
+          p.value,#
+          ci.low,#
+          ci.up,#
+          df.approx,#
+          outcome.sd#
+        ) %>%#
+        group_by(COUNTRY, Variable) %>%#
+        dplyr::filter(!(Category == "(Ref:)")) %>%#
+        dplyr::filter(Variable == "FOCAL_PREDICTOR")#
+      colnames(metainput) <-#
+        c("Country", "Variable", "Category", "Est", "SE", "pvalue", "ci.lb", "ci.ub", "df", "outcome.sd")#
+      metainput <- metainput %>%#
+        mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        )
+df<-df.imp.long%>% filter(COUNTRY == "China")
+table(df$COV_REL1)
+table(df$COV_REL2)
+table(df$COV_REL2_Y1)
+table(df$COV_REL1_Y1)
+output <- output %>%#
+        group_by(Variable) %>%#
+        fill(Variable) %>%#
+        ungroup() %>%#
+        mutate(#
+          Variable = case_when(Variable == "AGE_GRP" ~ "Year of birth", .default = Variable),#
+          Category = case_when(#
+            Variable == "REL1" &#
+              str_detect(Category, "Combined") ~ "Collapsed affiliations with prevalence<3%",#
+            Category == "25-29" ~ "1993-1998; age 25-29",#
+            Category == "30-39" ~ "1983-1993; age 30-39",#
+            Category == "40-49" ~ "1973-1983; age 40-49",#
+            Category == "50-59" ~ "1963-1973; age 50-59",#
+            Category == "60-69" ~ "1953-1963; age 60-69",#
+            Category == "70-79" ~ "1943-1953; age 70-79",#
+            Category == "80 or older" ~ "1943 or earlier; age 80+",#
+            Category == "(Ref:)" &#
+              Variable == "AGE_GRP" ~ "(Ref: 1998-2005; current age: 18-24)",#
+            Category == "(Ref:)" &#
+              Variable == "GENDER" ~ "(Ref: Male)",#
+            Category == "(Ref:)" &#
+              Variable == "PARENTS_12YRS" ~ "(Ref: Parents married)",#
+            Category == "(Ref:)" &#
+              Variable == "SVCS_12YRS" ~ "(Ref: Never)",#
+            # Category == "(Ref:)" & Variable == "SVCS_MOTHER" ~ "(Ref: Never)",#
+            # Category == "(Ref:)" & Variable == "SVCS_FATHER" ~ "(Ref: Never)",#
+            Category == "(Ref:)" &#
+              Variable == "MOTHER_RELATN" ~ "(Ref: Very bad/somewhat bad)",#
+            Category == "(Ref:)" &#
+              Variable == "FATHER_RELATN" ~ "(Ref: Very bad/somewhat bad)",#
+            # Category == "(Ref:)" & Variable == "MOTHER_LOVED" ~ "(Ref: No)",#
+            # Category == "(Ref:)" & Variable == "FATHER_LOVED" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "OUTSIDER" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "ABUSED" ~ "(Ref: No)",#
+            Category == "(Ref:)" &#
+              Variable == "HEALTH_GROWUP" ~ "(Ref: Good)",#
+            Category == "(Ref:)" &#
+              Variable == "BORN_COUNTRY" ~ "(Ref: Born in this country)",#
+            Category == "(Ref:)" &#
+              Variable == "INCOME_12YRS" ~ "(Ref: Got by)",#
+            Category == "(Ref:)" &#
+              Variable == "RACE_PLURALITY" ~ "(Ref: Plurality group)",#
+            Category == "(Ref:)" &#
+              Variable == "MOTHER_NA" ~ "(Ref: Non-missing Mother Flags)",#
+            Category == "(Ref:)" &#
+              Variable == "FATHER_NA" ~ "(Ref: Non-missing Father Flags)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c(#
+                "Argentina",#
+                "Australia",#
+                "Brazil",#
+                "China",#
+                "Germany",#
+                "Hong Kong",#
+                "Japan",#
+                "Mexico",#
+                "Poland",#
+                "South Africa",#
+                "Spain",#
+                "Sweden",#
+                "Tanzania",#
+                "United Kingdom",#
+                "United States"#
+              ) &#
+              Variable == "REL1" ~ "(Ref: No religion/Atheist/Agnostic)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Egypt", "Indonesia", "Turkey") &#
+              Variable == "REL1" ~ "(Ref: Islam)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("India") &#
+              Variable == "REL1" ~ "(Ref: Hinduism)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Israel") &#
+              Variable == "REL1" ~ "(Ref: Judaism)",#
+            Category == "(Ref:)" &#
+              COUNTRY %in% c("Kenya", "Nigeria", "Philippines") &#
+              Variable == "REL1" ~ "(Ref: Christianity)",#
+            .default = Category#
+          )#
+        ) %>%#
+        dplyr::mutate(#
+          OUTCOME = your.outcome,#
+          FOCAL_PREDICTOR = your.pred,#
+          .before = Variable#
+        ) %>%#
+        dplyr::mutate(#
+          id.Est = .round(estimate.pooled),#
+          id.SE = .round(se.pooled),#
+          id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),#
+          ## make sure to apply RR approximation is outcome is actually linear#
+          rr.Est = case_when(#
+          	outcome.type == "RR" ~ .round(exp(estimate.pooled)),#
+          	outcome.type == "linear" ~ .round(exp(0.91*estimate.pooled))#
+          ),#
+          logrr.SE = .round(se.pooled),#
+          rr.CI = case_when(#
+          	outcome.type == "RR" ~ paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")"),#
+          	outcome.type == "linear" ~ paste0("(", .round(exp(0.91*ci.low)), ",", .round(exp(0.91*ci.up)), ")")#
+          )#
+        )
+save(#
+        output,#
+        metainput,#
+        fit.pca.summary,#
+        file = here::here(#
+          res.dir,#
+          paste0(your.pred,#
+                 "_regressed_on_",#
+                 your.outcome, "_saved_results.RData")#
+        )#
       )
 devtools::load_all()
-df.raw <- gfs_get_labelled_raw_data(
-file = here::here(data.dir, dataset.name),
-list.composites = LIST.COMPOSITES
-)
-table(df.raw$DRINKS)
-table(df.raw$DRINKS_Y1)
-table(df.raw[,c("DRINKS_Y1","COUNTRY")])
-table(df.raw[,c("DRINKS_Y1","COUNTRY")])
+devtools::load_all()
+OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,#
+your.outcome <- OUTCOME.VEC0[1]#
+#
+# Model 1: Run without principal components#
+LIST.RES1 <- map(OUTCOME.VEC0, \(x){#
+  gfs_run_regression_single_outcome(#
+    your.outcome = x,#
+    data = df.imp.long,#
+    wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")#
+    psu = PSU, #psu = as.name("PSU")#
+    strata = STRATA, # strata = as.name("STRATA")#
+    your.pred = FOCAL_PREDICTOR,#
+    covariates = DEMO.CHILDHOOD.PRED,#
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+    list.composites = LIST.COMPOSITES[[1]],#
+    standardize = TRUE,#
+    res.dir = "results-wopc",#
+    pc.rule = "omit"#
+  )#
+}, .progress = TRUE)
+your.outcome <- OUTCOME.VEC0[2]
+your.outcome
+table(df$APPROVE_GOVT_Y2)
+table(df.imp.long[,c("COUNTRY", your.outcome)],useNA="always")
+outcome.na <- lapply(OUTCOME.VEC, function(x){#
+	sum(is.na(df.imp.1[[x]]))#
+})
+df.imp.1 <- df.imp.long %>% filter(.imp == 1)#
+#
+outcome.na <- lapply(OUTCOME.VEC, function(x){#
+	sum(is.na(df.imp.1[[x]]))#
+})
+outcome.na
+outcome.na <- lapply(OUTCOME.VEC, function(x){#
+	df.imp.1 %>%#
+	group_by(COUNTRY) %>%#
+	summarise(#
+		"NA_{x}" := sum(is.na(x))#
+	)#
+})
+outcome.na
+outcome.na <- df.imp.1 %>%#
+	group_by(COUNTRY) %>%#
+	summarise(#
+		across(all_of(OUTCOME.VEC), \(x) sum(is.na(x)) )#
+	)
+outcome.na
+outcome.na <- df.imp.1 %>%#
+	group_by(COUNTRY) %>%#
+	summarise(#
+		across(all_of(OUTCOME.VEC), \(x) sum(is.na(x))/length(x) )#
+	)
+outcome.na
+write_csv(outcome.na, file="outcome_missing_post_imp_by_country.csv")
+anyNA(df.raw)
+tmp.dat1 <- df.raw %>%#
+  arrange(ID)#
+tmp.dat2 <- df.imp.long %>%#
+  filter(.imp == 1) %>%#
+  arrange(ID)
+table(tmp.dat1[["BELIEVE_GOD_Y1"]], tmp.dat2[["BELIEVE_GOD_Y1"]], dnn = dnn0, useNA = "ifany")
+dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
+table(tmp.dat1[["BELIEVE_GOD_Y1"]], tmp.dat2[["BELIEVE_GOD_Y1"]], dnn = dnn0, useNA = "ifany")
+anyNA(tmp.dat2[["BELIEVE_GOD_Y1"]])
+table(tmp.dat1[["BELIEVE_GOD_Y2"]], tmp.dat2[["BELIEVE_GOD_Y2"]], dnn = dnn0, useNA = "ifany")
+df <- df.imp.long%>%filter(COUNTRY == "Egypt")
+table(df$BELIEVE_GOD_Y2,useNA="always")
+df <- df.raw%>%filter(COUNTRY == "Egypt")
+table(df$BELIEVE_GOD_Y2,useNA="always")
+}
+devtools::load_all()

@@ -54,7 +54,7 @@ gfs_pool_estimates <- function(data) {
         .default = NA
       ),
       p.value = case_when(
-        p.value <= 1e-16 ~ 1e-16,
+        p.value <= 2.22e-16 ~ 2.22e-16,
         .default = p.value
       ),
       miss.info = (lambda+2/(vm+3))/(lambda+1)

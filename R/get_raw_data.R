@@ -142,8 +142,9 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
                      ))
           ), \(x){
             x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
-            x <- recode_labels(x, cur_column(),...)
+            x <- recode_labels(x, cur_column())
             x <- recode_to_type(x, cur_column())
+
             x
           }, .names = "{.col}")
       )

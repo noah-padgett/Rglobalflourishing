@@ -47,16 +47,19 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
 
   # DEFINE VECTOR OF Groups of Variables
   {
+
+
     # Demographics
     DEMOGRAPHIC.VARS <- c(
       "GENDER",
+      'SELFID1',
+
       "MARITAL_STATUS",
       "EMPLOYMENT",
       "ATTEND_SVCS",
       "EDUCATION_3",
       "BORN_COUNTRY",
       "REL2",
-      'SELFID1',
       'REGION1',
 
       'EDUCATION',
@@ -73,7 +76,6 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
       'OUTSIDER',
       'PARENTS_12YRS',
       'REL1',
-      'SELFID1',
       'SVCS_12YRS',
       'SVCS_FATHER',
       'SVCS_MOTHER'
@@ -136,7 +138,7 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
         'PEACE',
         'PEOPLE_HELP',
         'PHYSICAL_HLTH',
-        'POLITICAL_ID',
+        #'POLITICAL_ID', # do not use (missing in china, egypt, and india)
         'PRAY_MEDITATE',
         'PROMOTE_GOOD',
         'REL_EXPERIENC',
@@ -219,12 +221,11 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
         'MARITAL_STATUS_DIVORCED',
         'MENTAL_HEALTH',
         'NUM_CHILDREN',
-        'NUM_HOUSEHOLD',
         'OWN_RENT_HOME',
         'PEACE',
         'PEOPLE_HELP',
         'PHYSICAL_HLTH',
-        'POLITICAL_ID',
+        #'POLITICAL_ID', # do not use (missing in china, egypt, and india)
         'PRAY_MEDITATE',
         'PROMOTE_GOOD',
         'REL_EXPERIENC',
@@ -463,7 +464,8 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
     VARS.Y2 = c(VARS.Y2, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y2")]),
     VARS0 = str_remove(c(VARS.Y1), "_Y1"),
     OUTCOME.VEC = str_remove(c(VARS.Y1, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y1")]), "_Y1"),
-    DEMOGRAPHIC.VARS = paste0(DEMOGRAPHIC.VARS, appnd),
+    GENDER.RACE = paste0(DEMOGRAPHIC.VARS[c(1:2)], appnd),
+    DEMOGRAPHIC.VARS = paste0(DEMOGRAPHIC.VARS[-c(1:2)], appnd),
     RETROSPECTIVE.VARS = paste0(RETROSPECTIVE.VARS, appnd)
   )
   what = ifelse(what == "all", c(names(out)), what)
