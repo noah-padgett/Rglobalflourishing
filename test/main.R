@@ -12,30 +12,29 @@
 #   "play nice" with other packages.
 
 # install.packages("remotes")
-# remotes::install_github("noah-padgett/Rglobalflourishing")
-# library(Rglobalflourishing)
+#remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
+#library(Rglobalflourishing)
 
 # Analysis Set-Up
 
 # Add the directory where the dataset is stored on your computer
 data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-data"
-#dataset.name <- "gfs_all_countries_wave1.sav"
-dataset.name <- "df_w2_sim_wide.sav"
+ dataset.name <- "gfs_all_countries_wave2.sav"
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"
+out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-GFS-Core-Wave-2/test-package"
 
 # Here is YOUR wave 1 construct variable
 FOCAL_PREDICTOR <- "PHYSICAL_HLTH_Y1"
-FOCAL_PREDICTOR_BETTER_NAME <- "Self-rated physical health"
-FOCAL_PREDICTOR_REFERENCE_VALE <- "estimate within country mean of self rated physical health"
+FOCAL_PREDICTOR_BETTER_NAME <- "Self-Rated Physical Health"
+FOCAL_PREDICTOR_REFERENCE_VALUE <- "mean rating within country"
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for
 #   consistency across studies.
-VALUES_DEFINING_UPPER_CATEGORY <- c(NULL)
-VALUES_DEFINING_LOWER_CATEGORY <- c(NULL)
+VALUES_DEFINING_UPPER_CATEGORY <- NULL
+VALUES_DEFINING_LOWER_CATEGORY <- NULL
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
@@ -69,6 +68,7 @@ LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
 RECODE.DEFAULTS <- list(
   FOCAL_PREDICTOR = FOCAL_PREDICTOR,
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(
+    get_variable_codes("GENDER.RACE", appnd=""),
     get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),
     get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")
   ),
@@ -93,8 +93,8 @@ df.raw <- gfs_get_labelled_raw_data(
   run.imp <- TRUE
   if (run.imp) {
     pred0 <- c(
-      'ANNUAL_WEIGHT_R2', 'MODE_RECRUIT_Y1',
-      'AGE_Y1', 'GENDER_Y1', 'MARITAL_STATUS_Y1',
+      'ANNUAL_WEIGHT_R2', 'MODE_RECRUIT',
+      'AGE_Y1', 'GENDER_Y1', 'RACE_PLURALITY1', 'MARITAL_STATUS_Y1',
       'EMPLOYMENT_Y1', 'EDUCATION_3_Y1', 'ATTEND_SVCS_Y1',
       'URBAN_RURAL_Y1', 'BORN_COUNTRY_Y1', 'REL2_Y1',
       'ABUSED_Y1', 'OUTSIDER_Y1',
@@ -105,13 +105,14 @@ df.raw <- gfs_get_labelled_raw_data(
     df.imp <- run_impute_data(
       data =  df.raw,
       data.dir = data.dir,
-      Nimp = 3,
+      Nimp = 2,
       Miter = 1,
-      pred.vars = pred0
+      pred.vars = pred0,
+      file.name = "gfs_w2_imputed_data_2imp_test.RData"
     )
   }
 
-  load(here::here(data.dir, "gfs_imputed_data_test.RData"))
+  load(here::here(data.dir, "gfs_w2_imputed_data_2imp_test.RData"))
   # ~~
   df.imp.long <- recode_imputed_data(
     df.imp,
@@ -132,6 +133,7 @@ tmp.dat2 <- df.imp.long %>%
   arrange(ID)
 dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
 table(tmp.dat1[[FOCAL_PREDICTOR]], tmp.dat2[[FOCAL_PREDICTOR]], dnn = dnn0, useNA = "ifany")
+table(tmp.dat1[["BELIEVE_GOD_Y2"]], tmp.dat2[["BELIEVE_GOD_Y2"]], dnn = dnn0, useNA = "ifany")
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -142,22 +144,25 @@ df.imp.long <- run_attrition_model(
   data = df.imp.long,
   obs.id.var = "CASE_OBSERVED_Y2",
   attr.pred = c(
-    "ANNUAL_WEIGHT_R1", "MODE_RECRUIT_Y1",
+    "ANNUAL_WEIGHT_R2", "MODE_RECRUIT",
     'COMPOSITE_HAPPI_LIFE_SAT_Y1', 'COMPOSITE_HEALTH_Y1', 'COMPOSITE_MEANING_PURPOSE_Y1',
-    'COMPOSITE_CHARACTER_Y1', 'COMPOSITE_SUBJECTIVE_SOC_CONN_Y1', 'COMPOSITE_FINL_MAT_YORRY_Y1',
+    'COMPOSITE_CHARACTER_Y1', 'COMPOSITE_SUBJECTIVE_SOC_CONN_Y1', 'COMPOSITE_FINL_MAT_WORRY_Y1',
     'COMPOSITE_EXTRAVERSION_Y1', 'COMPOSITE_OPENNESS_Y1', 'COMPOSITE_AGREEABLENESS_Y1',
     'COMPOSITE_CONSCIENTIOUSNESS_Y1', 'COMPOSITE_NEUROTICISM_Y1',
     'DEPRESSED_Y1', 'LONELY_Y1', 'DAYS_EXERCISE_Y1',
-    'COV_AGE_GRP_Y1', 'COV_GENDER_Y1', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',
+    'COV_AGE_GRP_Y1', 'COV_GENDER', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
-  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU"
+  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",	
+  replace = TRUE
 )
 
+readr::write_rds(df.imp.long, here::here(data.dir, "gfs_imputed_data_formatted_wwgts.RData"))
 # ================================================================================================ #
 # ================================================================================================ #
 # Run primary country-wise analyses -- Full imputation based approach
+df.imp.long <- readr::read_rds(here::here(data.dir, "gfs_imputed_data_formatted_wwgts.RData"))
 
 VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
 OUTCOME.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
@@ -186,14 +191,14 @@ DEMO.CHILDHOOD.PRED <- c(
 )
 # Run country-specific regression analyses for ALL wave 2 outcomes
 OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,
-your.outcome <- OUTCOME.VEC0[1]
+your.outcome <- OUTCOME.VEC0[2]
 
 # Model 1: Run without principal components
 LIST.RES1 <- map(OUTCOME.VEC0, \(x){
   gfs_run_regression_single_outcome(
     your.outcome = x,
     data = df.imp.long,
-    wgt = ANNUAL_WEIGHT_R1, # wgt = as.name("ANNUAL_WEIGHT1")
+    wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
     psu = PSU, #psu = as.name("PSU")
     strata = STRATA, # strata = as.name("STRATA")
     your.pred = FOCAL_PREDICTOR,
@@ -229,9 +234,9 @@ readr::write_rds(
 LIST.RES2 <- map(OUTCOME.VEC0, \(x){
   gfs_run_regression_single_outcome(
     data = df.imp.long,
-    wgt = ANNUAL_WEIGHT_R1,
-    psu = PSU,
-    strata = STRATA,
+    wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
+    psu = PSU, #psu = as.name("PSU")
+    strata = STRATA, # strata = as.name("STRATA")
     your.pred = FOCAL_PREDICTOR,
     your.outcome = x,
     covariates = DEMO.CHILDHOOD.PRED,
@@ -266,7 +271,7 @@ readr::write_rds(
 # ================================================================================================ #
 # ================================================================================================ #
 # Run supplemental country-wise analyses -- attrition-weight adjusted sampling weights
-{
+
 
   # Supplemental analysis set 1: Run without principal components
   SUPP.LIST.RES1 <- map(OUTCOME.VEC0, \(x){
@@ -336,7 +341,7 @@ readr::write_rds(
     file = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"),
     compress = "gz"
   )
-}
+
 # ================================================================================================ #
 # ================================================================================================ #
 # Construct manuscript tables
@@ -345,10 +350,11 @@ LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
 RECODE.DEFAULTS <- list(
   FOCAL_PREDICTOR = FOCAL_PREDICTOR,
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(
+    get_variable_codes("GENDER.RACE", appnd=""),
     get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),
     get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")
   ),
-  VARIABLES.VEC = c(get_variable_codes("VARS.W1"), get_variable_codes("VARS.W2")),
+  VARIABLES.VEC = c(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2")),
   FORCE_BINARY = FORCE_BINARY,
   FORCE_CONTINUOUS = FORCE_CONTINUOUS,
   VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,
@@ -362,7 +368,8 @@ df.raw <- gfs_get_labelled_raw_data(
   list.composites = LIST.COMPOSITES,
   add.whitespace = TRUE
 )
-df.raw <- append_attrition_weights_to_df(df.raw)
+
+df.raw <- append_attrition_weights_to_df(data=df.raw)
 VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
 OUTCOME.VEC0 <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
 COUN.RES.WOPC <- get_country_specific_regression_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
@@ -383,16 +390,17 @@ gfs_generate_main_doc(
   meta.wpc = META.RES2,
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,
-  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALE,
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
   res.dir = "results",
   wgt = WGT0,
-  wgt1 = ANNUAL_WEIGHT_R1,
+  wgt1 = ANNUAL_WEIGHT_R2,
   wgt2 = SAMP.ATTR.WGT,
   psu = PSU,
-  strata = STRATA
+  strata = STRATA,
+  n.print="207,919"
 )
 
-# online supplemental fileS (there's too much to pack into 1 file, separated into 3 files... for now.)
+# online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)
 gfs_generate_supplemental_docs(
   df.raw = df.raw,
   meta.wopc = META.RES1, meta.wpc = META.RES2,
@@ -402,10 +410,15 @@ gfs_generate_supplemental_docs(
   supp.coun.wopc = SUPP.COUN.RES.WOPC , supp.coun.wpc = SUPP.COUN.RES.WPC ,
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
-  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALE,
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
   res.dir = "results",
-  wgt = as.name("ANNUAL_WEIGHT_R1"), psu = as.name("PSU"), strata = as.name("STRATA"),
-  what = "all"
+  wgt = WGT0,
+  wgt1 = ANNUAL_WEIGHT_R2,
+  wgt2 = SAMP.ATTR.WGT,
+  psu = PSU,
+  strata = STRATA,
+  what = "all",
+  n.print="207,919"
 )
 
 
@@ -567,106 +580,49 @@ gfs_generate_supplemental_docs(
   )
 }
 
+##
+# Code to tinker as needed with the within-between supplemental plot
 
-# ================================================================================================ #
-# ================================================================================================ #
-## test, within-between plot
-# Plot all effects as risk-ratios
-
-# from standardized effect size to RR:
-# RR = exp(0.91*STD_Est);
 plot.dat <- META.RES2 %>%
-  select(OUTCOME0, data, theta.rma, theta.rma.se, theta.rma.ci) %>%
-  mutate(
-    type = get_outcome_scale(OUTCOME0),
-    type = case_when(
-      type == "cont" ~ "Std. Est",
-      .default = "log(RR)"
-    )
-  ) %>%
-  unnest(c(data)) %>%
-  mutate(
-    est.rr = case_when(
-      type == "log(RR)" ~ exp(Est),
-      type == "Std. Est." ~ exp(0.91*Est)
-    )
-  )
-
-
-p <- plot.dat %>%
-  group_by(Country) %>%
-  mutate(
-    avg.rr = mean(est.rr, na.rm=TRUE),
-    var.rr = var(est.rr, na.rm=TRUE)
-  ) %>% ungroup() %>%
-  ggplot(aes(x=reorder(Country, -avg.rr), y = est.rr)) +
-  geom_point() +
-  geom_hline(yintercept = c(0.90, 1.10), linetype="dashed") +
-  labs(y="Estimated Risk-Ratio", x="", title="Heterogenetiy in estimated effects within and between countries") +
-  scale_x_discrete(guide = guide_axis(angle = 60)) +
-  scale_y_continuous(limits = c(0.75,1.25))+
-  theme_bw()
+        select(OUTCOME0, data, theta.rma, theta.rma.se, theta.rma.ci) %>%
+        mutate(
+          type = get_outcome_scale(OUTCOME0),
+          type = case_when(
+            type == "cont" ~ "Std. Est",
+            .default = "log(RR)"
+          )
+        ) %>%
+        unnest(c(data)) %>%
+        mutate(
+          est.rr = case_when(
+            type == "log(RR)" ~ exp(Est),
+            type == "Std. Est" ~ exp(0.91*Est)
+          )
+        )
+      p <- plot.dat %>%
+        group_by(Country) %>%
+        mutate(
+          avg.rr = mean(est.rr, na.rm=TRUE),
+          var.rr = var(est.rr, na.rm=TRUE)
+        ) %>% ungroup() %>%
+        ggplot(aes(x=reorder(Country, avg.rr), y = est.rr)) +
+        geom_point() +
+        geom_hline(yintercept = c(0.90, 1.10), linetype="dashed") +
+        labs(y="Estimated Risk-Ratio", x="",
+             title="Heterogenetiy in estimated effects within and between countries",
+             subtitle="Model estimated controlling for 7 principal components") +
+        scale_x_discrete(guide = guide_axis(angle = 60)) +
+        scale_y_continuous(limits = c(0.25,4))+
+        theme_Publication()
 
 p
-
-outcomes = OUTCOME.VEC0
-predictors = FOCAL_PREDICTOR
-res.dir = "results-wpc"
-tmp.list <- list()
-for (your.outcome in outcomes) {
-  for (your.pred in predictors) {
-    load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
-    # create new columns in output to help with constructing tables
-    output <- output
-    tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
-  }
-}
-
-tmp <- get_country_specific_output("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-
-tmp %>%
-  filter( !(term %in% c("(Intercept)", "FOCAL_PREDICTOR"))) %>%
-  filter(EE < quantile(EE, 0.99)) %>%
-  ggplot(aes(x=EE)) +
-  geom_density()
-
-tmp1 <- get_country_specific_output("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-dat1 <- tmp1 %>% filter( (term %in% "FOCAL_PREDICTOR"))
-dat2 <- tmp %>% filter( (term %in% paste0("PC_",1:7)))
-dat3 <- tmp %>% filter( !(term %in% c("(Intercept)", "FOCAL_PREDICTOR",paste0("PC_",1:7))))  %>%
-  filter(EE < quantile(EE, 0.99))
-
-ggplot(dat1, aes(x=EE, group=COUNTRY)) +
-  geom_vline(aes(xintercept=EE)) +
-  geom_density(data=dat2, aes(x=EE), color="blue", alpha=0.5) +
-  geom_density(data=dat3, aes(x=EE), color="red", alpha=0.5)
-
-
-
-# summary of PCs
-
-vec.id <- c("prop.var", "Cumulative_Proportion_Explained")
-vec.pc <- c("Percent Explained by each PC", "Cumulative Percent Explained")
-cnames <- c(
-  "PC",
-  vec.pc
-)
-
-tmp.pca <- FIT.PCA.SUM[[1]] %>% ungroup() %>%
-  dplyr::filter( PC == 7 ) %>%
-  dplyr::select(COUNTRY, PC,tidyr::any_of(vec.id)) %>%
-  dplyr::mutate(
-    across(tidyr::any_of(vec.id),\(x) .round(x*100,1) )
+ggsave(
+    filename = here::here(paste0("figure_S1_heterogeneity_plot.png")),
+    plot = p,
+    units = "in", width = 6, height = 5
   )
-coun.pca$PC <- 1:20
-coun.pca[vec.pc] <- tmp.pca[vec.id]
-
-tmp.pca2 <- FIT.PCA.SUM[[1]] %>% ungroup() %>%
-  dplyr::select(COUNTRY, PC, Cumulative_Proportion_Explained) %>%
-  group_by(PC) %>%
-  summarise(
-    Avg = mean(Cumulative_Proportion_Explained),
-    Min = min(Cumulative_Proportion_Explained),
-    Max = max(Cumulative_Proportion_Explained)
+  ggsave(
+    filename = here::here(paste0("figure_S1_heterogeneity_plot.pdf")),
+    plot = p,
+    units = "in", width = 6, height = 5
   )
-

@@ -266,12 +266,12 @@ get_outcome_better_name <- function(var,
   }
   if (include.fid){
     var.tmp <- case_when(
-      var0 %in% c("LIFE_SAT", "HAPPY") ~ paste0(var.tmp, "^(a)"),
-      var0 %in% c("PHYSICAL_HLTH", "MENTAL_HEALTH") ~ paste0(var.tmp, "^(b)"),
-      var0 %in% c("WORTHWHILE", "LIFE_PURPOSE") ~ paste0(var.tmp, "^(c)"),
-      var0 %in% c("PROMOTE_GOOD", "GIVE_UP") ~ paste0(var.tmp, "^(d)"),
-      var0 %in% c("CONTENT", "SAT_RELATNSHP") ~ paste0(var.tmp, "^(e)"),
-      var0 %in% c("EXPENSES", "WORRY_SAFETY") ~ paste0(var.tmp, "^(f)"),
+      var %in% c("LIFE_SAT", "HAPPY") ~ paste0(var.tmp, "^(a)"),
+      var %in% c("PHYSICAL_HLTH", "MENTAL_HEALTH") ~ paste0(var.tmp, "^(b)"),
+      var %in% c("WORTHWHILE", "LIFE_PURPOSE") ~ paste0(var.tmp, "^(c)"),
+      var %in% c("PROMOTE_GOOD", "GIVE_UP") ~ paste0(var.tmp, "^(d)"),
+      var %in% c("CONTENT", "SAT_RELATNSHP") ~ paste0(var.tmp, "^(e)"),
+      var %in% c("EXPENSES", "WORRY_SAFETY") ~ paste0(var.tmp, "^(f)"),
       .default = var.tmp
     )
   }

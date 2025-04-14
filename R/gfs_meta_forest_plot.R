@@ -35,7 +35,8 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     "United States",
     "Argentina",
     "Brazil",
-    "Mexico"
+    "Mexico",
+    "China"
   )
   tmp.fit <- fit
   tmp.dat <- fit$data %>%
@@ -87,7 +88,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     "τ=", .round(sqrt(tmp.fit$tau2), 3),
     "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ", .round(myci$random[2, 3], 3), "]",
     "; Q(df=", tmp.fit$k - tmp.fit$QMdf[1], ")=",
-    .round(tmp.fit$QE), ", p", ifelse(tmp.fit$QEp > 0.001, .round(tmp.fit$QEp, 3), "<.001"),
+    .round(tmp.fit$QE), ", p=", format.pval(temp.fit$QEp, digits=3, scientific=TRUE),
     "; I^2=", .round(tmp.fit$I2),
     ";\n",
     tmp.excluded.countries

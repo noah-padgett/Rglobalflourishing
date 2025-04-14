@@ -251,6 +251,9 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
               if ( str_detect(lvls[i],"\\. ") ) {
                 relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
               }
+              if ( str_detect(lvls[i],"Missing") ) {
+                relvls[i] = "    (Missing)"  
+              }
             }
             x = factor(x, levels = lvls, labels = relvls)
           }
@@ -280,7 +283,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         include = c(
           {focal.predictor0},
           AGE,
-          any_of(baseline.pred0),
+          GENDER,
+          #any_of(baseline.pred0),
           COUNTRY
         ),
         type = list(
@@ -296,20 +300,20 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
           AGE ~ "Age of participant",
           AGE_GRP ~ "Year of birth",
           GENDER ~ "Gender",
-          MARITAL_STATUS ~ "Respondent marital status",
-          EMPLOYMENT ~ "Employment status",
-          ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
-          EDUCATION_3 ~ "Education (years)",
-          BORN_COUNTRY ~ "Immigration status",
-          PARENTS_12YRS ~ "Parental marital status around age 12",
-          MOTHER_RELATN ~ "Relationship with mother when growing up",
-          FATHER_RELATN ~ "Relationship with father when growing up",
-          OUTSIDER ~ "Felt like an outsider in family when growing up",
-          ABUSED ~ "Experienced abuse when growing up",
-          HEALTH_GROWUP ~ "Self-rated health when growing up",
-          INCOME_12YRS ~ "Subjective financial status of family growing up",
-          SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
-          REL1 ~ "Religious affiliation growing up",
+          #MARITAL_STATUS ~ "Respondent marital status",
+          #EMPLOYMENT ~ "Employment status",
+          #ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+          #EDUCATION_3 ~ "Education (years)",
+          #BORN_COUNTRY ~ "Immigration status",
+          #PARENTS_12YRS ~ "Parental marital status around age 12",
+          #MOTHER_RELATN ~ "Relationship with mother when growing up",
+          #FATHER_RELATN ~ "Relationship with father when growing up",
+          #OUTSIDER ~ "Felt like an outsider in family when growing up",
+          #ABUSED ~ "Experienced abuse when growing up",
+          #HEALTH_GROWUP ~ "Self-rated health when growing up",
+          #INCOME_12YRS ~ "Subjective financial status of family growing up",
+          #SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+          #REL1 ~ "Religious affiliation growing up",
           COUNTRY ~ "Country of respondent"
         ),
         digits = list(
@@ -321,14 +325,14 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
       ) %>%
       italicize_labels()
 
-    tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
+    tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Expanded summary tables of all demographic characteristics and outcome variables are provided in Tables S1-2 in our online supplement.")
 
     sumtab.toprint <- sumtab %>%
       as_flex_table() %>%
       autofit() %>%
       format_flex_table(pg.width = 21 / 2.54 - 2) %>%
       set_caption(
-        paste0("Table 1. Weighted sample demographic and childhood predictor summary statistics.")
+        paste0("Table 1. Weighted sample demographic summary statistics.")
       ) %>%
       add_footer_row(
         values = tb.note.summarytab, top = FALSE,colwidths=3
@@ -875,10 +879,10 @@ gfs_generate_supplemental_docs <- function(
 
       df.raw <- gfs_add_variable_labels(df.raw, OUTCOME.VEC)
 
-      tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "W1"]
+      tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "Y1"]
       tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
       df.w1 <- df.raw %>%
-        select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, contains("_Y1")) %>%
+        select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, RACE1, contains("_Y1")) %>%
         mutate(
           "{{wgt}}" := {{wgt1}}
         )
@@ -886,7 +890,7 @@ gfs_generate_supplemental_docs <- function(
       df.w1$WAVE0 <- "Wave 1"
       df.w2 <- df.raw %>%
         filter(CASE_OBSERVED_Y2 == 1) %>%
-        select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, GENDER, contains("_Y2"), any_of(tmp00)) %>%
+        select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, GENDER, RACE1, contains("_Y2"), any_of(tmp00)) %>%
         mutate(
           "{{wgt}}" := {{wgt2}}
         )
@@ -912,7 +916,8 @@ gfs_generate_supplemental_docs <- function(
         {focal.predictor0},
         AGE,
         any_of(c(OUTCOME.VEC0)),
-        any_of(c(baseline.pred0))
+        any_of(c(baseline.pred0)),
+        INCOME, RACE1
       ) %>%
       mutate(
         across(any_of(c("COUNTRY", focal.predictor0, OUTCOME.VEC0, baseline.pred0)), \(x){
@@ -922,6 +927,9 @@ gfs_generate_supplemental_docs <- function(
             for (i in 1:length(lvls)) {
               if ( str_detect(lvls[i],"\\. ") ) {
                 relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
+              }
+              if ( str_detect(lvls[i],"Missing") ) {
+                relvls[i] = "    (Missing)"  
               }
             }
             x = factor(x, levels = lvls, labels = relvls)
@@ -1016,7 +1024,7 @@ gfs_generate_supplemental_docs <- function(
 
     }
     ## ========================================================================================== ##
-    ## ====== Construct outcome data summary table ============================================== ##
+    ## ====== Construct summary tables ========================================================== ##
     {
 
       # temp.dat <-  svydesign(
@@ -1031,7 +1039,76 @@ gfs_generate_supplemental_docs <- function(
           strata = {{strata}},
           weights = {{wgt}}
         )
+        
+      ## demographics + childhood predictors
+      sumtab <- temp.dat %>%
+      tbl_svysummary(
+        by = WAVE0,
+        include = c(
+          {focal.predictor0},
+          AGE,
+          AGE_GRP,
+          GENDER,
+          MARITAL_STATUS,
+          EDUCATION_3, EMPLOYMENT,
+          ATTEND_SVCS, 
+          BORN_COUNTRY, 
+          PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN, 
+          OUTSIDER, ABUSED, HEALTH_GROWUP, INCOME_12YRS, REL1
+        ),
+        type = list(
+          AGE ~ "continuous2",
+          all_continuous() ~ "continuous2"
+        ),
+        statistic = list(
+          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+          all_categorical() ~ "{n} ({p}%)"
+        ),
+        label = list(
+          {focal.predictor0} ~ focal.better.name,
+          AGE ~ "Age of participant",
+          AGE_GRP ~ "Year of birth",
+          GENDER ~ "Gender",
+          #RACE1 ~ "Race/ethnicity",
+          MARITAL_STATUS ~ "Respondent marital status",
+          EMPLOYMENT ~ "Employment status",
+          #INCOME ~ "Self-reported income",
+          ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+          EDUCATION_3 ~ "Education (years)",
+          BORN_COUNTRY ~ "Immigration status",
+          PARENTS_12YRS ~ "Parental marital status around age 12",
+          MOTHER_RELATN ~ "Relationship with mother when growing up",
+          FATHER_RELATN ~ "Relationship with father when growing up",
+          OUTSIDER ~ "Felt like an outsider in family when growing up",
+          ABUSED ~ "Experienced abuse when growing up",
+          HEALTH_GROWUP ~ "Self-rated health when growing up",
+          INCOME_12YRS ~ "Subjective financial status of family growing up",
+          SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+          REL1 ~ "Religious affiliation growing up"
+        ),
+        digits = list(
+          all_continuous() ~ 1,
+          all_categorical() ~ 0
+        ),
+        missing_text = "    (Missing)",
+        missing_stat = "{N_miss} ({p_miss}%)"
+      ) %>%
+      italicize_labels()
 
+    tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
+
+    sumtab.toprint.A <- sumtab %>%
+      as_flex_table() %>%
+      autofit() %>%
+      format_flex_table(pg.width = 21 / 2.54 - 2) %>%
+      set_caption(
+        paste0("Table S1. Weighted sample demographic and childhood predictor summary statistics.")
+      ) %>%
+      add_footer_row(
+        values = tb.note.summarytab, top = FALSE,colwidths=3
+      )
+
+      ## outcomes
       sumtab <- temp.dat %>%
         tbl_svysummary(
           by = WAVE0,
@@ -1058,14 +1135,14 @@ gfs_generate_supplemental_docs <- function(
 
       tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
 
-      sumtab.toprint <- sumtab %>%
+      sumtab.toprint.B <- sumtab %>%
         as_flex_table() %>%
         autofit() %>%
         width(j=2,width=1.25)%>%
         width(j=3,width=1.25)%>%
         format_flex_table(pg.width = 21 / 2.54 - 2) %>%
         set_caption(
-          paste0("Table S1. Summary statistics of the observed data (weighted).")
+          paste0("Table S2. Summary statistics of the observed data (weighted).")
         ) %>%
         add_footer_row(
           values = tb.note.summarytab, top = FALSE,colwidths=3
@@ -1073,7 +1150,7 @@ gfs_generate_supplemental_docs <- function(
 
       }
     ## ========================================================================================== ##
-    ## ====== Meta-analyzed Results - Attrition Weight & MI ===================================== ##
+    ## ====== Meta-analyzed Results - MI & Attrition Weight ===================================== ##
     {
       vec.id <- c("theta.rma", "theta.rma.ci","prob.lg.c","tau","global.pvalue")
       vec.rr <- c("rr.theta", "rr.theta.ci","prob.rr.c","rr.tau","global.pvalue")
@@ -1167,7 +1244,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       meta.outcomewide.toprint <- meta.outcomewide %>%
         flextable() %>%
         set_caption(
-          paste0("Table S2. Model 1 (no principal components) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (multiple imputation vs. attrition weights).")
+          paste0("Table S3. Model 1 (no principal components) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (multiple imputation vs. attrition weights).")
         ) %>%
         # uncomment when using all outcomes
         italic(part = "body",
@@ -1287,7 +1364,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       meta.outcomewide.toprint <- meta.outcomewide %>%
         flextable() %>%
         set_caption(
-          paste0("Table S3. Model 2 (first 7 principal components included) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (attrition weights vs. multiple imputation).")
+          paste0("Table S4. Model 2 (first 7 principal components included) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (attrition weights vs. multiple imputation).")
         ) %>%
         # uncomment when using all outcomes
         italic(part = "body",
@@ -1390,7 +1467,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         flextable() %>%
         #autofit() %>%
         set_caption(
-          paste0("Table S4. Comparing estimated E-values across models and how missingnes at wave 2 was handled.")
+          paste0("Table S5. Comparing estimated E-values across models and how missingnes at wave 2 was handled.")
         ) %>%
         # uncomment when using all outcomes
         italic(part = "body",
@@ -1429,7 +1506,10 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         height = 5, width = 6
       )  |>
       body_add_break() |>
-      body_add_flextable(value = sumtab.toprint) |>
+      body_add_flextable(value = sumtab.toprint.A) |>
+      body_end_block_section(value = normal_portrait) |>
+      body_add_break() |>
+      body_add_flextable(value = sumtab.toprint.B) |>
       body_end_block_section(value = normal_portrait) |>
       body_add_break() |>
       body_add_flextable(value = meta.outcomewide.toprint.A) |>
@@ -1535,10 +1615,12 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
               RACE1 = case_when(is.na(RACE1) ~ "    (Missing)", .default = RACE1),
               RACE1 = factor(RACE1, levels = sort(unique(RACE1))),
               RACE1 = fct_relevel(RACE1, "    (Missing)", after = Inf),
-              #INCOME = droplevels(INCOME),
-              #INCOME = factor(INCOME, levels = sort(unique(INCOME))),
-              #INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME),
-              #INCOME = fct_relevel(INCOME, "    (Missing)", after = Inf),
+              INCOME = case_when(INCOME == "(Missing)" ~ "    (Missing)", .default = INCOME),
+              INCOME = factor(INCOME),
+              INCOME = droplevels(INCOME),
+              INCOME = factor(INCOME, levels = sort(unique(INCOME))),
+              INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME),
+              INCOME = fct_relevel(INCOME, "    (Missing)", after = Inf),
             ) %>%
             as_survey_design(
               ids = {{psu}},
@@ -1557,8 +1639,11 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
               by = WAVE0,
               include = c(
                 {focal.predictor0},
-                AGE,
-                any_of(c(baseline.pred0[1:16], "RACE1"))
+          		AGE, AGE_GRP, GENDER, RACE1, MARITAL_STATUS,
+          		EDUCATION_3, EMPLOYMENT, INCOME,
+          		ATTEND_SVCS,  BORN_COUNTRY, 
+          		PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN, 
+          		OUTSIDER, ABUSED, HEALTH_GROWUP, INCOME_12YRS, REL1
               ),
               type = list(
                 AGE ~ "continuous2",
@@ -1569,31 +1654,30 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                 all_categorical() ~ "{n} ({p}%)"
               ),
               label = list(
-                {focal.predictor0} ~ focal.better.name
+                {focal.predictor0} ~ focal.better.name,
+          		AGE ~ "Age of participant",
+          		AGE_GRP ~ "Year of birth",
+          		GENDER ~ "Gender",
+          		RACE1 ~ "Race/ethnicity",
+          		MARITAL_STATUS ~ "Respondent marital status",
+          		EMPLOYMENT ~ "Employment status",
+          		INCOME ~ "Self-reported income",
+          		ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+          		EDUCATION_3 ~ "Education (years)",
+          		BORN_COUNTRY ~ "Immigration status",
+          		PARENTS_12YRS ~ "Parental marital status around age 12",
+          		MOTHER_RELATN ~ "Relationship with mother when growing up",
+          		FATHER_RELATN ~ "Relationship with father when growing up",
+          		OUTSIDER ~ "Felt like an outsider in family when growing up",
+          		ABUSED ~ "Experienced abuse when growing up",
+          		HEALTH_GROWUP ~ "Self-rated health when growing up",
+          		INCOME_12YRS ~ "Subjective financial status of family growing up",
+          		SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+          		REL1 ~ "Religious affiliation growing up"
               ),
-              #  AGE ~ "Age of participant",
-              #  AGE_GRP ~ "Year of birth",
-              #  GENDER ~ "Gender",
-              #  MARITAL_STATUS ~ "Respondent marital status",
-              #  EMPLOYMENT ~ "Employment status",
-              #  ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
-              #  EDUCATION_3 ~ "Education (years)",
-              #  BORN_COUNTRY ~ "Immigration status",
-              #  PARENTS_12YRS ~ "Parental marital status around age 12",
-              #  MOTHER_RELATN ~ "Relationship with mother when growing up",
-              #  FATHER_RELATN ~ "Relationship with father when growing up",
-              #  OUTSIDER ~ "Felt like an outsider in family when growing up",
-              # ABUSED ~ "Experienced abuse when growing up",
-              # HEALTH_GROWUP ~ "Self-rated health when growing up",
-              # INCOME_12YRS ~ "Subjective financial status of family growing up",
-              # SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
-              # RACE1 ~ "Self reported race/ethnic affiliation",
-              # INCOME ~ "Self reported income",
-              # COUNTRY ~ "Country"
-              # ),
               digits = list(
-                all_continuous() ~ 2,
-                all_categorical() ~ 1
+                all_continuous() ~ 1,
+                all_categorical() ~ 0
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
@@ -1609,7 +1693,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             width(j=3,width=1.5)%>%
             format_flex_table(pg.width = 21 / 2.54 - 2) %>%
             set_caption(
-              paste0("Table S",i+tb.num.shift,"a. Summary statistics of the observed data (weighted) in ", COUNTRY_LABELS[i])
+              paste0("Table S",i+tb.num.shift,"a. Weighted demographic summary statistics in ", COUNTRY_LABELS[i])
             ) %>%
             add_footer_row(
               values = tb.note.summarytab, top = FALSE,colwidths=3
@@ -1669,7 +1753,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             width(j=3,width=1.5)%>%
             format_flex_table(pg.width = 21 / 2.54 - 2) %>%
             set_caption(
-              paste0("Table S",i+tb.num.shift,"b. Summary statistics of outcomes (weighted) in ", COUNTRY_LABELS[i])
+              paste0("Table S",i+tb.num.shift,"b. Weighted summary statistics of outcomes in ", COUNTRY_LABELS[i])
             ) %>%
             add_footer_row(
               values = tb.note.summarytab, top = FALSE,colwidths=3
@@ -1705,6 +1789,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           add_footer_row(
             values = tb.note, top = FALSE, colwidths=4
           )
+          
       }
       ## ======================================================================================== ##
       ## ====== Table Sid. Country specific PCA Summary ========================================= ##
@@ -1730,7 +1815,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
 
         #coun.pca <- na.omit(coun.pca)
         # footnote information:
-        tb.note.pca <- as_paragraph("_Notes_.  N=",country.n1.print,"; PCA was conducted using 'survey::svyprcomp(.)' function using all available contemporaneous (with focal predictor) exposures at wave 1. All PCs were standardized prior to being used as predictors. The number of retained components for analysis was 7.")
+        tb.note.pca <- as_paragraph("_Notes_.  N=",country.n1.print,"; PCA was conducted using 'survey::svyprcomp(.)' function using all available contemporaneous (with focal predictor) exposures at wave 1. All PCs were standardized prior to being used as predictors. The bolded row represented the number of retained components for analysis was 7.")
 
         coun.pca.toprint <- coun.pca %>%
           flextable() %>%
@@ -1744,6 +1829,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           format_flex_table(pg.width = 21 / 2.54 - 4) %>%
           align(i = 1, j = NULL, align = "center", part = "header") %>%
           align(part = "footer", align = "left", j = 1:ncol(coun.pca)) %>%
+          bold(i=7,j=1:3) %>%
           border_remove()  %>%
           hline_bottom(part = "body") %>%
           hline_top(part = "header") %>%
@@ -1991,7 +2077,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       suppressWarnings({
 
         temp.dat <- df.raw.long %>%
-          select(!any_of(c("RACE1", "RACE2"))) %>%
+          select(!any_of(c("RACE1", "RACE2", "INCOME"))) %>%
           as_survey_design(
             ids = {{psu}},
             strata = {{strata}},
@@ -2139,7 +2225,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             paste0("Table S2. Summary statistics of the observed outcome data (weighted) across countries.")
           ) %>%
           add_footer_row(
-            values = tb.note.summarytab, top = FALSE,colwidths=23+22
+            values = tb.note.summarytab, top = FALSE,colwidths=23+24
           )
       })
     })
@@ -2154,7 +2240,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
     #))
 
     supp_doc <- supp_doc |>
-      body_add_flextable(tbia.toprint) |>
+      body_add_flextable(tbia.toprint) |> 
       body_add_break() |>
       body_add_flextable(tbib.toprint) |>
       body_end_block_section(value = extra_wide_landscape)|>

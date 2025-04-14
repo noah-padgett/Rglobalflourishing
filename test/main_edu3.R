@@ -150,7 +150,7 @@ df.imp.long <- run_attrition_model(
     'COMPOSITE_EXTRAVERSION_Y1', 'COMPOSITE_OPENNESS_Y1', 'COMPOSITE_AGREEABLENESS_Y1',
     'COMPOSITE_CONSCIENTIOUSNESS_Y1', 'COMPOSITE_NEUROTICISM_Y1',
     'DEPRESSED_Y1', 'LONELY_Y1', 'DAYS_EXERCISE_Y1',
-    'COV_AGE_GRP_Y1', 'COV_GENDER_Y1', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',
+    'COV_AGE_GRP_Y1', 'COV_GENDER', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
@@ -350,10 +350,11 @@ LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
 RECODE.DEFAULTS <- list(
   FOCAL_PREDICTOR = FOCAL_PREDICTOR,
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(
+    get_variable_codes("GENDER.RACE", appnd=""),
     get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),
     get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")
   ),
-  VARIABLES.VEC = c(get_variable_codes("VARS.W1"), get_variable_codes("VARS.W2")),
+  VARIABLES.VEC = c(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2")),
   FORCE_BINARY = FORCE_BINARY,
   FORCE_CONTINUOUS = FORCE_CONTINUOUS,
   VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,
@@ -368,14 +369,14 @@ df.raw <- gfs_get_labelled_raw_data(
   add.whitespace = TRUE
 )
 
-df.raw <- append_attrition_weights_to_df(df.raw)
+df.raw <- append_attrition_weights_to_df(data=df.raw)
 VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
 OUTCOME.VEC0 <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
 COUN.RES.WOPC <- get_country_specific_regression_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
 COUN.RES.WPC <- get_country_specific_regression_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
 SUPP.COUN.RES.WOPC <- get_country_specific_regression_results("supp-results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
 SUPP.COUN.RES.WPC <- get_country_specific_regression_results("supp-results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-FIT.PCA.SUM <- get_country_specific_pca_summary("results-wpc", paste0(OUTCOME.VEC0,"_Y2"), FOCAL_PREDICTOR)
+FIT.PCA.SUM <- get_country_specific_pca_summary("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
 FIT.ATTR <- get_fitted_attrition_models("results-attr")
 META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))
 META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
@@ -411,8 +412,11 @@ gfs_generate_supplemental_docs(
   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
   res.dir = "results",
-  wgt = as.name("WGT0"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("SAMP.ATTR.WGT"),
-  psu = as.name("PSU"), strata = as.name("STRATA"),
+  wgt = WGT0,
+  wgt1 = ANNUAL_WEIGHT_R2,
+  wgt2 = SAMP.ATTR.WGT,
+  psu = PSU,
+  strata = STRATA,
   what = "all",
   n.print="207,919"
 )
