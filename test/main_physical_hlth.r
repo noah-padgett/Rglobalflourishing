@@ -138,7 +138,7 @@ tmp.dat2 <- df.imp.long %>%
 dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
 for(i in 1:length(FOCAL_PREDICTOR)){
 	print(FOCAL_PREDICTOR[i])
-  print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))	
+  print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))
 }
 
 
@@ -185,7 +185,7 @@ df.imp.long <- run_attrition_model(
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
-  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",	
+  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",
   replace = TRUE
 )
 
@@ -433,8 +433,8 @@ META.RES2 <- META.RES2 %>% select(keep.cols)
 # main text
 gfs_generate_main_doc(
   df.raw = df.raw,
-  meta.wopc = META.RES1,
-  meta.wpc = META.RES2,
+  meta.wopc = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),
+  meta.wpc = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"),
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,
   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
@@ -449,36 +449,28 @@ gfs_generate_main_doc(
 
 ## Generate online supplements
 
-keep.cols <- c('OUTCOME0', 'FOCAL_PREDICTOR0', 'FOCAL_PREDICTOR', 'theta.rma', 'theta.rma.se', 'theta.rma.ci','tau', 'theta.rma.EE', 'theta.rma.ECI', 'rr.theta', 'rr.theta.ci', 'rr.tau', 'theta.rr.EE', 'theta.rr.ECI', 'global.pvalue', 'forest.plot')
-META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))
-META.RES1 <- META.RES1 %>% select(keep.cols)
-META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
-META.RES2 <- META.RES2 %>% select(keep.cols)
-SUPP.META.RES1 <- readr::read_rds(file = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"))
-SUPP.META.RES1 <- SUPP.META.RES1 %>% select(keep.cols)
-SUPP.META.RES2 <- readr::read_rds(file = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"))
-SUPP.META.RES2 <- SUPP.META.RES2 %>% select(keep.cols)
 
 # online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)
 gfs_generate_supplemental_docs(
   df.raw = df.raw,
-  meta.wopc = META.RES1, meta.wpc = META.RES2,
-  supp.meta.wopc = SUPP.META.RES1, supp.meta.wpc = SUPP.META.RES2,  
+  meta.wopc = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),
+  meta.wpc = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"),
+  supp.meta.wopc = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"),
+  supp.meta.wpc = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"),
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
   res.dir = "results",
-  attr.models = "results-attr",
+  attr.models.dir = "results-attr",
   coun.wopc.dir =  "results-wopc" , coun.wpc.dir = "results-wpc" , coun.fit.pca.dir = "results-wpc" ,
-  supp.coun.wopc.dir = "supp-results-wopc" , 
+  supp.coun.wopc.dir = "supp-results-wopc" ,
   supp.coun.wpc.dir = "supp-results-wpc" ,
   wgt = WGT0,
   wgt1 = ANNUAL_WEIGHT_R2,
   wgt2 = SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all",
-  n.print="207,919"
+  what = "all"
 )
 
 
@@ -640,7 +632,8 @@ gfs_generate_supplemental_docs(
   )
 }
 
-##
+# ================================================================================================ #
+# ================================================================================================ #
 # Code to tinker as needed with the within-between supplemental plot
 
 plot.dat <- META.RES2 %>%

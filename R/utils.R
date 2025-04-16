@@ -327,7 +327,7 @@ theme_Publication <- function(base_size=14) {
 
 
 #' @export
-load_meta_result <- function(file, predictor, outcome, what = NULL) {
+load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
   # Use local() to limit the scope of the loaded object
   local({
     # Load the RDS file
@@ -336,11 +336,17 @@ load_meta_result <- function(file, predictor, outcome, what = NULL) {
     if(is.null(what)){
     		what <- colnames(data)
     }
+    if(is.null(predictor)){
+    	  predictor = unique(data$FOCAL_PREDICTOR0)
+    }
+    if(is.null(outcome)){
+    	  outcome = unique(data$OUTCOME0)
+    }
     
     data <- data %>% 
     		ungroup() %>%
-    		dplyr::filter(OUTCOME0 == outome) %>%
-    		dplyr::filter(FOCAL_PREDICTOR0 == predictor) %>%
+    		dplyr::filter(OUTCOME0 %in% outcome) %>%
+    		dplyr::filter(FOCAL_PREDICTOR0 %in% predictor) %>%
     		dplyr::select(any_of(what))
     		
     # Return the processed data
