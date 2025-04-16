@@ -23,32 +23,32 @@ data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-d
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-GFS-Core-Wave-2/test-package"
+out.dir <- getwd()
 
 # Here is YOUR wave 1 construct variable
-FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1", "CIGARETTES_Y1")
-FOCAL_PREDICTOR_BETTER_NAME <- c("Self-Rated Physical Health", "Self-reported Smoker Status")
-FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country", "non-smoker status")
+FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
+FOCAL_PREDICTOR_BETTER_NAME <- c("Self-Rated Physical Health")
+FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for
 #   consistency across studies.
-VALUES_DEFINING_UPPER_CATEGORY <- list(NA, 1:97)
-VALUES_DEFINING_LOWER_CATEGORY <- list(NA, 0)
+VALUES_DEFINING_UPPER_CATEGORY <- list(NA)
+VALUES_DEFINING_LOWER_CATEGORY <- list(NA)
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
 #   feel_anxious and control_worry)  or depression (sum of depressed and interest) that have a
 # 	history of being dichotomized.
-FORCE_BINARY <- c(FALSE, TRUE)
+FORCE_BINARY <- c(FALSE)
 # Note 2: if your focal predictor is categorical/binary, you can use the responses as if they were continuous.
 # 	The provided (straightforward-ish) approach implemented is to reverse code all
 #   ordered-categorical variables (reverse code from what is reported in the codebook), and
 #   standardized as if continuous. This approach is not applicable for variables with nominal
 #   response categories such as employment. This is employed using the option below.
-FORCE_CONTINUOUS <- c(FALSE, FALSE)
+FORCE_CONTINUOUS <- c(FALSE)
 # Note 3: if you need to define a subpopulation for domain analysis. (in-development)
-SUBPOPULATION <- list(NULL, NULL)
+SUBPOPULATION <- list(NULL)
 
 names(FORCE_CONTINUOUS) <- names(FORCE_BINARY) <- names(VALUES_DEFINING_UPPER_CATEGORY)  <- names(VALUES_DEFINING_LOWER_CATEGORY) <- names(SUBPOPULATION) <- FOCAL_PREDICTOR
 # ================================================================================================ #
@@ -261,7 +261,7 @@ META.RES1 <- gfs_meta_analysis(
 )
 readr::write_rds(
   META.RES1,
-  file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc2.rds"),
+  file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES1, meta.input, META.RES1)
@@ -425,9 +425,11 @@ df.raw <- append_attrition_weights_to_df(data=df.raw)
 VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
 OUTCOME.VEC0 <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
 
+keep.cols <- c('OUTCOME0', 'FOCAL_PREDICTOR0', 'FOCAL_PREDICTOR', 'theta.rma', 'theta.rma.se', 'theta.rma.ci','tau', 'theta.rma.EE', 'theta.rma.ECI', 'rr.theta', 'rr.theta.ci', 'rr.tau', 'theta.rr.EE', 'theta.rr.ECI', 'global.pvalue', 'forest.plot')
 META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))
+META.RES1 <- META.RES1 %>% select(keep.cols)
 META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
-
+META.RES2 <- META.RES2 %>% select(keep.cols)
 # main text
 gfs_generate_main_doc(
   df.raw = df.raw,
@@ -447,17 +449,15 @@ gfs_generate_main_doc(
 
 ## Generate online supplements
 
-
-
-COUN.RES.WOPC <- get_country_specific_regression_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-COUN.RES.WPC <- get_country_specific_regression_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
+keep.cols <- c('OUTCOME0', 'FOCAL_PREDICTOR0', 'FOCAL_PREDICTOR', 'theta.rma', 'theta.rma.se', 'theta.rma.ci','tau', 'theta.rma.EE', 'theta.rma.ECI', 'rr.theta', 'rr.theta.ci', 'rr.tau', 'theta.rr.EE', 'theta.rr.ECI', 'global.pvalue', 'forest.plot')
+META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))
+META.RES1 <- META.RES1 %>% select(keep.cols)
+META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
+META.RES2 <- META.RES2 %>% select(keep.cols)
 SUPP.META.RES1 <- readr::read_rds(file = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"))
+SUPP.META.RES1 <- SUPP.META.RES1 %>% select(keep.cols)
 SUPP.META.RES2 <- readr::read_rds(file = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"))
-SUPP.COUN.RES.WOPC <- get_country_specific_regression_results("supp-results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-SUPP.COUN.RES.WPC <- get_country_specific_regression_results("supp-results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-FIT.PCA.SUM <- get_country_specific_pca_summary("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
-FIT.ATTR <- get_fitted_attrition_models("results-attr")
-FIT.ATTR <- get_fitted_attrition_model("results-attr", "China")
+SUPP.META.RES2 <- SUPP.META.RES2 %>% select(keep.cols)
 
 # online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)
 gfs_generate_supplemental_docs(

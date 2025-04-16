@@ -245,6 +245,9 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
       # TO-DO, figure out a way to remove the leading values (doesn't work for)
       mutate(
         across(any_of(c("COUNTRY", focal.predictor0, OUTCOME.VEC0, baseline.pred0)), \(x){
+          if(cur_column() == "COUNTRY"){
+          	x = factor(x)
+          }
           if ( is.factor(x) & str_detect(cur_column(), "AGE_GRP", negate = TRUE) ) {
             lvls <- levels(x)
             relvls <- lvls
@@ -253,7 +256,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
                 relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
               }
               if ( str_detect(lvls[i],"Missing") ) {
-                relvls[i] = "    (Missing)"  
+                relvls[i] = "    (Missing)"
               }
               if(cur_column() == "COUNTRY"){
               	relvls[i] = paste0("    ",lvls[i])
@@ -266,7 +269,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
       )
 
     df.raw.long <- gfs_add_variable_labels(df.raw.long, OUTCOME.VEC)
-    
+
     ## add labels for focal predictor(s)
     for (i in 1:length(focal.predictor0)) {
   	  if(any(str_detect(colnames(df.raw.long), focal.predictor0[i]))){
@@ -289,8 +292,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         strata = {{strata}},
         weights = {{wgt}}
       )
-      
 
+	suppressWarnings({
     sumtab <- temp.dat %>%
       tbl_svysummary(
         by = WAVE0,
@@ -338,6 +341,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         missing_stat = "{N_miss} ({p_miss}%)"
       ) %>%
       italicize_labels()
+     })
 
     tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Expanded summary tables of all demographic characteristics and outcome variables are provided in Tables S1-2 in our online supplement.")
 
@@ -356,14 +360,14 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
   ## ============================================================================================ ##
   ## ====== Construct meta-analyzed results output table ======================================== ##
   tbl.meta.list <- list()
+  f0=1
   for(f0 in 1:length(focal.predictor)){
-    vec.id <- c("theta.rma", "theta.rma.ci","prob.lg.c","tau","global.pvalue")
-    vec.rr <- c("rr.theta", "rr.theta.ci","prob.rr.c","rr.tau","global.pvalue")
-    vec.wopc <- c("Est","95% CI","Pr(|y|>c)","τ", "Global p-value")
-    vec.wpc <- c("Est\r","95% CI\r","Pr(|y|>c)\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+    vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
+    vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
+    vec.wopc <- c("RR", "ES","95% CI","τ", "Global p-value")
+    vec.wpc <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
     cnames <- c(
       "Outcome",
-      "Ref.",
       vec.wopc,
       "\r",
       vec.wpc
@@ -378,11 +382,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         meta.outcomewide[i, 1] <- MYLABEL[ii]
         ii <- ii + 1
       } else {
-        meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = TRUE))
-        meta.outcomewide[i, 2] = case_when(
-          get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ "0.00",
-          .default = "1.00"
-        )
+        meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = FALSE))
         tmp.vec <- case_when(
           get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
           .default = vec.rr
@@ -390,7 +390,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         ## ====== Random effects meta - estimates withOUT PCs ======================================= ##
         tmp.wopc <- meta.wopc %>% ungroup() %>%
           dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-          dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+          dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
@@ -412,7 +412,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         ## ====== Random effects meta - estimates WITH PCs ======================================= ##
         tmp.wpc <- meta.wpc %>% ungroup() %>%
           dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-          dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+          dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
@@ -432,43 +432,57 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
             })
           )
         ## ====== Add Results to output object ====================================================== ##
-        if(nrow(tmp.wopc) > 0) meta.outcomewide[i,vec.wopc] <- tmp.wopc[tmp.vec]
-        if(nrow(tmp.wpc) > 0) meta.outcomewide[i,vec.wpc] <- tmp.wpc[tmp.vec]
+        if(nrow(tmp.wopc) > 0){
+        	if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        		meta.outcomewide[i,vec.wopc[-1]] <- tmp.wopc[tmp.vec]
+        	}
+        	if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        		meta.outcomewide[i,vec.wopc[-2]] <- tmp.wopc[tmp.vec]
+        	}
+        }
+        if(nrow(tmp.wpc) > 0){
+        	if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        		meta.outcomewide[i,vec.wpc[-1]] <- tmp.wpc[tmp.vec]
+        	}
+        	if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        		meta.outcomewide[i,vec.wpc[-2]] <- tmp.wpc[tmp.vec]
+        	}
+        }
       }
     }
     #meta.outcomewide <- na.omit(meta.outcomewide)
 
 
     # footnote information:
-    tb.note.meta.outcomewide <- as_paragraph(paste0("_Notes_. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; Pr(|y|>c), the estimated proportion of effects [below / above] a threshold based on the calibrated effect sizes (Mathur & VanderWeele, 2020); τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
+    tb.note.meta.outcomewide <- as_paragraph(paste0("_Notes_. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and family factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Models with PC (principal components), the first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at wave 2.
 
 An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a B, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
 
-P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni) p < ",.round_p(p.bonferroni),". ǂEstimate of τ (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
+P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni) p < ",.round_p(p.bonferroni),", correction for multiple testing. ǂEstimate of τ (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
 
     meta.outcomewide.toprint <- meta.outcomewide %>%
       flextable() %>%
       set_caption(
-        paste0("Table ", tb.num,". Meta-analyzed associations of _", focal.better.name[f0] ,"_ with adult well-being and other outcomes at wave 2.")
+        paste0("Table ", tb.num,". Meta-analyzed associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at wave 2.")
       ) %>%
       # uncomment when using all outcomes
       italic(part = "body",
              i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
              j = 1) %>%
       add_header_row(
-        values = c("", "", "Model 1: Without PC", "", "Model 2: With PC"),
-        colwidths = c(1,1,length(vec.wopc), 1, length(vec.wpc))
+        values = c("", "Model 1: Demographics and Childhood Variables as Controls", "", "Model 2: Demographics, Childhood, and Wave 1 Confounders (via principal components) as Controls"),
+        colwidths = c(1,length(vec.wopc), 1, length(vec.wpc))
       ) %>%
       add_footer_row(
         values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
       ) %>%
       width(j=1,width=2.00)%>%
-      width(j=c(2:3,6,9,12),width=0.50)%>%
-      width(j=c(4:5,10:11),width=0.85)%>%
-      width(j=c(7,13),width=1.0)%>%
-      width(j=8,width=0.20)%>%
+      width(j=c(2:3,5,8:9,11),width=0.50)%>%
+      width(j=c(4,10),width=0.85)%>%
+      width(j=c(6,12),width=1.0)%>%
+      width(j=7,width=0.20)%>%
       format_flex_table(pg.width = 29.7/2.54 - 2) %>%
       align(i = 1, j = NULL, align = "center", part = "header") %>%
       align(part = "footer", align = "left", j = 1:ncol(meta.outcomewide)) %>%
@@ -476,8 +490,8 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
       hline_bottom(part = "body") %>%
       hline_top(part = "header") %>%
       hline_bottom(part = "header") %>%
-      hline(i=1,j=c(3:7,9:13), part="header")
-      
+      hline(i=1,j=c(2:6,8:12), part="header")
+
       tbl.meta.list[[f0]] <- meta.outcomewide.toprint
       tb.num <- tb.num + 1
   }
@@ -512,7 +526,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
         ## ====== Random effects meta - estimates withOUT PCs ======================================= ##
         tmp.wopc <- meta.wopc %>% ungroup() %>%
           dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-          dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+          dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(where(is.numeric),\(x) .round(x,2)),
@@ -520,7 +534,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
         ## ====== Random effects meta - estimates WITH PCs ======================================= ##
         tmp.wpc <- meta.wpc %>% ungroup() %>%
           dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-          dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+          dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(where(is.numeric),\(x) .round(x,2)),
@@ -547,7 +561,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
              i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
              j = 1) %>%
       add_header_row(
-        values = c("", "Model 1: Without PC", "", "Model 2: With PC"),
+        values = c("", "Model 1: Demographics and Childhood Variables as Controls", "", "Model 2: Demographics, Childhood, and Wave 1 Confounders (via principal components) as Controls"),
         colwidths = c(1, length(vec.wopc), 1, length(vec.wpc))
       ) %>%
       add_footer_row(
@@ -562,35 +576,46 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
       hline_top(part = "header") %>%
       hline_bottom(part = "header") %>%
       hline(i=1,j=c(2:3,5:6), part="header")
-      tbl.evalues.list[[f0]] <- meta.evalues.toprint 
+      tbl.evalues.list[[f0]] <- meta.evalues.toprint
       tb.num <- tb.num + 1
   }
   ## ============================================================================================ ##
   ## ====== Forest plot for Secure Flourishing Index ============================================ ##
   tb.cap.fig1 <- list()
   tb.cap.fig2 <- list()
+  fig.num <- 1
   for(f0 in 1:length(focal.predictor)){
-    tb.cap.fig1[[f0]] <- paste0("Figure 1. Heterogeneity in the effects of ", focal.better.name[f0] ," on composite Secure Flourishing Index scores across countries (N=", n.print, ").")
-    p1 <- meta.wpc %>% ungroup() %>%
+    tb.cap.fig1[[f0]] <- paste0("Figure ",fig.num,". Heterogeneity in the effects of ", focal.better.name[f0] ," on composite Secure Flourishing Index scores across countries controlling for demographics and childhood variables (N=", n.print, ").")
+    p1 <- meta.wopc %>% ungroup() %>%
       dplyr::filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_Y2") %>%
-      dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+      dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
       select(forest.plot)
     p1 <- p1[[1]]
     ggsave(
-      filename = here::here(res.dir, paste0("figure_1_SFI on ",focal.better.name[f0],".png")),
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," without PCs.png")),
       plot=p1[[1]], units="in", width=6, height=5
     )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," without PCs.pdf")),
+      plot=p1[[1]], units="in", width=6, height=5
+    )
+    fig.num <- fig.num + 1
 
-    tb.cap.fig2[[f0]] <- paste0("Figure 2. Heterogeneity in the effects of ", focal.better.name[f0] ," on composite Flourishing Index (excludes financial indicators) scores across countries (N=", n.print, ").")
+    tb.cap.fig2[[f0]] <- paste0("Figure ",fig.num,". Heterogeneity in the effects of ", focal.better.name[f0] ," on composite Secure Flourishing Index scores across countries controlling for demographics, childhood, and wave 1 confounders (via principal components) as controls (N=", n.print, ").")
     p2 <- meta.wpc %>% ungroup() %>%
-      dplyr::filter(OUTCOME0 == "COMPOSITE_FLOURISHING_Y2") %>%
-      dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+      dplyr::filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_Y2") %>%
+      dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
       select(forest.plot)
     p2 <- p2[[1]]
     ggsave(
-      filename = here::here(res.dir, paste0("figure_2_FI on ",focal.better.name[f0],".png")),
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," with PCs.png")),
       plot=p2[[1]], units="in", width=6, height=5
     )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," with PCs.pdf")),
+      plot=p2[[1]], units="in", width=6, height=5
+    )
+    fig.num <- fig.num + 1
   }
   ## ============================================================================================ ##
   ## ====== Print out tables to formatted Word document ========================================= ##
@@ -598,38 +623,41 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
     body_add_flextable(value = sumtab.toprint) |>
     body_end_block_section(value = normal_portrait) |>
     body_add_break()
-    
+
   for(f0 in 1:length(focal.predictor)){
   	main_doc <- main_doc |>
   	body_add_flextable(value = meta.outcomewide.toprint) |>
     body_end_block_section(value = landscape_one_column) |>
     body_add_break()
   }
-  
+
   for(f0 in 1:length(focal.predictor)){
   	main_doc <- main_doc |>
   	body_add_flextable(value = meta.evalues.toprint) |>
     body_add_break()
   }
-  
+
+  fig.num <- 1
   for(f0 in 1:length(focal.predictor)){
   	main_doc <- main_doc |>
   	body_add_par(tb.cap.fig1[[f0]]) |>
     body_add_img(
-      src = here::here(res.dir, paste0("figure_1_SFI on ",focal.better.name[f0],".png")),
+      src = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," without PCs.png")),
       height = 5, width = 6
     )  |>
-    body_add_break() |>
+    body_add_break()
+
+    fig.num <- fig.num + 1
+
+    main_doc <- main_doc |>
     body_add_par(tb.cap.fig2[[f0]]) |>
     body_add_img(
-      src = here::here(res.dir, paste0("figure_2_FI on ",focal.better.name[f0],".png")),
+      src = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," with PCs.png")),
       height = 5, width = 6
     ) |>
     body_add_break()
+    fig.num <- fig.num + 1
   }
-    
-   
-    
 
   print(
     main_doc,
@@ -692,9 +720,10 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
 #'
 gfs_generate_supplemental_docs <- function(
     df.raw = NULL,
-    meta.wopc=NULL, meta.wpc=NULL, coun.wopc=NULL, coun.wpc=NULL,
-    supp.meta.wopc=NULL, supp.meta.wpc=NULL, supp.coun.wopc=NULL, supp.coun.wpc=NULL,
-    coun.fit.pca=NULL, attr.models = NULL,
+    meta.wopc=NULL, meta.wpc=NULL, supp.meta.wopc=NULL, supp.meta.wpc=NULL,
+    coun.wopc.dir=NULL, coun.wpc.dir=NULL,
+    supp.coun.wopc.dir=NULL, supp.coun.wpc.dir=NULL,
+    coun.fit.pca.dir=NULL, attr.models.dir = NULL,
     focal.predictor = NULL, focal.better.name="Focal Predictor",
     focal.predictor.reference.value="estimated population mean of focal predictor",
     p.bonferroni = 0.00068, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL,
@@ -978,7 +1007,7 @@ gfs_generate_supplemental_docs <- function(
                 relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
               }
               if ( str_detect(lvls[i],"Missing") ) {
-                relvls[i] = "    (Missing)"  
+                relvls[i] = "    (Missing)"
               }
             }
             x = factor(x, levels = lvls, labels = relvls)
@@ -989,7 +1018,7 @@ gfs_generate_supplemental_docs <- function(
 
     tmp.vec <- c(baseline.pred0, OUTCOME.VEC0)
     df.raw.long <- gfs_add_variable_labels( df=df.raw.long, vars=tmp.vec )
-    
+
     ## add labels for focal predictor(s)
     for (i in 1:length(focal.predictor0)) {
   	  if(any(str_detect(colnames(df.raw.long), focal.predictor0[i]))){
@@ -1097,8 +1126,9 @@ gfs_generate_supplemental_docs <- function(
           strata = {{strata}},
           weights = {{wgt}}
         )
-        
+
       ## demographics + childhood predictors
+      suppressWarnings({
       sumtab <- temp.dat %>%
       tbl_svysummary(
         by = WAVE0,
@@ -1109,9 +1139,9 @@ gfs_generate_supplemental_docs <- function(
           GENDER,
           MARITAL_STATUS,
           EDUCATION_3, EMPLOYMENT,
-          ATTEND_SVCS, 
-          BORN_COUNTRY, 
-          PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN, 
+          ATTEND_SVCS,
+          BORN_COUNTRY,
+          PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN,
           OUTSIDER, ABUSED, HEALTH_GROWUP, INCOME_12YRS, REL1
         ),
         type = list(
@@ -1151,6 +1181,7 @@ gfs_generate_supplemental_docs <- function(
         missing_stat = "{N_miss} ({p_miss}%)"
       ) %>%
       italicize_labels()
+      })
 
     tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
 
@@ -1166,6 +1197,7 @@ gfs_generate_supplemental_docs <- function(
       )
 
       ## outcomes
+      suppressWarnings({
       sumtab <- temp.dat %>%
         tbl_svysummary(
           by = WAVE0,
@@ -1189,6 +1221,7 @@ gfs_generate_supplemental_docs <- function(
           missing_stat = "{N_miss} ({p_miss}%)"
         ) %>%
         italicize_labels()
+        })
 
       tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
 
@@ -1216,11 +1249,10 @@ gfs_generate_supplemental_docs <- function(
     {
       vec.id <- c("theta.rma", "theta.rma.ci","prob.lg.c","tau","global.pvalue")
       vec.rr <- c("rr.theta", "rr.theta.ci","prob.rr.c","rr.tau","global.pvalue")
-      vec.a <- c("Est","95% CI","Pr(|y|>c)","τ", "Global p-value")
-      vec.b <- c("Est\r","95% CI\r","Pr(|y|>c)\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+      vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
+      vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
       cnames <- c(
         "Outcome",
-        "Ref.",
         vec.a,
         "\r",
         vec.b
@@ -1236,10 +1268,6 @@ gfs_generate_supplemental_docs <- function(
           ii <- ii + 1
         } else {
           meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = TRUE))
-          meta.outcomewide[i, 2] = case_when(
-            get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ "0.00",
-            .default = "1.00"
-          )
           tmp.vec <- case_when(
             get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
             .default = vec.rr
@@ -1247,7 +1275,7 @@ gfs_generate_supplemental_docs <- function(
           ## ====== Random effects meta - estimates withOUT PCs ======================================= ##
           tmp.a <- meta.wopc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
@@ -1269,7 +1297,7 @@ gfs_generate_supplemental_docs <- function(
           ## ====== Supplemental random effects meta - estimates withOUT PCs ==================== ##
           tmp.b <- supp.meta.wopc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
@@ -1289,21 +1317,35 @@ gfs_generate_supplemental_docs <- function(
               })
             )
           ## ====== Add Results to output object ====================================================== ##
-          if(nrow(tmp.a) > 0) meta.outcomewide[i,vec.a] <- tmp.a[tmp.vec]
-          if(nrow(tmp.b) > 0) meta.outcomewide[i,vec.b] <- tmp.b[tmp.vec]
+          if(nrow(tmp.a) > 0){
+        	if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        		meta.outcomewide[i,vec.a[-1]] <- tmp.a[tmp.vec]
+        	}
+        	if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        		meta.outcomewide[i,vec.a[-2]] <- tmp.a[tmp.vec]
+        	}
+          }
+          if(nrow(tmp.b) > 0){
+        	if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        		meta.outcomewide[i,vec.b[-1]] <- tmp.b[tmp.vec]
+        	}
+        	if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        		meta.outcomewide[i,vec.b[-2]] <- tmp.b[tmp.vec]
+        	}
+          }
         }
       }
       #meta.outcomewide <- na.omit(meta.outcomewide)
 
 
       # footnote information:
-      tb.note.meta.outcomewide <-as_paragraph(paste0("_Notes_. N_{multiple imputation}=", n1.print ,"; N_{attrition weights}=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; Pr(|y|>c), the estimated proportion of effects [below / above] a threshold based on the calibrated effect sizes (Mathur & VanderWeele, 2020); τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+      tb.note.meta.outcomewide <-as_paragraph(paste0("_Notes_. N_{multiple imputation}=", n1.print ,"; N_{attrition weights}=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and family factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available.
 
 An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a B, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
 
-P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferroni) p < ",.round(p.bonferroni,4),". ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
+P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferroni) p < ",.round(p.bonferroni,4),", to account for multiple testing. ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
 
       meta.outcomewide.toprint <- meta.outcomewide %>%
         flextable() %>%
@@ -1315,15 +1357,17 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
                j = 1) %>%
         add_header_row(
-          values = c("", "", "Multiple Imputation", "", "Attrition Weights"),
+          values = c("", "Multiple Imputation", "", "Attrition Weights"),
           colwidths = c(1,1,length(vec.attr), 1, length(vec.mi))
         ) %>%
         add_footer_row(
           values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
         ) %>%
         width(j=1,width=2.00)%>%
-        width(j=2,width=0.50)%>%
-        width(j=8,width=0.20)%>%
+        width(j=c(2:3,5,8:9,11),width=0.50)%>%
+        width(j=c(4,10),width=0.85)%>%
+        width(j=c(6,12),width=1.0)%>%
+        width(j=7,width=0.20)%>%
         format_flex_table(pg.width = 29.7/2.54 - 2) %>%
         align(i = 1, j = NULL, align = "center", part = "header") %>%
         align(part = "footer", align = "left", j = 1:ncol(meta.outcomewide)) %>%
@@ -1338,38 +1382,33 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
     {
       vec.id <- c("theta.rma", "theta.rma.ci","prob.lg.c","tau","global.pvalue")
       vec.rr <- c("rr.theta", "rr.theta.ci","prob.rr.c","rr.tau","global.pvalue")
-      vec.attr <- c("Est","95% CI","Pr(|y|>c)","τ", "Global p-value")
-      vec.mi <- c("Est\r","95% CI\r","Pr(|y|>c)\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+      vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
+      vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
       cnames <- c(
         "Outcome",
-        "Ref.",
-        vec.attr,
+        vec.a,
         "\r",
-        vec.mi
+        vec.b
       )
 
       meta.outcomewide <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
       colnames(meta.outcomewide) <- cnames
       meta.outcomewide$"\r" <- ""
-      i = ii = 1
+      i = ii = 5
       for (i in 1:length(OUTCOME.VEC)) {
         if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
           meta.outcomewide[i, 1] <- MYLABEL[ii]
           ii <- ii + 1
         } else {
           meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = TRUE))
-          meta.outcomewide[i, 2] = case_when(
-            get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ "0.00",
-            .default = "1.00"
-          )
           tmp.vec <- case_when(
             get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
             .default = vec.rr
           )
-          ## ====== Random effects meta - estimates WITH PCs ==================================== ##
-          tmp.attr <- meta.wpc %>% ungroup() %>%
+          ## ====== Random effects meta - estimates with PCs ======================================= ##
+          tmp.a <- meta.wpc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
@@ -1388,10 +1427,10 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                 )
               })
             )
-          ## ====== Supplemental random effects meta - estimates WITH PCs ======================= ##
-          tmp.mi <- supp.meta.wpc %>% ungroup() %>%
+          ## ====== Supplemental random effects meta - estimates with PCs ==================== ##
+          tmp.b <- supp.meta.wpc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
@@ -1411,15 +1450,29 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
               })
             )
           ## ====== Add Results to output object ====================================================== ##
-          if(nrow(tmp.attr) > 0) meta.outcomewide[i,vec.attr] <- tmp.attr[tmp.vec]
-          if(nrow(tmp.mi) > 0) meta.outcomewide[i,vec.mi] <- tmp.mi[tmp.vec]
+          if(nrow(tmp.a) > 0){
+        	if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        		meta.outcomewide[i,vec.a[-1]] <- tmp.a[tmp.vec]
+        	}
+        	if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        		meta.outcomewide[i,vec.a[-2]] <- tmp.a[tmp.vec]
+        	}
+          }
+          if(nrow(tmp.b) > 0){
+        	if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        		meta.outcomewide[i,vec.b[-1]] <- tmp.b[tmp.vec]
+        	}
+        	if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        		meta.outcomewide[i,vec.b[-2]] <- tmp.b[tmp.vec]
+        	}
+          }
         }
       }
       #meta.outcomewide <- na.omit(meta.outcomewide)
 
 
       # footnote information:
-      tb.note.meta.outcomewide <-as_paragraph(paste0("_Notes_. N_{multiple imputation}=", n1.print ,"; N_{attrition weights}=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value,"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; Pr(|y|>c), the estimated proportion of effects [below / above] a threshold based on the calibrated effect sizes (Mathur & VanderWeele, 2020); τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+      tb.note.meta.outcomewide <-as_paragraph(paste0("_Notes_. N_{multiple imputation}=", n1.print ,"; N_{attrition weights}=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value,"; Ref., reference value for a null effect; Est., pooled standardized effect estimate; CI, confidence interval; τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and family factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. The first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at wave 2.
 
@@ -1430,7 +1483,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       meta.outcomewide.toprint <- meta.outcomewide %>%
         flextable() %>%
         set_caption(
-          paste0("Table S",tb.num,". ", focal.better.name[f0]," Model 2 (first 7 principal components included) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (attrition weights vs. multiple imputation).")
+          paste0("Table S",tb.num,". ", focal.better.name[f0]," Model 2 including demographics, childhood, and wave 1 confounders (via principal components) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (attrition weights vs. multiple imputation).")
         ) %>%
         # uncomment when using all outcomes
         italic(part = "body",
@@ -1444,8 +1497,10 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
         ) %>%
         width(j=1,width=2.00)%>%
-        width(j=2,width=0.50)%>%
-        width(j=8,width=0.20)%>%
+        width(j=c(2:3,5,8:9,11),width=0.50)%>%
+        width(j=c(4,10),width=0.85)%>%
+        width(j=c(6,12),width=1.0)%>%
+        width(j=7,width=0.20)%>%
         format_flex_table(pg.width = 29.7/2.54 - 2) %>%
         align(i = 1, j = NULL, align = "center", part = "header") %>%
         align(part = "footer", align = "left", j = 1:ncol(meta.outcomewide)) %>%
@@ -1453,7 +1508,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         hline_bottom(part = "body") %>%
         hline_top(part = "header") %>%
         hline_bottom(part = "header") %>%
-        hline(i=1,j=c(3:7,9:13), part="header")
+        hline(i=1,j=c(2:6,8:12), part="header")
 
       meta.outcomewide.toprint.B[[f0]] <- meta.outcomewide.toprint
       tb.num = tb.num + 1
@@ -1492,7 +1547,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           ## ====== Attr wgt - random effects meta - estimates withOUT PCs ====================== ##
           tmp.wopc.attr <- meta.wopc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(where(is.numeric),\(x) .round(x,2)),
@@ -1500,7 +1555,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           ## ====== Attr wgt - random effects meta - estimates WITH PCs ========================= ##
           tmp.wpc.attr <- meta.wpc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(where(is.numeric),\(x) .round(x,2)),
@@ -1508,7 +1563,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           ## ====== Supplement MI - random effects meta - estimates withOUT PCs ================= ##
           tmp.wopc.mi <- supp.meta.wopc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(where(is.numeric),\(x) .round(x,2)),
@@ -1516,7 +1571,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           ## ====== Supplement MI - random effects meta - estimates WITH PCs ==================== ##
           tmp.wpc.mi <- supp.meta.wpc %>% ungroup() %>%
             dplyr::filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
-            dplyr::filter(FOCAL_PREDICTOR0 == focal.predcitor0[f0]) %>%
+            dplyr::filter(FOCAL_PREDICTOR0 == focal.predictor[f0]) %>%
             dplyr::select(tidyr::any_of(tmp.vec)) %>%
             dplyr::mutate(
               dplyr::across(where(is.numeric),\(x) .round(x,2)),
@@ -1545,7 +1600,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
                j = 1) %>%
         add_header_row(
-          values = c("", "Model 1: Without PC", "", "Model 2: With PC", "", "Model 1: Without PC", "", "Model 2: With PC"),
+          values = c("", "Model 1: Demographics and Childhood Variables as Controls", "", "Model 2: Demographics, Childhood, and Wave 1 Confounders (via principal components) as Controls", "", "Model 1: Demographics and Childhood Variables as Controls", "", "Model 2: Demographics, Childhood, and Wave 1 Confounders (via principal components) as Controls"),
           colwidths = c(1, length(vec.wopc.attr), 1, length(vec.wpc.attr), 1, length(vec.wopc.mi), 1, length(vec.wpc.mi)),
           top = TRUE
         ) %>%
@@ -1567,10 +1622,10 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         hline_bottom(part = "header") %>%
         hline(i=1,j=c(2:6,8:12), part="header") %>%
         hline(i=2,j=c(2:3,5:6,8:9,11:12), part="header")
-        
-        meta.outcomewide.toprint.C[[f0]] <- meta.evalues.toprint 
+
+        meta.outcomewide.toprint.C[[f0]] <- meta.evalues.toprint
     }
-    
+
     	tb.num = tb.num + 1
     }
     ## ========================================================================================== ##
@@ -1588,7 +1643,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       body_add_flextable(value = sumtab.toprint.B) |>
       body_end_block_section(value = normal_portrait) |>
       body_add_break()
-      
+
       for(f0 in 1:length(focal.predictors0)){
       	supp_doc <- supp_doc |>
       body_add_flextable(value = meta.outcomewide.toprint.A[[f0]]) |>
@@ -1601,7 +1656,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       body_end_block_section(value = landscape_one_column) |>
       body_add_break()
       }
-      
+
 
     print(
       supp_doc,
@@ -1723,8 +1778,8 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
               any_of(focal.predictor0),
           		AGE, AGE_GRP, GENDER, RACE1, MARITAL_STATUS,
           		EDUCATION_3, EMPLOYMENT, INCOME,
-          		ATTEND_SVCS,  BORN_COUNTRY, 
-          		PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN, 
+          		ATTEND_SVCS,  BORN_COUNTRY,
+          		PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN,
           		OUTSIDER, ABUSED, HEALTH_GROWUP, INCOME_12YRS, REL1
               ),
               type = list(
@@ -1845,7 +1900,9 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       ## ======================================================================================== ##
       ## ====== Table Sic. Summary of Attrition Model =========================================== ##
       {
-        tmp.attr.mod <- attr.models[[COUNTRY_LABELS[i]]]
+
+
+        tmp.attr.mod <- get_fitted_attrition_model(attr.models, COUNTRY_LABELS[i])
         tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
         tmp.included.vars <- str_remove(tmp.included.vars0, "COV_")
         lab.list <- list()
@@ -1874,13 +1931,20 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           add_footer_row(
             values = tb.note, top = FALSE, colwidths=4
           )
-          
+
           tb.num <- tb.num + 1
-          
+
       }
       ## ======================================================================================== ##
       ## ====== Table Sid. Country specific PCA Summary ========================================= ##
       {
+      	coun.fit.pca <- get_country_pca_summary(
+      	    res.dir = coun.fit.pca.dir,
+      	    country = COUNTRY_LABELS[i],
+      		outcome = OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)][1],
+      		predictor = focal.predictor[1]
+      	)
+
         vec.id <- c("prop.var", "Cumulative_Proportion_Explained")
         vec.pc <- c("Percent Explained by each PC", "Cumulative Percent Explained")
         cnames <- c(
@@ -1889,10 +1953,9 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         )
 
         coun.pca <- as.data.frame(matrix(nrow = 20, ncol = length(cnames)))
-        colnames(coun.pca) <- cnames
-        tmp.name <- paste0(OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)][1], "_", focal.predictor)
-        tmp.pca <- coun.fit.pca[[tmp.name]] %>% ungroup() %>%
-          dplyr::filter(  str_detect(COUNTRY, COUNTRY_LABELS[i]), PC <= 20 ) %>%
+        colnames(coun.pca) <- cname
+        tmp.pca <- coun.fit.pca %>%
+          dplyr::filter( PC <= 20 ) %>%
           dplyr::select(PC,tidyr::any_of(vec.id)) %>%
           dplyr::mutate(
             across(tidyr::any_of(vec.id),\(x) .round(x*100,1) )
@@ -1928,13 +1991,13 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       tbl.sid.list <- list()
       tbl.sie.list <- list()
       for(f0 in 1:length(focal.predictor)){
+
         vec.id <- c("id.Est", "id.SE", "id.CI","p.value")
         vec.rr <- c("rr.Est", "logrr.SE", "rr.CI","p.value")
-        vec.wopc <- c("Est", "SE", "95% CI", "p-value")
-        vec.wpc <- c("Est\r", "SE\r", "95% CI\r", "p-value\r")
+        vec.wopc <- c("RR", "ES", "SE", "95% CI", "p-value")
+        vec.wpc <- c("RR\r", "ES\r", "SE\r", "95% CI\r", "p-value\r")
         cnames <- c(
           "Outcome",
-          "Reference",
           vec.wopc,
           "\r",
           vec.wpc
@@ -1950,19 +2013,21 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             ii <- ii + 1
           } else {
             coun.outcomewide[j, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[j], include.name = FALSE, include.fid = TRUE))
-            coun.outcomewide[j, 2] = case_when(
-              get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ "0.00",
-              .default = "1.00"
-            )
             tmp.vec <- case_when(
               get_outcome_scale(OUTCOME.VEC[j]) == "cont" ~ vec.id,
               .default = vec.rr
             )
             tmp.name <- paste0(OUTCOME.VEC[j], "_", focal.predictor[f0])
             ## ====== estimates withOUT PCs ======================================= ##
+            coun.wopc <- get_country_specific_results(
+      			res.dir = coun.wopc.dir,
+      			country = COUNTRY_LABELS[i],
+      			predictor = focal.predictor[f0],
+      			outcomes =  OUTCOME.VEC[j]
+      		)
             if(tmp.name %in% names(coun.wopc)){
-              tmp.wopc <- coun.wopc[[tmp.name]] %>% ungroup() %>%
-                dplyr::filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
+
+              tmp.wopc <- coun.wopc %>%
                 dplyr::select(tidyr::any_of(tmp.vec)) %>%
                 dplyr::mutate(
                   dplyr::across(tidyr::any_of(c("p.value")),\(x){
@@ -1975,9 +2040,22 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                   })
                 )
               ## ====== Add Results to output object ====================================================== ##
-              if(nrow(tmp.wopc) > 0) coun.outcomewide[j,vec.wopc] <- tmp.wopc[tmp.vec]
+              if(nrow(tmp.wopc) > 0)
+                if(get_outcome_scale(OUTCOME.VEC[j]) == "cont"){
+        		  coun.outcomewide[j,vec.wopc[-1]] <- tmp.wopc[tmp.vec]
+        	     }
+        	    if(get_outcome_scale(OUTCOME.VEC[j]) != "cont"){
+        		  coun.outcomewide[j,vec.wopc[-2]] <- tmp.wopc[tmp.vec]
+        	    }
+
             }
             ## ====== Random effects coun - estimates WITH PCs ======================================= ##
+            coun.wpc <- get_country_specific_results(
+      			res.dir = coun.wpc.dir,
+      			country = COUNTRY_LABELS[i],
+      			predictor = focal.predictor[f0],
+      			outcomes =  OUTCOME.VEC[j]
+      		)
             if(tmp.name %in% names(coun.wpc)){
               tmp.wpc <- coun.wpc[[tmp.name]] %>% ungroup() %>%
                 dplyr::filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
@@ -1993,14 +2071,21 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                   })
                 )
               ## ====== Add Results to output object ====================================================== ##
-              if(nrow(tmp.wpc) > 0) coun.outcomewide[j,vec.wpc] <- tmp.wpc[tmp.vec]
+              if(nrow(tmp.wpc) > 0)
+              	if(get_outcome_scale(OUTCOME.VEC[j]) == "cont"){
+        		  coun.outcomewide[j,vec.wpc[-1]] <- tmp.wpc[tmp.vec]
+        	     }
+        	    if(get_outcome_scale(OUTCOME.VEC[j]) != "cont"){
+        		  coun.outcomewide[j,vec.wpc[-2]] <- tmp.wpc[tmp.vec]
+        	    }
+
             }
           }
         }
         #coun.outcomewide <- na.omit(coun.outcomewide)
 
         # footnote information:
-        tb.note.coun.outcomewide <-as_paragraph(paste0("_Notes_. Reference for focal predictor: ", focal.predictor.reference.value,". Est., standardized effect estimate; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.coun.outcomewide <-as_paragraph(paste0("_Notes_. Reference for focal predictor: ", focal.predictor.reference.value,". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and family factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Models with PC (principal components), the first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at wave 2.
 
@@ -2018,29 +2103,32 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                  i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
                  j = 1) %>%
           add_header_row(
-            values = c("", "", "Model 1: Without PC", "", "Model 2: With PC"),
-            colwidths = c(1,1,length(vec.wopc), 1, length(vec.wpc))
-          ) %>%
-          add_footer_row(
-            values = tb.note.coun.outcomewide, top = FALSE, colwidths = ncol(coun.outcomewide)
-          ) %>%
-          width(j=1,width=1.75)%>%
-          width(j=7,width=0.20)%>%
-          format_flex_table(pg.width = 29.7/2.54 - 2) %>%
-          align(i = 1, j = NULL, align = "center", part = "header") %>%
-          align(part = "footer", align = "left", j = 1:ncol(coun.outcomewide)) %>%
-          border_remove()  %>%
-          hline_bottom(part = "body") %>%
-          hline_top(part = "header") %>%
-          hline_bottom(part = "header") %>%
-          hline(i=1,j=c(3:6,8:11), part="header")
-          
+        values = c("", "Model 1: Demographics and Childhood Variables as Controls", "", "Model 2: Demographics, Childhood, and Wave 1 Confounders (via principal components) as Controls"),
+        colwidths = c(1,length(vec.wopc), 1, length(vec.wpc))
+      ) %>%
+      add_footer_row(
+        values = tb.note.coun.outcomewide, top = FALSE, colwidths = ncol(coun.outcomewide)
+      ) %>%
+      width(j=1,width=2.00)%>%
+      width(j=c(2:3,5,8:9,11),width=0.50)%>%
+      width(j=c(4,10),width=0.85)%>%
+      width(j=c(6,12),width=1.0)%>%
+      width(j=7,width=0.20)%>%
+      format_flex_table(pg.width = 29.7/2.54 - 2) %>%
+      align(i = 1, j = NULL, align = "center", part = "header") %>%
+      align(part = "footer", align = "left", j = 1:ncol(coun.outcomewide)) %>%
+      border_remove()  %>%
+      hline_bottom(part = "body") %>%
+      hline_top(part = "header") %>%
+      hline_bottom(part = "header") %>%
+      hline(i=1,j=c(2:6,8:12), part="header")
+
           tbl.sid.list[[f0]] <- coun.outcomewide.toprint
           tb.num <- tb.num + 1
-      
+
       ## ======================================================================================== ##
       ## ====== Table Sie. Country Specific E-values output table =============================== ##
-      
+
         vec.id <- c("EE", "ECI")
         vec.wopc <- c("EE", "ECI")
         vec.wpc <- c("EE\r", "ECI\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
@@ -2063,6 +2151,12 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
             tmp.vec <- vec.id
             tmp.name <- paste0(OUTCOME.VEC[j], "_", focal.predictor[f0])
             ## ====== estimates withOUT PCs ======================================= ##
+            coun.wopc <- get_country_specific_results(
+      			res.dir = coun.wopc.dir,
+      			country = COUNTRY_LABELS[i],
+      			predictor = focal.predictor[f0],
+      			outcomes =  OUTCOME.VEC[j]
+      		)
             if(tmp.name %in% names(coun.wopc)){
               tmp.wopc <- coun.wopc[[tmp.name]] %>% ungroup() %>%
                 dplyr::filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
@@ -2075,6 +2169,12 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
 
             }
             ## ====== estimates WITH PCs ======================================= ##
+            coun.wpc <- get_country_specific_results(
+      			res.dir = coun.wpc.dir,
+      			country = COUNTRY_LABELS[i],
+      			predictor = focal.predictor[f0],
+      			outcomes =  OUTCOME.VEC[j]
+      		)
             if(tmp.name %in% names(coun.wpc)){
               tmp.wpc <- coun.wpc[[tmp.name]] %>% ungroup() %>%
                 dplyr::filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
@@ -2119,14 +2219,14 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           hline_top(part = "header") %>%
           hline_bottom(part = "header") %>%
           hline(i=1,j=c(2:3,5:6), part="header")
-          
+
           tbl.sie.list[[f0]] <-  coun.evalues.toprint
           tb.num <- tb.num + 1
       }
       ## ======================================================================================== ##
       ## ====== Print out tables to formatted Word document ===================================== ##
       {
-        
+
         supp_doc <- supp_doc |>
           body_add_flextable(value = tbia.toprint) |>
           body_add_break() |>
@@ -2137,7 +2237,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           body_add_flextable(value = coun.pca.toprint) |>
           body_end_block_section(value = normal_portrait) |>
           body_add_break()
-          
+
         for(f0 in 1:length(focal.predictor)){
           supp_doc <- supp_doc |>
           	body_add_flextable(value = tbl.sid.list[[f0]]) |>
@@ -2147,7 +2247,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
           	body_end_block_section(value = normal_portrait) |>
           	body_add_break()
         }
-          
+
 
         print(
           supp_doc,
@@ -2155,9 +2255,6 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
         )
       }
     }
-
-
-
 
   }
   ## ============================================================================================== ##
@@ -2338,7 +2435,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
     #))
 
     supp_doc <- supp_doc |>
-      body_add_flextable(tbia.toprint) |> 
+      body_add_flextable(tbia.toprint) |>
       body_add_break() |>
       body_add_flextable(tbib.toprint) |>
       body_end_block_section(value = extra_wide_landscape)|>
@@ -2352,7 +2449,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
 
     tmp.vec <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
     for(i in  1:length(tmp.vec)){
-    	
+
       if(tmp.vec[i] %in% unique(meta.wopc$OUTCOME0) & tmp.vec[i] %in% unique(meta.wpc$OUTCOME0) ) {
 
         supp_doc <- read_docx(

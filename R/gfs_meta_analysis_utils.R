@@ -148,7 +148,7 @@ add_pop_wgts <- function(df) {
   }
   df
 }
-#' @rdname compute_calibrated
+
 #' @export
 construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictors) {
   tmp.list <- list()
@@ -161,7 +161,6 @@ construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictor
   tmp.list
 }
 
-#' @rdname compute_calibrated
 #' @export
 get_country_specific_regression_results <- function(res.dir, outcomes, predictors) {
   tmp.list <- list()
@@ -177,7 +176,20 @@ get_country_specific_regression_results <- function(res.dir, outcomes, predictor
   tmp.list
 }
 
-#' @rdname compute_calibrated
+#' @export
+get_country_specific_regression_results <- function(res.dir, country, predictor, outcomes) {
+  tmp.list <- list()
+  for (your.outcome in outcomes) {
+      load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
+      # create new columns in output to help with constructing tables
+      output <- output  %>%
+        dplyr::filter(Variable == "FOCAL_PREDICTOR") %>%
+        dplyr::filter(str_detect(COUNTRY, country))
+      tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
+  }
+  tmp.list
+}
+
 #' @export
 get_country_specific_output <- function(res.dir, outcomes, predictors) {
   tmp.list <- list()
@@ -191,7 +203,7 @@ get_country_specific_output <- function(res.dir, outcomes, predictors) {
 	bind_rows()
 }
 
-#' @rdname compute_calibrated
+
 #' @export
 get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
   tmp.list <- list()
@@ -206,7 +218,19 @@ get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
   tmp.list
 }
 
-#' @rdname compute_calibrated
+#' @export
+get_country_pca_summary <- function(res.dir, country, outcome, predictor) {
+  tmp.list <- NULL
+      try({
+        load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results.RData")))
+        tmp.list <- fit.pca.summary %>% 
+        	ungroup() %>%
+        	filter(str_detect(COUNTRY, country))
+      })
+  tmp.list
+}
+
+
 #' @export
 get_fitted_attrition_models <- function(res.dir) {
   tmp.list <- list()
@@ -219,7 +243,6 @@ get_fitted_attrition_models <- function(res.dir) {
   tmp.list
 }
 
-#' @rdname compute_calibrated
 #' @export
 get_fitted_attrition_model <- function(res.dir, country) {
   tmp.attr.files <- list.files(res.dir)
