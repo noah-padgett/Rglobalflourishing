@@ -151,19 +151,22 @@ add_pop_wgts <- function(df) {
 
 #' @export
 construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictors) {
-  tmp.list <- list()
+  local({
+  	tmp.list <- list()
   for (your.outcome in outcomes) {
     for (your.pred in predictors) {
       load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
       tmp.list[[paste0(your.outcome, "_", your.pred)]] <- metainput
     }
   }
-  tmp.list
+  return(tmp.list)
+  })
 }
 
 #' @export
 get_country_specific_regression_results <- function(res.dir, outcomes, predictors) {
-  tmp.list <- list()
+  local({
+  	tmp.list <- list()
   for (your.outcome in outcomes) {
     for (your.pred in predictors) {
       load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
@@ -173,12 +176,14 @@ get_country_specific_regression_results <- function(res.dir, outcomes, predictor
       tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
     }
   }
-  tmp.list
+  return(tmp.list)
+  })
 }
 
 #' @export
 get_country_specific_regression_results <- function(res.dir, country, predictor, outcomes) {
-  tmp.list <- list()
+  local({
+  	tmp.list <- list()
   for (your.outcome in outcomes) {
       load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
       # create new columns in output to help with constructing tables
@@ -187,26 +192,32 @@ get_country_specific_regression_results <- function(res.dir, country, predictor,
         dplyr::filter(str_detect(COUNTRY, country))
       tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
   }
-  tmp.list
+  return(tmp.list)
+  })
+  
 }
 
 #' @export
 get_country_specific_output <- function(res.dir, outcomes, predictors) {
-  tmp.list <- list()
+  local({
+  	tmp.list <- list()
   for (your.outcome in outcomes) {
     for (your.pred in predictors) {
       load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
       tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
     }
   }
-  tmp.list |>
+  tmp.list <- tmp.list |>
 	bind_rows()
+	return(tmp.list)
+	})
 }
 
 
 #' @export
 get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
-  tmp.list <- list()
+  local({
+  	tmp.list <- list()
   for (your.outcome in outcomes) {
     for (your.pred in predictors) {
       try({
@@ -215,38 +226,46 @@ get_country_specific_pca_summary <- function(res.dir, outcomes, predictors) {
       })
     }
   }
-  tmp.list
+  return(tmp.list)
+  })
 }
 
 #' @export
 get_country_pca_summary <- function(res.dir, country, outcome, predictor) {
-  tmp.list <- NULL
+  local({
+  	tmp.list <- NULL
       try({
         load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results.RData")))
         tmp.list <- fit.pca.summary %>% 
         	ungroup() %>%
         	filter(str_detect(COUNTRY, country))
       })
-  tmp.list
+  return(tmp.list)
+  })
 }
 
 
 #' @export
 get_fitted_attrition_models <- function(res.dir) {
-  tmp.list <- list()
+  local({
+  	tmp.list <- list()
   tmp.attr.files <- list.files(res.dir)
   i = 1
   for ( i in 1:length(tmp.attr.files)){
   	load(here::here(res.dir, tmp.attr.files[i]))
      tmp.list[[str_split_i(tmp.attr.files[i], " fitted", 1)]] <- fit.attr
   }
-  tmp.list
+  return(tmp.list)
+  })
+  
 }
 
 #' @export
 get_fitted_attrition_model <- function(res.dir, country) {
-  tmp.attr.files <- list.files(res.dir)
+  local({
+  	tmp.attr.files <- list.files(res.dir)
   tmp.attr.files <- tmp.attr.files[str_detect(tmp.attr.files, country)]
   load(here::here(res.dir, tmp.attr.files))
-  fit.attr
+  return(fit.attr)
+  })
 }
