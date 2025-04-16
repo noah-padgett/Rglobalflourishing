@@ -606,7 +606,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
     p1 <- p1[[1]]
     ggsave(
       filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," without PCs.png")),
-      plot=p1[[1]], units="in", width=6, height=5
+      plot=p1[[1]], units="in", width=6, height=5, dpi = 1000
     )
     ggsave(
       filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," without PCs.pdf")),
@@ -624,7 +624,7 @@ P-value significance thresholds: p < 1e-2*, p < 1e-3**, p < 1e-4***, (Bonferroni
     p2 <- p2[[1]]
     ggsave(
       filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," with PCs.png")),
-      plot=p2[[1]], units="in", width=6, height=5
+      plot=p2[[1]], units="in", width=6, height=5, dpi = 1000
     )
     ggsave(
       filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0]," with PCs.pdf")),
@@ -1272,8 +1272,8 @@ gfs_generate_supplemental_docs <- function(
     tb.num = 3
     for(f0 in 1:length(focal.predictor)){
     {
-      vec.id <- c("theta.rma", "theta.rma.ci","prob.lg.c","tau","global.pvalue")
-      vec.rr <- c("rr.theta", "rr.theta.ci","prob.rr.c","rr.tau","global.pvalue")
+      vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
+      vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
       vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
       vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
       cnames <- c(
@@ -1385,7 +1385,7 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
                j = 1) %>%
         add_header_row(
           values = c("", "Multiple Imputation", "", "Attrition Weights"),
-          colwidths = c(1,length(vec.attr), 1, length(vec.mi))
+          colwidths = c(1,length(vec.a), 1, length(vec.b))
         ) %>%
         add_footer_row(
           values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
@@ -1407,8 +1407,8 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
       meta.outcomewide.toprint.A[[f0]] <- meta.outcomewide.toprint
     }
     {
-      vec.id <- c("theta.rma", "theta.rma.ci","prob.lg.c","tau","global.pvalue")
-      vec.rr <- c("rr.theta", "rr.theta.ci","prob.rr.c","rr.tau","global.pvalue")
+      vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
+      vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
       vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
       vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
       cnames <- c(
@@ -1520,7 +1520,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
                j = 1) %>%
         add_header_row(
           values = c("", "", "Multiple Imputation", "", "Attrition Weights"),
-          colwidths = c(1,1,length(vec.attr), 1, length(vec.mi))
+          colwidths = c(1,1,length(vec.a), 1, length(vec.b))
         ) %>%
         add_footer_row(
           values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
@@ -1939,7 +1939,7 @@ P-value significance thresholds: p < 0.01*, p < 0.001**, p < 0.0001***, (Bonferr
       {
 
 
-        tmp.attr.mod <- get_fitted_attrition_model(attr.models, COUNTRY_LABELS[i])
+        tmp.attr.mod <- get_fitted_attrition_model(attr.models.dir, COUNTRY_LABELS[i])
         tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
         tmp.included.vars <- str_remove(tmp.included.vars0, "COV_")
         lab.list <- list()
@@ -2522,7 +2522,7 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
           p1 <- p1[[1]]
           ggsave(
             filename = here::here(res.dir, "fig", paste0("figure_s",fig.num,"a_", tmp.vec[i],"_regressed_on_", focal.predictor[f0], ".png")),
-            plot=p1[[1]], units="in", width=6, height=5
+            plot=p1[[1]], units="in", width=6, height=5, dpi = 1000
           )
 
           p2 <- fp.wpc %>% ungroup() %>%
@@ -2531,7 +2531,7 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
           p2 <- p2[[1]]
           ggsave(
             filename = here::here(res.dir, "fig", paste0("figure_s",fig.num,"b_", tmp.vec[i],"_regressed_on_", focal.predictor[f0], ".png")),
-            plot=p2[[1]], units="in", width=6, height=5
+            plot=p2[[1]], units="in", width=6, height=5, dpi = 1000
           )
         }
 
