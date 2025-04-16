@@ -218,3 +218,12 @@ get_fitted_attrition_models <- function(res.dir) {
   }
   tmp.list
 }
+
+#' @rdname compute_calibrated
+#' @export
+get_fitted_attrition_model <- function(res.dir, country) {
+  tmp.attr.files <- list.files(res.dir)
+  tmp.attr.files <- tmp.attr.files[str_detect(tmp.attr.files, country)]
+  load(here::here(res.dir, tmp.attr.files))
+  fit.attr
+}

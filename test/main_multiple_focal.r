@@ -26,28 +26,31 @@ data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-d
 out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-GFS-Core-Wave-2/test-package"
 
 # Here is YOUR wave 1 construct variable
-FOCAL_PREDICTOR <- "PHYSICAL_HLTH_Y1"
-FOCAL_PREDICTOR_BETTER_NAME <- "Self-Rated Physical Health"
-FOCAL_PREDICTOR_REFERENCE_VALUE <- "mean rating within country"
+FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1", "CIGARETTES_Y1")
+FOCAL_PREDICTOR_BETTER_NAME <- c("Self-Rated Physical Health", "Self-reported Smoker Status")
+FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country", "non-smoker status")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for
 #   consistency across studies.
-VALUES_DEFINING_UPPER_CATEGORY <- NULL
-VALUES_DEFINING_LOWER_CATEGORY <- NULL
+VALUES_DEFINING_UPPER_CATEGORY <- list(NA, 1:97)
+VALUES_DEFINING_LOWER_CATEGORY <- list(NA, 0)
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
 #   feel_anxious and control_worry)  or depression (sum of depressed and interest) that have a
 # 	history of being dichotomized.
-FORCE_BINARY <- FALSE
+FORCE_BINARY <- c(FALSE, TRUE)
 # Note 2: if your focal predictor is categorical/binary, you can use the responses as if they were continuous.
 # 	The provided (straightforward-ish) approach implemented is to reverse code all
 #   ordered-categorical variables (reverse code from what is reported in the codebook), and
 #   standardized as if continuous. This approach is not applicable for variables with nominal
 #   response categories such as employment. This is employed using the option below.
-FORCE_CONTINUOUS <- FALSE
+FORCE_CONTINUOUS <- c(FALSE, FALSE)
+# Note 3: if you need to define a subpopulation for domain analysis. (in-development)
+SUBPOPULATION <- list(NULL, NULL)
 
+names(FORCE_CONTINUOUS) <- names(FORCE_BINARY) <- names(VALUES_DEFINING_UPPER_CATEGORY)  <- names(VALUES_DEFINING_LOWER_CATEGORY) <- names(SUBPOPULATION) <- FOCAL_PREDICTOR
 # ================================================================================================ #
 # ================================================================================================ #
 # Data Prep
@@ -112,7 +115,7 @@ df.raw <- gfs_get_labelled_raw_data(
     )
   }
 
-  load(here::here(data.dir, "gfs_w2_imputed_data_20imp.RData"))
+  load(here::here(data.dir, "gfs_w2_imputed_data_2imp_test.RData"))
   # ~~
   df.imp.long <- recode_imputed_data(
     df.imp,
@@ -132,7 +135,11 @@ tmp.dat2 <- df.imp.long %>%
   filter(.imp == 1) %>%
   arrange(ID)
 dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
-table(tmp.dat1[[FOCAL_PREDICTOR]], tmp.dat2[[FOCAL_PREDICTOR]], dnn = dnn0, useNA = "ifany")
+for(i in 1:length(FOCAL_PREDICTOR)){
+	print(FOCAL_PREDICTOR[i])
+  print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))	
+}
+
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -218,49 +225,54 @@ your.outcome <- OUTCOME.VEC0[2]
 
 # Model 1: Run without principal components
 LIST.RES1 <- map(OUTCOME.VEC0, \(x){
+map(FOCAL_PREDICTOR, \(y){
   gfs_run_regression_single_outcome(
     your.outcome = x,
     data = df.imp.long,
     wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
     psu = PSU, #psu = as.name("PSU")
     strata = STRATA, # strata = as.name("STRATA")
-    your.pred = FOCAL_PREDICTOR,
+    your.pred = y,
     covariates = DEMO.CHILDHOOD.PRED,
     contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
     list.composites = LIST.COMPOSITES[[1]],
     standardize = TRUE,
     res.dir = "results-wopc",
-    pc.rule = "omit"
+    pc.rule = "omit",
+    subpopulation = SUBPOPULATION[[y]]
   )
-}, .progress = TRUE)
+}) }, .progress = TRUE)
 
 
 #LIST.RES1 <- construct_meta_input_from_saved_results("results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
 meta.input <- LIST.RES1 %>%
   bind_rows() %>%
-  mutate(OUTCOME0 = OUTCOME) %>%
-  group_by(OUTCOME0) %>%
+  mutate(
+  	OUTCOME0 = OUTCOME,
+  	FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  ) %>%
+  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
 
 META.RES1 <- gfs_meta_analysis(
   meta.input,
-  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Excluded -- Full Imputation Approach"
 )
 readr::write_rds(
   META.RES1,
-  file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),
+  file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc2.rds"),
   compress = "gz"
 )
 
 # Model 2: Run with principal components
 LIST.RES2 <- map(OUTCOME.VEC0, \(x){
+map(FOCAL_PREDICTOR, \(y){
   gfs_run_regression_single_outcome(
     data = df.imp.long,
     wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
     psu = PSU, #psu = as.name("PSU")
     strata = STRATA, # strata = as.name("STRATA")
-    your.pred = FOCAL_PREDICTOR,
+    your.pred = y,
     your.outcome = x,
     covariates = DEMO.CHILDHOOD.PRED,
     contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
@@ -268,20 +280,23 @@ LIST.RES2 <- map(OUTCOME.VEC0, \(x){
     standardize = TRUE,
     res.dir = "results-wpc",
     pc.cutoff = 7,
-    pc.rule = "constant"
+    pc.rule = "constant",
+    subpopulation = SUBPOPULATION[[y]]
   )
-}, .progress = TRUE)
+}) }, .progress = TRUE)
 
 #LIST.RES2 <- construct_meta_input_from_saved_results("results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
 meta.input <- LIST.RES2 %>%
   bind_rows() %>%
-  mutate(OUTCOME0 = OUTCOME) %>%
-  group_by(OUTCOME0) %>%
+  mutate(
+  	OUTCOME0 = OUTCOME,
+  	FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  ) %>%
+  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
 
 META.RES2 <- gfs_meta_analysis(
   meta.input,
-  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Included -- Full Imputation Approach"
 )
 
@@ -298,30 +313,34 @@ readr::write_rds(
 
   # Supplemental analysis set 1: Run without principal components
   SUPP.LIST.RES1 <- map(OUTCOME.VEC0, \(x){
+  	map(FOCAL_PREDICTOR, \(y){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       data = df.imp.long %>% filter(CASE_OBSERVED_Y2 == 1),
       wgt = SAMP.ATTR.WGT,
       psu = PSU,
       strata = STRATA,
-      your.pred = FOCAL_PREDICTOR,
+      your.pred = y,
       covariates = DEMO.CHILDHOOD.PRED,
       contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
       list.composites = LIST.COMPOSITES[[1]],
       standardize = TRUE,
       res.dir = "supp-results-wopc",
-      pc.rule = "omit"
+      pc.rule = "omit",
+    subpopulation = SUBPOPULATION[[y]]
     )
-  }, .progress = TRUE)
+  }) }, .progress = TRUE)
   SUPP.LIST.RES1 <- construct_meta_input_from_saved_results("supp-results-wopc", OUTCOME.VEC0, FOCAL_PREDICTOR)
   meta.input <- SUPP.LIST.RES1 %>%
     bind_rows() %>%
-    mutate(OUTCOME0 = OUTCOME) %>%
-    group_by(OUTCOME0) %>%
+  	mutate(
+  		OUTCOME0 = OUTCOME,
+  		FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	) %>%
+  	group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
     nest()
   SUPP.META.RES1 <- gfs_meta_analysis(
     meta.input,
-    better.name = FOCAL_PREDICTOR_BETTER_NAME,
     p.subtitle = "Principal Components Excluded -- Attrition Weights"
   )
   readr::write_rds(
@@ -332,31 +351,35 @@ readr::write_rds(
 
   # Analysis set 2: Run with principal components
   SUPP.LIST.RES2 <- map(OUTCOME.VEC0, \(x){
+  	map(FOCAL_PREDICTOR, \(y){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       data = df.imp.long %>% filter(CASE_OBSERVED_Y2 == 1),
       wgt = SAMP.ATTR.WGT,
       psu = PSU,
       strata = STRATA,
-      your.pred = FOCAL_PREDICTOR,
+      your.pred = y,
       covariates = DEMO.CHILDHOOD.PRED,
       contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
       list.composites = LIST.COMPOSITES[[1]],
       standardize = TRUE,
       res.dir = "supp-results-wpc",
       pc.cutoff = 7,
-      pc.rule = "constant"
+      pc.rule = "constant",
+      subpopulation = SUBPOPULATION[[y]]
     )
-  }, .progress = TRUE)
+  }) }, .progress = TRUE)
   SUPP.LIST.RES2 <- construct_meta_input_from_saved_results("supp-results-wpc", OUTCOME.VEC0, FOCAL_PREDICTOR)
   meta.input <- SUPP.LIST.RES2 %>%
     bind_rows() %>%
-    mutate(OUTCOME0 = OUTCOME) %>%
-    group_by(OUTCOME0) %>%
+  	mutate(
+  		OUTCOME0 = OUTCOME,
+  		FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	) %>%
+  	group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
     nest()
   SUPP.META.RES2 <- gfs_meta_analysis(
     meta.input,
-    better.name = FOCAL_PREDICTOR_BETTER_NAME,
     p.subtitle = "Principal Components Included -- Attrition Weights"
   )
   readr::write_rds(
@@ -405,6 +428,8 @@ META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_
 META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
 SUPP.META.RES1 <- readr::read_rds(file = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"))
 SUPP.META.RES2 <- readr::read_rds(file = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"))
+
+FIT.ATTR <- get_fitted_attrition_model("results-attr", "China")
 
 # main text
 gfs_generate_main_doc(

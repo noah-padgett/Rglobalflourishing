@@ -581,34 +581,36 @@ recode_imputed_data <- function(
   for (tmp.var in list.default[["VARIABLES.VEC"]]) {
     # print(tmp.var)
     x <- df.imp.long[, tmp.var, drop = TRUE]
-    if ((tmp.var == list.default[["FOCAL_PREDICTOR"]]) & !(list.default[["USE_DEFAULT"]])) {
+    if ((tmp.var %in% list.default[["FOCAL_PREDICTOR"]]) & !(all(list.default[["USE_DEFAULT"]]))) {
       # if the focal variable is continous, essential ignore and moe to next
       if (get_outcome_scale(tmp.var) == "cont") {
-        if (list.default[["FORCE_BINARY"]]) {
+        if (list.default[["FORCE_BINARY"]][tmp.var]) {
           x <- case_when(
-            x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]]) ~ 1,
-            x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]]) ~ 0
+            x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
+            x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
           )
         } else {
           x <- recode_to_type(x, tmp.var)
           x <- reorder_levels(x, tmp.var)
           x <- recode_to_numeric(x, tmp.var)
         }
-      } else if (list.default[["FORCE_CONTINUOUS"]]) {
-        x <- recode_to_type(x, tmp.var)
-        x <- reorder_levels(x, tmp.var)
-        if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
-          x <- as.numeric(x)
-        } else {
-          x <- recode_to_numeric(x, tmp.var)
-        }
-      } else {
-        # if focal variable is binary/categorical, then collasp as user-specified
-        x <- case_when(
-          x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]]) ~ 1,
-          x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]]) ~ 0
-        )
-      }
+      } else if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
+      	  if (list.default[["FORCE_CONTINUOUS"]][tmp.var]) {
+      	  	x <- recode_to_type(x, tmp.var)
+      	  	x <- reorder_levels(x, tmp.var)
+      	  	if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
+      	    	x <- as.numeric(x)
+      	  	} else {
+      	    	x <- recode_to_numeric(x, tmp.var)
+      	  	}
+      	  } else {
+      	    # if focal variable is binary/categorical, then collasp as user-specified
+      	    x <- case_when(
+      	      x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
+      	      x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
+      	    )
+      	  }	
+      }   
     } else {
       if (str_detect(tmp.var, "COMPOSITE")) {
         is.sum <- ifelse(

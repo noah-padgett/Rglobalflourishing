@@ -11,9 +11,11 @@
 #' @param pc.rule principal components analysis use rule (default: "omit")
 #' @param pc.cutoff a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)
 #' @param force.linear a logical of whether to force a linear model (default: FALSE)
+#' @param force.binary a logical of whether to force a Poisson model (default: FALSE)
 #' @param robust.huberM a  logical of whether to use a robust variant of the linear regression model (default: FALSE), see below for additional details.
 #' @param robust.tune a numeric value defining the tuning parameter for the robust.huberM option.
 #' @param res.dir a character string defining directory to save results to.
+#' @param subpopulation (optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)
 #' @param compute.vif (optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a data.frame that contains the meta-analysis input results
@@ -57,10 +59,12 @@ gfs_run_regression_single_outcome <- function(
     pc.cutoff = 7,
     pc.rule = "omit",
     force.linear = FALSE,
+    force.binary = FALSE,
     robust.huberM = FALSE,
     robust.tune = 1,
     res.dir = NULL,
     list.composites = NULL,
+    subpopulation = NULL,
     compute.vif = FALSE, 
     .return.all = FALSE, ...) {
   suppressMessages({
@@ -90,6 +94,7 @@ gfs_run_regression_single_outcome <- function(
         .default = "linear"
       )
       outcome.type <- case_when(
+        force.binary ~ "RR",
         force.linear ~ "linear",
         .default = outcome.type
       )
@@ -195,6 +200,29 @@ gfs_run_regression_single_outcome <- function(
             # )
           })
         )
+        
+      if(!is.null(subpopulation)){
+        
+        sub.var <- sym(subpopulation[[1]])
+        sub.cat <- subpopulation[[2]]
+        subpop.expr <- expr(!!sub.var %in% !!sub.cat)
+        
+        svy.data.imp <- svy.data.imp %>%
+          mutate(
+            data = map(data, \(x){
+              subset(x, eval(subpop.expr))
+            }),
+            svy.data = map(svy.data, \(x){
+              subset(x, eval(subpop.expr))
+            })
+          )
+        
+        if(!is.null(subpopulation[[3]])){
+          svy.data.imp <- svy.data.imp %>%
+            filter((COUNTRY %in% c(subpopulation[[3]]) )) %>%
+            mutate(COUNTRY = fct_drop(COUNTRY))
+        }
+      }
 
 
       # IF: pc.rule NOT omit
@@ -684,32 +712,33 @@ gfs_run_regression_single_outcome <- function(
           	outcome.type == "linear" ~ paste0("(", .round(exp(0.91*ci.low)), ",", .round(exp(0.91*ci.up)), ")")
           )
         )
+        
+      outfile <- here::here(
+          res.dir,
+          paste0(your.pred,  "_regressed_on_", your.outcome, "_saved_results.RData")
+        )
+      if(!is.null(subpopulation)){
+      	outfile <- here::here(
+          res.dir,
+          paste0(your.pred,  "_regressed_on_", your.outcome, "_saved_results_subdomain.RData")
+        )
+      }
+        
 
       save(
         output,
         metainput,
         fit.pca.summary,
-        file = here::here(
-          res.dir,
-          paste0(your.pred,
-                 "_regressed_on_",
-                 your.outcome, "_saved_results.RData")
-        )
-        
+        file = outfile
       )
       
       if( .return.all ){
        	save(
-       	svy.data.imp, ## this object includes ALL the imputation, fitted regression models, diagnostics, etc., is memory intensive.
+       	svy.data.imp, ## this object includes ALL the imputations, fitted regression models, diagnostics, etc., is memory intensive.
         output,
         metainput,
         fit.pca.summary,
-        file = here::here(
-          res.dir,
-          paste0(your.pred,
-                 "_regressed_on_",
-                 your.outcome, "_saved_results.RData")
-        )
+        file = outfile
         )
        }
     })
