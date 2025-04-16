@@ -1086,9 +1086,12 @@ gfs_generate_supplemental_docs <- function(
         	outcome = NULL,
         	what = c("OUTCOME0", "FOCAL_PREDICTOR0", "data", "theta.rma", "theta.rma.se", "theta.rma.ci")
         ) 
+       plot.dat$type <- ""
+      for(i in 1:nrow(plot.dat)){
+      	plot.dat$type[i] = get_outcome_scale(plot.dat$OUTCOME0[i])
+      }
       plot.dat <- plot.dat %>%
         mutate(
-          type = get_outcome_scale(OUTCOME0),
           type = case_when(
             type == "cont" ~ "Std. Est",
             .default = "log(RR)"
