@@ -45,20 +45,21 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     )
 
   if("FOCAL_PREDICTOR" %in% colnames(tmp.dat)){
-  	
+
   	focal.pred <- tmp.dat$FOCAL_PREDICTOR[1]
   	focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
   	if (!is.null(better.name)) {
    	 focal.pred <- better.name
   	}
+  	tmp.outcome.scale <- get_outcome_scale(tmp.dat$OUTCOME[1])
   	tmp.outcome <- tmp.dat$OUTCOME[1]
   	tmp.outcome <- get_outcome_better_name(tmp.outcome, include.name = FALSE, include.wave = TRUE)
 
   	focal.pred <- str_to_sentence(focal.pred)
   	tmp.outcome <- str_to_sentence(tmp.outcome)
-  	
+
   }
-  
+
   if(is.null(p.title)){
   	p.title = paste0("`", focal.pred, "` predicts `", tmp.outcome, "`")
   }
@@ -79,7 +80,10 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   )
   }
 
-  xLab <- "Standardized Effect"
+  xLab <- case_when(
+    tmp.outcome.scale == "cont" ~ "Standardized Effect Size",
+    tmp.outcome.scale != "cont" ~ "log(Risk-Ratio)"
+  )
 
   # construct heterogeneity statement...
   myci <- confint(tmp.fit, type = "PL")

@@ -188,7 +188,7 @@ get_outcome_better_name <- function(var,
       TEACHINGS_13 = "The Teachings of Spiritism Are Very Important in Your Life (Spiritism Identified as Current Religion)",
       TEACHINGS_14 = "The Teachings of African-Derived Religions Are Very Important in Your Life (African-Derived Religions Identified as Current Religion)",
       TEACHINGS_15 = "The Teachings of Chinese Folk/Traditional Religion are Very Important in Your Life (Chinese Folk/Traditional Religion Identified as Current Religion)",
-      TELL_BELIEFS = "Evangilism",
+      TELL_BELIEFS = "Evangelism",
       THREAT_LIFE = "Threat Life",
       TRAITS1 = "Pair of Traits Applies To You: Extroverted Enthusiastic",
       TRAITS2 = "Pair of Traits Applies To You: Critical Quarrelsome",
@@ -2120,7 +2120,7 @@ x==2406~'2406. Hong Kong:  Civic Party',
 x==2407~'2407. Hong Kong:  Democratic Party',
 x==9996~'9996. Other',
 x==9997~'9997. Do not feel close to any party',
-     .default = "(Missing)"  
+     .default = "(Missing)"
     ),
     PRAY_MEDITATE = case_when(
       x == 1 ~ "1. More than once a day",

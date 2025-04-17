@@ -181,23 +181,6 @@ get_country_specific_regression_results <- function(res.dir, outcomes, predictor
 }
 
 #' @export
-get_country_specific_regression_results <- function(res.dir, country, predictor, outcomes) {
-  local({
-  	tmp.list <- list()
-  for (your.outcome in outcomes) {
-      load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results.RData")))
-      # create new columns in output to help with constructing tables
-      output <- output  %>%
-        dplyr::filter(Variable == "FOCAL_PREDICTOR") %>%
-        dplyr::filter(str_detect(COUNTRY, country))
-      tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
-  }
-  return(tmp.list)
-  })
-  
-}
-
-#' @export
 get_country_specific_output <- function(res.dir, outcomes, predictors) {
   local({
   	tmp.list <- list()

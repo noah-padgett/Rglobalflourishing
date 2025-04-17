@@ -354,3 +354,18 @@ load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
   })
 }
 
+#' @export
+get_country_specific_regression_results <- function(res.dir, country, predictor, outcome) {
+  local({
+  	tmp.list <- NULL
+      load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results.RData")))
+      # create new columns in output to help with constructing tables
+      output <- output  %>%
+        dplyr::filter(Variable == "FOCAL_PREDICTOR") %>%
+        dplyr::filter(str_detect(COUNTRY, country))
+      tmp.list <- output
+  return(tmp.list)
+  })
+  
+}
+
