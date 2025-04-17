@@ -999,6 +999,7 @@ gfs_generate_supplemental_docs <- function(
 
       focal.predictor0 <- str_remove(focal.predictor,"_Y1")
       OUTCOME.VEC0 <- str_remove(OUTCOME.VEC,"_Y2")
+      OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "CIGARETTES")] <- "CIGARETTES"
       baseline.pred0 <- str_remove(baseline.pred,"_Y1")
 
       df.raw.long <- df.raw.long %>%
@@ -1236,7 +1237,8 @@ gfs_generate_supplemental_docs <- function(
             ),
             type = list(
               all_continuous() ~ "continuous2",
-              contains("NUM_CHILDREN") ~ "continuous2"
+              contains("NUM_CHILDREN") ~ "continuous2",
+              "CIGARETTES" ~ "continuous2"
             ),
             statistic = list(
               all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
@@ -1910,7 +1912,8 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
               ),
               type = list(
                 all_continuous() ~ "continuous2",
-                contains("NUM_CHILDREN") ~ "continuous2"
+                contains("NUM_CHILDREN") ~ "continuous2",
+              "CIGARETTES" ~ "continuous2"
               ),
               statistic = list(
                 all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
@@ -2263,7 +2266,7 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
                  i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
                  j = 1) %>%
           add_header_row(
-            values = c("", "Model 1: Without PC", "", "Model 2: With PC"),
+            values = c("", "Model 1: Demographics and Childhood Variables as Controls", "", "Model 2: Demographics, Childhood, and Wave 1 Confounders (via principal components) as Controls"),
             colwidths = c(1, length(vec.wopc), 1, length(vec.wpc))
           ) %>%
           add_footer_row(
@@ -2452,7 +2455,8 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
                 label = OUTCOME.VEC.LABELS,
                 type = list(
                   all_continuous() ~ "continuous2",
-                  contains("NUM_CHILDREN") ~ "continuous2"
+                  contains("NUM_CHILDREN") ~ "continuous2",
+              	  "CIGARETTES" ~ "continuous2"
                 ),
                 statistic = list(
                   all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
