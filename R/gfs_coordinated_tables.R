@@ -1232,7 +1232,7 @@ gfs_generate_supplemental_docs <- function(
           tbl_svysummary(
             by = WAVE0,
             include = c(
-              any_of(OUTCOME.VEC0)
+              any_of(OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "INCOME_QUINTILE", negate=TRUE)])
             ),
             type = list(
               all_continuous() ~ "continuous2",
@@ -1906,7 +1906,7 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
             tbl_svysummary(
               by = WAVE0,
               include = c(
-                any_of(OUTCOME.VEC0)
+                any_of(OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "INCOME_QUINTILE", negate=TRUE)])
               ),
               type = list(
                 all_continuous() ~ "continuous2",
@@ -1971,6 +1971,8 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
         ) |>
           modify_header(estimate = "**Odds Ratio**") |>
           as_flex_table() |>
+         autofit() |>
+          format_flex_table(pg.width = 21 / 2.54 - 2) |>
           set_caption(
             paste0("Table S",i+tb.num.shift,letters[tb.num],". Summary of fitted attrition model in ", COUNTRY_LABELS[i])
           ) %>%
@@ -2162,8 +2164,8 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
             values = tb.note.coun.outcomewide, top = FALSE, colwidths = ncol(coun.outcomewide)
           ) %>%
           width(j=1,width=2.00)%>%
-          width(j=c(2:3,5,8:9,11),width=0.50)%>%
-          width(j=c(4,10),width=0.85)%>%
+          width(j=c(2:4,8:10),width=0.50)%>%
+          width(j=c(5,11),width=0.85)%>%
           width(j=c(6,12),width=1.0)%>%
           width(j=7,width=0.20)%>%
           format_flex_table(pg.width = 29.7/2.54 - 2) %>%
@@ -2445,7 +2447,7 @@ P-value significance thresholds: p < 0.05*, (Bonferroni) p < ",.round(p.bonferro
               tbl_svysummary(
                 by = WAVE0,
                 include = c(
-                  any_of(OUTCOME.VEC0)
+                  any_of(OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "INCOME_QUINTILE", negate=TRUE)])
                 ),
                 label = OUTCOME.VEC.LABELS,
                 type = list(
