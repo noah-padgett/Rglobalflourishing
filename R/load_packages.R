@@ -30,6 +30,7 @@ load_packages <- function(...) {
     "flextable",
     "officer",
     "patchwork",
+    "ggthemes",
 
     # utility packages
     "tidyverse",
