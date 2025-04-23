@@ -81,7 +81,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   }
 
   xLab <- case_when(
-    tmp.outcome.scale == "cont" ~ "Standardized Effect Size",
+    tmp.outcome.scale == "cont" ~ "Effect Size",
     tmp.outcome.scale != "cont" ~ "log(Risk-Ratio)"
   )
 

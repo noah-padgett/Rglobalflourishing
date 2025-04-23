@@ -9,7 +9,7 @@
 #' # TO-DO
 #' @export
 gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "empirical", better.name = NULL,
-                              p.subtitle = NULL, ...) {
+                              p.subtitle = NULL, ci.alpha = 0.05, ...) {
   # meta.input = df.tmp %>%
   # 	group_by(OUTCOME) %>%
   # nest()
@@ -33,7 +33,7 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
     #    )
 	#	library(clubSandwich)
 	#	clubSandwich::coef_test(fit, vcov = "CR2", cluster=c(rep(1,11), rep(2,11)))
-   
+
   meta.res <- meta.input %>%
     mutate(
       FOCAL_PREDICTOR = map(data, \(x){
@@ -51,7 +51,7 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
       meta.rma.tidy = map(meta.rma, \(x) tidy(x, conf.int = TRUE)),
       theta.rma = map_dbl(meta.rma.tidy, "estimate"),
       theta.rma.se = map_dbl(meta.rma.tidy, "std.error"),
-      theta.rma.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma")),
+      theta.rma.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma", ci.alpha)),
       tau2 = map_dbl(meta.rma, "tau2"),
       tau = sqrt(tau2),
       I2 = map_dbl(meta.rma, "I2"),
@@ -79,7 +79,7 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
       # compute exponentiated (used only when scale is binary/Likert)
       calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),
       rr.theta = exp(theta.rma),
-      rr.theta.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma.rr")),
+      rr.theta.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma.rr", ci.alpha, .exp=TRUE)),
       rr.tau = sqrt((exp(tau2) - 1) * exp(2 * theta.rma + tau2)),
       prob.rr0.90 = map_dbl(
         calibrated.yi.exp, \(x){
@@ -92,8 +92,14 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
         }
       ),
       prob.rr.c = paste0("[", .round(prob.rr0.90), " / ",.round(prob.rr1.10) ,"]"),
-      theta.lb = map_dbl(meta.rma, \(x) tidy(x, conf.int = TRUE)[1, "conf.low", drop = TRUE]),
-      theta.ub = map_dbl(meta.rma, \(x) tidy(x, conf.int = TRUE)[1, "conf.high", drop = TRUE]),
+      theta.lb = map_dbl(meta.rma, \(x){
+        tmp <- tidy(x, conf.int = TRUE)
+        tmp[1, "estimate", drop = TRUE] - qnorm(1-ci.alpha/2)*tmp[1, "std.error", drop = TRUE]
+      }),
+      theta.ub = map_dbl(meta.rma, \(x){
+        tmp <- tidy(x, conf.int = TRUE)
+        tmp[1, "estimate", drop = TRUE] + qnorm(1-ci.alpha/2)*tmp[1, "std.error", drop = TRUE]
+      }),
       theta.rr.EE = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="EE", type="RR"),
       theta.rr.ECI = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="ECI", type="RR"),
       ## ====== population weighted meta results ================================================ ##
@@ -108,9 +114,7 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
         )
       }),
       theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),
-      theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x){
-        get_meta_ci(x, type = "FE")
-      }),
+      theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x) get_meta_ci(x, type = "FE", ci.alpha)),
       meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),
       ## ====== pooled-pvalue =================================================================== ##
       global.pvalue = map_dbl(data, \(x){

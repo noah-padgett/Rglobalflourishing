@@ -177,7 +177,7 @@ df.imp.long <- run_attrition_model(
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
-  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",	
+  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",
   replace = TRUE
 )
 
@@ -426,11 +426,10 @@ gfs_generate_main_doc(
 # online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)
 gfs_generate_supplemental_docs(
   df.raw = df.raw,
-  meta.wopc = META.RES1, meta.wpc = META.RES2,
-  coun.wopc =  COUN.RES.WOPC , coun.wpc = COUN.RES.WPC , coun.fit.pca = FIT.PCA.SUM ,
-  attr.models = FIT.ATTR,
-  supp.meta.wopc = SUPP.META.RES1, supp.meta.wpc = SUPP.META.RES2,
-  supp.coun.wopc = SUPP.COUN.RES.WOPC , supp.coun.wpc = SUPP.COUN.RES.WPC ,
+  meta.wopc = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"),
+  meta.wpc = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"),
+  supp.meta.wopc = here::here(out.dir, "supp-results-wopc", "0_meta_analyzed_results_wopc.rds"),
+  supp.meta.wpc = here::here(out.dir, "supp-results-wpc", "0_meta_analyzed_results_wpc.rds"),
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
@@ -440,8 +439,7 @@ gfs_generate_supplemental_docs(
   wgt2 = SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all",
-  n.print="207,919"
+  what = "S2"
 )
 
 

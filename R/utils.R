@@ -188,11 +188,11 @@ quickpred2 <- function(
 format_flex_table <- function(xtb, pg.width = 6.5) {
   tb.temp <- xtb %>%
     theme_apa() %>%
-    font(part = "all", fontname = "Times New Roman") %>%
+    font(part = "all", fontname = "Open Sans") %>%
     fontsize(part = "header", size = 11) %>%
     fontsize(part = "body", size = 10) %>%
-    line_spacing(space = 1, part = "all") %>%
-    padding(padding = 2, part = "all") %>%
+    line_spacing(space = 0.95, part = "all") %>%
+    padding(padding = 0, part = "all") %>%
     align(align = "right", part = "all") %>%
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all") %>%
@@ -204,6 +204,70 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
     width(tb.temp,
       width = dim(tb.temp)$widths * pg.width / (flextable_dim(tb.temp)$widths)
     )
+  tb.temp
+}
+
+#' @rdname utils
+#' @export
+theme_meta_outcome_wide <- function(xtb, pg.width = 29.7/2.54 - 2, .ncol = 12) {
+  tb.temp <- xtb %>%
+    theme_apa() %>%
+    font(part = "all", fontname = "Open Sans") %>%
+    fontsize(part = "header", size = 9) %>%
+    fontsize(part = "body", size = 9) %>%
+    line_spacing(space = 0.95, part = "all") %>%
+    padding(padding = 0, part = "all") %>%
+    align(align = "right", part = "all") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    valign(valign = "bottom", part = "all")  %>%
+    width(j=1,width=2.00)%>%
+    width(j=c(2:3,5,8:9,11),width=0.50)%>%
+    width(j=c(4,10),width=0.85)%>%
+    width(j=c(6,12),width=1.0)%>%
+    width(j=7,width=0.20)
+
+  tb.temp <-
+    width(tb.temp,
+          width = dim(tb.temp)$widths * pg.width / (flextable_dim(tb.temp)$widths)
+    )
+
+    tb.temp <- tb.temp %>%
+    align(i = 1, j = NULL, align = "center", part = "header") %>%
+    align(part = "footer", align = "left", j = 1:.ncol) %>%
+    border_remove()  %>%
+    hline_bottom(part = "body") %>%
+    hline_top(part = "header") %>%
+    hline_bottom(part = "header") %>%
+    hline(i=1,j=c(2:6,8:12), part="header")
+
+  tb.temp
+}
+
+#' @rdname utils
+#' @export
+theme_meta_evalues <- function(xtb, pg.width = 21 / 2.54 - 2, .ncol = 6) {
+  tb.temp <- xtb %>%
+    theme_apa() %>%
+    font(part = "all", fontname = "Open Sans") %>%
+    fontsize(part = "header", size = 10) %>%
+    fontsize(part = "body", size = 10) %>%
+    line_spacing(space = 0.95, part = "all") %>%
+    padding(padding = 0, part = "all") %>%
+    align(align = "right", part = "all") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    valign(valign = "bottom", part = "all")  %>%
+    width(j=1,width=2.50)%>%
+    width(j=c(2,5),width=0.70)%>%
+    width(j=c(3,6),width=1.00)%>%
+    width(j=c(4),width=0.10)%>%
+    align(i = 1, j = NULL, align = "center", part = "header") %>%
+    align(part = "footer", align = "left", j = 1:.ncol) %>%
+    border_remove()  %>%
+    hline_bottom(part = "body") %>%
+    hline_top(part = "header") %>%
+    hline_bottom(part = "header") %>%
+    hline(i=1,j=c(2:3,5:6), part="header")
+
   tb.temp
 }
 
@@ -332,33 +396,33 @@ load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
   local({
     # Load the RDS file
     data <- readRDS(file)
-    
+
     if(is.null(what)){
     		what <- colnames(data)
     }
     if(is.null(predictor)){
-    	  predictor = unique(data$FOCAL_PREDICTOR0)
+    	  predictor = unique(data$FOCAL_PREDICTOR)
     }
     if(is.null(outcome)){
     	  outcome = unique(data$OUTCOME0)
     }
-    
-    data <- data %>% 
+
+    data <- data %>%
     		ungroup() %>%
     		dplyr::filter(OUTCOME0 %in% outcome) %>%
-    		dplyr::filter(FOCAL_PREDICTOR0 %in% predictor) %>%
+    		dplyr::filter(FOCAL_PREDICTOR %in% predictor) %>%
     		dplyr::select(any_of(what))
-    		
+
     # Return the processed data
     return(data)
   })
 }
 
 #' @export
-get_country_specific_regression_results <- function(res.dir, country, predictor, outcome) {
+get_country_specific_regression_results <- function(res.dir, country, predictor, outcome, appnd.txt="") {
   local({
   	tmp.list <- NULL
-      load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results.RData")))
+      load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
       # create new columns in output to help with constructing tables
       output <- output  %>%
         dplyr::filter(Variable == "FOCAL_PREDICTOR") %>%
@@ -366,6 +430,6 @@ get_country_specific_regression_results <- function(res.dir, country, predictor,
       tmp.list <- output
   return(tmp.list)
   })
-  
+
 }
 

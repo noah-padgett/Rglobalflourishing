@@ -17,6 +17,7 @@
 #' @param res.dir a character string defining directory to save results to.
 #' @param subpopulation (optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)
 #' @param compute.vif (optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.
+#' @param appnd.txt.to.filename (optional) character string to help differentiate saved results file (default "")
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a data.frame that contains the meta-analysis input results
 #' @examples {
@@ -66,6 +67,7 @@ gfs_run_regression_single_outcome <- function(
     list.composites = NULL,
     subpopulation = NULL,
     compute.vif = FALSE, 
+    appnd.txt.to.filename = "",
     .return.all = FALSE, ...) {
   suppressMessages({
     suppressWarnings({
@@ -715,20 +717,24 @@ gfs_run_regression_single_outcome <- function(
         
       outfile <- here::here(
           res.dir,
-          paste0(your.pred,  "_regressed_on_", your.outcome, "_saved_results.RData")
+          paste0(your.pred,  "_regressed_on_", your.outcome, "_saved_results",appnd.txt.to.filename,".RData")
         )
-      if(!is.null(subpopulation)){
-      	outfile <- here::here(
-          res.dir,
-          paste0(your.pred,  "_regressed_on_", your.outcome, "_saved_results_subdomain.RData")
-        )
+        
+      results.vif  <- NULL
+      if(compute.vif){
+      	results.vif <- svy.data.imp %>%
+        select(COUNTRY, .imp, fit.vif) %>%
+        unnest(c(fit.vif)) %>%
+        ungroup()
       }
+      
         
 
       save(
         output,
         metainput,
         fit.pca.summary,
+        results.vif,
         file = outfile
       )
       
