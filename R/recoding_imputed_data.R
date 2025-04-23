@@ -125,7 +125,7 @@ recode_imputed_data <- function(
         COV_FATHER_RELATN = relevel(COV_FATHER_RELATN, ref = "Very/somewhat bad"),
         COV_SVCS_12YRS = relevel(COV_SVCS_12YRS, ref = "Never"),
         COV_OUTSIDER = relevel(COV_OUTSIDER, ref = "No"),
-        COV_ABUSED = ifelse(COUNTRY == "Israel", factor(NA), relevel(COV_ABUSED, ref = "No")),
+        COV_ABUSED = ifelse(COUNTRY == "Israel", COV_ABUSED, relevel(COV_ABUSED, ref = "No")),
         COV_HEALTH_GROWUP = relevel(COV_HEALTH_GROWUP, ref = "Good"),
         COV_INCOME_12YRS = relevel(COV_INCOME_12YRS, ref = "Got by"),
 
