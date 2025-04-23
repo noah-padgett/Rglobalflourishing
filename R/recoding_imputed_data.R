@@ -125,7 +125,7 @@ recode_imputed_data <- function(
         COV_FATHER_RELATN = relevel(COV_FATHER_RELATN, ref = "Very/somewhat bad"),
         COV_SVCS_12YRS = relevel(COV_SVCS_12YRS, ref = "Never"),
         COV_OUTSIDER = relevel(COV_OUTSIDER, ref = "No"),
-        COV_ABUSED = relevel(COV_ABUSED, ref = "No"),
+        COV_ABUSED = ifelse(COUNTRY == "Israel", COV_ABUSED, relevel(COV_ABUSED, ref = "No")),
         COV_HEALTH_GROWUP = relevel(COV_HEALTH_GROWUP, ref = "Good"),
         COV_INCOME_12YRS = relevel(COV_INCOME_12YRS, ref = "Got by"),
 
@@ -317,6 +317,8 @@ recode_imputed_data <- function(
       names(rel.prominence.tab) <- rel.prominence[, 1, drop = T]
       rel.lvl <- levels(data[[var]])
       rel.ag.prom <- rel.prominence.tab[rel.lvl == "No religion/Atheist/Agnostic"]
+        if (is.null(rel.ag.prom)) {
+            rel.ag.prom <- 0 }
       if (rel.ag.prom > 0.03) {
         rel.mp <- "No religion/Atheist/Agnostic"
       } else {
