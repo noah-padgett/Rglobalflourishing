@@ -19,7 +19,7 @@
 
 # Add the directory where the dataset is stored on your computer
 data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-data"
-dataset.name <- "gfs_all_countries_wave2.sav"
+ dataset.name <- "gfs_all_countries_wave2.sav"
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
@@ -137,7 +137,7 @@ tmp.dat2 <- df.imp.long %>%
   arrange(ID)
 dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
 for(i in 1:length(FOCAL_PREDICTOR)){
-  print(FOCAL_PREDICTOR[i])
+	print(FOCAL_PREDICTOR[i])
   print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))
 }
 
@@ -147,24 +147,24 @@ for(i in 1:length(FOCAL_PREDICTOR)){
 # Add in missing observation flags
 
 df.raw00 <- df.raw %>%
-  mutate(
-    across(!contains("DOI_"), \(x){
-      x = dplyr::case_when(x %in% "(Missing)" ~ NA, .default = x)
-      case_when(
-        is.na(x) ~ "imputed",
-        .default = "observed"
-      )
-    }, .names = "IMPUTE_FLAG_{.col}")
-  ) %>%
-  select(ID, COUNTRY, STRATA, PSU, contains("IMPUTE_FLAG") )
+	mutate(
+		across(!contains("DOI_"), \(x){
+			x = dplyr::case_when(x %in% "(Missing)" ~ NA, .default = x)
+			case_when(
+				is.na(x) ~ "imputed",
+				.default = "observed"
+			)
+		}, .names = "IMPUTE_FLAG_{.col}")
+	) %>%
+	select(ID, COUNTRY, STRATA, PSU, contains("IMPUTE_FLAG") )
 
 df.imp.long.test <- left_join(df.imp.long, df.raw00)
 
 table(df.imp.long.test[,c("CIGARETTES_Y1","IMPUTE_FLAG_CIGARETTES_Y1")], useNA="always")
 
 df.imp.long.test %>%
-  ggplot(aes(y=CIGARETTES_Y2, x=IMPUTE_FLAG_CIGARETTES_Y2)) +
-  geom_boxplot()+facet_wrap(~.imp)+theme_classic()
+ggplot(aes(y=CIGARETTES_Y2, x=IMPUTE_FLAG_CIGARETTES_Y2)) +
+	geom_boxplot()+facet_wrap(~.imp)+theme_classic()
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -226,31 +226,31 @@ your.outcome <- OUTCOME.VEC0[2]
 
 # Model 1: Run without principal components
 LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
-    gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data = df.imp.long,
-      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
-      psu = PSU, #psu = as.name("PSU")
-      strata = STRATA, # strata = as.name("STRATA")
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = TRUE,
-      pc.rule = "omit",
-      res.dir = "results-primary",
-      appnd.txt.to.filename = "_primary_wopc"
-    )
-  }) }, .progress = TRUE)
+map(FOCAL_PREDICTOR, \(y){
+  gfs_run_regression_single_outcome(
+    your.outcome = x,
+    your.pred = y,
+    data = df.imp.long,
+    wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
+    psu = PSU, #psu = as.name("PSU")
+    strata = STRATA, # strata = as.name("STRATA")
+    covariates = DEMO.CHILDHOOD.PRED,
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+    list.composites = LIST.COMPOSITES[[1]],
+    standardize = TRUE,
+    pc.rule = "omit",
+    res.dir = "results-primary",
+    appnd.txt.to.filename = "_primary_wopc"
+  )
+}) }, .progress = TRUE)
 
 
 #LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wopc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	OUTCOME0 = OUTCOME,
+  	FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
   ) %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
@@ -268,31 +268,31 @@ remove(LIST.RES, meta.input, META.RES)
 
 # Model 2: Run with principal components
 LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
-    gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data = df.imp.long,
-      wgt = ANNUAL_WEIGHT_R2,
-      psu = PSU,
-      strata = STRATA,
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = TRUE,
-      pc.cutoff = 7,
-      pc.rule = "constant",
-      res.dir = "results-primary",
-      appnd.txt.to.filename = "_primary_wpc"
-    )
-  }) }, .progress = TRUE)
+	map(FOCAL_PREDICTOR, \(y){
+  		gfs_run_regression_single_outcome(
+    			your.outcome = x,
+    your.pred = y,
+    data = df.imp.long,
+    wgt = ANNUAL_WEIGHT_R2,
+    psu = PSU, 
+    strata = STRATA, 
+    covariates = DEMO.CHILDHOOD.PRED,
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+    list.composites = LIST.COMPOSITES[[1]],
+    standardize = TRUE,
+    pc.cutoff = 7,
+    pc.rule = "constant",
+    res.dir = "results-primary",
+    appnd.txt.to.filename = "_primary_wpc"
+  )
+}) }, .progress = TRUE)
 
 #LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wpc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	OUTCOME0 = OUTCOME,
+  	FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
   ) %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
@@ -314,9 +314,9 @@ remove(meta.input, LIST.RES, META.RES)
 # Run supplemental country-wise analyses -- "Complete Case Analysis"
 # - Uses attrition-weight adjusted sampling weights
 
-# Supplemental analysis set 1: Run without principal components
-SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
+  # Supplemental analysis set 1: Run without principal components
+  SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
+  	map(FOCAL_PREDICTOR, \(y){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
@@ -333,29 +333,29 @@ SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
       appnd.txt.to.filename = "_cca_wopc"
     )
   }) }, .progress = TRUE)
-#SUPP.LIST.RES <- construct_meta_input_from_saved_results("results-cca", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_cca_wopc")
-meta.input <- SUPP.LIST.RES %>%
-  bind_rows() %>%
-  mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
-  ) %>%
-  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
-  nest()
-SUPP.META.RES <- gfs_meta_analysis(
-  meta.input,
-  p.subtitle = "Principal Components Excluded -- Complete Case Analysis"
-)
-readr::write_rds(
-  SUPP.META.RES,
-  file = here::here(out.dir, "results-cca", "0_meta_analyzed_results_cca_wopc.rds"),
-  compress = "gz"
-)
+  #SUPP.LIST.RES <- construct_meta_input_from_saved_results("results-cca", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_cca_wopc")
+  meta.input <- SUPP.LIST.RES %>%
+    bind_rows() %>%
+  	mutate(
+  		OUTCOME0 = OUTCOME,
+  		FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	) %>%
+  	group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
+    nest()
+  SUPP.META.RES <- gfs_meta_analysis(
+    meta.input,
+    p.subtitle = "Principal Components Excluded -- Complete Case Analysis"
+  )
+  readr::write_rds(
+    SUPP.META.RES,
+    file = here::here(out.dir, "results-cca", "0_meta_analyzed_results_cca_wopc.rds"),
+    compress = "gz"
+  )
 remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
 
-# Analysis set 2: Run with principal components
-SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
+  # Analysis set 2: Run with principal components
+  SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
+  	map(FOCAL_PREDICTOR, \(y){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
@@ -373,57 +373,57 @@ SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
       appnd.txt.to.filename = "_cca_wpc"
     )
   }) }, .progress = TRUE)
-SUPP.LIST.RES <- construct_meta_input_from_saved_results("results-cca", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_cca_wpc")
-meta.input <- SUPP.LIST.RES %>%
-  bind_rows() %>%
-  mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
-  ) %>%
-  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
-  nest()
-SUPP.META.RES <- gfs_meta_analysis(
-  meta.input,
-  p.subtitle = "Principal Components Included -- Complete Case Analysis"
-)
-readr::write_rds(
-  SUPP.META.RES,
-  file = here::here(out.dir, "results-cca", "0_meta_analyzed_results_cca_wpc.rds"),
-  compress = "gz"
-)
+  SUPP.LIST.RES <- construct_meta_input_from_saved_results("results-cca", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_cca_wpc")
+  meta.input <- SUPP.LIST.RES %>%
+    bind_rows() %>%
+  	mutate(
+  		OUTCOME0 = OUTCOME,
+  		FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	) %>%
+  	group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
+    nest()
+  SUPP.META.RES <- gfs_meta_analysis(
+    meta.input,
+    p.subtitle = "Principal Components Included -- Complete Case Analysis"
+  )
+  readr::write_rds(
+    SUPP.META.RES,
+    file = here::here(out.dir, "results-cca", "0_meta_analyzed_results_cca_wpc.rds"),
+    compress = "gz"
+  )
 remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
 
 # ================================================================================================ #
 # ================================================================================================ #
 # Re-run primary analysis but get UNSTANDARDIZED estimated
 
-# Model 1: Run without principal components
+  # Model 1: Run without principal components
 LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
-    gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data = df.imp.long,
-      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
-      psu = PSU, #psu = as.name("PSU")
-      strata = STRATA, # strata = as.name("STRATA")
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = FALSE,
-      pc.rule = "omit",
-      res.dir = "results-unstd",
-      appnd.txt.to.filename = "_unstd_wopc"
-    )
-  }) }, .progress = TRUE)
+map(FOCAL_PREDICTOR, \(y){
+  gfs_run_regression_single_outcome(
+    your.outcome = x,
+    your.pred = y,
+    data = df.imp.long,
+    wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
+    psu = PSU, #psu = as.name("PSU")
+    strata = STRATA, # strata = as.name("STRATA")
+    covariates = DEMO.CHILDHOOD.PRED,
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+    list.composites = LIST.COMPOSITES[[1]],
+    standardize = FALSE,
+    pc.rule = "omit",
+    res.dir = "results-unstd",
+    appnd.txt.to.filename = "_unstd_wopc"
+  )
+}) }, .progress = TRUE)
 
 
 #LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wopc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	OUTCOME0 = OUTCOME,
+  	FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
   ) %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
@@ -441,31 +441,31 @@ remove(LIST.RES, meta.input, META.RES)
 
 # Model 2: Run with principal components
 LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
-    gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data = df.imp.long,
-      wgt = ANNUAL_WEIGHT_R2,
-      psu = PSU,
-      strata = STRATA,
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = FALSE,
-      pc.cutoff = 7,
-      pc.rule = "constant",
-      res.dir = "results-unstd",
-      appnd.txt.to.filename = "_unstd_wpc"
-    )
-  }) }, .progress = TRUE)
+	map(FOCAL_PREDICTOR, \(y){
+  		gfs_run_regression_single_outcome(
+    			your.outcome = x,
+    your.pred = y,
+    data = df.imp.long,
+    wgt = ANNUAL_WEIGHT_R2,
+    psu = PSU, 
+    strata = STRATA, 
+    covariates = DEMO.CHILDHOOD.PRED,
+    contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+    list.composites = LIST.COMPOSITES[[1]],
+    standardize = FALSE,
+    pc.cutoff = 7,
+    pc.rule = "constant",
+    res.dir = "results-unstd",
+    appnd.txt.to.filename = "_unstd_wpc"
+  )
+}) }, .progress = TRUE)
 
 #LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wpc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
+  	OUTCOME0 = OUTCOME,
+  	FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
   ) %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
@@ -511,8 +511,12 @@ df.raw <- gfs_get_labelled_raw_data(
   list.composites = get_variable_codes('LIST.COMPOSITES'),
   add.whitespace = TRUE
 )
-df.raw <- append_attrition_weights_to_df(data=df.raw)
 
+df.raw <- append_attrition_weights_to_df(data=df.raw)
+#VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
+#OUTCOME.VEC0 <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
+
+set_flextable_defaults(font.family = "Open Sans")
 # main text
 gfs_generate_main_doc(
   df.raw = df.raw,
@@ -534,9 +538,9 @@ gfs_generate_main_doc(
 
 # online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)
 gfs_generate_supplemental_docs(
-  df.raw = df.raw,
-  dir.primary="results-primary",
-  dir.supp="results-cca",
+  df.raw = df.raw,    
+  dir.primary="results-primary", 
+  dir.supp="results-cca", 
   dir.unstd = "results-unstd",
   dir.attr.models = "results-attr",
   focal.predictor = FOCAL_PREDICTOR,
@@ -548,7 +552,7 @@ gfs_generate_supplemental_docs(
   wgt2 = SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all"
+  what = "S3"
 )
 
 
@@ -715,45 +719,45 @@ gfs_generate_supplemental_docs(
 # Code to tinker as needed with the within-between supplemental plot
 
 plot.dat <- META.RES2 %>%
-  select(OUTCOME0, data, theta.rma, theta.rma.se, theta.rma.ci) %>%
-  mutate(
-    type = get_outcome_scale(OUTCOME0),
-    type = case_when(
-      type == "cont" ~ "Std. Est",
-      .default = "log(RR)"
-    )
-  ) %>%
-  unnest(c(data)) %>%
-  mutate(
-    est.rr = case_when(
-      type == "log(RR)" ~ exp(Est),
-      type == "Std. Est" ~ exp(0.91*Est)
-    )
-  )
-p <- plot.dat %>%
-  group_by(Country) %>%
-  mutate(
-    avg.rr = mean(est.rr, na.rm=TRUE),
-    var.rr = var(est.rr, na.rm=TRUE)
-  ) %>% ungroup() %>%
-  ggplot(aes(x=reorder(Country, avg.rr), y = est.rr)) +
-  geom_point() +
-  geom_hline(yintercept = c(0.90, 1.10), linetype="dashed") +
-  labs(y="Estimated Risk-Ratio", x="",
-       title="Heterogenetiy in estimated effects within and between countries",
-       subtitle="Model estimated controlling for 7 principal components") +
-  scale_x_discrete(guide = guide_axis(angle = 60)) +
-  scale_y_continuous(limits = c(0.25,4))+
-  theme_Publication()
+        select(OUTCOME0, data, theta.rma, theta.rma.se, theta.rma.ci) %>%
+        mutate(
+          type = get_outcome_scale(OUTCOME0),
+          type = case_when(
+            type == "cont" ~ "Std. Est",
+            .default = "log(RR)"
+          )
+        ) %>%
+        unnest(c(data)) %>%
+        mutate(
+          est.rr = case_when(
+            type == "log(RR)" ~ exp(Est),
+            type == "Std. Est" ~ exp(0.91*Est)
+          )
+        )
+      p <- plot.dat %>%
+        group_by(Country) %>%
+        mutate(
+          avg.rr = mean(est.rr, na.rm=TRUE),
+          var.rr = var(est.rr, na.rm=TRUE)
+        ) %>% ungroup() %>%
+        ggplot(aes(x=reorder(Country, avg.rr), y = est.rr)) +
+        geom_point() +
+        geom_hline(yintercept = c(0.90, 1.10), linetype="dashed") +
+        labs(y="Estimated Risk-Ratio", x="",
+             title="Heterogenetiy in estimated effects within and between countries",
+             subtitle="Model estimated controlling for 7 principal components") +
+        scale_x_discrete(guide = guide_axis(angle = 60)) +
+        scale_y_continuous(limits = c(0.25,4))+
+        theme_Publication()
 
 p
 ggsave(
-  filename = here::here(paste0("figure_S1_heterogeneity_plot.png")),
-  plot = p,
-  units = "in", width = 6, height = 5
-)
-ggsave(
-  filename = here::here(paste0("figure_S1_heterogeneity_plot.pdf")),
-  plot = p,
-  units = "in", width = 6, height = 5
-)
+    filename = here::here(paste0("figure_S1_heterogeneity_plot.png")),
+    plot = p,
+    units = "in", width = 6, height = 5
+  )
+  ggsave(
+    filename = here::here(paste0("figure_S1_heterogeneity_plot.pdf")),
+    plot = p,
+    units = "in", width = 6, height = 5
+  )

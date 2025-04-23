@@ -57,6 +57,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
   ## ====== INTERNAL VECTORS FOR PRINTING ======================================================= ##
   ## Initialize internal word document formatting functions
   {
+    set_flextable_defaults(font.family = "Open Sans")
+
     normal_portrait <- block_section(
       prop_section(page_size = page_size(orient = "portrait"), type = "continuous")
     )
@@ -617,7 +619,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       outcome = "COMPOSITE_FLOURISHING_SECURE_Y2",
       what = "forest.plot"
     )
-    p1 <- p1[[1]][[1]] + 
+    p1 <- p1[[1]][[1]] +
     		plot_annotate(
     			subtitle = str_wrap("(A) Controlling for demographic and childhood variables.",60),
     			title=NULL
@@ -637,7 +639,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       outcome = "COMPOSITE_FLOURISHING_SECURE_Y2",
       what = "forest.plot"
     )
-    p2 <- p2[[1]][[1]] + 
+    p2 <- p2[[1]][[1]] +
     		plot_annotate(
     			subtitle = str_wrap("(B) Controlling for demographic, childhood, and other Wave 1 confounders (via PCs) variables.",60),
     			title=NULL
@@ -676,7 +678,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   fig.num <- 1
   for(f0 in 1:length(focal.predictor)){
     tmp.bn <- fpar(ftext(tb.cap.fig1[[f0]], fp_text(font.size = 11, font.family = "Open Sans")))
-    
+
     main_doc <- main_doc %>%
       body_add_fpar(tmp.bn) |>
       body_add_par(value = "", style = "centered") |>
@@ -803,6 +805,7 @@ gfs_generate_supplemental_docs <- function(
   ## Initialize internal word document formatting functions
   {
     # text formatting
+    set_flextable_defaults(font.family = "Open Sans")
     gfs_title1_prop <- fp_text(color = "black", bold = TRUE, font.size = 14, font.family = "Open Sans")
 
     # page formatting
@@ -2501,7 +2504,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             tb.cap <- paste0("Table S",tb.num+tb.num.shift,". Unweighted demographic and childhood variable summary statistics in ", COUNTRY_LABELS[i]," by retention status")
           }
           tb.num <- tb.num + 1
-          tbia.toprint <- sumtab %>%
+          tbic.toprint <- sumtab %>%
             as_flex_table() %>%
             autofit() %>%
             width(j=2,width=1.5)%>%
@@ -2563,7 +2566,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             tb.cap <- paste0("Table S",tb.num+tb.num.shift,". Unweighted outcome variable summary statistics of outcomes in ", COUNTRY_LABELS[i], " by retention status.")
           }
           tb.num <- tb.num + 1
-          tbib.toprint <- sumtab %>%
+          tbid.toprint <- sumtab %>%
             as_flex_table() %>%
             autofit() %>%
             width(j=2,width=1.5)%>%
@@ -2582,7 +2585,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         })
       })
       ## ======================================================================================== ##
-      ## ====== Table Sic. Summary of Attrition Model =========================================== ##
+      ## ====== Table Sie. Summary of Attrition Model =========================================== ##
       {
 
 
@@ -2631,7 +2634,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
       }
       ## ======================================================================================== ##
-      ## ====== Table Sid. Country specific PCA Summary ========================================= ##
+      ## ====== Table Sif. Country specific PCA Summary ========================================= ##
       {
         coun.fit.pca <- get_country_pca_summary(
           res.dir = dir.primary,
@@ -2693,16 +2696,16 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           hline_bottom(part = "header")
       }
       ## ======================================================================================== ##
-      ## ====== Table Sid-x. Country specific outcome wide results ================================ ##
+      ## ====== Table Sig-x. Country specific outcome wide results ================================ ##
       tbl.sid.list <- list()
       tbl.sie.list <- list()
       f0 <- 1
       for(f0 in 1:length(focal.predictor)){
 
-        vec.id <- c("id.Est", "id.SE", "id.CI","p.value")
-        vec.rr <- c("rr.Est", "logrr.SE", "rr.CI","p.value")
-        vec.wopc <- c("RR", "ES", "SE", "95% CI", "p-value")
-        vec.wpc <- c("RR\r", "ES\r", "SE\r", "95% CI\r", "p-value\r")
+        vec.id <- c("id.Est","id.CI", "id.SE","p.value")
+        vec.rr <- c("rr.Est", "rr.CI", "logrr.SE","p.value")
+        vec.wopc <- c("RR", "ES", "95% CI", "SE", "p-value")
+        vec.wpc <- c("RR\r", "ES\r", "95% CI\r", "SE\r", "p-value\r")
         cnames <- c(
           "Outcome",
           vec.wopc,
@@ -2774,7 +2777,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               outcome =  OUTCOME.VEC[j],
               appnd.txt = "_primary_wpc"
             )
-          
+
             tmp.wpc <- coun.wpc %>%
               dplyr::select(tidyr::any_of(tmp.vec)) %>%
               dplyr::mutate(
@@ -2875,10 +2878,11 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             tmp.name <- paste0(OUTCOME.VEC[j], "_", focal.predictor[f0])
             ## ====== estimates withOUT PCs ======================================= ##
             coun.wopc <- get_country_specific_regression_results(
-              res.dir = coun.wopc.dir,
+              res.dir = dir.primary,
               country = COUNTRY_LABELS[i],
               predictor = focal.predictor[f0],
-              outcome =  OUTCOME.VEC[j]
+              outcome =  OUTCOME.VEC[j],
+              appnd.txt = "_primary_wopc"
             )
 
             tmp.wopc <- coun.wopc %>%
@@ -2891,10 +2895,11 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
             ## ====== estimates WITH PCs ======================================= ##
             coun.wpc <- get_country_specific_regression_results(
-              res.dir = coun.wpc.dir,
+              res.dir = dir.primary,
               country = COUNTRY_LABELS[i],
               predictor = focal.predictor[f0],
-              outcome =  OUTCOME.VEC[j]
+              outcome =  OUTCOME.VEC[j],
+              appnd.txt = "_primary_wpc"
             )
             tmp.wpc <- coun.wpc %>%
               dplyr::select(tidyr::any_of(tmp.vec)) %>%
@@ -2952,6 +2957,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           body_add_flextable(value = tbia.toprint) |>
           body_add_break() |>
           body_add_flextable(value = tbib.toprint) |>
+          body_add_break() |>
+          body_add_flextable(value = tbic.toprint) |>
+          body_add_break() |>
+          body_add_flextable(value = tbid.toprint) |>
           body_add_break() |>
           body_add_flextable(value = attr.fit.toprint) |>
           body_add_break() |>
@@ -3054,7 +3063,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           italicize_labels()
 
         tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
-        
+
         if(!tbl.num.sequential){
           tb.cap <-  paste0("Table S1. Weighted summary statistics of demographic and childhood variables data across countries.")
         }
@@ -3119,7 +3128,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           italicize_labels()
 
         tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
-        
+
         if(!tbl.num.sequential){
           tb.cap <-  paste0("Table S2. Weighted summary statistics of demographic and childhood variables data across countries.")
         }

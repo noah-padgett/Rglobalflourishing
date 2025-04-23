@@ -433,3 +433,91 @@ get_country_specific_regression_results <- function(res.dir, country, predictor,
 
 }
 
+#' @export
+construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictors, appnd.txt="") {
+  local({
+    tmp.list <- list()
+    for (your.outcome in outcomes) {
+      for (your.pred in predictors) {
+        try({
+          load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
+          tmp.list[[paste0(your.outcome, "_", your.pred)]] <- metainput
+        })
+      }
+    }
+    return(tmp.list)
+  })
+}
+
+#' @export
+get_country_specific_output <- function(res.dir, outcomes, predictors, appnd.txt="") {
+  local({
+    tmp.list <- list()
+    for (your.outcome in outcomes) {
+      for (your.pred in predictors) {
+        load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
+        tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
+      }
+    }
+    tmp.list <- tmp.list |>
+      bind_rows()
+    return(tmp.list)
+  })
+}
+
+
+#' @export
+get_country_specific_pca_summary <- function(res.dir, outcomes, predictors, appnd.txt="") {
+  local({
+    tmp.list <- list()
+    for (your.outcome in outcomes) {
+      for (your.pred in predictors) {
+        try({
+          load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
+          tmp.list[[paste0(your.outcome, "_", your.pred)]] <- fit.pca.summary
+        })
+      }
+    }
+    return(tmp.list)
+  })
+}
+
+#' @export
+get_country_pca_summary <- function(res.dir, country, outcome, predictor, appnd.txt="") {
+  local({
+    tmp.list <- NULL
+    try({
+      load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
+      tmp.list <- fit.pca.summary %>%
+        ungroup() %>%
+        filter(str_detect(COUNTRY, country))
+    })
+    return(tmp.list)
+  })
+}
+
+
+#' @export
+get_fitted_attrition_models <- function(res.dir) {
+  local({
+    tmp.list <- list()
+    tmp.attr.files <- list.files(res.dir)
+    i = 1
+    for ( i in 1:length(tmp.attr.files)){
+      load(here::here(res.dir, tmp.attr.files[i]))
+      tmp.list[[str_split_i(tmp.attr.files[i], " fitted", 1)]] <- fit.attr
+    }
+    return(tmp.list)
+  })
+
+}
+
+#' @export
+get_fitted_attrition_model <- function(res.dir, country) {
+  local({
+    tmp.attr.files <- list.files(res.dir)
+    tmp.attr.files <- tmp.attr.files[str_detect(tmp.attr.files, country)]
+    load(here::here(res.dir, tmp.attr.files))
+    return(fit.attr)
+  })
+}
