@@ -9,7 +9,11 @@ results/*
 results-attr/*
 results-wopc/*
 results-wpc/*
+results-primary/*
+results-cca/*
+results-unstd/*
 *results-attr
 *results-wopc
 *results-wpc
 .DS_Store
+test/tmp_workspace

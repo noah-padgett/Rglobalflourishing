@@ -611,8 +611,8 @@ recode_imputed_data <- function(
       	      x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
       	      x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
       	    )
-      	  }	
-      }   
+      	  }
+      }
     } else {
       if (str_detect(tmp.var, "COMPOSITE")) {
         is.sum <- ifelse(
@@ -632,6 +632,374 @@ recode_imputed_data <- function(
     }
     if (!is.null(x)) {
       df.imp.long[, tmp.var] <- x
+    }
+  }
+  ## ============================================================================================ ##
+  df.imp.long
+}
+
+#' @export
+recode_imputed_data_for_summary <- function(df.imp = NULL, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, ...) {
+
+  drop_created_vars <- c("AGE_GRP_Y1", "AGE_GRP_Y2", "RACE", "RACE_PLURALITY_Y1", "INCOME_QUINTILE_Y1", "INCOME_QUINTILE_Y2")
+  ## ============================================================================================ ##
+  ## ====== Initial Setup ======================================================================= ##
+  # extract imputed data and coerce into "long format"
+  df.imp.long <- df.imp %>%
+    mutate(imp.complete = map(imp.res, ~ complete(., action = "long"))) %>%
+    select(COUNTRY, imp.complete) %>%
+    unnest(imp.complete) %>%
+    select(!any_of(drop_created_vars)) %>%
+    mutate(
+      across(where(is.factor), \(x){
+        if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
+          x <- sub("\\..*", "", x)
+          x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+            as.numeric()
+        }
+        if(str_detect(cur_column(), "BORN_COUNTRY")){
+          x <- sub("\\..*", "", x)
+          x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+            as.numeric()
+        }
+        x
+      })
+    )
+
+
+  ## ============================================================================================ ##
+  ## ====== Recode as if "raw" data" ============================================================ ##
+
+  ## ====== CREATE COMPOSITES =================================================================== ##
+  # Create composites IF any have been specified in the outcome_variables file
+  if (!is.null(list.composites)) {
+    if(wave == 1 | wave == "W1"| wave == "W2"){
+      LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES0"]]
+      LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD0"]]
+      COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC0"]]
+    }
+    if(is.null(wave) | wave == 2 | wave == "W2"| wave == "Y2"){
+      LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
+      LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
+      COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
+    }
+
+    for (i in 1:length(LIST.OUTCOME.COMPOSITES)) {
+      # create a temporary variable then rename
+      if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "mean") {
+        df.imp.long <- df.imp.long %>%
+          dplyr::mutate(
+            temp.var.i = rowMeans(
+              dplyr::across(all_of(LIST.OUTCOME.COMPOSITES[[i]]), \(x){
+                x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
+                x <- recode_to_type(x, cur_column())
+                x <- reorder_levels(x, cur_column())
+                x <- recode_to_numeric(x, cur_column())
+                x
+              }),
+              na.rm = FALSE
+            )
+          )
+      }
+      if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "sum") {
+        df.imp.long <- df.imp.long %>%
+          dplyr::mutate(
+            temp.var.i = rowSums(
+              dplyr::across(all_of(LIST.OUTCOME.COMPOSITES[[i]]), \(x){
+                x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
+                x <- recode_to_type(x, cur_column())
+                x <- reorder_levels(x, cur_column())
+                x <- recode_to_numeric(x, cur_column(), TRUE)
+                x
+              }),
+              na.rm = FALSE
+            )
+          )
+      }
+
+      df.imp.long <- df.imp.long %>%
+        dplyr::mutate(
+          temp.var.i = recode_to_numeric(temp.var.i, COMPOSITE.VEC[i])
+        )
+
+      colnames(df.imp.long)[length(colnames(df.imp.long))] <- COMPOSITE.VEC[i]
+
+    }
+  }
+  ## ============================================================================================ ##
+  ## ====== VARIABLE RECODING =================================================================== ##
+  {
+    df.imp.long <- df.imp.long %>%
+      mutate(
+        dplyr::across(
+          !(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_Y2",
+                     paste0("INCOME",c("","_Y1","_Y2")),
+                     paste0("INCOME_QUINTILE",c("","_Y1","_Y2")),
+                     paste0("SELFID1",c("")),
+                     paste0("SELFID2",c("")),
+                     paste0("DOI_RECRUIT",c("","_Y1","_Y2")),
+                     paste0("DOI_ANNUAL",c("","_Y1"))
+          ))
+          ), \(x){
+            x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
+            x <- recode_labels(x, cur_column())
+            x <- recode_to_type(x, cur_column())
+
+            x
+          }, .names = "{.col}")
+      )
+  }
+  ## ============================================================================================ ##
+  ## ====== RECODE DEMOGRAPHIC VARIABLES ======================================================== ##
+  {
+    if(wave == 1 | wave == "W1"| wave == "Y1"){
+      df.imp.long <- df.imp.long %>%
+        mutate(
+          AGE_GRP = recode_labels(AGE, "AGE_GRP"),
+          AGE_GRP = recode_to_type(AGE_GRP, "AGE_GRP"),
+          RACE = recode_labels(SELFID1, "SELFID1"),
+          RACE_PLURALITY = recode_race_to_plurality(RACE, COUNTRY2)
+        )
+    }
+    if(is.null(wave) | wave == 2 | wave == "W2"| wave == "Y2"){
+      df.imp.long <- df.imp.long %>%
+        mutate(
+          AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1",...),
+          AGE_GRP_Y1 = recode_to_type(AGE_GRP_Y1, "AGE_GRP_Y1"),
+          AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y2",...),
+          AGE_GRP_Y2 = recode_to_type(AGE_GRP_Y2, "AGE_GRP_Y2"),
+          RACE1 = recode_labels(SELFID1, "SELFID1",...),
+          RACE2 = recode_labels(SELFID2, "SELFID2",...),
+          RACE_PLURALITY1 = recode_race_to_plurality(RACE1, COUNTRY2),
+          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY2)
+        )
+    }
+  }
+  ## ============================================================================================ ##
+  ## ====== RECODING INCOME DATA =============================================================== ##
+  {
+    if(wave == 1 | wave == "W1"| wave == "Y1"){
+      income.quintiles <- df.imp.long  %>%
+        select(
+          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME", wgt, strata, psu))
+        ) %>%
+        mutate(
+          imp0 = .imp,
+          across(INCOME,\(x){
+            case_when(
+              x < 0 ~ NA,
+              x > 9900 ~ NA,
+              x == 9900 ~ 0,
+              .default=x
+            )
+          })
+        ) %>%
+        group_by(.imp, COUNTRY) %>%
+        nest() %>%
+        mutate(
+          svy.data = map(data, \(x){
+            svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
+          }),
+          quintiles_w1 = map(svy.data, \(x){
+            svyquantile(~INCOME, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          })
+        ) %>%
+        select(.imp, COUNTRY, quintiles_w1)
+
+      df.imp.long <- df.imp.long %>%
+        mutate(imp0 = .imp) %>%
+        group_by(.imp, COUNTRY2) %>%
+        nest() %>%
+        mutate(
+          data = map(data, \(x){
+            cur.country = x$COUNTRY[1]
+            cur.imp = as.integer(round(x$imp0[1],0)+1)
+
+            tmp.quintiles <- income.quintiles %>%
+              filter(COUNTRY == cur.country)
+
+            tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
+
+            x <- x %>%
+              mutate(
+                INCOME_QUINTILE = case_when(
+                  INCOME >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME >= tmp.quintiles.w1["0.6",1] & INCOME < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME >= tmp.quintiles.w1["0.4",1] & INCOME < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME >= tmp.quintiles.w1["0.2",1] & INCOME < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME < tmp.quintiles.w1["0.2",1] ~ 1
+                )
+              )
+            if(method.income=="quintiles.top.fixed"){
+              x <- x %>%
+                mutate(
+                  INCOME_QUINTILE = case_when(
+                    INCOME_QUINTILE == 5 ~ 1,
+                    INCOME_QUINTILE %in% 1:4 ~ 0
+                  )
+                )
+            }
+            if(method.income == "quintiles.top.random"){
+              set.seed(314150+cur.imp)
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y.mean = mean(y)
+                    if(y.mean > 0.20){
+                      n0 <- length(y)
+                      nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                      y[y==1][sample(1:(length(y[y==1])), nq, replace = FALSE)] <- 0
+                    }
+                    if(y.mean < 0.20){
+                      n0 <- length(y)
+                      nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                      x[x==4][sample(1:(length(x[x==4])), nq, replace = FALSE)] <- 5
+                      y <- case_when(
+                        x == 5 ~ 1,
+                        x %in% 1:4 ~ 0
+                      )
+                    }
+                    y
+                  })
+                )
+            }
+            x
+          }),
+          data = map(data, \(x){
+            x %>%
+              mutate(
+                INCOME = recode_labels(INCOME, "INCOME", ...)
+              )
+          })
+        ) %>%
+        unnest(c(data)) %>%
+        ungroup()
+    }
+    if(is.null(wave) | wave == 2 | wave == "W2"| wave == "Y2"){
+
+      income.quintiles <- df.imp.long  %>%
+        select(
+          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME_Y1", "INCOME_Y2", wgt, strata, psu))
+        ) %>%
+        mutate(
+          imp0 = .imp,
+          across(contains("INCOME"),\(x){
+            case_when(
+              x < 0 ~ NA,
+              x > 9900 ~ NA,
+              x == 9900 ~ 0,
+              .default=x
+            )
+          })
+        ) %>%
+        group_by(.imp, !!sym("COUNTRY")) %>%
+        nest() %>%
+        mutate(
+          svy.data = map(data, \(x){
+            svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
+          }),
+          quintiles_w1 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+          quintiles_w2 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+        ) %>%
+        select(COUNTRY, quintiles_w1, quintiles_w2)
+
+      df.imp.long <- df.imp.long %>%
+        mutate(imp0 = .imp) %>%
+        group_by(.imp, COUNTRY2) %>%
+        nest() %>%
+        mutate(
+          data = map(data, \(x){
+            cur.country = x$COUNTRY[1]
+            cur.imp = as.integer(round(x$imp0[1],0)+1)
+
+            tmp.quintiles <- income.quintiles %>%
+              filter(COUNTRY == cur.country)
+
+            tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
+            tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
+
+            x <- x %>%
+              mutate(
+                INCOME_QUINTILE_Y1 = case_when(
+                  INCOME_Y1 >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.6",1] & INCOME_Y1 < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.4",1] & INCOME_Y1 < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.2",1] & INCOME_Y1 < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME_Y1 < tmp.quintiles.w1["0.2",1] ~ 1
+                ),
+                INCOME_QUINTILE_Y2 = case_when(
+                  INCOME_Y2 >= tmp.quintiles.w2["0.8",1] ~ 5,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.6",1] & INCOME_Y2 < tmp.quintiles.w2["0.8",1] ~ 4,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.4",1] & INCOME_Y2 < tmp.quintiles.w2["0.6",1] ~ 3,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.2",1] & INCOME_Y2 < tmp.quintiles.w2["0.4",1] ~ 2,
+                  INCOME_Y2 < tmp.quintiles.w2["0.2",1] ~ 1
+                )
+              )
+            if(method.income=="quintiles.top.fixed"){
+              x <- x %>%
+                mutate(
+                  INCOME_QUINTILE_Y1 = case_when(
+                    INCOME_QUINTILE_Y1 == 5 ~ 1,
+                    INCOME_QUINTILE_Y1 %in% 1:4 ~ 0
+                  ),
+                  INCOME_QUINTILE_Y2 = case_when(
+                    INCOME_QUINTILE_Y2 == 5 ~ 1,
+                    INCOME_QUINTILE_Y2 %in% 1:4 ~ 0
+                  )
+                )
+            }
+            if(method.income == "quintiles.top.random"){
+              set.seed(314150+cur.imp)
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y.mean = mean(y, na.rm=TRUE)
+                    if(y.mean > 0.20){
+                      n0 <- length(y)
+                      nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                      y[y==1][sample(1:(length(y[y==1])), nq, replace = FALSE)] <- 0
+                    }
+                    if(y.mean < 0.20){
+                      n0 <- length(y)
+                      nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                      x[x==4][sample(1:(length(x[x==4])), nq, replace = FALSE)] <- 5
+                      y <- case_when(
+                        x == 5 ~ 1,
+                        x %in% 1:4 ~ 0
+                      )
+                    }
+                    y
+                  })
+                )
+            }
+            x
+          }),
+          data = map(data, \(x){
+            x %>%
+              mutate(
+                INCOME_Y1 = recode_labels(INCOME_Y1, "INCOME_Y1"),
+                INCOME_Y2 = recode_labels(INCOME_Y2, "INCOME_Y2"),
+                INCOME_QUINTILE_Y1 = recode_labels(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y2 = recode_labels(INCOME_QUINTILE_Y2, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y1 = factor(INCOME_QUINTILE_Y1),
+                INCOME_QUINTILE_Y2 = factor(INCOME_QUINTILE_Y2)
+              )
+          })
+        ) %>%
+        unnest(c(data)) %>%
+        ungroup()
     }
   }
   ## ============================================================================================ ##
