@@ -1,40 +1,24 @@
-#' Reformat Imputed Data
-#'
-#' Reformated the imputed (nested) data for use in coordinated regression analyses.
-#'
-#' @param df.imp a nested data.frame with results from run_impute_data(.).
-#' @param list.default (required) a names list with DEMOGRAPHICS.CHILDHOOD.PRED.VEC, OUTCOME.VE,
-#'    FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS
-#' @param list.composites (optional) a named list with elements LIST.OUTCOME.COMPOSITES, LIST.COMPOSITE.COMBINE.METHOD and COMPOSITE.VEC.
-#' @param list.manual (optional) a list like list.default (to-do)
-#' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
-#' @param method.income (optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'. Defaults to 'quintiles.top.random'.
-#' @param ... other arguments passed to mice
-#' @returns a long data.frame for use in analyses
-#' @examples {
-#'   # none
-#' }
-#' @export
-#' @description
-#'
-#' By default, the recoding creates a set of new variables for each demographic and childhood predictor variable with the prefix "COV_".
-#'
-#' method.income has several options.
-#' * 'quintiles.num.fixed', 'quintiles.num.random' use survey::svyquantile() to identify the country specific categories that separate responses into quintiles. This is only approximate however because the categories are coarse and the top 20% isn't guarenteed to be exact. The used of the 'fixed' version uses these coarse not exactly 20% quantiles. The 'random' version will randomly sample exactly 20% from a top down approach to obtain quintiles.
-#' * 'quintiles.top.fixed', ''quintiles.top.random' use the
-#' * 'numeric
-#'
-#' More to come...
-#'
-recode_imputed_data <- function(
-    df.imp = NULL,
-    list.default = NULL,
-    list.composites = NULL,
-    list.manual = NULL,
-    wave = 2,
-    method.income = "quintiles.top.random",
-    wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",
-    ...) {
+#df.imp.long <- recode_imputed_data(
+#  df.imp,
+#  list.default = RECODE.DEFAULTS,
+#  list.composites = LIST.COMPOSITES,
+#  wgt = "ANNUAL_WEIGHT_R2"
+#)
+
+load(here::here(data.dir, "gfs_w2_imputed_data_20imp.RData"))
+
+df.imp <- df.imp %>%
+  filter(COUNTRY == "Israel")
+
+list.default <- RECODE.DEFAULTS
+list.composites <- LIST.COMPOSITES
+list.manual <- NULL
+wave <- 2
+method.income <- "quintiles.top.random"
+wgt <- "ANNUAL_WEIGHT_R2"
+strata <- "STRATA"
+psu <- "PSU"
+
   if (is.null(list.default)) {
     stop("'list.default' was not supplied. Check input for recode_imputed data.")
   }
@@ -53,15 +37,15 @@ recode_imputed_data <- function(
     select(!any_of(drop_created_vars)) %>%
     mutate(
       across(where(is.factor), \(x){
-      	if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
-        	x <- sub("\\..*", "", x)
-        	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-          		as.numeric()
+        if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
+          x <- sub("\\..*", "", x)
+          x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+            as.numeric()
         }
         if(str_detect(cur_column(), "BORN_COUNTRY")){
-        	x <- sub("\\..*", "", x)
-        	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-          		as.numeric()
+          x <- sub("\\..*", "", x)
+          x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+            as.numeric()
         }
         x
       })
@@ -110,7 +94,7 @@ recode_imputed_data <- function(
         COV_FATHER_RELATN = case_when(FATHER_RELATN_1 == 1 | FATHER_RELATN_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
         COV_FATHER_RELATN = factor(COV_FATHER_RELATN),
         COV_MOTHER_NA = case_when(SVCS_MOTHER_97 == 1 | MOTHER_RELATN_97 == 1 | MOTHER_LOVED_97 == 1 ~ 1, .default = 0),
-        COV_FATHER_NA = case_when(SVCS_FATHER_97 == 1 | FATHER_RELATN_97 == 1 | FATHER_LOVED_97 == 1 ~ 1, .default = 0),
+        COV_FATHER_NA = case_when(SVCS_FATHER_97 == 1 | FATHER_RELATN_97 == 1 | FATHER_LOVED_97 == 1 ~ 1, .default = 0))
 
         # enforce reference group
         COV_AGE_GRP = relevel(COV_AGE_GRP, ref = levels(COV_AGE_GRP)[str_detect(levels(COV_AGE_GRP),"18-24")]),
@@ -125,7 +109,7 @@ recode_imputed_data <- function(
         COV_FATHER_RELATN = relevel(COV_FATHER_RELATN, ref = "Very/somewhat bad"),
         COV_SVCS_12YRS = relevel(COV_SVCS_12YRS, ref = "Never"),
         COV_OUTSIDER = relevel(COV_OUTSIDER, ref = "No"),
-        COV_ABUSED = ifelse(COUNTRY == "Israel", factor(NA), relevel(COV_ABUSED, ref = "No")),
+        COV_ABUSED = ifelse(COUNTRY == "Israel", COV_ABUSED, relevel(COV_ABUSED, ref = "No")),
         COV_HEALTH_GROWUP = relevel(COV_HEALTH_GROWUP, ref = "Good"),
         COV_INCOME_12YRS = relevel(COV_INCOME_12YRS, ref = "Got by"),
 
@@ -185,7 +169,7 @@ recode_imputed_data <- function(
         COV_FATHER_RELATN_Y1 = relevel(COV_FATHER_RELATN_Y1, ref = "Very/somewhat bad"),
         COV_SVCS_12YRS_Y1 = relevel(COV_SVCS_12YRS_Y1, ref = "Never"),
         COV_OUTSIDER_Y1 = relevel(COV_OUTSIDER_Y1, ref = "No"),
-        COV_ABUSED_Y1 = ifelse(COUNTRY == "Israel", COV_ABUSED_Y1, relevel(COV_ABUSED_Y1, ref = "No")),
+        COV_ABUSED_Y1 = relevel(COV_ABUSED_Y1, ref = "No"),
         COV_HEALTH_GROWUP_Y1 = relevel(COV_HEALTH_GROWUP_Y1, ref = "Good"),
         COV_INCOME_12YRS_Y1 = relevel(COV_INCOME_12YRS_Y1, ref = "Got by"),
 
@@ -250,52 +234,52 @@ recode_imputed_data <- function(
   ## ============================================================================================ ##
   ## ====== RACE PLURALITY INDICATOR ============================================================ ##
   {
-  df.imp.long <- df.imp.long %>%
-    mutate(
-      COV_RACE_PLURALITY = case_when(
-        COUNTRY2 == "Argentina" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "Argentina" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-        COUNTRY2 == "Australia" & str_detect(RACE, "Australian") ~ 0,
-        COUNTRY2 == "Australia" & str_detect(RACE, "Australian", negate = TRUE) ~ 1,
-        COUNTRY2 == "Brazil" & str_detect(RACE, "Branca") ~ 0,
-        COUNTRY2 == "Brazil" & str_detect(RACE, "Branca", negate = TRUE) ~ 1,
-        COUNTRY2 == "Egypt" & str_detect(RACE, "Arab") ~ 0,
-        COUNTRY2 == "Egypt" & str_detect(RACE, "Arab", negate = TRUE) ~ 1,
-        COUNTRY2 == "Germany" ~ NA,
-        COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)") ~ 0,
-        COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)", negate = TRUE) ~ 1,
-        COUNTRY2 == "India" & str_detect(RACE, "Other backward caste") ~ 0,
-        COUNTRY2 == "India" & str_detect(RACE, "Other backward caste", negate = TRUE) ~ 1,
-        COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa") ~ 0,
-        COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa", negate = TRUE) ~ 1,
-        COUNTRY2 == "Israel" & str_detect(RACE, "Jewish") ~ 0,
-        COUNTRY2 == "Israel" & str_detect(RACE, "Jewish", negate = TRUE) ~ 1,
-        COUNTRY2 == "Japan" ~ NA,
-        COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu") ~ 0,
-        COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu", negate = TRUE) ~ 1,
-        COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo") ~ 0,
-        COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo", negate = TRUE) ~ 1,
-        COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa") ~ 0,
-        COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa", negate = TRUE) ~ 1,
-        COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog") ~ 0,
-        COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog", negate = TRUE) ~ 1,
-        COUNTRY2 == "Poland" & str_detect(RACE, "Polish") ~ 0,
-        COUNTRY2 == "Poland" & str_detect(RACE, "Polish", negate = TRUE) ~ 1,
-        COUNTRY2 == "South Africa" & str_detect(RACE, "Black") ~ 0,
-        COUNTRY2 == "South Africa" & str_detect(RACE, "Black", negate = TRUE) ~ 1,
-        COUNTRY2 == "Spain" ~ NA,
-        COUNTRY2 == "Sweden" ~ NA,
-        COUNTRY2 == "Tanzania" & str_detect(RACE, "African") ~ 0,
-        COUNTRY2 == "Tanzania" & str_detect(RACE, "African", negate = TRUE) ~ 1,
-        COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish") ~ 0,
-        COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish", negate = TRUE) ~ 1,
-        COUNTRY2 == "United Kingdom" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-        COUNTRY2 == "United States" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-        .default = 0
+    df.imp.long <- df.imp.long %>%
+      mutate(
+        COV_RACE_PLURALITY = case_when(
+          COUNTRY2 == "Argentina" & str_detect(RACE, "White") ~ 0,
+          COUNTRY2 == "Argentina" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY2 == "Australia" & str_detect(RACE, "Australian") ~ 0,
+          COUNTRY2 == "Australia" & str_detect(RACE, "Australian", negate = TRUE) ~ 1,
+          COUNTRY2 == "Brazil" & str_detect(RACE, "Branca") ~ 0,
+          COUNTRY2 == "Brazil" & str_detect(RACE, "Branca", negate = TRUE) ~ 1,
+          COUNTRY2 == "Egypt" & str_detect(RACE, "Arab") ~ 0,
+          COUNTRY2 == "Egypt" & str_detect(RACE, "Arab", negate = TRUE) ~ 1,
+          COUNTRY2 == "Germany" ~ NA,
+          COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)") ~ 0,
+          COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)", negate = TRUE) ~ 1,
+          COUNTRY2 == "India" & str_detect(RACE, "Other backward caste") ~ 0,
+          COUNTRY2 == "India" & str_detect(RACE, "Other backward caste", negate = TRUE) ~ 1,
+          COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa") ~ 0,
+          COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa", negate = TRUE) ~ 1,
+          COUNTRY2 == "Israel" & str_detect(RACE, "Jewish") ~ 0,
+          COUNTRY2 == "Israel" & str_detect(RACE, "Jewish", negate = TRUE) ~ 1,
+          COUNTRY2 == "Japan" ~ NA,
+          COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu") ~ 0,
+          COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu", negate = TRUE) ~ 1,
+          COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo") ~ 0,
+          COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo", negate = TRUE) ~ 1,
+          COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa") ~ 0,
+          COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa", negate = TRUE) ~ 1,
+          COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog") ~ 0,
+          COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog", negate = TRUE) ~ 1,
+          COUNTRY2 == "Poland" & str_detect(RACE, "Polish") ~ 0,
+          COUNTRY2 == "Poland" & str_detect(RACE, "Polish", negate = TRUE) ~ 1,
+          COUNTRY2 == "South Africa" & str_detect(RACE, "Black") ~ 0,
+          COUNTRY2 == "South Africa" & str_detect(RACE, "Black", negate = TRUE) ~ 1,
+          COUNTRY2 == "Spain" ~ NA,
+          COUNTRY2 == "Sweden" ~ NA,
+          COUNTRY2 == "Tanzania" & str_detect(RACE, "African") ~ 0,
+          COUNTRY2 == "Tanzania" & str_detect(RACE, "African", negate = TRUE) ~ 1,
+          COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish") ~ 0,
+          COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish", negate = TRUE) ~ 1,
+          COUNTRY2 == "United Kingdom" & str_detect(RACE, "White") ~ 0,
+          COUNTRY2 == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY2 == "United States" & str_detect(RACE, "White") ~ 0,
+          COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          .default = 0
+        )
       )
-    )
   }
   ## ============================================================================================ ##
   ## ====== RECODING RELIGION DATA ============================================================== ##
@@ -307,7 +291,8 @@ recode_imputed_data <- function(
     # 	else, recodes such that the most prominant religion is the reference grp.
     # 	combines all religious grps with less than 3% of the smaple into a single combined grp.
     recode_REL <- function(data, var, wgt) {
-      # re-level REL2 based on most prominent religion as reference
+      #re-level REL2 based on most prominent religion as reference
+
       rel.prominence <- data %>%
         group_by((!!as.name(var)), .drop = FALSE) %>%
         summarise(N = sum(.data[[wgt]])) %>%
@@ -317,8 +302,8 @@ recode_imputed_data <- function(
       names(rel.prominence.tab) <- rel.prominence[, 1, drop = T]
       rel.lvl <- levels(data[[var]])
       rel.ag.prom <- rel.prominence.tab[rel.lvl == "No religion/Atheist/Agnostic"]
-        if (length(rel.ag.prom) == 0) {
-            rel.ag.prom <- 0 }
+      if (length(rel.ag.prom) == 0) {
+        rel.ag.prom <- 0 }
       if (rel.ag.prom > 0.03) {
         rel.mp <- "No religion/Atheist/Agnostic"
       } else {
@@ -482,7 +467,7 @@ recode_imputed_data <- function(
         ) %>%
         select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
 
-       df.imp.long <-  df.imp.long %>%
+      df.imp.long <-  df.imp.long %>%
         mutate(.imp2 = .imp) %>%
         group_by(.imp2, COUNTRY2) %>%
         nest() %>%
@@ -597,21 +582,21 @@ recode_imputed_data <- function(
           x <- recode_to_numeric(x, tmp.var)
         }
       } else if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
-      	  if (list.default[["FORCE_CONTINUOUS"]][tmp.var]) {
-      	  	x <- recode_to_type(x, tmp.var)
-      	  	x <- reorder_levels(x, tmp.var)
-      	  	if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
-      	    	x <- as.numeric(x)
-      	  	} else {
-      	    	x <- recode_to_numeric(x, tmp.var)
-      	  	}
-      	  } else {
-      	    # if focal variable is binary/categorical, then collasp as user-specified
-      	    x <- case_when(
-      	      x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
-      	      x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
-      	    )
-      	  }
+        if (list.default[["FORCE_CONTINUOUS"]][tmp.var]) {
+          x <- recode_to_type(x, tmp.var)
+          x <- reorder_levels(x, tmp.var)
+          if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
+            x <- as.numeric(x)
+          } else {
+            x <- recode_to_numeric(x, tmp.var)
+          }
+        } else {
+          # if focal variable is binary/categorical, then collasp as user-specified
+          x <- case_when(
+            x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
+            x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
+          )
+        }
       }
     } else {
       if (str_detect(tmp.var, "COMPOSITE")) {
@@ -636,7 +621,7 @@ recode_imputed_data <- function(
   }
   ## ============================================================================================ ##
   df.imp.long
-}
+
 
 #' @export
 recode_imputed_data_for_summary <- function(df.imp = NULL, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, ...) {
@@ -1001,7 +986,3 @@ recode_imputed_data_for_summary <- function(df.imp = NULL, list.composites = NUL
         unnest(c(data)) %>%
         ungroup()
     }
-  }
-  ## ============================================================================================ ##
-  df.imp.long
-}
