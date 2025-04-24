@@ -16,7 +16,7 @@ run_impute_data(
 )
 }
 \arguments{
-\item{data}{data.frame with raw data with missing coded as "(missing)"}
+\item{data}{data.frame with raw data with missing coded as "(missing)", must be a flat data.frame with no nesting}
 
 \item{data.dir}{directory where to save the imputed data}
 

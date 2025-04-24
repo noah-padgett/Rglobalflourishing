@@ -10,6 +10,7 @@ gfs_meta_analysis(
   interval.method = "empirical",
   better.name = NULL,
   p.subtitle = NULL,
+  ci.alpha = 0.05,
   ...
 )
 }

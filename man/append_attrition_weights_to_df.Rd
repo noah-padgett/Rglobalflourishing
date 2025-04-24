@@ -6,7 +6,7 @@
 \usage{
 append_attrition_weights_to_df(
   data,
-  attr.wgt.file = NULL,
+  country = NULL,
   composite.wgt.name = NULL,
   attr.wgt.name = NULL,
   wgt = NULL,
@@ -18,11 +18,11 @@ append_attrition_weights_to_df(
 \item{data}{a pre-cleaned and mostly ready for analysis data.frame that will be used to construct
 attrition weights.}
 
-\item{attr.wgt.file}{(default NULL), a file name to get the stored attrition weights}
-
 \item{composite.wgt.name}{(default NULL) name of composite weight in saved data}
 
 \item{attr.wgt.name}{(default NULL) name of attrition weight in saved data}
+
+\item{attr.wgt.file}{(default NULL), a file name to get the stored attrition weights}
 }
 \value{
 a dataset with attrition weights appended

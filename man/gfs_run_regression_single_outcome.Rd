@@ -10,17 +10,22 @@ gfs_run_regression_single_outcome(
   your.outcome = NULL,
   covariates = NULL,
   contemporaneous.exposures = NULL,
-  wgt = ANNUAL_WEIGHT_R1,
+  wgt = ANNUAL_WEIGHT_R2,
   psu = PSU,
   strata = STRATA,
   standardize = TRUE,
   pc.cutoff = 7,
   pc.rule = "omit",
   force.linear = FALSE,
+  force.binary = FALSE,
   robust.huberM = FALSE,
   robust.tune = 1,
   res.dir = NULL,
   list.composites = NULL,
+  subpopulation = NULL,
+  compute.vif = FALSE,
+  appnd.txt.to.filename = "",
+  .return.all = FALSE,
   ...
 )
 }
@@ -43,11 +48,19 @@ gfs_run_regression_single_outcome(
 
 \item{force.linear}{a logical of whether to force a linear model (default: FALSE)}
 
+\item{force.binary}{a logical of whether to force a Poisson model (default: FALSE)}
+
 \item{robust.huberM}{a  logical of whether to use a robust variant of the linear regression model (default: FALSE), see below for additional details.}
 
 \item{robust.tune}{a numeric value defining the tuning parameter for the robust.huberM option.}
 
 \item{res.dir}{a character string defining directory to save results to.}
+
+\item{subpopulation}{(optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)}
+
+\item{compute.vif}{(optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.}
+
+\item{appnd.txt.to.filename}{(optional) character string to help differentiate saved results file (default "")}
 
 \item{...}{other arguments passed to svyglm or glmrob functions}
 }

@@ -11,16 +11,17 @@ gfs_generate_main_doc(
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",
   focal.predictor = NULL,
-  p.bonferroni = 0.00081,
+  p.bonferroni = NULL,
   baseline.pred = NULL,
   outcome.vec = NULL,
   mylabels = NULL,
   res.dir = "results",
   wgt = as.name("WGT"),
-  wgt1 = as.name("ANNUAL_WEIGHT_R1"),
-  wgt2 = as.name("ANNUAL_WEIGHT_R1"),
+  wgt1 = as.name("ANNUAL_WEIGHT_R2"),
+  wgt2 = as.name("SAMP.ATTR.WGT"),
   psu = as.name("PSU"),
-  strata = as.name("STRATA")
+  strata = as.name("STRATA"),
+  ci.bonferroni = FALSE
 )
 }
 \arguments{
@@ -51,6 +52,8 @@ a word document saved to the current 'results/' directory
 }
 \description{
 TO-DO
+CONTENT',
+SAT_RELATNSHP',
 }
 \details{
 Generated a word document containing the results for the meta-analytic outcome wide results for the GFS coordinated analyses.

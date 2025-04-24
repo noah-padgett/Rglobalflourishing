@@ -10,8 +10,8 @@ recode_imputed_data(
   list.composites = NULL,
   list.manual = NULL,
   wave = 2,
-  method.income = "quintiles.top.fixed",
-  wgt = "ANNUAL_WEIGHT1",
+  method.income = "quintiles.top.random",
+  wgt = "ANNUAL_WEIGHT_R2",
   strata = "STRATA",
   psu = "PSU",
   ...
@@ -29,7 +29,7 @@ FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALU
 
 \item{wave}{(default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)}
 
-\item{method.income}{(optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', ''quintiles.top.random', 'numeric'.}
+\item{method.income}{(optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'. Defaults to 'quintiles.top.random'.}
 
 \item{...}{other arguments passed to mice}
 }

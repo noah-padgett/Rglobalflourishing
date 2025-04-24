@@ -6,43 +6,32 @@
 \usage{
 gfs_generate_supplemental_docs(
   df.raw = NULL,
-  meta.wopc = NULL,
-  meta.wpc = NULL,
-  coun.wopc = NULL,
-  coun.wpc = NULL,
-  supp.meta.wopc = NULL,
-  supp.meta.wpc = NULL,
-  supp.coun.wopc = NULL,
-  supp.coun.wpc = NULL,
-  coun.fit.pca = NULL,
-  attr.models = NULL,
+  file.imp.data = NULL,
+  dir.primary = "results-primary",
+  dir.supp = "results-cca",
+  dir.unstd = "results-unstd",
+  dir.attr.models = "results-attr",
   focal.predictor = NULL,
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",
-  p.bonferroni = 0.00068,
+  p.bonferroni = NULL,
   baseline.pred = NULL,
   outcome.vec = NULL,
   mylabels = NULL,
-  wgt = as.name("WGT"),
-  wgt1 = as.name("ANNUAL_WEIGHT_R1"),
-  wgt2 = as.name("ANNUAL_WEIGHT_R1"),
+  wgt = as.name("WGT0"),
+  wgt1 = as.name("ANNUAL_WEIGHT_R2"),
+  wgt2 = as.name("SAMP.ATTR.WGT"),
   psu = as.name("PSU"),
   strata = as.name("STRATA"),
   res.dir = "results",
   included.countries = NULL,
+  ci.bonferroni = FALSE,
+  single.file.num.sequential = FALSE,
   what = "all"
 )
 }
 \arguments{
 \item{df.raw}{a data.frame containing the raw data with values coded as labels}
-
-\item{meta.wopc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did NOT include the principal components in the country-specific regression analyses}
-
-\item{meta.wpc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did INCLUDED the principal components in the country-specific regression analyses}
-
-\item{coun.wopc}{a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did NOT include the principal components in the country-specific regression analyses}
-
-\item{coun.wpc}{a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did INCLUDED the principal components in the country-specific regression analyses}
 
 \item{focal.predictor}{a character defining the focal predictor}
 
@@ -64,6 +53,14 @@ gfs_generate_supplemental_docs(
 
 \item{what}{(character) options include: "all", "S1", "S2", "S3".}
 
+\item{coun.wopc}{a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did NOT include the principal components in the country-specific regression analyses}
+
+\item{coun.wpc}{a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did INCLUDED the principal components in the country-specific regression analyses}
+
+\item{meta.wopc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did NOT include the principal components in the country-specific regression analyses}
+
+\item{meta.wpc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did INCLUDED the principal components in the country-specific regression analyses}
+
 \item{...}{other arguments as needed}
 }
 \value{
@@ -74,7 +71,7 @@ Generates three online supplements.
 
 Supplement 1: Supplemental main-text results
 
-(1) Summary statistics of outcomes by wave (raw data)
+(1) Summary statistics of outcomes by wave (raw data + imputed data)
 (2) Supplemental meta-analyzed results
    - Compare attrition weights results with multiple-imputation results (one for each model)
 

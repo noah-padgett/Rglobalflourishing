@@ -110,29 +110,31 @@ df.raw <- gfs_get_labelled_raw_data(
       data.dir = data.dir,
       Nimp = 2,
       Miter = 1,
-      pred.vars = pred0,
-      file.name = "gfs_w2_imputed_data_2imp_test.RData"
+      pred.vars = pred0
     )
   }
 
-  load(here::here(data.dir, "gfs_w2_imputed_data_20imp.RData"))
+}
+# ================================================================================================ #
+# ================================================================================================ #
+# Recode the imputed data for easily use in analyses
   # ~~
-  df.imp.long <- recode_imputed_data(
-    df.imp,
+  recode_imp_by_country(
+    data.dir,
     list.default = RECODE.DEFAULTS,
     list.composites = LIST.COMPOSITES,
-    wgt = "ANNUAL_WEIGHT_R2"
+    wgt = "ANNUAL_WEIGHT_R2",
+    .nimp = 2
   )
-  remove(df.imp)
-}
 # ================================================================================================ #
 # ================================================================================================ #
 # CHECK VARIABLE CODING/COLLAPSING
 #
 # the following checks the imputed data back with the raw data
 tmp.dat1 <- df.raw %>%
+  filter(COUNTRY == "United States") %>%
   arrange(ID)
-tmp.dat2 <- df.imp.long %>%
+tmp.dat2 <- readr::read_rds(here::here(data.dir, "recoded_imputed_data_obj_United States.rds")) %>%
   filter(.imp == 1) %>%
   arrange(ID)
 dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
@@ -141,38 +143,13 @@ for(i in 1:length(FOCAL_PREDICTOR)){
   print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))
 }
 
-
-# ================================================================================================ #
-# ================================================================================================ #
-# Add in missing observation flags
-
-df.raw00 <- df.raw %>%
-  mutate(
-    across(!contains("DOI_"), \(x){
-      x = dplyr::case_when(x %in% "(Missing)" ~ NA, .default = x)
-      case_when(
-        is.na(x) ~ "imputed",
-        .default = "observed"
-      )
-    }, .names = "IMPUTE_FLAG_{.col}")
-  ) %>%
-  select(ID, COUNTRY, STRATA, PSU, contains("IMPUTE_FLAG") )
-
-df.imp.long.test <- left_join(df.imp.long, df.raw00)
-
-table(df.imp.long.test[,c("CIGARETTES_Y1","IMPUTE_FLAG_CIGARETTES_Y1")], useNA="always")
-
-df.imp.long.test %>%
-  ggplot(aes(y=CIGARETTES_Y2, x=IMPUTE_FLAG_CIGARETTES_Y2)) +
-  geom_boxplot()+facet_wrap(~.imp)+theme_classic()
-
 # ================================================================================================ #
 # ================================================================================================ #
 # Attrition Weights
 
 
-df.imp.long <- run_attrition_model(
-  data = df.imp.long,
+run_attrition_model_by_country(
+  data.dir,
   obs.id.var = "CASE_OBSERVED_Y2",
   attr.pred = c(
     "ANNUAL_WEIGHT_R2", "MODE_RECRUIT",
@@ -185,15 +162,12 @@ df.imp.long <- run_attrition_model(
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
-  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",
-  replace = TRUE
+  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU"
 )
 
-readr::write_rds(df.imp.long, here::here(data.dir, "gfs_imputed_data_formatted_wwgts20.RData"))
 # ================================================================================================ #
 # ================================================================================================ #
 # Run primary country-wise analyses -- Full imputation based approach
-df.imp.long <- readr::read_rds(here::here(data.dir, "gfs_imputed_data_formatted_wwgts20.RData"))
 
 VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
 OUTCOME.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
@@ -373,7 +347,7 @@ SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
       appnd.txt.to.filename = "_cca_wpc"
     )
   }) }, .progress = TRUE)
-SUPP.LIST.RES <- construct_meta_input_from_saved_results("results-cca", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_cca_wpc")
+SUPP.LIST.RES <- construct_meta_input_from_saved_results(res.dir="results-cca", outcomes=OUTCOME.VEC0, predictors=FOCAL_PREDICTOR, appnd.txt = "_cca_wpc")
 meta.input <- SUPP.LIST.RES %>%
   bind_rows() %>%
   mutate(

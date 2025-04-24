@@ -8,11 +8,11 @@ gfs_get_labelled_raw_data(
   file,
   list.composites = NULL,
   wave = 2,
-  method.income = "quintiles",
-  wgt = "ANNUAL_WEIGHT1",
+  method.income = "quintiles.top.random",
+  wgt = "ANNUAL_WEIGHT_R2",
   strata = "STRATA",
   psu = "PSU",
-  data.is.wide = FALSE,
+  data.is.long = FALSE,
   ...
 )
 }
@@ -23,11 +23,11 @@ gfs_get_labelled_raw_data(
 
 \item{wave}{(default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)}
 
-\item{method.income}{method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', ''quintiles.top.random', 'numeric'.}
-
-\item{data.is.wide}{(FALSE) change to TRUE only if the data are in long format}
+\item{method.income}{method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'.}
 
 \item{...}{other arguments}
+
+\item{data.is.wide}{(FALSE) change to TRUE only if the data are in long format}
 }
 \value{
 a dataset with attrition weights appended

@@ -1,6 +1,6 @@
-#' Estimate and Save Attrition Weights
+#' Estimate Attrition Model
 #'
-#' Estimate (save fitted model) and append attrition weights to data.frame
+#' Estimate (save fitted model)
 #'
 #' @param data a pre-cleaned and mostly ready for analysis data.frame that will be used to construct
 #'   attrition weights.
@@ -22,23 +22,22 @@
 #' The default set of predictors: "ANNUAL_WEIGHT_R2", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
 #' "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
 #'
-append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, stabilized = TRUE, robust = FALSE, wgt.trim.quantile = 0.99,  wgt = "ANNUAL_WEIGHT1", strata = "STRATA", psu = "PSU", composite.wgt.name = NULL, attr.wgt.name = NULL, replace = FALSE, ...) {
+fit_attrition_model <- function(data, obs.id.var = NULL, attr.pred = NULL, robust = FALSE,  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", ...) {
   if (is.null(obs.id.var)) {
-  	obs.id.var = "CASE_OBSERVED_W2"
+  	obs.id.var = "CASE_OBSERVED_Y2"
   }
   if (is.null(attr.pred)) {
     attr.pred <- c(
-      "ANNUAL_WEIGHT1", "MODE_RECRUIT_Y1",
-      "AGE_GRP_Y1", "GENDER_Y1", "EDUCATION_3_Y1", "INCOME_Y1",
-      "EMPLOYMENT_Y1", "MARITAL_STATUS_Y1", "RACE_PLURALITY_Y1",
-      "URBAN_RURAL_Y1"
+    "ANNUAL_WEIGHT_R2", "MODE_RECRUIT",
+    'COMPOSITE_HAPPI_LIFE_SAT_Y1', 'COMPOSITE_HEALTH_Y1', 'COMPOSITE_MEANING_PURPOSE_Y1',
+    'COMPOSITE_CHARACTER_Y1', 'COMPOSITE_SUBJECTIVE_SOC_CONN_Y1', 'COMPOSITE_FINL_MAT_WORRY_Y1',
+    'COMPOSITE_EXTRAVERSION_Y1', 'COMPOSITE_OPENNESS_Y1', 'COMPOSITE_AGREEABLENESS_Y1',
+    'COMPOSITE_CONSCIENTIOUSNESS_Y1', 'COMPOSITE_NEUROTICISM_Y1',
+    'COMPOSITE_DEPRESSION_Y1', 'COMPOSITE_ANXIETY_Y1', 'LONELY_Y1', 'DAYS_EXERCISE_Y1',
+    'COV_AGE_GRP_Y1', 'COV_GENDER', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',
+    'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
+    "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
     )
-  }
-  if (is.null(composite.wgt.name)){
-  	composite.wgt.name = as.name("SAMP.ATTR.WGT")
-  }
-  if (is.null(attr.wgt.name)){
-  	attr.wgt.name = as.name("ATTR.WGT")
   }
 
   tmp.data <- data %>%
@@ -61,21 +60,14 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
       weights = {{wgt}},
       calibrate.formula = ~1
     )
-  # survey::svydesign(
-  # 	data = tmp.data,
-  #   ids= tmp.data[[psu]],
-  #   strata= tmp.data[[strata]],
-  #   weights= tmp.data[[wgt]],
-  #   calibrate.formula = ~1
-  # )
-  cur.country <- data$COUNTRY2[1]
 
+  cur.country <- data$COUNTRY2[1]
   cur.country <- stringr::str_remove_all(str_replace(cur.country, "\n", "_"), "_")
+  cur.imp <- data$.imp2[1]
 
   keep.var <- keep_variable(attr.pred, svy.data[["variables"]], reason = "any")
 
   mod.form <- stats::reformulate(attr.pred[keep.var], response = obs.id.var)
-
 
   if (robust) {
     svy.data <- tmp.data
@@ -88,10 +80,46 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
                                #family = stats::quasipoisson(link = "log"),
                                control = list(maxit = 1000))
   }
+  fit.attr
+}
 
-  # summary(fit.attr)
 
-  wgts <- stats::predict(fit.attr, newdata=svy.data, type = "response")
+#' Estimate and Save Attrition Weights
+#'
+#' Estimate attrition weights to data.frame
+#'
+#' @param fit (model object) that was fit to estimate attrition weights
+#' @param stabilized (logical) default to TRUE, where the estimated attrition weight is the divisor and the numerator is the baseline rate of attrition (if FALSE, then the numerator is fixed to 1)
+#' @param wgt.trim.quantile (numeric) default to 0.99, quantile of the distribution of weights to trim to
+#' @param wgt (character) name of variable containing weights to use as "base-weights"
+#' @param strata (character) name of variable containing strata ids
+#' @param psu (character) name of variable containing primary sampling unit ids
+#' @param ... other arguments passed to svyglm or glmrob functions
+#' @returns a dataset with attrition weights appended
+#' @examples {
+#'   # TO-DO
+#' }
+#' @export
+#' @description
+#' The default set of predictors: "ANNUAL_WEIGHT_R2", "MODE_ANNUAL_W1", "AGE_W1", "GENDER_W1",
+#' "EDUCATION_3_W1", "EMPLOYMENT_W1", "MARITAL_STATUS_W1", "RACE_PLURALITY_W1".
+#'
+create_attr_wgts <- function(fit, obs.id.var = NULL, stabilized = TRUE, wgt.trim.quantile = 0.99,  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", composite.wgt.name = NULL, attr.wgt.name = NULL, ...) {
+
+  if (is.null(obs.id.var)) {
+    obs.id.var = "CASE_OBSERVED_Y2"
+  }
+  if (is.null(composite.wgt.name)){
+    composite.wgt.name = as.name("SAMP.ATTR.WGT")
+  }
+  if (is.null(attr.wgt.name)){
+    attr.wgt.name = as.name("ATTR.WGT")
+  }
+  # extract data
+  data <- fit$data
+  svy.data <- fit$survey.design
+
+  wgts <- stats::predict(fit, newdata=svy.data, type = "response")
   wgts <- as.numeric(wgts)
   wgts <- case_when(
     wgts < 0.001 ~ 0.001,
@@ -128,21 +156,11 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
   # add weights to "clean" dataset
   wgt0 <- as.name(wgt)
   data <- data  %>%
-  	mutate(
-   	 	"{{attr.wgt.name}}" := as.numeric(attr.wgts),
-   	 	"{{composite.wgt.name}}" := {{attr.wgt.name}} * {{wgt0}},
-   	 	"{{composite.wgt.name}}" := n() * ( {{composite.wgt.name}} / sum( {{composite.wgt.name}} ))
-  	)
-
-  # save fitted regression model for use later
-  # check if "results-attr" folder exists
-  if (!dir.exists("results-attr")) dir.create(here::here(getwd(), "results-attr"))
-
-  myfile = here::here("results-attr", paste0(cur.country, " fitted attrition model.RData"))
-  if (replace || !file.exists(myfile)){
-  	# save only results from 1 imputed dataset
-  	save(data, fit.attr, file = myfile)
-  }
+    mutate(
+      "{{attr.wgt.name}}" := as.numeric(attr.wgts),
+      "{{composite.wgt.name}}" := {{attr.wgt.name}} * {{wgt0}},
+      "{{composite.wgt.name}}" := n() * ( {{composite.wgt.name}} / sum( {{composite.wgt.name}} ))
+    )
 
   data
 }
@@ -151,10 +169,8 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
 #'
 #' Wrapper function to use the data.set specific attrition weights function.
 #'
-#' @param data a pre-cleaned and mostly ready for analysis data.frame that will be used to construct
-#'   attrition weights.
-#' @param wgt a character identifying the baseline weight used as the baseline for adjustments.
-#' @param ... additional arguments passed to append_attrition_wgts(.)
+#' @param data.dir character defining where the recoded imputed data files are stored
+#' @param ... additional arguments passed to ....
 #' @returns a dataset with attrition weights appended
 #' @examples {
 #'   # TO-DO
@@ -163,18 +179,55 @@ append_attrition_wgts <- function(data, obs.id.var = NULL, attr.pred = NULL, sta
 #' TO-DO
 #'
 #' @export
-run_attrition_model <- function(data, ...) {
-  df.attr <- data %>%
-    dplyr::group_by(COUNTRY, .imp) %>%
-    tidyr::nest() %>%
-    dplyr::mutate(
-      data = purrr::map(data, \(tmp.dat){
-        append_attrition_wgts(tmp.dat, ...)
+run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", attr.wgt.name = NULL, pooled.wgt = NULL, composite.wgt.name = NULL,...) {
+  if(is.null(pooled.wgt)){
+    pooled.wgt = as.name("AVG.SAMP.ATTR.WGT")
+  }
+  if (is.null(composite.wgt.name)){
+    composite.wgt.name = as.name("SAMP.ATTR.WGT")
+  }
+
+  # get list of files in data.dir
+  df.files <- list.files(data.dir)
+  df.files <- df.files[str_detect(df.files, "recoded_imputed_data_obj")]
+
+  if (!dir.exists("results-attr")) dir.create(here::here(getwd(), "results-attr"))
+  
+  res.cap <- map(df.files, \(x){
+    cur.country <- str_remove(x, "recoded_imputed_data_obj_")
+    cur.country <- str_remove(cur.country, ".rds")
+    
+    df.tmp <- readr::read_rds(here::here(data.dir, x))
+    
+    df.attr <- df.tmp %>%
+    		dplyr::group_by(COUNTRY, .imp) %>%
+    	tidyr::nest() %>%
+    	dplyr::mutate(
+      fit.attr = purrr::map(data, \(tmp.dat){
+        fit_attrition_model(tmp.dat)#, ...)
+      }),
+      data = map(fit.attr, \(x){
+        create_attr_wgts(x)#, ...)
       })
+    ) 
+    
+    df.wgts <- df.attr %>% 
+    select(COUNTRY, .imp, data) %>%
+    tidyr::unnest(c(data)) %>%
+    group_by(COUNTRY, ID) %>%
+    mutate(
+      "{{pooled.wgt}}" := mean({{composite.wgt.name}}, na.rm=TRUE)
     ) %>%
-    tidyr::unnest(c(data))
-  df.attr
+    ungroup() %>%
+    select(ID, COUNTRY, .imp, PSU, STRATA, contains("WGT"))
+
+    myfile = paste0(cur.country, " fitted attrition model.RData")
+    save(df.attr, df.wgts , file = here::here("results-attr", myfile))
+
+  })
 }
+
+
 
 #' Add Attrition Weights to Raw Data
 #'
@@ -193,7 +246,7 @@ run_attrition_model <- function(data, ...) {
 #' TO-DO
 #'
 #' @export
-append_attrition_weights_to_df <- function(data, attr.wgt.file = NULL, composite.wgt.name = NULL, attr.wgt.name = NULL, wgt = NULL, strata = NULL, psu = NULL){
+append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.name = NULL, attr.wgt.name = NULL, wgt = NULL, strata = NULL, psu = NULL){
   if (is.null(composite.wgt.name)) {
     composite.wgt.name = as.name("SAMP.ATTR.WGT")
   }
@@ -209,16 +262,18 @@ append_attrition_weights_to_df <- function(data, attr.wgt.file = NULL, composite
   if (is.null(psu)) {
     psu = as.name("PSU")
   }
-  if (is.null(attr.wgt.file)) {
-    attr.wgt.file <- list.files("results-attr")
-    names(attr.wgt.file) <- str_split_i(attr.wgt.file, " fitted", 1)
-  }
+
+  # get country specific files
+  attr.wgt.file <- list.files("results-attr")
+  names(attr.wgt.file) <- str_split_i(attr.wgt.file, " fitted", 1)
+  # subset to only this specific country
+  attr.wgt.file <- attr.wgt.file[str_detect(attr.wgt.file, country)]
 
   saved_attr_wgts <- map(attr.wgt.file, \(x){
     load(here::here("results-attr",x), ex <- new.env())
     # ls.str(ex)
-    ex$data %>%
-      select(COUNTRY2, ID, {{psu}}, {{strata}}, {{wgt}}, {{attr.wgt.name}}, {{composite.wgt.name}})
+    ex$data0 %>%
+      select(.imp, COUNTRY2, ID, {{psu}}, {{strata}}, {{wgt}}, {{attr.wgt.name}}, {{composite.wgt.name}})
   }) |> bind_rows(.id = "COUNTRY")
   data <- left_join(data, saved_attr_wgts)
 

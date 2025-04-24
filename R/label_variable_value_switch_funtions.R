@@ -477,8 +477,8 @@ get_outcome_scale <- function(var) {
       CIGARETTES_BINARY = "bin",
       INCOME_QUINTILE = "bin",
 
-      COMPOSITE_DEPRESSION = "cont",
-      COMPOSITE_ANXIETY = "cont",
+      COMPOSITE_DEPRESSION = "bin",
+      COMPOSITE_ANXIETY = "bin",
       COMPOSITE_DEP_ANX_COMBO = "cont",
       COMPOSITE_EXTRAVERSION = "cont",
       COMPOSITE_OPENNESS = "cont",

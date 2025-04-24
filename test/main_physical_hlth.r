@@ -110,8 +110,7 @@ df.raw <- gfs_get_labelled_raw_data(
       data.dir = data.dir,
       Nimp = 2,
       Miter = 1,
-      pred.vars = pred0,
-      file.name = "gfs_w2_imputed_data_2imp_test.RData"
+      pred.vars = pred0
     )
   }
 
@@ -552,7 +551,7 @@ gfs_generate_supplemental_docs(
   wgt2 = SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all"
+  what = "S3"
 )
 
 
