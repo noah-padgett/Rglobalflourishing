@@ -7,6 +7,7 @@
 #' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
 #' @param method.income method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'.
 #' @param data.is.wide (FALSE) change to TRUE only if the data are in long format
+#' @param reverse.code.cont (FALSE) reverse code numeric variables (e.g., lonely) for computing summary statistics. DO NOT apply this recoding before conducting imputation. THIS IS ONLY FOR SUMMARY STATISTICS.
 #' @param ... other arguments
 #' @returns a dataset with attrition weights appended
 #' @examples {
@@ -15,7 +16,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, ...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, reverse.code.cont = FALSE, ...) {
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -339,6 +340,18 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       unnest(c(data)) %>%
       ungroup()
     }
+  }
+  ## ============================================================================================ ##
+  if(reverse.code.cont){
+    df.original <- df.original %>%
+      mutate(
+        across(contains("LONELY"), \(x){
+          x <- recode_to_type(x, "LONELY")
+          x <- reorder_levels(x, "LONELY")
+          x <- recode_to_numeric(x, "LONELY")
+          x
+        })
+      )
   }
   ## ============================================================================================ ##
   df.original

@@ -27,7 +27,7 @@ out.dir <- getwd()
 
 # Here is YOUR wave 1 construct variable
 FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
-FOCAL_PREDICTOR_BETTER_NAME <- c("Self-Rated Physical Health")
+FOCAL_PREDICTOR_BETTER_NAME <- c("Self-rated physical health")
 FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
@@ -92,7 +92,7 @@ df.raw <- gfs_get_labelled_raw_data(
 # ================================================================================================ #
 # ================================================================================================ #
 # Imputing missing data
-{
+
   run.imp <- TRUE
   if (run.imp) {
     pred0 <- c(
@@ -108,13 +108,13 @@ df.raw <- gfs_get_labelled_raw_data(
     df.imp <- run_impute_data(
       data =  df.raw,
       data.dir = data.dir,
-      Nimp = 2,
-      Miter = 1,
+      Nimp = 5,
+      Miter = 2,
       pred.vars = pred0
     )
   }
 
-}
+
 # ================================================================================================ #
 # ================================================================================================ #
 # Recode the imputed data for easily use in analyses
@@ -124,7 +124,7 @@ df.raw <- gfs_get_labelled_raw_data(
     list.default = RECODE.DEFAULTS,
     list.composites = LIST.COMPOSITES,
     wgt = "ANNUAL_WEIGHT_R2",
-    .nimp = 2
+    .nimp = 5
   )
 # ================================================================================================ #
 # ================================================================================================ #
@@ -157,13 +157,17 @@ run_attrition_model_by_country(
     'COMPOSITE_CHARACTER_Y1', 'COMPOSITE_SUBJECTIVE_SOC_CONN_Y1', 'COMPOSITE_FINL_MAT_WORRY_Y1',
     'COMPOSITE_EXTRAVERSION_Y1', 'COMPOSITE_OPENNESS_Y1', 'COMPOSITE_AGREEABLENESS_Y1',
     'COMPOSITE_CONSCIENTIOUSNESS_Y1', 'COMPOSITE_NEUROTICISM_Y1',
-    'DEPRESSED_Y1', 'LONELY_Y1', 'DAYS_EXERCISE_Y1',
+    'COMPOSITE_DEPRESSION_Y1', 'COMPOSITE_ANXIETY_Y1', 'LONELY_Y1', 'DAYS_EXERCISE_Y1',
     'COV_AGE_GRP_Y1', 'COV_GENDER', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',
     'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",
     "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'
   ),
   wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU"
 )
+
+## append attrition weights to imputed data
+append_attr_wgts_to_imp_data(data.dir, attr.dir = "results-attr")
+
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -204,7 +208,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
-      data = df.imp.long,
+      data.dir = data.dir,
       wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
       psu = PSU, #psu = as.name("PSU")
       strata = STRATA, # strata = as.name("STRATA")
@@ -219,7 +223,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
   }) }, .progress = TRUE)
 
 
-#LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wopc")
+LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wopc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
@@ -235,7 +239,7 @@ META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   META.RES,
-  file = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  file = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES, meta.input, META.RES)
@@ -246,10 +250,10 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
-      data = df.imp.long,
-      wgt = ANNUAL_WEIGHT_R2,
-      psu = PSU,
-      strata = STRATA,
+      data.dir = data.dir,
+      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
+      psu = PSU, #psu = as.name("PSU")
+      strata = STRATA, # strata = as.name("STRATA")
       covariates = DEMO.CHILDHOOD.PRED,
       contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
       list.composites = LIST.COMPOSITES[[1]],
@@ -261,7 +265,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
     )
   }) }, .progress = TRUE)
 
-#LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wpc")
+LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wpc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
@@ -278,7 +282,7 @@ META.RES <- gfs_meta_analysis(
 
 readr::write_rds(
   META.RES,
-  file = here::here(out.dir, "results-primary","0_meta_analyzed_results_primary_wpc.rds"),
+  file = here::here("results-primary","0_meta_analyzed_results_primary_wpc.rds"),
   compress = "gz"
 )
 remove(meta.input, LIST.RES, META.RES)
@@ -294,7 +298,8 @@ SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
-      data = df.imp.long %>% filter(CASE_OBSERVED_Y2 == 1),
+      data.dir = data.dir,
+      direct.subset = expr(CASE_OBSERVED_Y2 == 1),
       wgt = SAMP.ATTR.WGT,
       psu = PSU,
       strata = STRATA,
@@ -322,7 +327,7 @@ SUPP.META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   SUPP.META.RES,
-  file = here::here(out.dir, "results-cca", "0_meta_analyzed_results_cca_wopc.rds"),
+  file = here::here("results-cca", "0_meta_analyzed_results_cca_wopc.rds"),
   compress = "gz"
 )
 remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
@@ -333,7 +338,8 @@ SUPP.LIST.RES <- map(OUTCOME.VEC0, \(x){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
-      data = df.imp.long %>% filter(CASE_OBSERVED_Y2 == 1),
+      data.dir = data.dir,
+      direct.subset = expr(CASE_OBSERVED_Y2 == 1),
       wgt = SAMP.ATTR.WGT,
       psu = PSU,
       strata = STRATA,
@@ -362,7 +368,7 @@ SUPP.META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   SUPP.META.RES,
-  file = here::here(out.dir, "results-cca", "0_meta_analyzed_results_cca_wpc.rds"),
+  file = here::here("results-cca", "0_meta_analyzed_results_cca_wpc.rds"),
   compress = "gz"
 )
 remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
@@ -377,7 +383,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
-      data = df.imp.long,
+      data.dir = data.dir,
       wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
       psu = PSU, #psu = as.name("PSU")
       strata = STRATA, # strata = as.name("STRATA")
@@ -392,7 +398,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
   }) }, .progress = TRUE)
 
 
-#LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wopc")
+LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wopc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
@@ -408,7 +414,7 @@ META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   META.RES,
-  file = here::here(out.dir, "results-unstd", "0_meta_analyzed_results_unstd_wopc.rds"),
+  file = here::here("results-unstd", "0_meta_analyzed_results_unstd_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES, meta.input, META.RES)
@@ -419,7 +425,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
     gfs_run_regression_single_outcome(
       your.outcome = x,
       your.pred = y,
-      data = df.imp.long,
+      data.dir = data.dir,
       wgt = ANNUAL_WEIGHT_R2,
       psu = PSU,
       strata = STRATA,
@@ -434,7 +440,7 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
     )
   }) }, .progress = TRUE)
 
-#LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wpc")
+LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wpc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
   mutate(
@@ -451,14 +457,13 @@ META.RES <- gfs_meta_analysis(
 
 readr::write_rds(
   META.RES,
-  file = here::here(out.dir, "results-unstd","0_meta_analyzed_results_unstd_wpc.rds"),
+  file = here::here("results-unstd","0_meta_analyzed_results_unstd_wpc.rds"),
   compress = "gz"
 )
 remove(meta.input, LIST.RES, META.RES)
 
 # ================================================================================================ #
 # ================================================================================================ #
-remove(df.imp.long)
 gc()
 # ================================================================================================ #
 # ================================================================================================ #
@@ -498,7 +503,7 @@ gfs_generate_main_doc(
   res.dir = "results",
   wgt = WGT0,
   wgt1 = ANNUAL_WEIGHT_R2,
-  wgt2 = SAMP.ATTR.WGT,
+  wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA
 )
@@ -519,10 +524,11 @@ gfs_generate_supplemental_docs(
   res.dir = "results",
   wgt = WGT0,
   wgt1 = ANNUAL_WEIGHT_R2,
-  wgt2 = SAMP.ATTR.WGT,
+  wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all"
+  what = "S1",
+  outcome.vec = OUTCOME.VEC0[73:79]
 )
 
 

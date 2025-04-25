@@ -330,7 +330,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
             GENDER ~ "Gender",
             #MARITAL_STATUS ~ "Respondent marital status",
             #EMPLOYMENT ~ "Employment status",
-            #ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+            #ATTEND_SVCS ~ "Current religious service attendance",
             EDUCATION_3 ~ "Education (years)",
             #BORN_COUNTRY ~ "Immigration status",
             #PARENTS_12YRS ~ "Parental marital status around age 12",
@@ -340,7 +340,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
             #ABUSED ~ "Experienced abuse when growing up",
             #HEALTH_GROWUP ~ "Self-rated health when growing up",
             #INCOME_12YRS ~ "Subjective financial status of family growing up",
-            #SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+            #SVCS_12YRS ~ "Religious service attendance around age 12",
             #REL1 ~ "Religious affiliation growing up",
             COUNTRY ~ "Country of respondent"
           ),
@@ -766,7 +766,8 @@ gfs_generate_supplemental_docs <- function(
     p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL,
     wgt = as.name("WGT0"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("SAMP.ATTR.WGT"),
     psu = as.name("PSU"), strata = as.name("STRATA"),
-    res.dir = "results", included.countries=NULL, ci.bonferroni = FALSE, single.file.num.sequential = FALSE, what = "all"){
+    res.dir = "results", included.countries=NULL,
+    ci.bonferroni = FALSE, single.file.num.sequential = FALSE, what = "all"){
 
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
 
@@ -1080,6 +1081,13 @@ gfs_generate_supplemental_docs <- function(
           OUTCOME.VEC00[i],
           include.name = FALSE, include.wave = FALSE
         )
+        if(str_detect(OUTCOME.VEC00[i], "GROUP_NOT_REL" )){
+          OUTCOME.VEC.LABELS[[OUTCOME.VEC00[i]]] <- "Secular community participation"
+        }
+        if(OUTCOME.VEC00[i] == "ATTEND_SVCS" ){
+          OUTCOME.VEC.LABELS[[OUTCOME.VEC00[i]]] <- "Religious service attendance"
+        }
+
       }
 
     })
@@ -1105,7 +1113,7 @@ gfs_generate_supplemental_docs <- function(
           "{{wgt}}" := n() * {{wgt1}} / sum( {{wgt1}} )
         )
       colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
-      df.w2$WAVE0 <- "Attriters--Not Observed in Wave 2"
+      df.w2$WAVE0 <- "Attritors--Not Observed in Wave 2"
 
 
       df.raw.attr.retained <-
@@ -1193,8 +1201,8 @@ gfs_generate_supplemental_docs <- function(
             by = WAVE0,
             include = c(
               any_of(focal.predictor0),
-              AGE,
               AGE_GRP,
+              AGE,
               GENDER,
               MARITAL_STATUS,
               EDUCATION_3, EMPLOYMENT,
@@ -1219,7 +1227,7 @@ gfs_generate_supplemental_docs <- function(
               MARITAL_STATUS ~ "Respondent marital status",
               EMPLOYMENT ~ "Employment status",
               #INCOME ~ "Self-reported income",
-              ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+              ATTEND_SVCS ~ "Current religious service attendance",
               EDUCATION_3 ~ "Education (years)",
               BORN_COUNTRY ~ "Immigration status",
               PARENTS_12YRS ~ "Parental marital status around age 12",
@@ -1229,23 +1237,27 @@ gfs_generate_supplemental_docs <- function(
               ABUSED ~ "Experienced abuse when growing up",
               HEALTH_GROWUP ~ "Self-rated health when growing up",
               INCOME_12YRS ~ "Subjective financial status of family growing up",
-              SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+              SVCS_12YRS ~ "Religious service attendance around age 12",
               REL1 ~ "Religious affiliation growing up"
             ),
             digits = list(
               all_continuous() ~ 1,
-              all_categorical() ~ 0
+              n = label_style_number(digits=0),
+              p = label_style_percent(digits=1)
             ),
             missing_text = "    (Missing)",
             missing_stat = "{N_miss} ({p_miss}%)"
+          ) %>%
+          add_stat_label(
+            label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
           ) %>%
           italicize_labels()
       	})
       })
 
-      tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout to maintain nationally representative estimates for Wave 2 characteristics using the reduced sample.")
+      tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.")
 
-      tb.cap <- paste0("Table S",tb.num,". Weighted sample demographic and childhood predictor summary statistics.")
+      tb.cap <- paste0("Table S",tb.num,". Weighted summary statistics for demographic and childhood variables.")
       tb.num = tb.num + 1
 
       sumtab.toprint.A <- sumtab %>%
@@ -1294,11 +1306,14 @@ gfs_generate_supplemental_docs <- function(
             missing_text = "    (Missing)",
             missing_stat = "{N_miss} ({p_miss}%)"
           ) %>%
-          italicize_labels()
+           add_stat_label(
+             label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+            ) %>%
+           italicize_labels()
         })
       })
 
-      tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout to maintain nationally representative estimates for Wave 2 characteristics using the reduced sample.")
+      tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.")
 
       tb.cap <- paste0("Table S",tb.num,". Weighted summary statistics of the outcome variables by Wave.")
       tb.num = tb.num + 1
@@ -1332,8 +1347,7 @@ gfs_generate_supplemental_docs <- function(
               by = WAVE0,
               include = c(
                 any_of(focal.predictor0),
-                AGE,
-                AGE_GRP,
+                AGE_GRP,AGE,
                 GENDER,
                 MARITAL_STATUS,
                 EDUCATION_3, EMPLOYMENT,
@@ -1358,7 +1372,7 @@ gfs_generate_supplemental_docs <- function(
                 MARITAL_STATUS ~ "Respondent marital status",
                 EMPLOYMENT ~ "Employment status",
                 #INCOME ~ "Self-reported income",
-                ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+                ATTEND_SVCS ~ "Current religious service attendance",
                 EDUCATION_3 ~ "Education (years)",
                 BORN_COUNTRY ~ "Immigration status",
                 PARENTS_12YRS ~ "Parental marital status around age 12",
@@ -1368,7 +1382,7 @@ gfs_generate_supplemental_docs <- function(
                 ABUSED ~ "Experienced abuse when growing up",
                 HEALTH_GROWUP ~ "Self-rated health when growing up",
                 INCOME_12YRS ~ "Subjective financial status of family growing up",
-                SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+                SVCS_12YRS ~ "Religious service attendance around age 12",
                 REL1 ~ "Religious affiliation growing up"
               ),
               digits = list(
@@ -1377,6 +1391,9 @@ gfs_generate_supplemental_docs <- function(
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
+            ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
             italicize_labels()
         })
@@ -1427,6 +1444,9 @@ gfs_generate_supplemental_docs <- function(
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
+            ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
             italicize_labels()
         })
@@ -1749,7 +1769,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
 
 P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', (1-p.bonferroni/2)*100,'% CIs;'), ';')," ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
 
-        tb.cap = paste0("Table S",tb.num,". ", focal.better.name[f0]," Model 2 including demographics, childhood, and wave 1 confounders (via principal components) supplemental meta-analyzed associations comparing how missingness at wave 2 was accounted for in country-specific analyses (attrition weights vs. multiple imputation).")
+        tb.cap = paste0("Table S",tb.num,".  Meta-analyzed associations of ", focal.better.name[f0] ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 2 by how missingness was accounted for (multiple imputation vs. complete case with attrition weights).")
         tb.num = tb.num + 1
 
         meta.outcomewide.toprint <- meta.outcomewide %>%
@@ -1765,7 +1785,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                  i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
                  j = 1) %>%
           add_header_row(
-            values = c("", "Multiple Imputation", "", "Attrition Weights"),
+            values = c("", "Multiple Imputation", "", "Complete Case with Attrition Weights"),
             colwidths = c(1,length(vec.a), 1, length(vec.b))
           ) %>%
           add_footer_row(
@@ -2025,7 +2045,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
 
         # footnote information:
-        tb.note.meta.outcomewide <-as_paragraph(paste0("_Notes_. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: ", paste0(focal.predictor.reference.value, collapse="; "),"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.meta.outcomewide <-as_paragraph(paste0("_Notes_. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: a value of `0` on the predcitor; RR, risk-ratio, null effect is 1.00; ES, effect size measure for regression coefficient, null effect is 0.00; CI, confidence interval; τ (Heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;  ^(a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; ^(b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; ^(c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; ^(d) item part of the Character & Virtue domain of the Secure Flourishing Index; ^(e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; ^(f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. The first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at wave 2.
 
@@ -2033,7 +2053,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
 
 P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', (1-p.bonferroni/2)*100,'% CIs;'), ';')," ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
 
-        tb.cap = paste0("Table S",tb.num,". ", focal.better.name[f0]," unstandardized effects sizes for models 1 and 2 (multiple imputation results only).")
+        tb.cap = paste0("Table S",tb.num,". Unstandardized effects sizes for the raw score of ", focal.better.name[f0]," (multiple imputation results only).")
         tb.num = tb.num + 1
 
         meta.outcomewide.toprint <- meta.outcomewide %>%
@@ -2297,7 +2317,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               by = WAVE0,
               include = c(
                 any_of(focal.predictor0),
-                AGE, AGE_GRP, GENDER, RACE1, MARITAL_STATUS,
+                AGE_GRP, AGE, GENDER, RACE1, MARITAL_STATUS,
                 EDUCATION_3, EMPLOYMENT, INCOME,
                 ATTEND_SVCS,  BORN_COUNTRY,
                 PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN,
@@ -2319,7 +2339,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                 MARITAL_STATUS ~ "Respondent marital status",
                 EMPLOYMENT ~ "Employment status",
                 INCOME ~ "Self-reported income",
-                ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+                ATTEND_SVCS ~ "Current religious service attendance",
                 EDUCATION_3 ~ "Education (years)",
                 BORN_COUNTRY ~ "Immigration status",
                 PARENTS_12YRS ~ "Parental marital status around age 12",
@@ -2329,7 +2349,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                 ABUSED ~ "Experienced abuse when growing up",
                 HEALTH_GROWUP ~ "Self-rated health when growing up",
                 INCOME_12YRS ~ "Subjective financial status of family growing up",
-                SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+                SVCS_12YRS ~ "Religious service attendance around age 12",
                 REL1 ~ "Religious affiliation growing up"
               ),
               digits = list(
@@ -2338,6 +2358,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
+            ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
             italicize_labels()
 
@@ -2403,6 +2426,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
+            )  %>%
+            modify_header(label ~ "**Outcome**") %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
             italicize_labels()
 
@@ -2457,7 +2484,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               by = WAVE0,
               include = c(
                 any_of(focal.predictor0),
-                AGE, AGE_GRP, GENDER, RACE1, MARITAL_STATUS,
+                 AGE_GRP, AGE, GENDER, RACE1, MARITAL_STATUS,
                 EDUCATION_3, EMPLOYMENT, INCOME,
                 ATTEND_SVCS,  BORN_COUNTRY,
                 PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN,
@@ -2479,7 +2506,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                 MARITAL_STATUS ~ "Respondent marital status",
                 EMPLOYMENT ~ "Employment status",
                 INCOME ~ "Self-reported income",
-                ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+                ATTEND_SVCS ~ "Current religious service attendance",
                 EDUCATION_3 ~ "Education (years)",
                 BORN_COUNTRY ~ "Immigration status",
                 PARENTS_12YRS ~ "Parental marital status around age 12",
@@ -2489,7 +2516,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                 ABUSED ~ "Experienced abuse when growing up",
                 HEALTH_GROWUP ~ "Self-rated health when growing up",
                 INCOME_12YRS ~ "Subjective financial status of family growing up",
-                SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+                SVCS_12YRS ~ "Religious service attendance around age 12",
                 REL1 ~ "Religious affiliation growing up"
               ),
               digits = list(
@@ -2498,6 +2525,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
+            ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
             italicize_labels()
 
@@ -2560,15 +2590,19 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
             ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+            )  %>%
+            modify_header(label ~ "**Outcome**") %>%
             italicize_labels()
 
           tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
 
           if(!single.file.num.sequential){
-            tb.cap <- paste0("Table S",i+tb.num.shift,letters[tb.num],". Unweighted outcome variable summary statistics of outcomes in ", COUNTRY_LABELS[i], " by retention status.")
+            tb.cap <- paste0("Table S",i+tb.num.shift,letters[tb.num],". Unweighted outcome variable summary statistics in ", COUNTRY_LABELS[i], " by retention status.")
           }
           if(single.file.num.sequential){
-            tb.cap <- paste0("Table S",tb.num+tb.num.shift,". Unweighted outcome variable summary statistics of outcomes in ", COUNTRY_LABELS[i], " by retention status.")
+            tb.cap <- paste0("Table S",tb.num+tb.num.shift,". Unweighted outcome variable summary statistics in ", COUNTRY_LABELS[i], " by retention status.")
           }
           tb.num <- tb.num + 1
           tbid.toprint <- sumtab %>%
@@ -2622,7 +2656,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             )
           },
           label = lab.list
-        ) |>
+        )  |>
+          italicize_labels() |>
           modify_header(estimate = "**Odds Ratio**") |>
           as_flex_table() |>
          autofit() |>
@@ -3249,7 +3284,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                   GENDER ~ "Gender",
                   MARITAL_STATUS ~ "Respondent marital status",
                   EMPLOYMENT ~ "Employment status",
-                  ATTEND_SVCS ~ "Religious service attendance as an adult (now)",
+                  ATTEND_SVCS ~ "Current religious service attendance",
                   EDUCATION_3 ~ "Education (years)",
                   BORN_COUNTRY ~ "Immigration status",
                   PARENTS_12YRS ~ "Parental marital status around age 12",
@@ -3259,7 +3294,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                   ABUSED ~ "Experienced abuse when growing up",
                   HEALTH_GROWUP ~ "Self-rated health when growing up",
                   INCOME_12YRS ~ "Subjective financial status of family growing up",
-                  SVCS_12YRS ~ "Frequency of religious service attendance around age 12",
+                  SVCS_12YRS ~ "Religious service attendance around age 12",
                   REL1 ~ "Religious affiliation growing up"
                 ),
                 digits = list(
@@ -3336,6 +3371,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
             .header = "**{strata}**"
           ) %>%
+          modify_header(label ~ "**Outcome**") %>%
           italicize_labels()
 
         tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")

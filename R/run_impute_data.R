@@ -191,16 +191,20 @@ run_impute_data <- function(data,
     tmp.vec[tmp.vec == "CIGARETTES_BINARY"] <- "CIGARETTES"
     tmp.vec <- tmp.vec[str_detect(tmp.vec, "COMPOSITE_", negate=TRUE)]
     i <- 1
+    t1 <- c()
+    t2 <- c()
     for(i in 1:length(tmp.vec)){
-      t1 <- paste0(tmp.vec[i], "_Y1")
-      t2 <- paste0(tmp.vec[i], "_Y2")
-      if(t1 %in% colnames(tmp.pred) & t2 %in% colnames(tmp.pred)){
-      	tmp.pred[t2,t1] <- 1
+      t10 <- paste0(tmp.vec[i], "_Y1")
+      t20 <- paste0(tmp.vec[i], "_Y2")
+      if(t10 %in% colnames(tmp.pred) & t20 %in% colnames(tmp.pred)){
+        t1 <- c(t1,t10)
+        t2 <- c(t2,t20)
       	#print(tmp.pred[c(t1,t2),c(t1,t2)])
       }
       #tmp.pred[t1,][tmp.pred[t1,] == 1]
       #tmp.pred[t2,][tmp.pred[t2,] == 1]
     }
+    tmp.pred[t2,t1] <- 1
     ## =================================================================== ##
     fit.imp <- NULL
     try({

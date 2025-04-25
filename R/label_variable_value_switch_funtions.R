@@ -69,7 +69,7 @@ get_outcome_better_name <- function(var,
       DOI_ANNUAL = "End Date of Interview - Annual Survey",
       DOI_RETENTION = "End Date of Interview - Retention (b/ 1 & 2) Survey",
       DOI_ANNUAL_2 = "End Date of Interview - Annual Survey 2",
-      ABUSED = "Physically or Sexually Abused When Growing Up",
+      ABUSED = "Physically or sexually abused when growing up",
       AFTER_DEATH = "Life after Death Belief",
       AGE = "Age of Respondent",
       APPROVE_GOVT = "Government Approval",
@@ -287,6 +287,8 @@ get_outcome_better_name <- function(var,
                      stringr::str_sub(var.wave, start = -1, end = -1),
                      ")")
   }
+  ## Make sure only the first word is capitalized
+  var.tmp <- str_to_sentence(var.tmp)
 
   var.tmp
 }
