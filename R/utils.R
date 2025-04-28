@@ -505,7 +505,7 @@ get_fitted_attrition_models <- function(res.dir) {
     i = 1
     for ( i in 1:length(tmp.attr.files)){
       load(here::here(res.dir, tmp.attr.files[i]))
-      tmp.list[[str_split_i(tmp.attr.files[i], " fitted", 1)]] <- fit.attr
+      tmp.list[[str_split_i(tmp.attr.files[i], " fitted", 1)]] <- df.attr$fit.attr[[1]]
     }
     return(tmp.list)
   })
@@ -518,6 +518,6 @@ get_fitted_attrition_model <- function(res.dir, country) {
     tmp.attr.files <- list.files(res.dir)
     tmp.attr.files <- tmp.attr.files[str_detect(tmp.attr.files, country)]
     load(here::here(res.dir, tmp.attr.files))
-    return(fit.attr)
+    return(df.attr$fit.attr[[1]])
   })
 }

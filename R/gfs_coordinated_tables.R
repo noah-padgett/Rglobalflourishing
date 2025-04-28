@@ -1220,8 +1220,8 @@ gfs_generate_supplemental_docs <- function(
               all_categorical() ~ "{n} ({p}%)"
             ),
             label = list(
-              AGE ~ "Age of participant",
               AGE_GRP ~ "Year of birth",
+              AGE ~ "Age of participant",
               GENDER ~ "Gender",
               #RACE1 ~ "Race/ethnicity",
               MARITAL_STATUS ~ "Respondent marital status",
@@ -1251,6 +1251,7 @@ gfs_generate_supplemental_docs <- function(
           add_stat_label(
             label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
           ) %>%
+          modify_header(label ~ "**Outcome**") %>%
           italicize_labels()
       	})
       })
@@ -1301,15 +1302,17 @@ gfs_generate_supplemental_docs <- function(
             label = OUTCOME.VEC.LABELS,
             digits = list(
               all_continuous() ~ 1,
-              all_categorical() ~ 0
+              n = label_style_number(digits=0),
+              p = label_style_percent(digits=1)
             ),
             missing_text = "    (Missing)",
             missing_stat = "{N_miss} ({p_miss}%)"
           ) %>%
-           add_stat_label(
-             label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
-            ) %>%
-           italicize_labels()
+          add_stat_label(
+            label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+          ) %>%
+          modify_header(label ~ "**Outcome**") %>%
+          italicize_labels()
         })
       })
 
@@ -1387,7 +1390,8 @@ gfs_generate_supplemental_docs <- function(
               ),
               digits = list(
                 all_continuous() ~ 1,
-                all_categorical() ~ 0
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
@@ -1440,7 +1444,8 @@ gfs_generate_supplemental_docs <- function(
               label = OUTCOME.VEC.LABELS,
               digits = list(
                 all_continuous() ~ 1,
-                all_categorical() ~ 0
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
@@ -1448,6 +1453,7 @@ gfs_generate_supplemental_docs <- function(
             add_stat_label(
               label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
+            modify_header(label ~ "**Outcome**") %>%
             italicize_labels()
         })
       })
@@ -2358,7 +2364,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               digits = list(
                 all_continuous() ~ 1,
-                all_categorical() ~ 0
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
@@ -2425,16 +2432,17 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               label = OUTCOME.VEC.LABELS,
               digits = list(
-                all_continuous() ~ 2,
-                all_categorical() ~ 1
+                all_continuous() ~ 1,
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
-            )  %>%
-            modify_header(label ~ "**Outcome**") %>%
+            ) %>%
             add_stat_label(
               label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
             ) %>%
+            modify_header(label ~ "**Outcome**") %>%
             italicize_labels()
 
           tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding. Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout to maintain nationally representative estimates for Wave 2 characteristics using the reduced sample.")
@@ -2525,7 +2533,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               digits = list(
                 all_continuous() ~ 1,
-                all_categorical() ~ 0
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
@@ -2588,15 +2597,16 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               ),
               label = OUTCOME.VEC.LABELS,
               digits = list(
-                all_continuous() ~ 2,
-                all_categorical() ~ 1
+                all_continuous() ~ 1,
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
               ),
               missing_text = "    (Missing)",
               missing_stat = "{N_miss} ({p_miss}%)"
             ) %>%
             add_stat_label(
               label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
-            )  %>%
+            ) %>%
             modify_header(label ~ "**Outcome**") %>%
             italicize_labels()
 
@@ -2637,8 +2647,27 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         tmp.included.vars <- str_remove(tmp.included.vars0, "COV_")
         lab.list <- list()
         for(ii in 1:length(tmp.included.vars)){
-          lab.list[[tmp.included.vars0[ii]]] = get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
-          tmp.included.vars[ii] <- get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+        	  ## manually adjust for specific variables
+          if(str_detect(tmp.included.vars0[ii], "INCOME")){
+          	if(COUNTRY_LABELS[i] %in% c("United States", "Australia")){
+          		lab.list[[tmp.included.vars0[ii]]] = "Annual household income"
+            	tmp.included.vars[ii] <- "Annual household income"
+          	} else {
+          		lab.list[[tmp.included.vars0[ii]]] = "Monthly household income"
+            	tmp.included.vars[ii] <- "Monthly household income"
+          	}
+          } else if(str_detect(tmp.included.vars0[ii], "ATTEND_SVCS")){
+          	lab.list[[tmp.included.vars0[ii]]] = "Religious service attendance"
+            tmp.included.vars[ii] <- "Religious service attendance"
+          } else if(str_detect(tmp.included.vars0[ii], "EMPLOYMENT")){
+          	lab.list[[tmp.included.vars0[ii]]] = "Employment status"
+            tmp.included.vars[ii] <- "Employment status"
+          } else {
+          	lab.list[[tmp.included.vars0[ii]]] = get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+            tmp.included.vars[ii] <- get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+          }
+
+
         }
         tb.note <- as_paragraph(paste0("_Notes_. N=",country.n1.print,"; attrition weights were estimated using the 'survey::svyglm(family=quasibinomial('logit'))' function. All continuous predictors were standardized and all categorical predictors used the most common category as the reference group. Reported p-values are based on the fitted regression model and no adjustments for multiple testing were done within this table."))
 
@@ -2661,7 +2690,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           },
           label = lab.list
         )  |>
-          italicize_labels() |>
+          bold_labels() |>
+          italicize_levels() |>
           modify_header(estimate = "**Odds Ratio**") |>
           as_flex_table() |>
          autofit() |>
@@ -3271,11 +3301,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                 by = WAVE0,
                 include = c(
                   any_of(focal.predictor0),
-                  AGE,
                   any_of(baseline.pred0)
                 ),
                 type = list(
-                  AGE ~ "continuous2",
                   all_continuous() ~ "continuous2"
                 ),
                 statistic = list(
@@ -3283,7 +3311,6 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                   all_categorical() ~ "{n} ({p}%)"
                 ),
                 label = list(
-                  AGE ~ "Age of participant",
                   AGE_GRP ~ "Year of birth",
                   GENDER ~ "Gender",
                   MARITAL_STATUS ~ "Respondent marital status",
@@ -3302,12 +3329,16 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                   REL1 ~ "Religious affiliation growing up"
                 ),
                 digits = list(
-                  all_continuous() ~ 1,
-                  all_categorical() ~ 0
+                all_continuous() ~ 1,
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
                 ),
                 missing_text = "    (Missing)",
                 missing_stat = "{N_miss} ({p_miss}%)"
-              ),
+              ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+            ),
             .header = "**{strata}**"
           ) %>%
           italicize_labels()
@@ -3367,16 +3398,21 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                   all_categorical() ~ "{n} ({p}%)"
                 ),
                 digits = list(
-                  all_continuous() ~ 1,
-                  all_categorical() ~ 0
+                all_continuous() ~ 1,
+                n = label_style_number(digits=0),
+                p = label_style_percent(digits=1)
                 ),
                 missing_text = "    (Missing)",
                 missing_stat = "{N_miss} ({p_miss}%)"
-              ),
+              ) %>%
+            add_stat_label(
+              label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+            ),
             .header = "**{strata}**"
           ) %>%
           modify_header(label ~ "**Outcome**") %>%
-          italicize_labels()
+            italicize_labels()
+
 
         tb.note.summarytab <- as_paragraph("_Note._ N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding.")
 
@@ -3412,13 +3448,13 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
         df.tmp <- get_country_specific_output(
           res.dir = dir.primary,
+          outcomes =  OUTCOME.VEC[str_detect(OUTCOME.VEC,"blank",negate=TRUE)],
           predictors = focal.predictor,
-          outcomes =  tmp.vec,
           appnd.txt = "_primary_wpc"
         ) %>%
           filter(Variable == "FOCAL_PREDICTOR") %>%
           select(COUNTRY, OUTCOME, id.Est, rr.Est)
-        for(i in 1:nrow(tmp.a)){
+        for(i in 1:nrow(df.tmp)){
           if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
             df.tmp$rr.Est[i] <- NA
           }
@@ -3441,11 +3477,11 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         }
 
 
-        tb.note.outcomewide <-as_paragraph(paste0("_Notes_. RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00.
+        tb.note.outcomewide <-as_paragraph(paste0("_Notes_. N =", n1.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; Self-rated feelings about income growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Models with PC (principal components), the first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at wave 2.
 
-An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a B, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model."))
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a ES, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model."))
 
         if(!single.file.num.sequential){
           tb.cap <-  paste0("Table S3. Model 2 outcome-wide results--point estimates of effect sizes only--re-structured for comparison across countries.")
@@ -3455,7 +3491,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         }
         tb.num <- tb.num + 1
 
-        tmp.tb <- df.tmp %>%
+        tb.outcomewide <- df.tmp %>%
           flextable() %>%
           autofit() %>%
           width(j=1,3) %>%
@@ -3487,10 +3523,20 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
       body_add_flextable(tbia.toprint) |>
       body_add_break() |>
       body_add_flextable(tbib.toprint) |>
+      body_add_break() |>
+      body_add_flextable(tb.outcomewide) |>
       body_end_block_section(value = extra_wide_landscape)|>
       body_add_break()
 
     print(supp_doc, target = out.file)
+    # create comparable files but as CSV
+    tmp.file <- here::here(res.dir,paste0("GFS-S3_Outcomewide_Results_Comparison_", paste0(focal.better.name, collapse=" "),".csv"))
+    readr::write_csv(df.tmp, file=tmp.file)
+
+    try({
+      tmp.file <- here::here(res.dir,paste0("GFS-S3_Country_Comparison_", paste0(focal.better.name, collapse=" "),".csv"))
+      readr::write_csv(sumtab, file=tmp.file)
+    })
     ## ========================================================================================== ##
     ## ====== Supplemental Forest plots ========================================================= ##
 
