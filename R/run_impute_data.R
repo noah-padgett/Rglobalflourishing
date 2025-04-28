@@ -247,7 +247,7 @@ run_impute_data <- function(data,
         )
       })
     }
-    ## save country-specific imputation result
+    ## save country-by-imputation-specific files
     c.file.name <- paste0("imputed_data_obj_",cur.country,"_nimp_",Nimp,".RData")
     save(fit.imp, file = here::here(data.dir, c.file.name))
   }
@@ -257,8 +257,8 @@ run_impute_data <- function(data,
   # 1. separate files by country
   country_vec <- sort(as.character(unique(data$COUNTRY)))
 
-  map(.x = country_vec,
-      .f = ~run_imputation(country = .x, df.tmp = data))
-
+  walk(country_vec,\(x){
+    run_imputation(country = x, df.tmp = data)
+  })
 
 }

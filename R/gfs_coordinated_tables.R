@@ -1490,6 +1490,10 @@ gfs_generate_supplemental_docs <- function(
         vec.rr <- c("rr.theta", "rr.theta.ci", "rr.tau","global.pvalue")
         vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
         vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+        if(ci.bonferroni){
+          vec.a <- c("RR", "ES",paste0(.round(p.bonferroni*100,1),"% CI"),"τ", "Global p-value")
+          vec.b <- c("RR\r", "ES\r",paste0(.round(p.bonferroni*100,1),"% CI\r"),"τ\r", "Global p-value\r")
+        }
         cnames <- c(
           "Outcome",
           vec.a,

@@ -32,6 +32,15 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original
   }
 
+  ## columns to drop
+  cols_to_drop <- c(
+    "CNTRY_REL_BUD", "CNTRY_REL_CHI", "CNTRY_REL_CHR",
+    "CNTRY_REL_HIN", "CNTRY_REL_ISL", "CNTRY_REL_JUD", "CNTRY_REL_SHI",
+    paste0("REL",3:9),
+    paste0("TEACHINGS_",1:15)
+  )
+  ##
+
   if(wave == 1 | wave == "Y1"| wave == "W1"){
     df.original <- df.original %>%
       dplyr::mutate(
@@ -39,6 +48,8 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         COUNTRY = factor(COUNTRY),
         COUNTRY2 = COUNTRY
       )
+    df.original <- df.original %>%
+      select(!(any_of(cols_to_drop)))
   }
   ## ============================================================================================ ##
   ## ====== Restructure to "wide" data ========================================================== ##
@@ -53,6 +64,11 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         COUNTRY = factor(COUNTRY),
         COUNTRY2 = COUNTRY
       )
+
+    ## DROP UNUSED COLUMNS
+    cols_to_drop <- c(paste0(cols_to_drop, "_Y1"), paste0(cols_to_drop, "_Y2"))
+    df.original <- df.original %>%
+      select(!(any_of(cols_to_drop)))
 
     ## ========================================================================================== ##
     ## ====== MISSINGNESS INDICATOR ============================================================= ##

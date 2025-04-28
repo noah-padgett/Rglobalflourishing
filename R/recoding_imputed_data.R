@@ -3,6 +3,7 @@
 #' Reformated the imputed (nested) data for use in coordinated regression analyses.
 #'
 #' @param df.imp a nested data.frame with results from run_impute_data(.).
+#' @param m (default: "long") or a number 1:Nimp
 #' @param list.default (required) a names list with DEMOGRAPHICS.CHILDHOOD.PRED.VEC, OUTCOME.VE,
 #'    FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS
 #' @param list.composites (optional) a named list with elements LIST.OUTCOME.COMPOSITES, LIST.COMPOSITE.COMBINE.METHOD and COMPOSITE.VEC.
@@ -27,7 +28,7 @@
 #' More to come...
 #'
 recode_imputed_data <- function(
-    df.imp = NULL,
+    df.imp = NULL, m = "long",
     list.default = NULL,
     list.composites = NULL,
     list.manual = NULL,
@@ -52,9 +53,10 @@ recode_imputed_data <- function(
   #  select(COUNTRY, imp.complete) %>%
   #  unnest(imp.complete)
 
-  df.imp.long <- complete(df.imp, action = "long") %>%
+  df.imp.long <- complete(df.imp, action = m) %>%
     select(!any_of(drop_created_vars)) %>%
     mutate(
+      .imp = ifelse(is.numeric(m), m, ifelse(!is.null(.imp), .imp, m)),
       across(where(is.factor), \(x){
       	if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
         	x <- sub("\\..*", "", x)
@@ -643,21 +645,26 @@ recode_imputed_data <- function(
 
 
 #' @export
-recode_imp_by_country <- function(data.dir, .nimp = 20, ...){
-
+recode_imp_by_country <- function(data.dir, nimp = 20, ...){
   # get list of files in data.dir
   imp.files <- list.files(data.dir)
   imp.files <- imp.files[str_detect(imp.files, "imputed_data_obj")]
-  imp.files <- imp.files[str_detect(imp.files, paste0("_nimp_",.nimp))]
-
+  imp.files <- imp.files[str_detect(imp.files, paste0("_nimp_",nimp))]
   # run recode_imputed_data by country
-  out.cap <- map(imp.files, \(x){
+  x <- imp.files[1]
+  y <- 1
+  walk(imp.files, \(x){
     load(here::here(data.dir,x), ex <- new.env())
     # ls.str(ex)
-    tmp.imp <- recode_imputed_data(ex$fit.imp,...)
-    cur.country <- as.character(tmp.imp$COUNTRY[1])
-    c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,".rds")
-    readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
+    walk(1:nimp, \(y){
+    		tmp.imp <- recode_imputed_data(ex$fit.imp, m = y, ...)
+    		cur.country <- as.character(tmp.imp$COUNTRY[1])
+    		c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,"_imp",y,".rds")
+    		readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
+    		rm(tmp.imp)
+    })
+    rm(ex)
+    gc(full=TRUE)
   })
 
 }

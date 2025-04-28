@@ -575,7 +575,28 @@ recode_raw_data <- function(
 
 }
 
+# outcome vectors
+LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
+RECODE.DEFAULTS <- list(
+  FOCAL_PREDICTOR = FOCAL_PREDICTOR,
+  DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(
+    get_variable_codes("GENDER.RACE", appnd=""),
+    get_variable_codes("DEMOGRAPHIC.VARS", appnd="_Y1"),
+    get_variable_codes("RETROSPECTIVE.VARS", appnd="_Y1")
+  ),
+  VARIABLES.VEC = c(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2")),
+  FORCE_BINARY = FORCE_BINARY,
+  FORCE_CONTINUOUS = FORCE_CONTINUOUS,
+  VALUES_DEFINING_UPPER_CATEGORY = VALUES_DEFINING_UPPER_CATEGORY,
+  VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,
+  USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)
+)
 
+# get "raw data"
+df.raw <- gfs_get_labelled_raw_data(
+  file = here::here(data.dir, dataset.name),
+  list.composites = LIST.COMPOSITES
+)
 
 df.raw.cca <- recode_raw_data(
 	df.raw, list.default = RECODE.DEFAULTS,
@@ -583,15 +604,6 @@ df.raw.cca <- recode_raw_data(
     wgt = "ANNUAL_WEIGHT_R2"
    )
    
-   
-head(df.raw.cca)   
-
-
-fit <- lm(PHYSICAL_HLTH_Y2 ~ PHYSICAL_HLTH_Y1, data=df.raw.cca)
-summary(fit)
-fit$df.residual
-
-
 OUTCOME.VEC0[73:79]
 DEMO.CHILDHOOD.PRED <- c(
   "COV_AGE_GRP_Y1",
@@ -617,10 +629,13 @@ DEMO.CHILDHOOD.PRED <- c(
 
 country.vec <- sort(as.character(unique(df.raw.cca$COUNTRY)))
 names(country.vec) <- country.vec
+outcome.vec <- OUTCOME.VEC0[73:79]
+names(outcome.vec) <- OUTCOME.VEC0[73:79]
 fit.res <- map(country.vec, \(x){
 	tmp.data <- df.raw.cca %>%
 	filter(COUNTRY == x)
-	tmp.data$PRIMARY_OUTCOME <- scale(tmp.data[[OUTCOME.VEC0[73]]])
+	my.res <- map(outcome.vec, \(y){
+	tmp.data$PRIMARY_OUTCOME <- scale(tmp.data[[y]])
 	tmp.data$FOCAL_PREDICTOR <- scale(tmp.data[[FOCAL_PREDICTOR]])
 
 	
@@ -641,13 +656,41 @@ fit.res <- map(country.vec, \(x){
 		), tmp.data
 	)
 	c(est = fit$coefficients["FOCAL_PREDICTOR"], se = se(fit)["FOCAL_PREDICTOR"], n = N)
+  }) |>
+  bind_rows(.id = "OUTCOME")
+  
+  
+  my.res
 }) |>bind_rows(.id="COUNTRY")
 
-colnames(fit.res) <- c("COUNTRY", "est", "se", "n")
-sum(fit.res$n)
+colnames(fit.res) <- c("COUNTRY", "OUTCOME", "est", "se", "n")
+
+fit.res %>%
+group_by(OUTCOME) %>%
+summarize(
+Ng = sum(n)
+)
 
 library(metafor)
 
-rma(yi=fit.res$est, sei = fit.res$se)
+meta.fit <- fit.res %>%
+group_by(OUTCOME) %>%
+nest() %>%
+mutate(
+ fit.rma = map(data, \(x){
+ 	rma(yi=x$est, sei = x$se)
+ }),
+ est = map_dbl(fit.rma, \(x) x$beta[1]),
+ cu.lb = map_dbl(fit.rma, \(x) x$ci.lb[1]),
+ ci.ub = map_dbl(fit.rma, \(x) x$ci.ub[1]),
+ tau = map_dbl(fit.rma, \(x) sqrt(x$tau2)[1])
+)
+
+write_csv(meta.fit[,c("OUTCOME", "est", "cu.lb", "ci.ub", "tau")], "unweighted_res.csv")
+
+meta.fit$OUTCOME
+names(meta.fit$fit.rma[[1]])$theta
+
+
 
 

@@ -121,10 +121,10 @@ df.raw <- gfs_get_labelled_raw_data(
   # ~~
   recode_imp_by_country(
     data.dir,
+    nimp = 5,
     list.default = RECODE.DEFAULTS,
     list.composites = LIST.COMPOSITES,
-    wgt = "ANNUAL_WEIGHT_R2",
-    .nimp = 5
+    wgt = "ANNUAL_WEIGHT_R2"
   )
 # ================================================================================================ #
 # ================================================================================================ #
@@ -134,8 +134,7 @@ df.raw <- gfs_get_labelled_raw_data(
 tmp.dat1 <- df.raw %>%
   filter(COUNTRY == "United States") %>%
   arrange(ID)
-tmp.dat2 <- readr::read_rds(here::here(data.dir, "recoded_imputed_data_obj_United States.rds")) %>%
-  filter(.imp == 1) %>%
+tmp.dat2 <- readr::read_rds(here::here(data.dir, "recoded_imputed_data_obj_United States_imp1.rds")) %>%
   arrange(ID)
 dnn0 <- c("Raw Data", "Recoded Imputed Data (.imp==1)")
 for(i in 1:length(FOCAL_PREDICTOR)){
@@ -200,8 +199,8 @@ DEMO.CHILDHOOD.PRED <- c(
 )
 # Run country-specific regression analyses for ALL wave 2 outcomes
 OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,
-your.outcome <- OUTCOME.VEC0[2]
-
+x <- OUTCOME.VEC0[2]
+y <- FOCAL_PREDICTOR[1]
 # Model 1: Run without principal components
 LIST.RES <- map(OUTCOME.VEC0, \(x){
   map(FOCAL_PREDICTOR, \(y){
