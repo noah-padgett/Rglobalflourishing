@@ -23,7 +23,7 @@ dataset.name <- "gfs_all_countries_wave2.sav"
 
 # Specify where you want to output results
 # Can be left blank, and the results will output to the same directory as the data.
-out.dir <- getwd()
+out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"
 
 # Here is YOUR wave 1 construct variable
 FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
@@ -526,8 +526,7 @@ gfs_generate_supplemental_docs(
   wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "S1",
-  outcome.vec = OUTCOME.VEC0[73:79]
+  what = "all"
 )
 
 

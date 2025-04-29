@@ -211,10 +211,10 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
         tidyr::nest() %>%
         dplyr::mutate(
           fit.attr = purrr::map(data, \(tmp.dat){
-            fit_attrition_model(tmp.dat)
+            fit_attrition_model(tmp.dat,...)
           }),
           data = map(fit.attr, \(x){
-            create_attr_wgts(x)
+            create_attr_wgts(x,...)
           })
         )
     	}) |>
@@ -276,7 +276,7 @@ append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.n
   names(attr.wgt.file) <- str_split_i(attr.wgt.file, " fitted", 1)
   # subset to only this specific country
   #attr.wgt.file <- attr.wgt.file[str_detect(attr.wgt.file, country)]
-
+  x <- attr.wgt.file[2]
   saved_attr_wgts <- map(attr.wgt.file, \(x){
     load(here::here("results-attr",x), ex <- new.env())
     # ls.str(ex)
@@ -316,6 +316,8 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
 		attr.file <- paste0(cur.country, " fitted attrition model.RData")
 		load(here::here(attr.dir, attr.file), env.attr <- new.env())
 		df.tmp <- left_join(df.tmp, env.attr$df.wgts)
-		readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
+		readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz") 
+		rm(df.tmp)
+		gc()
 	})
 }
