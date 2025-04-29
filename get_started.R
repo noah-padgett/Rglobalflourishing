@@ -1,26 +1,31 @@
 devtools::load_all()
-
-library(here)
-
 load_packages()
+
 
 data.dir <- "/Users/chris_felton/Documents/GFSw20"
 dataset.name <- "gfs_all_countries_wave2.sav"
 
+FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
+FOCAL_PREDICTOR_BETTER_NAME <- c("Self-rated physical health")
+FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country")
 
-FOCAL_PREDICTOR <- "PHYSICAL_HLTH_Y1"
-FOCAL_PREDICTOR_BETTER_NAME <- "Self-Rated Physical Health"
-FOCAL_PREDICTOR_REFERENCE_VALUE <- "mean rating within country"
+VALUES_DEFINING_UPPER_CATEGORY <- list(NA)
+VALUES_DEFINING_LOWER_CATEGORY <- list(NA)
 
-VALUES_DEFINING_UPPER_CATEGORY <- NULL
-VALUES_DEFINING_LOWER_CATEGORY <- NULL
-FORCE_BINARY <- FALSE
-FORCE_CONTINUOUS <- FALSE
+FORCE_BINARY <- c(FALSE)
+
+FORCE_CONTINUOUS <- c(FALSE)
+
+SUBPOPULATION <- list(NULL)
+
+names(FORCE_CONTINUOUS) <- names(FORCE_BINARY) <- names(VALUES_DEFINING_UPPER_CATEGORY)  <- names(VALUES_DEFINING_LOWER_CATEGORY) <- names(SUBPOPULATION) <- FOCAL_PREDICTOR
 
 if (!exists("out.dir")) {
   out.dir <- data.dir
 }
 setwd(out.dir)
+
+load_packages()
 
 options(
   survey.lonely.psu = "certainty"
@@ -42,7 +47,4 @@ RECODE.DEFAULTS <- list(
   USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)
 )
 
-df.raw <- gfs_get_labelled_raw_data(
-  file = here::here(data.dir, dataset.name),
-  list.composites = LIST.COMPOSITES
-)
+library(tictoc)
