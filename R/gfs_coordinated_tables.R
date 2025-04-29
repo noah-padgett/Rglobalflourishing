@@ -130,9 +130,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
 
         # Social Well-Being
         'blank',
-        'COMPOSITE_SUBJECTIVE_SOC_CONN',
-        #'CONTENT',
-        #'SAT_RELATNSHP',
+        'CONTENT',
+        'SAT_RELATNSHP',
         'PEOPLE_HELP',
         'CLOSE_TO',
         'APPROVE_GOVT',
@@ -620,7 +619,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       what = "forest.plot"
     )
     p1 <- p1[[1]][[1]] +
-    		plot_annotate(
+    		patchwork::plot_annotation(
     			subtitle = str_wrap("(A) Controlling for demographic and childhood variables.",60),
     			title=NULL
     		)
@@ -640,7 +639,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       what = "forest.plot"
     )
     p2 <- p2[[1]][[1]] +
-    		plot_annotate(
+        patchwork::plot_annotation(
     			subtitle = str_wrap("(B) Controlling for demographic, childhood, and other Wave 1 confounders (via PCs) variables.",60),
     			title=NULL
     		)
@@ -857,7 +856,6 @@ gfs_generate_supplemental_docs <- function(
         'blank',
         "COMPOSITE_FLOURISHING_SECURE",
         "COMPOSITE_FLOURISHING",
-        # Remove domains -> only reported in online supplement
         "COMPOSITE_HAPPI_LIFE_SAT",
         "COMPOSITE_HEALTH",
         "COMPOSITE_MEANING_PURPOSE",
