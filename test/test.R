@@ -10,8 +10,15 @@ load(here::here(data.dir, "gfs_w2_imputed_data_20imp.RData"))
 #  wgt = "ANNUAL_WEIGHT_R2"
 #)
 
-df.isr <- df.imp %>%
-  filter(COUNTRY == "Israel") %>%
+df_turkey <- readRDS(here(data.dir, "recoded_imputed_data_obj_Turkey_imp1.rds"))
+
+
+
+
+#df.isr <- df.imp %>%
+#  filter(COUNTRY == "Israel") %>%
+
+unique(df_turkey$PSU)
 
 
 country_vec <- as.character(unique(df.raw$COUNTRY))
