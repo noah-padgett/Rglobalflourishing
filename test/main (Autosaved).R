@@ -553,7 +553,7 @@ gfs_generate_supplemental_docs(
   wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all"
+  what = "S3"
 )
 
 

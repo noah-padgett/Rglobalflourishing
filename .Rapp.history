@@ -1,5 +1,5 @@
-getwd()
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"
+devtools::load_all()
+# Add the directory where the dataset is stored on your computer#
 data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-data"#
 dataset.name <- "gfs_all_countries_wave2.sav"#
 #
@@ -41,9 +41,10 @@ if (is.null(out.dir)) {#
   out.dir <- data.dir#
 }#
 setwd(out.dir)#
-# Note:
-devtools::load_all()
+# Note:#
+# The following function loads the required packages for the remainder of the script to work.#
 load_packages()#
+library(furrr)#
 # global options#
 options(#
   survey.lonely.psu = "certainty"#
@@ -64,32 +65,170 @@ RECODE.DEFAULTS <- list(#
   VALUES_DEFINING_LOWER_CATEGORY = VALUES_DEFINING_LOWER_CATEGORY,#
   USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)#
 )
-recode_imp_by_country(#
-    data.dir,#
-    nimp = 5,#
-    list.default = RECODE.DEFAULTS,#
-    list.composites = LIST.COMPOSITES,#
-    wgt = "ANNUAL_WEIGHT_R2"#
-  )
-run_attrition_model_by_country(#
-  data.dir,#
-  obs.id.var = "CASE_OBSERVED_Y2",#
-  attr.pred = c(#
-    "ANNUAL_WEIGHT_R2", "MODE_RECRUIT",#
-    'COMPOSITE_HAPPI_LIFE_SAT_Y1', 'COMPOSITE_HEALTH_Y1', 'COMPOSITE_MEANING_PURPOSE_Y1',#
-    'COMPOSITE_CHARACTER_Y1', 'COMPOSITE_SUBJECTIVE_SOC_CONN_Y1', 'COMPOSITE_FINL_MAT_WORRY_Y1',#
-    'COMPOSITE_EXTRAVERSION_Y1', 'COMPOSITE_OPENNESS_Y1', 'COMPOSITE_AGREEABLENESS_Y1',#
-    'COMPOSITE_CONSCIENTIOUSNESS_Y1', 'COMPOSITE_NEUROTICISM_Y1',#
-    'COMPOSITE_DEPRESSION_Y1', 'COMPOSITE_ANXIETY_Y1', 'LONELY_Y1', 'DAYS_EXERCISE_Y1',#
-    'COV_AGE_GRP_Y1', 'COV_GENDER', 'COV_MARITAL_STATUS_Y1', 'COV_EMPLOYMENT_Y1',#
-    'COV_ATTEND_SVCS_Y1', 'COV_EDUCATION_3_Y1', 'COV_BORN_COUNTRY_Y1', "COV_RACE_PLURALITY",#
-    "COV_URBAN_RURAL_Y1", 'COV_INCOME_Y1'#
-  ),#
-  wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU"#
+plan("multicore")#
+#
+VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]#
+OUTCOME.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]#
+CONTEMPORANEOUS.EXPOSURES.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "COMPOSITE", negate = TRUE)]#
+CONTEMPORANEOUS.EXPOSURES.VEC <- CONTEMPORANEOUS.EXPOSURES.VEC[str_detect(CONTEMPORANEOUS.EXPOSURES.VEC, "_Y1")]#
+DEMO.CHILDHOOD.PRED <- c(#
+  "COV_AGE_GRP_Y1",#
+  "COV_GENDER_Y1",#
+  "COV_EDUCATION_3_Y1",#
+  "COV_EMPLOYMENT_Y1",#
+  "COV_MARITAL_STATUS_Y1",#
+  "COV_ATTEND_SVCS_Y1",#
+  "COV_BORN_COUNTRY_Y1",#
+  "COV_PARENTS_12YRS_Y1",#
+  "COV_SVCS_12YRS_Y1",#
+  "COV_MOTHER_RELATN_Y1",#
+  "COV_FATHER_RELATN_Y1",#
+  "COV_OUTSIDER_Y1",#
+  "COV_ABUSED_Y1",#
+  "COV_HEALTH_GROWUP_Y1",#
+  "COV_INCOME_12YRS_Y1",#
+  "COV_REL1_Y1",#
+  "COV_RACE_PLURALITY",#
+  "COV_MOTHER_NA",#
+  "COV_FATHER_NA"#
+)#
+# Run country-specific regression analyses for ALL wave 2 outcomes#
+OUTCOME.VEC0 <- OUTCOME.VEC
+# Model 2: Run with principal components#
+with_progress({#
+  furrr::future_walk(OUTCOME.VEC0, \(x){#
+    walk(FOCAL_PREDICTOR, \(y){#
+    gfs_run_regression_single_outcome(#
+      your.outcome = x,#
+      your.pred = y,#
+      data.dir = data.dir,#
+      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")#
+      psu = PSU, #psu = as.name("PSU")#
+      strata = STRATA, # strata = as.name("STRATA")#
+      covariates = DEMO.CHILDHOOD.PRED,#
+      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+      list.composites = LIST.COMPOSITES[[1]],#
+      standardize = TRUE,#
+      pc.cutoff = 7,#
+      pc.rule = "constant",#
+      res.dir = "results-primary",#
+      appnd.txt.to.filename = "_primary_wpc"#
+    )#
+  }) })#
+})
+library(progressr)
+install.packages(progressr)
+install.packages("progressr")
+install.packages(progressr)
+install.packages(progressr)
+library(progressr)
+# Model 2: Run with principal components#
+with_progress({#
+  furrr::future_walk(OUTCOME.VEC0, \(x){#
+    walk(FOCAL_PREDICTOR, \(y){#
+    gfs_run_regression_single_outcome(#
+      your.outcome = x,#
+      your.pred = y,#
+      data.dir = data.dir,#
+      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")#
+      psu = PSU, #psu = as.name("PSU")#
+      strata = STRATA, # strata = as.name("STRATA")#
+      covariates = DEMO.CHILDHOOD.PRED,#
+      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+      list.composites = LIST.COMPOSITES[[1]],#
+      standardize = TRUE,#
+      pc.cutoff = 7,#
+      pc.rule = "constant",#
+      res.dir = "results-primary",#
+      appnd.txt.to.filename = "_primary_wpc"#
+    )#
+  }) })#
+})
+LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wpc")#
+meta.input <- LIST.RES %>%#
+  bind_rows() %>%#
+  mutate(#
+    OUTCOME0 = OUTCOME,#
+    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR#
+  ) %>%#
+  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%#
+  nest()#
+#
+META.RES <- gfs_meta_analysis(#
+  meta.input,#
+  p.subtitle = "Principal Components Included -- Full Imputation Approach"#
 )#
 #
-## append attrition weights to imputed data#
-append_attr_wgts_to_imp_data(data.dir, attr.dir = "results-attr")
+readr::write_rds(#
+  META.RES,#
+  file = here::here("results-primary","0_meta_analyzed_results_primary_wpc.rds"),#
+  compress = "gz"#
+)
+with_progress({#
+  p <- progressr::progressor(OUTCOME.VEC0)#
+  furrr::future_walk(OUTCOME.VEC0, \(x){#
+    walk(FOCAL_PREDICTOR, \(y){#
+      gfs_run_regression_single_outcome(#
+      your.outcome = x,#
+      your.pred = y,#
+      data.dir = data.dir,#
+      direct.subset = expr(CASE_OBSERVED_Y2 == 1),#
+      wgt = SAMP.ATTR.WGT,#
+      psu = PSU,#
+      strata = STRATA,#
+      covariates = DEMO.CHILDHOOD.PRED,#
+      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+      list.composites = LIST.COMPOSITES[[1]],#
+      standardize = TRUE,#
+      pc.cutoff = 7,#
+      pc.rule = "constant",#
+      res.dir = "results-cca",#
+      appnd.txt.to.filename = "_cca_wpc"#
+      )#
+    }) #
+    p()#
+  })#
+})
+furrr::future_walk(OUTCOME.VEC0, \(x){#
+    walk(FOCAL_PREDICTOR, \(y){#
+      gfs_run_regression_single_outcome(#
+      your.outcome = x,#
+      your.pred = y,#
+      data.dir = data.dir,#
+      direct.subset = expr(CASE_OBSERVED_Y2 == 1),#
+      wgt = SAMP.ATTR.WGT,#
+      psu = PSU,#
+      strata = STRATA,#
+      covariates = DEMO.CHILDHOOD.PRED,#
+      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,#
+      list.composites = LIST.COMPOSITES[[1]],#
+      standardize = TRUE,#
+      pc.cutoff = 7,#
+      pc.rule = "constant",#
+      res.dir = "results-cca",#
+      appnd.txt.to.filename = "_cca_wpc"#
+      )#
+    })#
+  }, .progress=TRUE)
+LIST.RES <- construct_meta_input_from_saved_results(res.dir="results-cca", outcomes=OUTCOME.VEC0, predictors=FOCAL_PREDICTOR, appnd.txt = "_cca_wpc")#
+meta.input <- LIST.RES %>%#
+  bind_rows() %>%#
+  mutate(#
+    OUTCOME0 = OUTCOME,#
+    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR#
+  ) %>%#
+  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%#
+  nest()#
+META.RES <- gfs_meta_analysis(#
+  meta.input,#
+  p.subtitle = "Principal Components Included -- Complete Case Analysis"#
+)#
+readr::write_rds(#
+  META.RES,#
+  file = here::here("results-cca", "0_meta_analyzed_results_cca_wpc.rds"),#
+  compress = "gz"#
+)
+meta.input
 RECODE.DEFAULTS <- list(#
   FOCAL_PREDICTOR = FOCAL_PREDICTOR,#
   DEMOGRAPHICS.CHILDHOOD.PRED.VEC = c(#
@@ -111,28 +250,52 @@ df.raw <- gfs_get_labelled_raw_data(#
   list.composites = get_variable_codes('LIST.COMPOSITES'),#
   add.whitespace = TRUE#
 )#
-df.raw <- append_attrition_weights_to_df(data=df.raw)
-composite.wgt.name = as.name("AVG.SAMP.ATTR.WGT")
-attr.wgt.name = as.name("ATTR.WGT")
-wgt = as.name("ANNUAL_WEIGHT_R2")
-strata = as.name("STRATA")
-psu = as.name("PSU")
-attr.wgt.file <- list.files("results-attr")
-attr.wgt.file
-names(attr.wgt.file) <- str_split_i(attr.wgt.file, " fitted", 1)
-attr.wgt.file
-x <- attr.wgt.file[2]
-load(here::here("results-attr",x), ex <- new.env())
-ls.str(ex)
-saved_attr_wgts <- map(attr.wgt.file, \(x){#
-    load(here::here("results-attr",x), ex <- new.env())#
-    # ls.str(ex)#
-    ex$df.wgts %>%#
-      filter(.imp == 1) %>%#
-      select(ID, COUNTRY, {{psu}}, {{strata}}, {{attr.wgt.name}}, {{composite.wgt.name}})#
-  }) |> bind_rows()
-data <- left_join(data, saved_attr_wgts)
-data=df.raw
-data <- left_join(data, saved_attr_wgts)
-devtools::load)_all()
+df.raw <- append_attrition_weights_to_df(data=df.raw)#
+#
+# main text#
+gfs_generate_main_doc(#
+  df.raw = df.raw,#
+  meta.wopc = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),#
+  meta.wpc = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wpc.rds"),#
+  focal.predictor = FOCAL_PREDICTOR,#
+  focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,#
+  res.dir = "results",#
+  wgt = WGT0,#
+  wgt1 = ANNUAL_WEIGHT_R2,#
+  wgt2 = AVG.SAMP.ATTR.WGT,#
+  psu = PSU,#
+  strata = STRATA#
+)
 devtools::load_all()
+gfs_generate_main_doc(#
+  df.raw = df.raw,#
+  meta.wopc = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),#
+  meta.wpc = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wpc.rds"),#
+  focal.predictor = FOCAL_PREDICTOR,#
+  focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,#
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,#
+  res.dir = "results",#
+  wgt = WGT0,#
+  wgt1 = ANNUAL_WEIGHT_R2,#
+  wgt2 = AVG.SAMP.ATTR.WGT,#
+  psu = PSU,#
+  strata = STRATA#
+)
+gfs_generate_supplemental_docs(#
+  df.raw = df.raw,#
+  res.dir = "results",#
+  dir.primary="results-primary",#
+  dir.supp="results-cca",#
+  dir.unstd = "results-unstd",#
+  dir.attr.models = "results-attr",#
+  focal.predictor = FOCAL_PREDICTOR,#
+  focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,#
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,#
+  wgt = WGT0,#
+  wgt1 = ANNUAL_WEIGHT_R2,#
+  wgt2 = AVG.SAMP.ATTR.WGT,#
+  psu = PSU,#
+  strata = STRATA,#
+  what = "all"#
+)

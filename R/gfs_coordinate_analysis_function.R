@@ -214,18 +214,9 @@ gfs_run_regression_single_outcome <- function(
                 })
               )
           }
-          svy.data.imp
-        }
-
-        if(.check_if_valid_comb()){
-        	  #x <- country.files[1]
-        	  
-        	  
-       	  fit.pca.summary = NULL # need to initialize object to not throw error when saving data
-          if( str_to_lower(pc.rule) != "omit"){
-          fit.pca.summary <- map(country.files,\(x){
-            svy.data.imp <- .get_data(x)
-            # IF: pc.rule NOT omit
+          ## append PCs if needed
+          if(str_to_lower(pc.rule) != "omit"){
+          	# IF: pc.rule NOT omit
             # Conduct PCA and add PCs to data.frames
               svy.data.imp <- svy.data.imp %>%
                 mutate(
@@ -236,7 +227,23 @@ gfs_run_regression_single_outcome <- function(
                   svy.data = map(svy.data, \(x) {
                     keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
                     append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                  }),
+                  })
+                )
+          }
+          svy.data.imp
+        }
+
+        if(.check_if_valid_comb()){
+        	  #x <- country.files[1]
+
+
+       	  fit.pca.summary = NULL # need to initialize object to not throw error when saving data
+          if( str_to_lower(pc.rule) != "omit"){
+          fit.pca.summary <- map(country.files,\(x){
+            svy.data.imp <- .get_data(x)
+              ## get fitted PCA for summarizing results
+              svy.data.imp <- svy.data.imp %>%
+                mutate(
                   fit.pca = map(svy.data, \(x) {
                     keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
                     svyprcomp(
@@ -252,6 +259,7 @@ gfs_run_regression_single_outcome <- function(
                     get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])
                   })
                 )
+            
               # get summary of PCA results to save to output file
               fit.pca.summary <- svy.data.imp %>%
                 mutate(
@@ -275,11 +283,11 @@ gfs_run_regression_single_outcome <- function(
                   prop.sum = cumsum(prop.var),
                   Cumulative_Proportion_Explained = prop.sum
                 )
-                    
+
                 fit.pca.summary
-                
+
            }) |> bind_rows()
-           
+
            fit.pca.summary <- fit.pca.summary %>% ungroup() %>%
            	group_by(COUNTRY, PC) %>%
            	summarise(
@@ -288,6 +296,7 @@ gfs_run_regression_single_outcome <- function(
            		prop.sum = mean(prop.var, na.rm=TRUE),
            		Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
            	)
+           	
            }
 
 
@@ -299,14 +308,6 @@ gfs_run_regression_single_outcome <- function(
             if( str_to_lower(pc.rule) != "omit"){
               svy.data.imp <- svy.data.imp %>%
                 mutate(
-                  data = map(data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x)
-                    append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                  }),
-                  svy.data = map(svy.data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-                    append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                  }),
                   fit.pca = map(svy.data, \(x) {
                     keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
                     svyprcomp(
@@ -348,8 +349,8 @@ gfs_run_regression_single_outcome <- function(
 
               # check pc.cutoff to determine which PCs to use
               if (pc.cutoff %% 1 == 0) {
-                keep.num.pc <- rep(pc.cutoff, length(unique(data$COUNTRY2)))
-                names(keep.num.pc) <- unique(data$COUNTRY2)
+                keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary$COUNTRY)))
+                names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
               } else {
                 # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
                 if (str_to_lower(pc.rule) == "mintotal") {
@@ -357,7 +358,7 @@ gfs_run_regression_single_outcome <- function(
                     dplyr::filter(prop.sum >= pc.cutoff) %>%
                     dplyr::filter(PC == min(PC, na.rm = TRUE))
                   keep.num.pc <- keep.num.pc0$PC
-                  names(keep.num.pc) <- keep.num.pc0$COUNTRY2
+                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
                 }
                 if (str_to_lower(pc.rule) == "mincomp") {
                   keep.num.pc0 <- fit.pca.summary %>%
@@ -370,26 +371,20 @@ gfs_run_regression_single_outcome <- function(
                   keep.num.pc0 <- keep.num.pc0 %>%
                     dplyr::filter(PC == max(PC, na.rm = TRUE))
                   keep.num.pc <- keep.num.pc0$PC
-                  names(keep.num.pc) <- keep.num.pc0$COUNTRY2
+                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
                 }
                 if (str_to_lower(pc.rule) == "omit") {
                   # this is just to avoid errors and is not used
-                  keep.num.pc <- rep(0, length(unique(data$COUNTRY2)))
-                  names(keep.num.pc) <- unique(data$COUNTRY2)
+                  keep.num.pc <- rep(0, length(unique(fit.pca.summary$COUNTRY)))
+                  names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
                 }
               }
-              tmp.df.pca <- data.frame(
-                COUNTRY = names(keep.num.pc),
-                NumPCAkeep = keep.num.pc
-              )
-              tmp.df.pca$Rule <- pc.rule
-              tmp.df.pca$Cutoff <- pc.cutoff
-              fit.pca.summary <- dplyr::left_join(fit.pca.summary, tmp.df.pca)
+
             }
             # ============================================================================================== #
             # RUN REGRESSION ANALYSIS
             # svy.data.imp is a nested df by country & .imp
-            svy.data.imp <- svy.data.imp %>%
+            svy.data.imp %>%
               dplyr::mutate(
                 svy.fit = purrr::map(svy.data, \(x) {
                   tmp.fit <- NULL
@@ -435,8 +430,6 @@ gfs_run_regression_single_outcome <- function(
               ) %>%
               select(fit.tidy) %>%
               ungroup()
-
-            svy.data.imp
           }) |> bind_rows()
 
           # re-estimate basic model with the max number of PCs used to get the variable names
@@ -453,10 +446,42 @@ gfs_run_regression_single_outcome <- function(
               termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])
             )
           } else {
-            tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
+          	 # check pc.cutoff to determine which PCs to use
+              if (pc.cutoff %% 1 == 0) {
+                keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary$COUNTRY)))
+                names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+              } else {
+                # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
+                if (str_to_lower(pc.rule) == "mintotal") {
+                  keep.num.pc0 <- fit.pca.summary %>%
+                    dplyr::filter(prop.sum >= pc.cutoff) %>%
+                    dplyr::filter(PC == min(PC, na.rm = TRUE))
+                  keep.num.pc <- keep.num.pc0$PC
+                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
+                }
+                if (str_to_lower(pc.rule) == "mincomp") {
+                  keep.num.pc0 <- fit.pca.summary %>%
+                    dplyr::filter(prop.var >= pc.cutoff)
+                  if (nrow(keep.num.pc0) < 23) {
+                    # cutoff fails because too stringent, switching to a default of 0.02
+                    keep.num.pc0 <- fit.pca.summary %>%
+                      dplyr::filter(prop.var >= 0.02)
+                  }
+                  keep.num.pc0 <- keep.num.pc0 %>%
+                    dplyr::filter(PC == max(PC, na.rm = TRUE))
+                  keep.num.pc <- keep.num.pc0$PC
+                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
+                }
+                if (str_to_lower(pc.rule) == "omit") {
+                  # this is just to avoid errors and is not used
+                  keep.num.pc <- rep(0, length(unique(fit.pca.summary$COUNTRY)))
+                  names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+                }
+              }
+            #tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
             tmp.model <- reformulate(
               response = "PRIMARY_OUTCOME",
-              termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[tmp.country])))
+              termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
             )
           }
           tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)
@@ -762,7 +787,6 @@ gfs_run_regression_single_outcome <- function(
           )
 
           ## load the previously "saved" result and append results for the next country
-          metainput0 <- metainput
           if(cur.country != "Argentina"){
             load(outfile, env.res <- new.env())
             output <- rbind(output, env.res$output)

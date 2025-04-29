@@ -36,13 +36,15 @@ load_packages <- function(...) {
     "tidyverse",
     "dplyr",
     "tidyselect",
-    "future",
     "forcats",
     "fastDummies",
     "haven",
     "ranger",
     "here",
-    "remotes"
+    "remotes",
+    "future",
+    "furrr",
+    "progressr"
   )
   new.packages <- packages[!(packages %in% utils::installed.packages()[, "Package"])]
   if (length(new.packages)) utils::install.packages(new.packages)
