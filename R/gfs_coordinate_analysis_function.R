@@ -64,7 +64,7 @@ gfs_run_regression_single_outcome <- function(
     force.binary = FALSE,
     robust.huberM = FALSE,
     robust.tune = 1,
-    res.dir = NULL,
+    res.dir = "results",
     list.composites = NULL,
     domain.subset = NULL,
     appnd.txt.to.filename = "", ...) {
@@ -81,9 +81,12 @@ gfs_run_regression_single_outcome <- function(
         var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(list.composites[[your.pred]]))]
       }
 
-      if (is.null(res.dir)) {
-        res.dir <- here::here(getwd(),"results")
-      }
+      #if (is.null(res.dir)) {
+      #  res.dir <- here::here(getwd(),"results")
+      #}
+
+      res.dir <- here(data.dir, res.dir)
+
       if (!dir.exists(res.dir)) {
         dir.create(res.dir)
       }
@@ -158,13 +161,16 @@ gfs_run_regression_single_outcome <- function(
                 "{{wgt}}" := n() * {{wgt}} / sum( {{wgt}} , na.rm = TRUE)
               )
           }
+
+          # renaming .imp outside of dplyr
+          data$imp_num <- data$.imp
+
           # convert to nested survey object
           svy.data.imp <- data %>%
             mutate(
-              COUNTRY = COUNTRY2,
-              .imp00 = .imp
+              COUNTRY = COUNTRY2
             ) %>%
-            group_by(COUNTRY, .imp) %>%
+            group_by(COUNTRY, imp_num) %>%
             nest() %>%
             mutate(
               data = map(data, \(x) {
@@ -259,14 +265,14 @@ gfs_run_regression_single_outcome <- function(
                     get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])
                   })
                 )
-            
+
               # get summary of PCA results to save to output file
               fit.pca.summary <- svy.data.imp %>%
                 mutate(
                   pc.sdev = map(fit.pca, \(x) x$sdev),
                   pc.rotation = map(fit.pca, \(x) x$rotation)
                 ) %>%
-                select(.imp, COUNTRY, pc.sdev, fit.eigen) %>%
+                select(imp_num, COUNTRY, pc.sdev, fit.eigen) %>%
                 unnest(c(pc.sdev, fit.eigen)) %>%
                 mutate(
                   PC = 1:n()
@@ -296,7 +302,7 @@ gfs_run_regression_single_outcome <- function(
            		prop.sum = mean(prop.var, na.rm=TRUE),
            		Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
            	)
-           	
+
            }
 
 
@@ -329,7 +335,7 @@ gfs_run_regression_single_outcome <- function(
                   pc.sdev = map(fit.pca, \(x) x$sdev),
                   pc.rotation = map(fit.pca, \(x) x$rotation)
                 ) %>%
-                select(.imp, COUNTRY, pc.sdev, fit.eigen) %>%
+                select(imp_num, COUNTRY, pc.sdev, fit.eigen) %>%
                 unnest(c(pc.sdev, fit.eigen)) %>%
                 mutate(
                   PC = 1:n()
@@ -537,7 +543,7 @@ gfs_run_regression_single_outcome <- function(
           }) |> bind_rows()
 
           sd.pooled <- sd.pooled %>%
-            select(COUNTRY, .imp, est, pred.var) %>%
+            select(COUNTRY, imp_num, est, pred.var) %>%
             group_by(COUNTRY) %>%
             summarize(
               outcome.sd = sqrt(mean(est, na.rm=TRUE)),

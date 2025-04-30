@@ -768,6 +768,12 @@ gfs_generate_supplemental_docs <- function(
     res.dir = "results", included.countries=NULL,
     ci.bonferroni = FALSE, single.file.num.sequential = FALSE, what = "all"){
 
+  dir.primary <- here(data.dir, dir.primary)
+  dir.supp <- here(data.dir, dir.supp)
+  dir.unstd <- here(data.dir, dir.unstd)
+  dir.attr.models <- here(data.dir, dir.attr.models)
+  res.dir <- here(data.dir, res.dir)
+
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
 
   if(is.null(baseline.pred)){

@@ -275,7 +275,7 @@ META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   META.RES,
-  file = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  file = here::here(data.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES, meta.input, META.RES)

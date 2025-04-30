@@ -226,7 +226,7 @@ with_progress({
         res.dir = "results-primary",
         appnd.txt.to.filename = "_primary_wopc"
       )
-    }) 
+    })
     p()
   })
 })
@@ -248,7 +248,7 @@ META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   META.RES,
-  file = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  file = here::here(data.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES, meta.input, META.RES)
@@ -274,7 +274,7 @@ with_progress({
       res.dir = "results-primary",
       appnd.txt.to.filename = "_primary_wpc"
       )
-    }) 
+    })
     p()
   })
 })
@@ -328,7 +328,7 @@ with_progress({
       res.dir = "results-cca",
       appnd.txt.to.filename = "_cca_wopc"
       )
-    }) 
+    })
     p()
   })
 })
@@ -462,7 +462,7 @@ remove(LIST.RES, meta.input, META.RES)
       res.dir = "results-unstd",
       appnd.txt.to.filename = "_unstd_wpc"
       )
-    }) 
+    })
   }, .progress=TRUE)
 
 

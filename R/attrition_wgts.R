@@ -194,17 +194,17 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
   ## get country names
   country.vec <- str_remove(df.files, "recoded_imputed_data_obj_") |>
     stringr::word(1, sep = "\\_imp") |>
-    unique() |> 
+    unique() |>
     sort()
 
-  if (!dir.exists("results-attr")) dir.create(here::here(getwd(), "results-attr"))
-  
+  if (!dir.exists(here(data.dir, "results-attr"))) dir.create(here::here(data.dir, "results-attr"))
+
   x <- country.vec[1]
   walk(country.vec, \(x){
     tmp.files <- df.files[str_detect(df.files,x)]
     y <- tmp.files[1]
     df.attr <- map(tmp.files, \(y){
-    	
+
       df.tmp <- readr::read_rds(here::here(data.dir, y))
       df.tmp %>%
         dplyr::group_by(COUNTRY, .imp) %>%
@@ -231,7 +231,7 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
       select(ID, COUNTRY, .imp, PSU, STRATA, contains("WGT"))
 
     myfile = paste0(x, " fitted attrition model.RData")
-    save(df.attr, df.wgts , file = here::here("results-attr", myfile))
+    save(df.attr, df.wgts , file = here::here(data.dir, "results-attr", myfile))
   })
 }
 
@@ -278,7 +278,7 @@ append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.n
   #attr.wgt.file <- attr.wgt.file[str_detect(attr.wgt.file, country)]
   x <- attr.wgt.file[2]
   saved_attr_wgts <- map(attr.wgt.file, \(x){
-    load(here::here("results-attr",x), ex <- new.env())
+    load(here::here(data.dir, "results-attr",x), ex <- new.env())
     # ls.str(ex)
     ex$df.wgts %>%
       filter(.imp == 1) %>%
@@ -309,6 +309,8 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
 	df.files <- list.files(data.dir)
 	df.files <- df.files[str_detect(df.files, "recoded_imputed_data_obj")]
 
+	attr.dir <- here(data.dir, attr.dir)
+
 	walk(df.files, \(x){
 		df.tmp <- readr::read_rds(here::here(data.dir, x))
 		cur.country <- str_remove(x, "recoded_imputed_data_obj_") |>
@@ -316,7 +318,7 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
 		attr.file <- paste0(cur.country, " fitted attrition model.RData")
 		load(here::here(attr.dir, attr.file), env.attr <- new.env())
 		df.tmp <- left_join(df.tmp, env.attr$df.wgts)
-		readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz") 
+		readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
 		rm(df.tmp)
 		gc()
 	})
