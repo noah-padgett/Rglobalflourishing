@@ -5,7 +5,8 @@
 \title{GFS Focal Predictor Analysis}
 \usage{
 gfs_run_regression_single_outcome(
-  data = NULL,
+  data.dir = NULL,
+  direct.subset = NULL,
   your.pred = NULL,
   your.outcome = NULL,
   covariates = NULL,
@@ -20,17 +21,15 @@ gfs_run_regression_single_outcome(
   force.binary = FALSE,
   robust.huberM = FALSE,
   robust.tune = 1,
-  res.dir = NULL,
+  res.dir = "results",
   list.composites = NULL,
-  subpopulation = NULL,
-  compute.vif = FALSE,
+  domain.subset = NULL,
   appnd.txt.to.filename = "",
-  .return.all = FALSE,
   ...
 )
 }
 \arguments{
-\item{data}{long data.frame must have COUNTRY and .imp columns (default: df.imp.long)}
+\item{data.dir}{a character string defining where data are located}
 
 \item{your.pred}{a character string defining focal predictor (e.g., "PHYSICAL_HLTH_Y1")}
 
@@ -56,13 +55,13 @@ gfs_run_regression_single_outcome(
 
 \item{res.dir}{a character string defining directory to save results to.}
 
-\item{subpopulation}{(optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)}
-
-\item{compute.vif}{(optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.}
-
 \item{appnd.txt.to.filename}{(optional) character string to help differentiate saved results file (default "")}
 
 \item{...}{other arguments passed to svyglm or glmrob functions}
+
+\item{subpopulation}{(optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)}
+
+\item{compute.vif}{(optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.}
 }
 \value{
 a data.frame that contains the meta-analysis input results

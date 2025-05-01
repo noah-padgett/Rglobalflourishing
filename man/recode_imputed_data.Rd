@@ -6,6 +6,7 @@
 \usage{
 recode_imputed_data(
   df.imp = NULL,
+  m = "long",
   list.default = NULL,
   list.composites = NULL,
   list.manual = NULL,
@@ -19,6 +20,8 @@ recode_imputed_data(
 }
 \arguments{
 \item{df.imp}{a nested data.frame with results from run_impute_data(.).}
+
+\item{m}{(default: "long") or a number 1:Nimp}
 
 \item{list.default}{(required) a names list with DEMOGRAPHICS.CHILDHOOD.PRED.VEC, OUTCOME.VE,
 FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS}

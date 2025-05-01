@@ -52,8 +52,6 @@ a word document saved to the current 'results/' directory
 }
 \description{
 TO-DO
-CONTENT',
-SAT_RELATNSHP',
 }
 \details{
 Generated a word document containing the results for the meta-analytic outcome wide results for the GFS coordinated analyses.

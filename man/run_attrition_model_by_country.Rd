@@ -6,12 +6,16 @@
 \usage{
 run_attrition_model_by_country(
   data.dir,
+  wgt = "ANNUAL_WEIGHT_R2",
+  attr.wgt.name = NULL,
   pooled.wgt = NULL,
   composite.wgt.name = NULL,
   ...
 )
 }
 \arguments{
+\item{data.dir}{character defining where the recoded imputed data files are stored}
+
 \item{...}{additional arguments passed to ....}
 }
 \value{

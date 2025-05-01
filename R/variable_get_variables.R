@@ -39,16 +39,13 @@ get_demo_childhood_variables <- function(...) {
 #' @param ... argument not used
 #' @returns a character string
 #' @examples {
-#'   get_variable_codes()
+#'   #TODO
 #' }
 #' @export
 get_variable_codes <- function(what = "all", appnd="", ...) {
 
-
   # DEFINE VECTOR OF Groups of Variables
   {
-
-
     # Demographics
     DEMOGRAPHIC.VARS <- c(
       "GENDER",
@@ -138,7 +135,6 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
         'PEACE',
         'PEOPLE_HELP',
         'PHYSICAL_HLTH',
-        #'POLITICAL_ID', # do not use (missing in china, egypt, and india)
         'PRAY_MEDITATE',
         'PROMOTE_GOOD',
         'REL_EXPERIENC',
@@ -225,7 +221,6 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
         'PEACE',
         'PEOPLE_HELP',
         'PHYSICAL_HLTH',
-        #'POLITICAL_ID', # do not use (missing in china, egypt, and india)
         'PRAY_MEDITATE',
         'PROMOTE_GOOD',
         'REL_EXPERIENC',

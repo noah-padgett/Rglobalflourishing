@@ -21,6 +21,6 @@ A simple function to get a list of variable codes used throughout the package
 }
 \examples{
 {
-  get_variable_codes()
+  #TODO
 }
 }
