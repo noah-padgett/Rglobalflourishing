@@ -31,6 +31,8 @@ load_packages <- function(...) {
     "officer",
     "patchwork",
     "ggthemes",
+    "doconv",
+    "qpdf",
 
     # utility packages
     "tidyverse",

@@ -85,7 +85,7 @@ gfs_run_regression_single_outcome <- function(
       #  res.dir <- here::here(getwd(),"results")
       #}
 
-      res.dir <- here(data.dir, res.dir)
+      res.dir <- here(res.dir)
 
       if (!dir.exists(res.dir)) {
         dir.create(res.dir)

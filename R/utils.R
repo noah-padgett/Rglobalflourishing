@@ -436,7 +436,7 @@ get_country_specific_regression_results <- function(res.dir, country, predictor,
 #' @export
 construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictors, appnd.txt="") {
   local({
-    res.dir <- here(data.dir, res.dir)
+    res.dir <- here::here(res.dir)
     tmp.list <- list()
     for (your.outcome in outcomes) {
       for (your.pred in predictors) {

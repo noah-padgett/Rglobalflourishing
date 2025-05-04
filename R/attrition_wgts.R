@@ -197,7 +197,7 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
     unique() |>
     sort()
 
-  if (!dir.exists(here(data.dir, "results-attr"))) dir.create(here::here(data.dir, "results-attr"))
+  if (!dir.exists(here("results-attr"))) dir.create(here::here("results-attr"))
 
   x <- country.vec[1]
   walk(country.vec, \(x){
@@ -231,7 +231,7 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
       select(ID, COUNTRY, .imp, PSU, STRATA, contains("WGT"))
 
     myfile = paste0(x, " fitted attrition model.RData")
-    save(df.attr, df.wgts , file = here::here(data.dir, "results-attr", myfile))
+    save(df.attr, df.wgts , file = here::here("results-attr", myfile))
   })
 }
 
@@ -309,7 +309,7 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
 	df.files <- list.files(data.dir)
 	df.files <- df.files[str_detect(df.files, "recoded_imputed_data_obj")]
 
-	attr.dir <- here(data.dir, attr.dir)
+	attr.dir <- here(attr.dir)
 
 	walk(df.files, \(x){
 		df.tmp <- readr::read_rds(here::here(data.dir, x))
