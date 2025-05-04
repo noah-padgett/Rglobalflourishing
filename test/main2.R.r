@@ -171,7 +171,6 @@ run_attrition_model_by_country(
 ## append attrition weights to imputed data
 append_attr_wgts_to_imp_data(data.dir, attr.dir = "results-attr")
 
-
 # ================================================================================================ #
 # ================================================================================================ #
 # Run primary country-wise analyses -- Full imputation based approach
@@ -226,7 +225,7 @@ with_progress({
         res.dir = "results-primary",
         appnd.txt.to.filename = "_primary_wopc"
       )
-    }) 
+    })
     p()
   })
 })
@@ -248,7 +247,7 @@ META.RES <- gfs_meta_analysis(
 )
 readr::write_rds(
   META.RES,
-  file = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  file = here::here(data.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES, meta.input, META.RES)
@@ -274,7 +273,7 @@ with_progress({
       res.dir = "results-primary",
       appnd.txt.to.filename = "_primary_wpc"
       )
-    }) 
+    })
     p()
   })
 })
@@ -328,7 +327,7 @@ with_progress({
       res.dir = "results-cca",
       appnd.txt.to.filename = "_cca_wopc"
       )
-    }) 
+    })
     p()
   })
 })
@@ -462,7 +461,7 @@ remove(LIST.RES, meta.input, META.RES)
       res.dir = "results-unstd",
       appnd.txt.to.filename = "_unstd_wpc"
       )
-    }) 
+    })
   }, .progress=TRUE)
 
 
@@ -553,8 +552,20 @@ gfs_generate_supplemental_docs(
   wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "S3"
+  what = "all",
+  single.file = TRUE
 )
+
+# Next, convert the (painfully large .docx) to PDF for easier viewing and sharing
+
+library(doconv)
+library(locatexec)
+library(here)
+
+my.docx <- here::here("results", paste0("GFS-Wave 2 Online Supplement_Self-rated physical health.docx"))
+my.pdf <- here::here("results", paste0("GFS-Wave 2 Online Supplement_Self-rated physical health.pdf"))
+
+doconv::to_pdf(input = my.docx, output=my.pdf)
 
 
 # ================================================================================================ #

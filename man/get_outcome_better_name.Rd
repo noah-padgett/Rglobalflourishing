@@ -8,7 +8,8 @@ get_outcome_better_name(
   var,
   include.name = TRUE,
   include.wave = FALSE,
-  include.fid = FALSE
+  include.fid = FALSE,
+  rm.text = NULL
 )
 }
 \arguments{
@@ -17,6 +18,8 @@ get_outcome_better_name(
 \item{include.wave}{(logical) whether to include wave identifier (Wave 1) in returned string, not applicable when include.name is true}
 
 \item{include.fid}{(logical) whether to include a flag (a-e) for designating which flourishing index domain each an item belongs to}
+
+\item{rm.text}{(string) NULL or string of text to remove from variable name}
 
 \item{include.label}{(logical) whether to include variable name (var) in returned string}
 }

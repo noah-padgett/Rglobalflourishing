@@ -18,7 +18,7 @@ gfs_generate_main_doc(
   res.dir = "results",
   wgt = as.name("WGT"),
   wgt1 = as.name("ANNUAL_WEIGHT_R2"),
-  wgt2 = as.name("SAMP.ATTR.WGT"),
+  wgt2 = as.name("AVG.SAMP.ATTR.WGT"),
   psu = as.name("PSU"),
   strata = as.name("STRATA"),
   ci.bonferroni = FALSE

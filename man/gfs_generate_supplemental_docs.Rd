@@ -7,6 +7,7 @@
 gfs_generate_supplemental_docs(
   df.raw = NULL,
   file.imp.data = NULL,
+  out.dir = NULL,
   dir.primary = "results-primary",
   dir.supp = "results-cca",
   dir.unstd = "results-unstd",
@@ -20,12 +21,13 @@ gfs_generate_supplemental_docs(
   mylabels = NULL,
   wgt = as.name("WGT0"),
   wgt1 = as.name("ANNUAL_WEIGHT_R2"),
-  wgt2 = as.name("SAMP.ATTR.WGT"),
+  wgt2 = as.name("AVG.SAMP.ATTR.WGT"),
   psu = as.name("PSU"),
   strata = as.name("STRATA"),
   res.dir = "results",
   included.countries = NULL,
   ci.bonferroni = FALSE,
+  single.file = TRUE,
   single.file.num.sequential = FALSE,
   what = "all"
 )

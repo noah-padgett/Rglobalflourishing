@@ -278,7 +278,7 @@ append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.n
   #attr.wgt.file <- attr.wgt.file[str_detect(attr.wgt.file, country)]
   x <- attr.wgt.file[2]
   saved_attr_wgts <- map(attr.wgt.file, \(x){
-    load(here::here(data.dir, "results-attr",x), ex <- new.env())
+    load(here::here("results-attr",x), ex <- new.env())
     # ls.str(ex)
     ex$df.wgts %>%
       filter(.imp == 1) %>%

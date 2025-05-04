@@ -521,12 +521,12 @@ df.raw <- append_attrition_weights_to_df(data=df.raw)
 # main text
 gfs_generate_main_doc(
   df.raw = df.raw,
-  meta.wopc = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
-  meta.wpc = here::here(out.dir, "results-primary", "0_meta_analyzed_results_primary_wpc.rds"),
+  res.dir = "results",
+  meta.wopc = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  meta.wpc = here::here("results-primary", "0_meta_analyzed_results_primary_wpc.rds"),
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,
   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
-  res.dir = "results",
   wgt = WGT0,
   wgt1 = ANNUAL_WEIGHT_R2,
   wgt2 = AVG.SAMP.ATTR.WGT,
@@ -536,8 +536,16 @@ gfs_generate_main_doc(
 
 ## Generate online supplements
 
+# Generating the online supplement is a complicated process. First, run the next 6 lines.
+# Running line (546) will ask you to give R permission to access Word. Please say "Yes".
+library(doconv)
+out.file <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".docx"))
+out.file.pdf <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".pdf"))
+file.copy(here::here("data","supp_page_1.docx"), here::here("results"))
+file.rename(here::here("results","supp_page_1.docx"), out.file)
+doconv::to_pdf(out.file, out.file.pdf)
 
-# online supplemental files (there's too much to pack into 1 file, separated into 3 files... for now.)
+
 gfs_generate_supplemental_docs(
   df.raw = df.raw,
   res.dir = "results",
@@ -553,7 +561,8 @@ gfs_generate_supplemental_docs(
   wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  what = "all"
+  what = "all",
+  single.file = TRUE
 )
 
 
@@ -561,8 +570,8 @@ gfs_generate_supplemental_docs(
 # ================================================================================================ #
 # Code to fiddle/tinker with forest plots (main text plots)
 {
-  META.RES1 <- readr::read_rds(file = here::here(out.dir, "results-wopc", "0_meta_analyzed_results_wopc.rds"))
-  META.RES2 <- readr::read_rds(file = here::here(out.dir, "results-wpc", "0_meta_analyzed_results_wpc.rds"))
+  META.RES1 <- readr::read_rds(file = here::here("results-wopc", "0_meta_analyzed_results_wopc.rds"))
+  META.RES2 <- readr::read_rds(file = here::here("results-wpc", "0_meta_analyzed_results_wpc.rds"))
 
   # Base plot:
   p1 <- META.RES2 %>% ungroup() %>%
@@ -715,50 +724,3 @@ gfs_generate_supplemental_docs(
   )
 }
 
-# ================================================================================================ #
-# ================================================================================================ #
-# Code to tinker as needed with the within-between supplemental plot
-
-plot.dat <- META.RES2 %>%
-  select(OUTCOME0, data, theta.rma, theta.rma.se, theta.rma.ci) %>%
-  mutate(
-    type = get_outcome_scale(OUTCOME0),
-    type = case_when(
-      type == "cont" ~ "Std. Est",
-      .default = "log(RR)"
-    )
-  ) %>%
-  unnest(c(data)) %>%
-  mutate(
-    est.rr = case_when(
-      type == "log(RR)" ~ exp(Est),
-      type == "Std. Est" ~ exp(0.91*Est)
-    )
-  )
-p <- plot.dat %>%
-  group_by(Country) %>%
-  mutate(
-    avg.rr = mean(est.rr, na.rm=TRUE),
-    var.rr = var(est.rr, na.rm=TRUE)
-  ) %>% ungroup() %>%
-  ggplot(aes(x=reorder(Country, avg.rr), y = est.rr)) +
-  geom_point() +
-  geom_hline(yintercept = c(0.90, 1.10), linetype="dashed") +
-  labs(y="Estimated Risk-Ratio", x="",
-       title="Heterogenetiy in estimated effects within and between countries",
-       subtitle="Model estimated controlling for 7 principal components") +
-  scale_x_discrete(guide = guide_axis(angle = 60)) +
-  scale_y_continuous(limits = c(0.25,4))+
-  theme_Publication()
-
-p
-ggsave(
-  filename = here::here(paste0("figure_S1_heterogeneity_plot.png")),
-  plot = p,
-  units = "in", width = 6, height = 5
-)
-ggsave(
-  filename = here::here(paste0("figure_S1_heterogeneity_plot.pdf")),
-  plot = p,
-  units = "in", width = 6, height = 5
-)

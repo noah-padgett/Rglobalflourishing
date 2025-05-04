@@ -220,11 +220,11 @@ theme_meta_outcome_wide <- function(xtb, pg.width = 29.7/2.54 - 2, .ncol = 12) {
     align(align = "right", part = "all") %>%
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all")  %>%
-    width(j=1,width=2.00)%>%
-    width(j=c(2:3,5,8:9,11),width=0.50)%>%
+    width(j=1,width=2.25)%>%
+    width(j=c(2:3,5,8:9,11),width=0.45)%>%
     width(j=c(4,10),width=0.85)%>%
     width(j=c(6,12),width=1.0)%>%
-    width(j=7,width=0.20)
+    width(j=7,width=0.10)
 
   tb.temp <-
     width(tb.temp,
