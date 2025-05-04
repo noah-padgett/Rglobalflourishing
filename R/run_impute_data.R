@@ -218,9 +218,10 @@ run_impute_data <- function(data,
           predictorMatrix = tmp.pred,
           donors = 10,
           threshold = 2.0, # see https://github.com/amices/mice/issues/314 for threshold information
-          n.core = round(future::availableCores()/2,0), # use half of available cores
+          n.core = future::availableCores(), # use half of available cores
           parallelseed = 31415
         )
+        future::resetWorkers(plan())
       } else {
         fit.imp <- mice::mice(
           tmp.dat,
