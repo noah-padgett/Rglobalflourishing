@@ -125,7 +125,7 @@ recode_imputed_data <- function(
         COV_MARITAL_STATUS = relevel(COV_MARITAL_STATUS, ref = "Single/Never been married"),
         COV_ATTEND_SVCS = relevel(COV_ATTEND_SVCS, ref = "Never"),
         COV_BORN_COUNTRY = relevel(COV_BORN_COUNTRY, ref = "Born in this country"),
-        COV_PARENTS_12YRS = relevel(COV_PARENTS_12YRS, ref = "Yes, married"),
+        COV_PARENTS_12YRS = relevel(COV_PARENTS_12YRS, ref = "Parents were married"),
         COV_MOTHER_RELATN = relevel(COV_MOTHER_RELATN, ref = "Very/somewhat bad"),
         COV_FATHER_RELATN = relevel(COV_FATHER_RELATN, ref = "Very/somewhat bad"),
         COV_SVCS_12YRS = relevel(COV_SVCS_12YRS, ref = "Never"),
