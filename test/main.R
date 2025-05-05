@@ -1,6 +1,6 @@
 # Script: main.R
 # Created by: R. Noah Padgett & Chris Felton
-# Last edited on: 2024-03-13
+# Last edited on: 2024-05-05
 
 # WARNING: The package was set up to be as user-friendly as possible for researchers
 #	part of the GFS core team who mainly have experience with other statistical analysis
@@ -12,29 +12,25 @@
 #   "play nice" with other packages.
 
 # install.packages("remotes")
-#remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
-#library(Rglobalflourishing)
+remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
+library(Rglobalflourishing)
 
 # Analysis Set-Up
 
 # Add the directory where the dataset is stored on your computer
-data.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/data/wave2-data"
+data.dir <- "data"
 dataset.name <- "gfs_all_countries_wave2.sav"
-
-# Specify where you want to output results
-# Can be left blank, and the results will output to the same directory as the data.
-out.dir <- "/Users/noahp/Documents/GitHub/global-flourishing-study/3-Rglobalflourishing"
 
 # Here is YOUR wave 1 construct variable
 FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
-FOCAL_PREDICTOR_BETTER_NAME <- c("Self-rated physical health")
+FOCAL_PREDICTOR_BETTER_NAME <- c("self-rated physical health")
 FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for
 #   consistency across studies.
-VALUES_DEFINING_UPPER_CATEGORY <- list(NA)
-VALUES_DEFINING_LOWER_CATEGORY <- list(NA)
+VALUES_DEFINING_UPPER_CATEGORY <- list(NULL)
+VALUES_DEFINING_LOWER_CATEGORY <- list(NULL)
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
@@ -53,22 +49,32 @@ SUBPOPULATION <- list(NULL)
 names(FORCE_CONTINUOUS) <- names(FORCE_BINARY) <- names(VALUES_DEFINING_UPPER_CATEGORY)  <- names(VALUES_DEFINING_LOWER_CATEGORY) <- names(SUBPOPULATION) <- FOCAL_PREDICTOR
 # ================================================================================================ #
 # ================================================================================================ #
-# Data Prep
+# environment prep
 
-if (is.null(out.dir)) {
-  out.dir <- data.dir
-}
-setwd(out.dir)
 # Note:
 # The following function loads the required packages for the remainder of the script to work.
 load_packages()
 # global options
 options(
-  survey.lonely.psu = "certainty"
+  survey.lonely.psu = "certainty",
+  future.plan = "multisession"
 )
-plan("multicore")
 handlers(global = TRUE)
-handlers("progress")
+
+# Generating the online supplement is a complicated process. We start here to ensure the internal document conversation can be conducted.
+# First, run the next 6 lines.
+# Running line (81) will ask you to give R permission to access Word. Please say "Yes".
+if(!(dir.exists(here("results")))) dir.create(here("results"))
+
+library(doconv)
+out.file <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".docx"))
+out.file.pdf <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".pdf"))
+file.copy(here::here("data","supp_page_1.docx"), here::here("results"))
+file.rename(here::here("results","supp_page_1.docx"), out.file)
+doconv::to_pdf(out.file, out.file.pdf)
+
+# ================================================================================================ #
+# ================================================================================================ #
 
 # outcome vectors
 LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
@@ -97,39 +103,38 @@ df.raw <- gfs_get_labelled_raw_data(
 # ================================================================================================ #
 # Imputing missing data
 
-  run.imp <- TRUE
-  if (run.imp) {
-    pred0 <- c(
-      'ANNUAL_WEIGHT_R2', 'MODE_RECRUIT',
-      'AGE_Y1', 'GENDER_Y1', 'RACE_PLURALITY1', 'MARITAL_STATUS_Y1',
-      'EMPLOYMENT_Y1', 'EDUCATION_3_Y1', 'ATTEND_SVCS_Y1',
-      'URBAN_RURAL_Y1', 'BORN_COUNTRY_Y1', 'REL2_Y1',
-      'ABUSED_Y1', 'OUTSIDER_Y1',
-      'HEALTH_GROWUP_Y1', 'INCOME_12YRS_Y1',
-      'FATHER_RELATN_Y1', 'MOTHER_RELATN_Y1',
-      'PARENTS_12YRS_Y1'
-    )
-    df.imp <- run_impute_data(
-      data =  df.raw,
-      data.dir = data.dir,
-      Nimp = 5,
-      Miter = 2,
-      pred.vars = pred0
-    )
-  }
-
+run.imp <- TRUE
+if (run.imp) {
+  pred0 <- c(
+    'ANNUAL_WEIGHT_R2', 'MODE_RECRUIT',
+    'AGE_Y1', 'GENDER_Y1', 'RACE_PLURALITY1', 'MARITAL_STATUS_Y1',
+    'EMPLOYMENT_Y1', 'EDUCATION_3_Y1', 'ATTEND_SVCS_Y1',
+    'URBAN_RURAL_Y1', 'BORN_COUNTRY_Y1', 'REL2_Y1',
+    'ABUSED_Y1', 'OUTSIDER_Y1',
+    'HEALTH_GROWUP_Y1', 'INCOME_12YRS_Y1',
+    'FATHER_RELATN_Y1', 'MOTHER_RELATN_Y1',
+    'PARENTS_12YRS_Y1'
+  )
+  df.imp <- run_impute_data(
+    data =  df.raw,
+    data.dir = data.dir,
+    Nimp = 20,
+    Miter = 5,
+    pred.vars = pred0
+  )
+}
 
 # ================================================================================================ #
 # ================================================================================================ #
 # Recode the imputed data for easily use in analyses
-  # ~~
-  recode_imp_by_country(
-    data.dir,
-    nimp = 5,
-    list.default = RECODE.DEFAULTS,
-    list.composites = LIST.COMPOSITES,
-    wgt = "ANNUAL_WEIGHT_R2"
-  )
+# ~~
+recode_imp_by_country(
+  data.dir,
+  nimp = 20,
+  list.default = RECODE.DEFAULTS,
+  list.composites = LIST.COMPOSITES,
+  wgt = "ANNUAL_WEIGHT_R2"
+)
 # ================================================================================================ #
 # ================================================================================================ #
 # CHECK VARIABLE CODING/COLLAPSING
@@ -203,13 +208,15 @@ DEMO.CHILDHOOD.PRED <- c(
 )
 # Run country-specific regression analyses for ALL wave 2 outcomes
 OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,
-x <- OUTCOME.VEC0[2]
-y <- FOCAL_PREDICTOR[1]
 
 # Model 1: Run without principal components
+plan("multisession")
 with_progress({
-  p <- progressr::progressor(along = OUTCOME.VEC0)
+  p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
+    load_packages()
+    options(survey.lonely.psu = "certainty")
+
     walk(FOCAL_PREDICTOR, \(y){
       gfs_run_regression_single_outcome(
         your.outcome = x,
@@ -227,9 +234,10 @@ with_progress({
         appnd.txt.to.filename = "_primary_wopc"
       )
     })
-    p()
-  })
+    p(sprintf("x= %s", x))
+  },.options = furrr_options(seed = TRUE))
 })
+future::resetWorkers(plan())
 
 
 LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wopc")
@@ -254,31 +262,35 @@ readr::write_rds(
 remove(LIST.RES, meta.input, META.RES)
 
 # Model 2: Run with principal components
+plan("multisession")
 with_progress({
-  p <- progressr::progressor(OUTCOME.VEC0)
+  p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
+    load_packages()
+    options(survey.lonely.psu = "certainty")
+
     walk(FOCAL_PREDICTOR, \(y){
       gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data.dir = data.dir,
-      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
-      psu = PSU, #psu = as.name("PSU")
-      strata = STRATA, # strata = as.name("STRATA")
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = TRUE,
-      pc.cutoff = 7,
-      pc.rule = "constant",
-      res.dir = "results-primary",
-      appnd.txt.to.filename = "_primary_wpc"
+        your.outcome = x,
+        your.pred = y,
+        data.dir = data.dir,
+        wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
+        psu = PSU, #psu = as.name("PSU")
+        strata = STRATA, # strata = as.name("STRATA")
+        covariates = DEMO.CHILDHOOD.PRED,
+        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+        list.composites = LIST.COMPOSITES[[1]],
+        standardize = TRUE,
+        pc.cutoff = 7,
+        pc.rule = "constant",
+        res.dir = "results-primary",
+        appnd.txt.to.filename = "_primary_wpc"
       )
     })
-    p()
-  })
+    p(sprintf("x= %s", x))
+  },.options = furrr_options(seed = TRUE))
 })
-
+future::resetWorkers(plan())
 
 LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wpc")
 meta.input <- LIST.RES %>%
@@ -308,30 +320,35 @@ remove(meta.input, LIST.RES, META.RES)
 # - Uses attrition-weight adjusted sampling weights
 
 # Supplemental analysis set 1: Run without principal components
+plan("multisession")
 with_progress({
-  p <- progressr::progressor(OUTCOME.VEC0)
+  p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
+    load_packages()
+    options(survey.lonely.psu = "certainty")
+
     walk(FOCAL_PREDICTOR, \(y){
       gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data.dir = data.dir,
-      direct.subset = expr(CASE_OBSERVED_Y2 == 1),
-      wgt = SAMP.ATTR.WGT,
-      psu = PSU,
-      strata = STRATA,
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = TRUE,
-      pc.rule = "omit",
-      res.dir = "results-cca",
-      appnd.txt.to.filename = "_cca_wopc"
+        your.outcome = x,
+        your.pred = y,
+        data.dir = data.dir,
+        direct.subset = expr(CASE_OBSERVED_Y2 == 1),
+        wgt = SAMP.ATTR.WGT,
+        psu = PSU,
+        strata = STRATA,
+        covariates = DEMO.CHILDHOOD.PRED,
+        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+        list.composites = LIST.COMPOSITES[[1]],
+        standardize = TRUE,
+        pc.rule = "omit",
+        res.dir = "results-cca",
+        appnd.txt.to.filename = "_cca_wopc"
       )
     })
-    p()
-  })
+    p(sprintf("x= %s", x))
+  },.options = furrr_options(seed = TRUE))
 })
+future::resetWorkers(plan())
 
 LIST.RES <- construct_meta_input_from_saved_results("results-cca", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_cca_wopc")
 meta.input <- LIST.RES %>%
@@ -354,27 +371,36 @@ readr::write_rds(
 remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
 
 # Analysis set 2: Run with principal components
+plan("multisession")
+with_progress({
+  p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
+    load_packages()
+    options(survey.lonely.psu = "certainty")
+
     walk(FOCAL_PREDICTOR, \(y){
       gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data.dir = data.dir,
-      direct.subset = expr(CASE_OBSERVED_Y2 == 1),
-      wgt = SAMP.ATTR.WGT,
-      psu = PSU,
-      strata = STRATA,
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = TRUE,
-      pc.cutoff = 7,
-      pc.rule = "constant",
-      res.dir = "results-cca",
-      appnd.txt.to.filename = "_cca_wpc"
+        your.outcome = x,
+        your.pred = y,
+        data.dir = data.dir,
+        direct.subset = expr(CASE_OBSERVED_Y2 == 1),
+        wgt = SAMP.ATTR.WGT,
+        psu = PSU,
+        strata = STRATA,
+        covariates = DEMO.CHILDHOOD.PRED,
+        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+        list.composites = LIST.COMPOSITES[[1]],
+        standardize = TRUE,
+        pc.cutoff = 7,
+        pc.rule = "constant",
+        res.dir = "results-cca",
+        appnd.txt.to.filename = "_cca_wpc"
       )
     })
-  }, .progress=TRUE)
+    p(sprintf("x= %s", x))
+  },.options = furrr_options(seed = TRUE))
+})
+future::resetWorkers(plan())
 
 LIST.RES <- construct_meta_input_from_saved_results(res.dir="results-cca", outcomes=OUTCOME.VEC0, predictors=FOCAL_PREDICTOR, appnd.txt = "_cca_wpc")
 meta.input <- LIST.RES %>%
@@ -401,25 +427,34 @@ remove(meta.input, LIST.RES, META.RES)
 # Re-run primary analysis but get UNSTANDARDIZED estimated
 
 # Model 1: Run without principal components
+plan("multisession")
+with_progress({
+  p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
+    load_packages()
+    options(survey.lonely.psu = "certainty")
+
     walk(FOCAL_PREDICTOR, \(y){
       gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data.dir = data.dir,
-      wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
-      psu = PSU, #psu = as.name("PSU")
-      strata = STRATA, # strata = as.name("STRATA")
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = FALSE,
-      pc.rule = "omit",
-      res.dir = "results-unstd",
-      appnd.txt.to.filename = "_unstd_wopc"
+        your.outcome = x,
+        your.pred = y,
+        data.dir = data.dir,
+        wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
+        psu = PSU, #psu = as.name("PSU")
+        strata = STRATA, # strata = as.name("STRATA")
+        covariates = DEMO.CHILDHOOD.PRED,
+        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+        list.composites = LIST.COMPOSITES[[1]],
+        standardize = FALSE,
+        pc.rule = "omit",
+        res.dir = "results-unstd",
+        appnd.txt.to.filename = "_unstd_wopc"
       )
     })
-  }, .progress=TRUE)
+    p(sprintf("x= %s", x))
+  },.options = furrr_options(seed = TRUE))
+})
+future::resetWorkers(plan())
 
 
 LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wopc")
@@ -444,26 +479,35 @@ readr::write_rds(
 remove(LIST.RES, meta.input, META.RES)
 
 # Model 2: Run with principal components
+plan("multisession")
+with_progress({
+  p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
+    load_packages()
+    options(survey.lonely.psu = "certainty")
+
     walk(FOCAL_PREDICTOR, \(y){
       gfs_run_regression_single_outcome(
-      your.outcome = x,
-      your.pred = y,
-      data.dir = data.dir,
-      wgt = ANNUAL_WEIGHT_R2,
-      psu = PSU,
-      strata = STRATA,
-      covariates = DEMO.CHILDHOOD.PRED,
-      contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-      list.composites = LIST.COMPOSITES[[1]],
-      standardize = FALSE,
-      pc.cutoff = 7,
-      pc.rule = "constant",
-      res.dir = "results-unstd",
-      appnd.txt.to.filename = "_unstd_wpc"
+        your.outcome = x,
+        your.pred = y,
+        data.dir = data.dir,
+        wgt = ANNUAL_WEIGHT_R2,
+        psu = PSU,
+        strata = STRATA,
+        covariates = DEMO.CHILDHOOD.PRED,
+        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
+        list.composites = LIST.COMPOSITES[[1]],
+        standardize = FALSE,
+        pc.cutoff = 7,
+        pc.rule = "constant",
+        res.dir = "results-unstd",
+        appnd.txt.to.filename = "_unstd_wpc"
       )
     })
-  }, .progress=TRUE)
+    p(sprintf("x= %s", x))
+  },.options = furrr_options(seed = TRUE))
+})
+future::resetWorkers(plan())
 
 
 LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wpc")
@@ -514,7 +558,7 @@ RECODE.DEFAULTS <- list(
 df.raw <- gfs_get_labelled_raw_data(
   here::here(data.dir, dataset.name),
   list.composites = get_variable_codes('LIST.COMPOSITES'),
-  add.whitespace = TRUE
+  add.whitespace = TRUE, reverse.code.cont = TRUE
 )
 df.raw <- append_attrition_weights_to_df(data=df.raw)
 
@@ -534,18 +578,7 @@ gfs_generate_main_doc(
   strata = STRATA
 )
 
-## Generate online supplements
-
-# Generating the online supplement is a complicated process. First, run the next 6 lines.
-# Running line (546) will ask you to give R permission to access Word. Please say "Yes".
-library(doconv)
-out.file <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".docx"))
-out.file.pdf <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".pdf"))
-file.copy(here::here("data","supp_page_1.docx"), here::here("results"))
-file.rename(here::here("results","supp_page_1.docx"), out.file)
-doconv::to_pdf(out.file, out.file.pdf)
-
-
+## Generate online supplement
 gfs_generate_supplemental_docs(
   df.raw = df.raw,
   res.dir = "results",
@@ -707,8 +740,8 @@ gfs_generate_supplemental_docs(
     ) +
     plot_annotation(
       title = str_wrap(paste0("`", focal.pred, "` predicts `", tmp.outcome, "`"), 75),
-      subtitle = p.subtitle,
-      caption = tmp.het
+      subtitle = NULL,
+      caption = NULL
     )
 
   p
