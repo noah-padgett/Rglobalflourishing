@@ -15,7 +15,7 @@ library(tictoc)
 
 # install.packages("remotes")
 #remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
-#library(Rglobalflourishing)
+library(Rglobalflourishing)
 
 # Analysis Set-Up
 
@@ -68,6 +68,15 @@ load_packages()
 options(
   survey.lonely.psu = "certainty"
 )
+
+## MULTISESSION
+num_cores <- parallel::detectCores() - 1
+plan("multisession", workers = num_cores)
+handlers(global = TRUE)
+#handlers("progress")
+
+
+
 # outcome vectors
 LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
 RECODE.DEFAULTS <- list(
@@ -290,12 +299,19 @@ rm(wopc_log)
 tic.clearlog()
 tic()
 
+
 # Model 2: Run with principal components
-LIST.RES <- map(OUTCOME.VEC0, \(x){
-  map(FOCAL_PREDICTOR, \(y){
-    gfs_run_regression_single_outcome(
+
+
+
+furrr::future_walk(OUTCOME.VEC0, \(x){
+  load_packages()
+  options(
+    survey.lonely.psu = "certainty"
+  )
+  gfs_run_regression_single_outcome(
       your.outcome = x,
-      your.pred = y,
+      your.pred = FOCAL_PREDICTOR,
       data.dir = data.dir,
       wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
       psu = PSU, #psu = as.name("PSU")
@@ -309,12 +325,13 @@ LIST.RES <- map(OUTCOME.VEC0, \(x){
       res.dir = "results-primary",
       appnd.txt.to.filename = "_primary_wpc"
     )
-  }) }, .progress = TRUE)
+})
+
 
 LIST.RES <- construct_meta_input_from_saved_results("results-primary", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_primary_wpc")
 meta.input <- LIST.RES %>%
   bind_rows() %>%
-  mutate(
+  dplyr::mutate(
     OUTCOME0 = OUTCOME,
     FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
   ) %>%
@@ -328,7 +345,7 @@ META.RES <- gfs_meta_analysis(
 
 readr::write_rds(
   META.RES,
-  file = here::here("results-primary","0_meta_analyzed_results_primary_wpc.rds"),
+  file = here::here(data.dir, "results-primary","0_meta_analyzed_results_primary_wpc.rds"),
   compress = "gz"
 )
 remove(meta.input, LIST.RES, META.RES)

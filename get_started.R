@@ -1,6 +1,14 @@
+# for base R:
+# setwd("/Users/chris_felton/Documents/GitHub/Rglobalflourishing")
+
 devtools::load_all()
 load_packages()
 
+## MULTISESSION
+num_cores <- parallel::detectCores()/2
+plan("multisession", workers = num_cores)
+#handlers(global = TRUE)
+#handlers("progress")
 
 data.dir <- "/Users/chris_felton/Documents/GFSw20"
 dataset.name <- "gfs_all_countries_wave2.sav"

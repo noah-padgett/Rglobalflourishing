@@ -1,6 +1,6 @@
 # Script: main.R
 # Created by: R. Noah Padgett & Chris Felton
-# Last edited on: 2024-05-05
+# Last edited on: 2024-03-13
 
 # WARNING: The package was set up to be as user-friendly as possible for researchers
 #	part of the GFS core team who mainly have experience with other statistical analysis
@@ -22,15 +22,15 @@ data.dir <- "data"
 dataset.name <- "gfs_all_countries_wave2.sav"
 
 # Here is YOUR wave 1 construct variable
-FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
-FOCAL_PREDICTOR_BETTER_NAME <- c("self-rated physical health")
-FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean rating within country")
+FOCAL_PREDICTOR <- c("LIFE_BALANCE_Y1")
+FOCAL_PREDICTOR_BETTER_NAME <- c("balance in life")
+FOCAL_PREDICTOR_REFERENCE_VALUE <- c("responding never/rarely")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for
 #   consistency across studies.
-VALUES_DEFINING_UPPER_CATEGORY <- list(NULL)
-VALUES_DEFINING_LOWER_CATEGORY <- list(NULL)
+VALUES_DEFINING_UPPER_CATEGORY <- list(1:2)
+VALUES_DEFINING_LOWER_CATEGORY <- list(3:4)
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
@@ -72,6 +72,15 @@ out.file.pdf <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", pas
 file.copy(here::here("data","supp_page_1.docx"), here::here("results"))
 file.rename(here::here("results","supp_page_1.docx"), out.file)
 doconv::to_pdf(out.file, out.file.pdf)
+
+if (availableCores(constraints = "connections") == 2) {
+  num_cores <- 1
+} else if (availableCores(constraints = "connections") %% 2 == 0) {
+  num_cores <- availableCores(constraints = "connections")/2
+} else if (availableCores(constraints = "connections") %% 2 == 1) {
+  num_cores <- availableCores(constraints = "connections")/2 - 0.5
+}
+
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -123,6 +132,7 @@ if (run.imp) {
     pred.vars = pred0
   )
 }
+
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -210,7 +220,7 @@ DEMO.CHILDHOOD.PRED <- c(
 OUTCOME.VEC0 <- OUTCOME.VEC # c(1, 8, 24)+76,
 
 # Model 1: Run without principal components
-plan("multisession")
+plan("multisession", workers = num_cores)
 with_progress({
   p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
@@ -262,7 +272,7 @@ readr::write_rds(
 remove(LIST.RES, meta.input, META.RES)
 
 # Model 2: Run with principal components
-plan("multisession")
+plan("multisession", workers = num_cores)
 with_progress({
   p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
@@ -320,7 +330,7 @@ remove(meta.input, LIST.RES, META.RES)
 # - Uses attrition-weight adjusted sampling weights
 
 # Supplemental analysis set 1: Run without principal components
-plan("multisession")
+plan("multisession", workers = num_cores)
 with_progress({
   p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
@@ -371,7 +381,7 @@ readr::write_rds(
 remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
 
 # Analysis set 2: Run with principal components
-plan("multisession")
+plan("multisession", workers = num_cores)
 with_progress({
   p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
@@ -427,7 +437,7 @@ remove(meta.input, LIST.RES, META.RES)
 # Re-run primary analysis but get UNSTANDARDIZED estimated
 
 # Model 1: Run without principal components
-plan("multisession")
+plan("multisession", workers = num_cores)
 with_progress({
   p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
@@ -479,7 +489,7 @@ readr::write_rds(
 remove(LIST.RES, meta.input, META.RES)
 
 # Model 2: Run with principal components
-plan("multisession")
+plan("multisession", workers = num_cores)
 with_progress({
   p <- progressor(along = OUTCOME.VEC0)
   furrr::future_walk(OUTCOME.VEC0, \(x){
