@@ -771,8 +771,8 @@ gfs_generate_supplemental_docs <- function(
     file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds",
     file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds",
     file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds",
-    file.cca.wopc = "0_meta_analyzed_results_primary_wopc.rds",
-    file.cca.wpc = "0_meta_analyzed_results_primary_wpc.rds",
+    file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds",
+    file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds",
     p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL,
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     res.dir = "results", included.countries=NULL,
@@ -1187,11 +1187,12 @@ gfs_generate_supplemental_docs <- function(
   #	(1) Summary statistics of OUTCOMES by wave (raw data)
   # ========================= #
   if(what == "all" | what == "S1"){
+    cat("Starting part 1 - meta-analysis results\n")
     if(single.file.num.sequential | single.file){
-      out.file <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.docx <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
       out.file.pdf <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".pdf"))
     } else {
-      out.file <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.docx <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".docx"))
       out.file.pdf <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".pdf"))
     }
     ## ========================================================================================== ##
@@ -2223,7 +2224,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     # 3. append temp PDF to pdf outcome
     gfs_append_pdf(out.file.pdf, res.dir)
 
-
+    cat("Part 1 complete.\n")
   }
   ## ============================================================================================== ##
   # Supplement 2: Country-specific results
@@ -2236,13 +2237,14 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   #     - Outcome-wide E-values (similar to main text Table 3)
   # ========================= #
   if(what == "all" | what == "S2"){
+    cat("Starting part 2 -- country-specific results\n")
     if(single.file.num.sequential | single.file){
-      out.file <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.docx <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
       out.file.pdf <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".pdf"))
     } else {
       # initialize objects as needed
       tb.num <- 1
-      out.file <- here::here(res.dir,paste0("GFS-S2 Online Supplement Part 2_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.docx <- here::here(res.dir,paste0("GFS-S2 Online Supplement Part 2_", paste0(focal.better.name, collapse=" "),".docx"))
       out.file.pdf <- here::here(res.dir,paste0("GFS-S2 Online Supplement Part 2_", paste0(focal.better.name, collapse=" "),".pdf"))
       supp_doc <- read_docx() |>
         body_add_fpar(
@@ -2250,7 +2252,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         #body_add_par("...general caveats...")
         body_end_section_continuous() %>%
         body_add_break() |>
-        print(target=out.file)
+        print(target=out.file.docx)
     }
 
 
@@ -3303,9 +3305,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ## print tmp file
         print(tmp_doc, target = tmp.file)
         ## Print out tables for current country
-        supp_doc <- read_docx(out.file)
+        supp_doc <- read_docx(out.file.docx)
         supp_doc <- supp_doc |> body_add_docx(tmp.file)
-        print(supp_doc, target = out.file)
+        print(supp_doc, target = out.file.docx)
         doconv::to_pdf(input = tmp.file, output = tmp.file.pdf)
 
         tmp.dir <- tempdir()
@@ -3320,6 +3322,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       }
     }
 
+    cat("Part 2 complete.\n")
   }
   ## ============================================================================================== ##
   # Supplement 3:
@@ -3330,21 +3333,21 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   #     - Model 2 (w/ PCs)
   ## ============================================================================================== ##
   if(what == "all" | what == "S3"){
-
+    cat("Starting part 3 - wide format and forest plots\n")
     if(single.file.num.sequential | single.file){
-      out.file <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.docx <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
       out.file.pdf <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".pdf"))
     } else {
       # initialize objects as needed
       tb.num <- 1
-      out.file <- here::here(res.dir,paste0("GFS-S3 Online Supplement Part 3_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.docx <- here::here(res.dir,paste0("GFS-S3 Online Supplement Part 3_", paste0(focal.better.name, collapse=" "),".docx"))
       out.file.pdf <- here::here(res.dir,paste0("GFS-S3 Online Supplement Part 3_", paste0(focal.better.name, collapse=" "),".pdf"))
       supp_doc <- read_docx() |>
         body_add_fpar(fpar(ftext("GFS Online Supplement Part 3", gfs_title1_prop)), style="centered") %>%
         #body_add_par("...general caveats...")
         body_end_section_continuous() %>%
         body_add_break() |>
-        print(target=out.file)
+        print(target=out.file.docx)
     }
 
 
@@ -3715,6 +3718,8 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
 
       }
     }
+
+    cat("Part 3 complete.\n")
   }
 
 }
