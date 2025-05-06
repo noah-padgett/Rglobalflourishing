@@ -14,7 +14,6 @@ gfs_run_regression_single_outcome(
   wgt = ANNUAL_WEIGHT_R2,
   psu = PSU,
   strata = STRATA,
-  standardize = TRUE,
   pc.cutoff = 7,
   pc.rule = "omit",
   force.linear = FALSE,
@@ -39,8 +38,6 @@ gfs_run_regression_single_outcome(
 
 \item{contemporaneous.exposures}{a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)}
 
-\item{standardize}{a logical (default: TRUE) of whether to standardized the predictor and outcome}
-
 \item{pc.cutoff}{a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)}
 
 \item{pc.rule}{principal components analysis use rule (default: "omit")}
@@ -60,8 +57,6 @@ gfs_run_regression_single_outcome(
 \item{...}{other arguments passed to svyglm or glmrob functions}
 
 \item{subpopulation}{(optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)}
-
-\item{compute.vif}{(optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.}
 }
 \value{
 a data.frame that contains the meta-analysis input results

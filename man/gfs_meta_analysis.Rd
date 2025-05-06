@@ -6,6 +6,8 @@
 \usage{
 gfs_meta_analysis(
   meta.input,
+  yi = as.name("Est"),
+  sei = as.name("SE"),
   estimator = "PM",
   interval.method = "empirical",
   better.name = NULL,
@@ -16,6 +18,20 @@ gfs_meta_analysis(
 }
 \arguments{
 \item{meta.input}{a nested data.frame where `data` is a column}
+
+\item{yi}{a name of the variable containing the effect sizes to be meta-analyzed (e.g., as.name("Est"))}
+
+\item{sei}{a name of the variable containing the standard error of the effect size (e.g., as.name("SE"))}
+
+\item{estimator}{(default = "PM") other options include those available in the metafor package}
+
+\item{interval.method}{(default = "empirical) how the proportion of effect size metric is computed}
+
+\item{better.name}{(optional) string of the name to use in the forest plot}
+
+\item{p.subtitle}{(optional) subtitle of forest plot}
+
+\item{ci.alpha}{(0.05) type-1 error rate (alpha) for confidence intervals}
 
 \item{...}{additional arguments}
 }

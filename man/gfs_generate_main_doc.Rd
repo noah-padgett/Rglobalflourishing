@@ -6,8 +6,8 @@
 \usage{
 gfs_generate_main_doc(
   df.raw = NULL,
-  meta.wopc = NULL,
-  meta.wpc = NULL,
+  meta.wopc = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  meta.wpc = here::here("results-primary", "0_meta_analyzed_results_primary_wpc.rds"),
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",
   focal.predictor = NULL,
@@ -16,11 +16,11 @@ gfs_generate_main_doc(
   outcome.vec = NULL,
   mylabels = NULL,
   res.dir = "results",
-  wgt = as.name("WGT"),
-  wgt1 = as.name("ANNUAL_WEIGHT_R2"),
-  wgt2 = as.name("AVG.SAMP.ATTR.WGT"),
-  psu = as.name("PSU"),
-  strata = as.name("STRATA"),
+  wgt = WGT0,
+  wgt1 = ANNUAL_WEIGHT_R2,
+  wgt2 = AVG.SAMP.ATTR.WGT,
+  psu = PSU,
+  strata = STRATA,
   ci.bonferroni = FALSE
 )
 }

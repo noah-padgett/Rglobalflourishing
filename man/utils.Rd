@@ -14,6 +14,8 @@
 \alias{.geom_stripes}
 \alias{.GeomStripes}
 \alias{theme_Publication}
+\alias{gfs_print_docx}
+\alias{gfs_append_pdf}
 \title{Standardized with Complex Survey Adjusted Mean and Variance}
 \format{
 An object of class \code{GeomStripes} (inherits from \code{Geom}, \code{ggproto}, \code{gg}) of length 5.
@@ -58,6 +60,10 @@ theme_meta_evalues(xtb, pg.width = 21/2.54 - 2, .ncol = 6)
 .GeomStripes
 
 theme_Publication(base_size = 14)
+
+gfs_print_docx(doc, file, dir)
+
+gfs_append_pdf(file, dir)
 }
 \arguments{
 \item{x}{(character vector) of a vector of variable names in data}
@@ -96,6 +102,12 @@ abbreviated.}
 matrix (square, of size \code{ncol(data)} specifying the MAXIMUM
 threshold(s) against which the absolute correlation in the data is compared.
 this is used to help troubleshoot and resolve non-invertible predictor matrices}
+
+\item{doc}{officer object to be printed out}
+
+\item{file}{name of pdf file needed to be file appended to}
+
+\item{dir}{name of directory to print out file to}
 }
 \value{
 a vector of standardized scores
