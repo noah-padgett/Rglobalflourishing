@@ -7,7 +7,6 @@
 #' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_Y2")
 #' @param covariates a character vector defining core set of covariates (default: NULL)
 #' @param contemporaneous.exposures a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)
-#' @param standardize a logical (default: TRUE) of whether to standardized the predictor and outcome
 #' @param pc.rule principal components analysis use rule (default: "omit")
 #' @param pc.cutoff a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)
 #' @param force.linear a logical of whether to force a linear model (default: FALSE)
@@ -16,7 +15,6 @@
 #' @param robust.tune a numeric value defining the tuning parameter for the robust.huberM option.
 #' @param res.dir a character string defining directory to save results to.
 #' @param subpopulation (optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)
-#' @param compute.vif (optional) a logical of whether to compute the VIF. *warning* this significantly increases the time needed to get results.
 #' @param appnd.txt.to.filename (optional) character string to help differentiate saved results file (default "")
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a data.frame that contains the meta-analysis input results
@@ -46,6 +44,7 @@
 #' changes to standard errors for reasons that are unclear to me. Could be due to a strange
 #' interaction of robustness weights, attrition weights, and post-stratified sampling weights.
 #'
+#'
 gfs_run_regression_single_outcome <- function(
     data.dir = NULL,
     direct.subset = NULL,
@@ -57,7 +56,6 @@ gfs_run_regression_single_outcome <- function(
     psu = PSU,
     strata = STRATA,
     # advanced options: only change if you know what you are doing
-    standardize = TRUE,
     pc.cutoff = 7,
     pc.rule = "omit",
     force.linear = FALSE,
@@ -120,7 +118,8 @@ gfs_run_regression_single_outcome <- function(
         ###
         .check_if_valid_comb <- function(){
           out <- TRUE
-
+          # combinations of outcomes/predictors known to lead to issues such as 100% within country,
+          # zero change from wave 1, or zero variation in outcome within country
           if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
             if(cur.country %in% c("China","Egypt") ){
               out <- FALSE
@@ -146,6 +145,14 @@ gfs_run_regression_single_outcome <- function(
           if (str_detect(your.outcome,"SAY_IN_GOVT") | str_detect(your.pred,"SAY_IN_GOVT")) {
             if(cur.country %in% c("China") ){
               out <- FALSE
+            }
+          }
+          if (str_detect(your.outcome, "EDUCATION_3")){
+            if(cur.country %in% c("China")){
+              out <- TRUE
+              # update covariates to EXCLUDE education wave 1
+              # not enough time has passed from wave 1 to wave 2 for education to change
+              covariates <- covariates[covariates != "COV_EDUCATION_3_Y1"]
             }
           }
 
@@ -180,20 +187,6 @@ gfs_run_regression_single_outcome <- function(
               data = map(data, \(x) {
                 x$FOCAL_PREDICTOR <- as.numeric(x[, your.pred, drop = TRUE])
                 x
-              }),
-              data = map(data, \(x) {
-                x %>% mutate(
-                  PRIMARY_OUTCOME = case_when(
-                    standardize == FALSE ~ PRIMARY_OUTCOME,
-                    outcome.type == "linear" & standardize == TRUE ~ svy_scale(PRIMARY_OUTCOME, {{wgt}}, {{psu}}, {{strata}}),
-                    .default = PRIMARY_OUTCOME
-                  ),
-                  FOCAL_PREDICTOR = case_when(
-                    standardize == FALSE ~ FOCAL_PREDICTOR,
-                    outcome.type == "linear" & standardize == TRUE ~ svy_scale(FOCAL_PREDICTOR, {{wgt}}, {{psu}}, {{strata}}),
-                    .default = FOCAL_PREDICTOR
-                  )
-                )
               }),
               data = map(data, \(tmp.dat){
                 tmp.dat %>%
@@ -551,12 +544,6 @@ gfs_run_regression_single_outcome <- function(
             ) %>%
             select(COUNTRY, outcome.sd, predictor.sd)
 
-          # Now, IF the outcome and predictor were first standardized, this the above isn't necessary... and needs to be overwritten by a vector of 1s
-          if (standardize) {
-            sd.pooled$outcome.sd <- 1
-            sd.pooled$predictor.sd <- 1
-          }
-
           ## Relabel output
           varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")
           termlist <- as.character(unique(results.pooled$term))[-1]
@@ -651,6 +638,30 @@ gfs_run_regression_single_outcome <- function(
             ) %>%
             arrange(Variable)
 
+          # Compute standardized estimates
+          # note: for binary outcomes only need to multiply by the predictor standard deviation
+          output <- output %>%
+            mutate(
+              std.estimate.pooled = case_when(
+                outcome.type == "linear" ~ estimate.pooled * (predictor.sd / outcome.sd),
+                outcome.type == "RR" ~ estimate.pooled * predictor.sd,
+                .default = estimate.pooled
+              ),
+              std.se.pooled = case_when(
+                outcome.type == "linear" ~ se.pooled * (predictor.sd / outcome.sd),
+                outcome.type == "RR" ~ se.pooled * predictor.sd ,
+                .default = se.pooled
+              ),
+              std.ci.low = case_when(
+                df.approx > 1 ~ std.estimate.pooled - stats::qt(0.975, df.approx) * std.se.pooled,
+                .default = NA
+              ),
+              std.ci.up = case_when(
+                df.approx > 1 ~ std.estimate.pooled + stats::qt(0.975, df.approx) * std.se.pooled,
+                .default = NA
+              )
+            )
+
 
           # Meta analysis input - is a simplified data.frame with only:
           # 		country, variable, category, estimate, standard error, and global p-value
@@ -666,13 +677,21 @@ gfs_run_regression_single_outcome <- function(
               ci.low,
               ci.up,
               df.approx,
-              outcome.sd
+              outcome.sd,
+              predictor.sd,
+              std.estimate.pooled,
+              std.se.pooled,
+              std.ci.low,
+              std.ci.up
             ) %>%
             group_by(COUNTRY, Variable) %>%
             dplyr::filter(!(Category == "(Ref:)")) %>%
             dplyr::filter(Variable == "FOCAL_PREDICTOR")
           colnames(metainput) <-
-            c("Country", "Variable", "Category", "Est", "SE", "pvalue", "ci.lb", "ci.ub", "df", "outcome.sd")
+            c("Country", "Variable", "Category",
+              "est", "se", "pvalue", "ci.lb", "ci.ub",
+              "df", "outcome.sd", "predictor.sd",
+              "std.est", "std.se", "std.ci.lb", "std.ci.ub")
           metainput <- metainput %>%
             mutate(
               OUTCOME = your.outcome,
@@ -775,6 +794,9 @@ gfs_run_regression_single_outcome <- function(
               id.Est = .round(estimate.pooled),
               id.SE = .round(se.pooled),
               id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
+              id.Std.Est = .round(std.estimate.pooled),
+              id.Std.SE = .round(std.se.pooled),
+              id.Std.CI = paste0("(", .round(std.ci.low), ",", .round(std.ci.up), ")"),
               ## make sure to apply RR approximation is outcome is actually linear
               rr.Est = case_when(
                 outcome.type == "RR" ~ .round(exp(estimate.pooled)),
@@ -784,6 +806,15 @@ gfs_run_regression_single_outcome <- function(
               rr.CI = case_when(
                 outcome.type == "RR" ~ paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")"),
                 outcome.type == "linear" ~ paste0("(", .round(exp(0.91*ci.low)), ",", .round(exp(0.91*ci.up)), ")")
+              ),
+              rr.Std.Est = case_when(
+                outcome.type == "RR" ~ .round(exp(std.estimate.pooled)),
+                outcome.type == "linear" ~ .round(exp(0.91*std.estimate.pooled))
+              ),
+              logrr.Std.SE = .round(std.se.pooled),
+              rr.Std.CI = case_when(
+                outcome.type == "RR" ~ paste0("(", .round(exp(std.ci.low)), ",", .round(exp(std.ci.up)), ")"),
+                outcome.type == "linear" ~ paste0("(", .round(exp(0.91*std.ci.low)), ",", .round(exp(0.91*std.ci.up)), ")")
               )
             )
 
@@ -793,7 +824,7 @@ gfs_run_regression_single_outcome <- function(
           )
 
           ## load the previously "saved" result and append results for the next country
-          if(cur.country != "Argentina"){
+          if(cur.country != country.vec[1]){
             load(outfile, env.res <- new.env())
             output <- rbind(output, env.res$output)
             metainput <- rbind(metainput, env.res$metainput)

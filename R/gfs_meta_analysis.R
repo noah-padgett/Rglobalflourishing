@@ -3,12 +3,19 @@
 #' Conducted meta-analysis (random effects or population weighted) for a set of effect of interest.
 #'
 #' @param meta.input a nested data.frame where `data` is a column
+#' @param yi a name of the variable containing the effect sizes to be meta-analyzed (e.g., as.name("Est"))
+#' @param sei a name of the variable containing the standard error of the effect size (e.g., as.name("SE"))
+#' @param estimator (default = "PM") other options include those available in the metafor package
+#' @param interval.method (default = "empirical) how the proportion of effect size metric is computed
+#' @param better.name (optional) string of the name to use in the forest plot
+#' @param p.subtitle (optional) subtitle of forest plot
+#' @param ci.alpha (0.05) type-1 error rate (alpha) for confidence intervals
 #' @param ... additional arguments
 #' @return a list of meta-analysis results from the metafor package
 #' @examples
 #' # TO-DO
 #' @export
-gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "empirical", better.name = NULL,
+gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE"), estimator = "PM", interval.method = "empirical", better.name = NULL,
                               p.subtitle = NULL, ci.alpha = 0.05, ...) {
   # meta.input = df.tmp %>%
   # 	group_by(OUTCOME) %>%
@@ -39,11 +46,18 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
       FOCAL_PREDICTOR = map(data, \(x){
         x$FOCAL_PREDICTOR[1]
       }),
+      data = map(data, \(x){
+        x %>%
+          mutate(
+            yi = {{yi}},
+            sei = {{sei}}
+          )
+      }),
       ## ====== random effects meta results ===================================================== ##
       meta.rma = map(data, \(x){
         rma(
-          yi = Est,
-          sei = SE,
+          yi = yi,
+          sei = sei,
           data = x,
           method = estimator
         )
@@ -106,8 +120,8 @@ gfs_meta_analysis <- function(meta.input, estimator = "PM", interval.method = "e
       meta.pop.wgt = map(data, \(x){
         x <- add_pop_wgts(x)
         rma(
-          yi = Est,
-          sei = SE,
+          yi = yi,
+          sei = sei,
           weights = wi,
           data = x,
           method = "FE"

@@ -1,6 +1,6 @@
 # Script: main.R
 # Created by: R. Noah Padgett & Chris Felton
-# Last edited on: 2024-03-13
+# Last edited on: 2024-05-05
 
 # WARNING: The package was set up to be as user-friendly as possible for researchers
 #	part of the GFS core team who mainly have experience with other statistical analysis
@@ -12,8 +12,8 @@
 #   "play nice" with other packages.
 
 # install.packages("remotes")
-remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
-library(Rglobalflourishing)
+#remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
+#library(Rglobalflourishing)
 
 # Analysis Set-Up
 
@@ -22,15 +22,15 @@ data.dir <- "data"
 dataset.name <- "gfs_all_countries_wave2.sav"
 
 # Here is YOUR wave 1 construct variable
-FOCAL_PREDICTOR <- c("LIFE_BALANCE_Y1")
-FOCAL_PREDICTOR_BETTER_NAME <- c("balance in life")
-FOCAL_PREDICTOR_REFERENCE_VALUE <- c("responding never/rarely")
+FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
+FOCAL_PREDICTOR_BETTER_NAME <- c("self-rated physical health at wave 1")
+FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean score within country")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
 #   want it to be categorized. Categorization must result in a binary variable 0/1 for
 #   consistency across studies.
-VALUES_DEFINING_UPPER_CATEGORY <- list(1:2)
-VALUES_DEFINING_LOWER_CATEGORY <- list(3:4)
+VALUES_DEFINING_UPPER_CATEGORY <- list(NULL)
+VALUES_DEFINING_LOWER_CATEGORY <- list(NULL)
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
@@ -63,15 +63,18 @@ handlers(global = TRUE)
 
 # Generating the online supplement is a complicated process. We start here to ensure the internal document conversation can be conducted.
 # First, run the next 6 lines.
-# Running line (81) will ask you to give R permission to access Word. Please say "Yes".
+# Running lines () will ask you to give R permission to access Word. Please say "Yes".
 if(!(dir.exists(here("results")))) dir.create(here("results"))
 
-library(doconv)
+library(pandoc)
 out.file <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".docx"))
 out.file.pdf <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".pdf"))
 file.copy(here::here("data","supp_page_1.docx"), here::here("results"))
 file.rename(here::here("results","supp_page_1.docx"), out.file)
-doconv::to_pdf(out.file, out.file.pdf)
+pandoc::pandoc_convert(
+  from = "docx", to = "pdf",
+  file = out.file, output = out.file.pdf
+)
 
 if (availableCores(constraints = "connections") == 2) {
   num_cores <- 1
@@ -80,7 +83,6 @@ if (availableCores(constraints = "connections") == 2) {
 } else if (availableCores(constraints = "connections") %% 2 == 1) {
   num_cores <- availableCores(constraints = "connections")/2 - 0.5
 }
-
 
 # ================================================================================================ #
 # ================================================================================================ #
@@ -186,7 +188,6 @@ run_attrition_model_by_country(
 ## append attrition weights to imputed data
 append_attr_wgts_to_imp_data(data.dir, attr.dir = "results-attr")
 
-
 # ================================================================================================ #
 # ================================================================================================ #
 # Run primary country-wise analyses -- Full imputation based approach
@@ -238,7 +239,6 @@ with_progress({
         covariates = DEMO.CHILDHOOD.PRED,
         contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
         list.composites = LIST.COMPOSITES[[1]],
-        standardize = TRUE,
         pc.rule = "omit",
         res.dir = "results-primary",
         appnd.txt.to.filename = "_primary_wopc"
@@ -260,13 +260,31 @@ meta.input <- LIST.RES %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
 
+## Primary result - standardized effect sizes
+# if predictor & outcome are continuous, change in SD on outcome for 1 SD increase in predictor
+# if predictor is continuous & outcome is binary, change in risk of being in upper category for 1 SD increase in predictor
+# if predictor & outcome are binary, change in risk of being in upper category for being in upper category on predictor compared to lower category
 META.RES <- gfs_meta_analysis(
-  meta.input,
+  meta.input, yi = std.est, sei = std.se,
   p.subtitle = "Principal Components Excluded -- Full Imputation Approach"
 )
 readr::write_rds(
   META.RES,
-  file = here::here(data.dir, "results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  file = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
+  compress = "gz"
+)
+
+## Supplemental result - UNstandardized effect sizes
+# if predictor & outcome are continuous, change in on outcome for 1 unit increase in predictor
+# if predictor is continuous & outcome is binary, change in risk of being in upper category for 1 unit increase in predictor
+# if predictor & outcome are binary, change in risk of being in upper category for being in upper category on predictor compared to lower category
+META.RES <- gfs_meta_analysis(
+  meta.input, yi = est, sei = se,
+  p.subtitle = "Principal Components Excluded -- Full Imputation Approach"
+)
+readr::write_rds(
+  META.RES,
+  file = here::here("results-primary", "0_meta_analyzed_results_unstd_wopc.rds"),
   compress = "gz"
 )
 remove(LIST.RES, meta.input, META.RES)
@@ -290,7 +308,6 @@ with_progress({
         covariates = DEMO.CHILDHOOD.PRED,
         contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
         list.composites = LIST.COMPOSITES[[1]],
-        standardize = TRUE,
         pc.cutoff = 7,
         pc.rule = "constant",
         res.dir = "results-primary",
@@ -313,13 +330,26 @@ meta.input <- LIST.RES %>%
   nest()
 
 META.RES <- gfs_meta_analysis(
-  meta.input,
+  meta.input, yi = std.est, sei = std.se,
   p.subtitle = "Principal Components Included -- Full Imputation Approach"
 )
-
 readr::write_rds(
   META.RES,
-  file = here::here("results-primary","0_meta_analyzed_results_primary_wpc.rds"),
+  file = here::here("results-primary", "0_meta_analyzed_results_primary_wpc.rds"),
+  compress = "gz"
+)
+
+## Supplemental result - UNstandardized effect sizes
+# if predictor & outcome are continuous, change in on outcome for 1 unit increase in predictor
+# if predictor is continuous & outcome is binary, change in risk of being in upper category for 1 unit increase in predictor
+# if predictor & outcome are binary, change in risk of being in upper category for being in upper category on predictor compared to lower category
+META.RES <- gfs_meta_analysis(
+  meta.input, yi = est, sei = se,
+  p.subtitle = "Principal Components Included -- Full Imputation Approach"
+)
+readr::write_rds(
+  META.RES,
+  file = here::here("results-primary", "0_meta_analyzed_results_unstd_wpc.rds"),
   compress = "gz"
 )
 remove(meta.input, LIST.RES, META.RES)
@@ -349,7 +379,6 @@ with_progress({
         covariates = DEMO.CHILDHOOD.PRED,
         contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
         list.composites = LIST.COMPOSITES[[1]],
-        standardize = TRUE,
         pc.rule = "omit",
         res.dir = "results-cca",
         appnd.txt.to.filename = "_cca_wopc"
@@ -369,8 +398,9 @@ meta.input <- LIST.RES %>%
   ) %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
+
 META.RES <- gfs_meta_analysis(
-  meta.input,
+  meta.input, yi = std.est, sei = std.se,
   p.subtitle = "Principal Components Excluded -- Complete Case Analysis"
 )
 readr::write_rds(
@@ -378,7 +408,8 @@ readr::write_rds(
   file = here::here("results-cca", "0_meta_analyzed_results_cca_wopc.rds"),
   compress = "gz"
 )
-remove(meta.input, SUPP.LIST.RES, SUPP.META.RES)
+
+remove(meta.input, LIST.RES, META.RES)
 
 # Analysis set 2: Run with principal components
 plan("multisession", workers = num_cores)
@@ -400,7 +431,6 @@ with_progress({
         covariates = DEMO.CHILDHOOD.PRED,
         contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
         list.composites = LIST.COMPOSITES[[1]],
-        standardize = TRUE,
         pc.cutoff = 7,
         pc.rule = "constant",
         res.dir = "results-cca",
@@ -421,8 +451,9 @@ meta.input <- LIST.RES %>%
   ) %>%
   group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
   nest()
+
 META.RES <- gfs_meta_analysis(
-  meta.input,
+  meta.input, yi = std.est, sei = std.se,
   p.subtitle = "Principal Components Included -- Complete Case Analysis"
 )
 readr::write_rds(
@@ -430,116 +461,7 @@ readr::write_rds(
   file = here::here("results-cca", "0_meta_analyzed_results_cca_wpc.rds"),
   compress = "gz"
 )
-remove(meta.input, LIST.RES, META.RES)
 
-# ================================================================================================ #
-# ================================================================================================ #
-# Re-run primary analysis but get UNSTANDARDIZED estimated
-
-# Model 1: Run without principal components
-plan("multisession", workers = num_cores)
-with_progress({
-  p <- progressor(along = OUTCOME.VEC0)
-  furrr::future_walk(OUTCOME.VEC0, \(x){
-    load_packages()
-    options(survey.lonely.psu = "certainty")
-
-    walk(FOCAL_PREDICTOR, \(y){
-      gfs_run_regression_single_outcome(
-        your.outcome = x,
-        your.pred = y,
-        data.dir = data.dir,
-        wgt = ANNUAL_WEIGHT_R2, # wgt = as.name("ANNUAL_WEIGHT_R2")
-        psu = PSU, #psu = as.name("PSU")
-        strata = STRATA, # strata = as.name("STRATA")
-        covariates = DEMO.CHILDHOOD.PRED,
-        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-        list.composites = LIST.COMPOSITES[[1]],
-        standardize = FALSE,
-        pc.rule = "omit",
-        res.dir = "results-unstd",
-        appnd.txt.to.filename = "_unstd_wopc"
-      )
-    })
-    p(sprintf("x= %s", x))
-  },.options = furrr_options(seed = TRUE))
-})
-future::resetWorkers(plan())
-
-
-LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wopc")
-meta.input <- LIST.RES %>%
-  bind_rows() %>%
-  mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
-  ) %>%
-  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
-  nest()
-
-META.RES <- gfs_meta_analysis(
-  meta.input,
-  p.subtitle = "Principal Components Excluded -- Unstandardized Results"
-)
-readr::write_rds(
-  META.RES,
-  file = here::here("results-unstd", "0_meta_analyzed_results_unstd_wopc.rds"),
-  compress = "gz"
-)
-remove(LIST.RES, meta.input, META.RES)
-
-# Model 2: Run with principal components
-plan("multisession", workers = num_cores)
-with_progress({
-  p <- progressor(along = OUTCOME.VEC0)
-  furrr::future_walk(OUTCOME.VEC0, \(x){
-    load_packages()
-    options(survey.lonely.psu = "certainty")
-
-    walk(FOCAL_PREDICTOR, \(y){
-      gfs_run_regression_single_outcome(
-        your.outcome = x,
-        your.pred = y,
-        data.dir = data.dir,
-        wgt = ANNUAL_WEIGHT_R2,
-        psu = PSU,
-        strata = STRATA,
-        covariates = DEMO.CHILDHOOD.PRED,
-        contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC,
-        list.composites = LIST.COMPOSITES[[1]],
-        standardize = FALSE,
-        pc.cutoff = 7,
-        pc.rule = "constant",
-        res.dir = "results-unstd",
-        appnd.txt.to.filename = "_unstd_wpc"
-      )
-    })
-    p(sprintf("x= %s", x))
-  },.options = furrr_options(seed = TRUE))
-})
-future::resetWorkers(plan())
-
-
-LIST.RES <- construct_meta_input_from_saved_results("results-unstd", OUTCOME.VEC0, FOCAL_PREDICTOR, appnd.txt = "_unstd_wpc")
-meta.input <- LIST.RES %>%
-  bind_rows() %>%
-  mutate(
-    OUTCOME0 = OUTCOME,
-    FOCAL_PREDICTOR0 = FOCAL_PREDICTOR
-  ) %>%
-  group_by(OUTCOME0, FOCAL_PREDICTOR0) %>%
-  nest()
-
-META.RES <- gfs_meta_analysis(
-  meta.input,
-  p.subtitle = "Principal Components Included -- Unstandardized Results"
-)
-
-readr::write_rds(
-  META.RES,
-  file = here::here("results-unstd","0_meta_analyzed_results_unstd_wpc.rds"),
-  compress = "gz"
-)
 remove(meta.input, LIST.RES, META.RES)
 
 # ================================================================================================ #
@@ -575,37 +497,17 @@ df.raw <- append_attrition_weights_to_df(data=df.raw)
 # main text
 gfs_generate_main_doc(
   df.raw = df.raw,
-  res.dir = "results",
-  meta.wopc = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
-  meta.wpc = here::here("results-primary", "0_meta_analyzed_results_primary_wpc.rds"),
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,
-  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
-  wgt = WGT0,
-  wgt1 = ANNUAL_WEIGHT_R2,
-  wgt2 = AVG.SAMP.ATTR.WGT,
-  psu = PSU,
-  strata = STRATA
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE
 )
 
 ## Generate online supplement
 gfs_generate_supplemental_docs(
   df.raw = df.raw,
-  res.dir = "results",
-  dir.primary="results-primary",
-  dir.supp="results-cca",
-  dir.unstd = "results-unstd",
-  dir.attr.models = "results-attr",
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
-  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
-  wgt = WGT0,
-  wgt1 = ANNUAL_WEIGHT_R2,
-  wgt2 = AVG.SAMP.ATTR.WGT,
-  psu = PSU,
-  strata = STRATA,
-  what = "all",
-  single.file = TRUE
+  focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE
 )
 
 
@@ -613,23 +515,19 @@ gfs_generate_supplemental_docs(
 # ================================================================================================ #
 # Code to fiddle/tinker with forest plots (main text plots)
 {
-  META.RES1 <- readr::read_rds(file = here::here("results-wopc", "0_meta_analyzed_results_wopc.rds"))
-  META.RES2 <- readr::read_rds(file = here::here("results-wpc", "0_meta_analyzed_results_wpc.rds"))
+  META.RES <- readr::read_rds(file = here::here("results-primary", "0_meta_analyzed_results_wpc.rds"))
 
   # Base plot:
-  p1 <- META.RES2 %>% ungroup() %>%
+  p1 <- META.RES %>% ungroup() %>%
     filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_W2") %>%
     select(forest.plot)
   p1
 
   # IF desired, the code to re-create the figure and fiddle as desired is below:
-  tmp.fit <- META.RES2 %>% ungroup() %>%
+  tmp.fit <- META.RES %>% ungroup() %>%
     filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_Y2")
   tmp.fit <- tmp.fit$fit[[1]]
-  tmp.dat <- tmp.fit$data %>%
-    mutate(
-      yi = Est
-    )
+  tmp.dat <- tmp.fit$data
   ALL.COUNTRIES <- c(
     "Australia","Hong Kong","India","Indonesia","Japan","Philippines","Egypt","Germany","Israel",
     "Kenya","Nigeria","Poland", "South Africa","Spain", "Sweden","Tanzania","Turkey", "United Kingdom",
@@ -766,4 +664,6 @@ gfs_generate_supplemental_docs(
     units = "in", width = 6, height = 5
   )
 }
+
+
 

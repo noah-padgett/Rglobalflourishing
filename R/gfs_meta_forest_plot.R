@@ -39,10 +39,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     "China"
   )
   tmp.fit <- fit
-  tmp.dat <- fit$data %>%
-    mutate(
-      yi = Est
-    )
+  tmp.dat <- fit$data
 
   if("FOCAL_PREDICTOR" %in% colnames(tmp.dat)){
 

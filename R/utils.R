@@ -189,8 +189,8 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
   tb.temp <- xtb %>%
     theme_apa() %>%
     font(part = "all", fontname = "Open Sans") %>%
-    fontsize(part = "header", size = 11) %>%
-    fontsize(part = "body", size = 10) %>%
+    fontsize(part = "header", size = 10) %>%
+    fontsize(part = "body", size = 9) %>%
     line_spacing(space = 0.95, part = "all") %>%
     padding(padding = 0, part = "all") %>%
     align(align = "right", part = "all") %>%
@@ -250,15 +250,15 @@ theme_meta_evalues <- function(xtb, pg.width = 21 / 2.54 - 2, .ncol = 6) {
     theme_apa() %>%
     font(part = "all", fontname = "Open Sans") %>%
     fontsize(part = "header", size = 10) %>%
-    fontsize(part = "body", size = 10) %>%
+    fontsize(part = "body", size = 9) %>%
     line_spacing(space = 0.95, part = "all") %>%
     padding(padding = 0, part = "all") %>%
     align(align = "right", part = "all") %>%
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all")  %>%
-    width(j=1,width=2.50)%>%
-    width(j=c(2,5),width=0.70)%>%
-    width(j=c(3,6),width=1.00)%>%
+    width(j=1,width=2.60)%>%
+    width(j=c(2,5),width=0.60)%>%
+    width(j=c(3,6),width=0.90)%>%
     width(j=c(4),width=0.10)%>%
     align(i = 1, j = NULL, align = "center", part = "header") %>%
     align(part = "footer", align = "left", j = 1:.ncol) %>%
@@ -521,4 +521,72 @@ get_fitted_attrition_model <- function(res.dir, country) {
     load(here::here(res.dir, tmp.attr.files))
     return(df.attr$fit.attr[[1]])
   })
+}
+
+
+
+#' @rdname utils
+#' @param doc officer object to be printed out
+#' @param file name of file to print out internal officer object
+#' @param dir name of directory to print out file to
+#' @export
+gfs_print_docx <- function(doc, file, dir){
+  tmp.file <- here::here(dir, "tmp_doc.docx")
+  print(doc, target = tmp.file)
+  rdoc <- read_docx(file)
+  rdoc <- rdoc |> body_add_docx(tmp.file)
+  print(rdoc, target = file)
+}
+
+#' @rdname utils
+#' @param file name of pdf file needed to be file appended to
+#' @param dir name of directory to print out file to
+#' @export
+gfs_append_pdf <- function(file, dir){
+  tmp.dir <- tempdir()
+  tmp.pdf <- here::here(res.dir, "tmp_pdf.pdf")
+  tmp.dir.file <- here::here(tmp.dir, "tmp_pdf2.pdf")
+  res.dir.file <- here::here(dir, "tmp_pdf2.pdf")
+  file.copy(file, tmp.dir, overwrite=TRUE)
+  file.rename(here::here(tmp.dir, "tmp_pdf.pdf"), tmp.dir.file)
+  file.copy(tmp.dir.file, dir, overwrite=TRUE)
+  qpdf::pdf_combine(c(res.dir.file, tmp.pdf), output = file)
+}
+
+
+#' @export
+style_percent <- function (x,
+                           digits = 0,
+                           big.mark = ifelse(decimal.mark == ",", " ", ","),
+                           decimal.mark = getOption("OutDec"),
+                           prefix = "",
+                           suffix = "",
+                           symbol,
+                           ...)
+{
+  set_cli_abort_call()
+  if (!missing(symbol)) {
+    lifecycle::deprecate_soft(
+      when = "2.0.3",
+      what = "gtsummary::style_percent(symbol)",
+      with = I("style_percent(suffix='%')")
+    )
+    if (isTRUE(symbol))
+      suffix = "%"
+  }
+  if (missing(decimal.mark)) {
+    decimal.mark <- get_theme_element("style_number-arg:decimal.mark", default = decimal.mark)
+  }
+  if (missing(big.mark)) {
+    big.mark <- get_theme_element("style_number-arg:big.mark",
+                                  default = ifelse(decimal.mark == ",", " ", ","))
+  }
+  y <- dplyr::case_when(
+    x * 100 >= 10 ~ style_number( x * 100, digits = digits + 1, big.mark = big.mark, decimal.mark = decimal.mark, prefix = prefix, suffix = suffix, ... ),
+    x * 100 >= 10^(-(digits + 1)) ~ style_number( x * 100, digits = digits + 1, big.mark = big.mark, decimal.mark = decimal.mark, prefix = prefix, suffix = suffix, ... ),
+    x > 0 ~ paste0("<", style_number( x = 10^(-(digits + 1)), digits = digits + 1,  big.mark = big.mark, decimal.mark = decimal.mark,  prefix = prefix, suffix = suffix,...) ),
+    x == 0 ~ paste0(prefix, "0", suffix)
+  )
+  attributes(y) <- attributes(unclass(x))
+  return(y)
 }

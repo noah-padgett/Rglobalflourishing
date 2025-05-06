@@ -203,7 +203,7 @@ get_outcome_better_name <- function(var, include.name = TRUE, include.wave = FAL
       TRUST_PEOPLE = "Trust within country",
       URBAN_RURAL = "Urbanicity",
       VOLUNTEERED = "Volunteering",
-      WB_FIVEYRS = "Future life lvaluation",
+      WB_FIVEYRS = "Future life evaluation",
       WB_TODAY = "Current life evaluation",
       WORRY_SAFETY = "Material security",
       WORTHWHILE = "Meaningful activities",

@@ -20,7 +20,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = as.name("WGT"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("AVG.SAMP.ATTR.WGT"), psu = as.name("PSU"), strata = as.name("STRATA"), ci.bonferroni = FALSE){
+gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"), meta.wpc = here::here("results-primary", "0_meta_analyzed_results_primary_wpc.rds"), focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE){
 
   n.print = df.raw %>%
     summarize(
@@ -57,7 +57,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
   ## ====== INTERNAL VECTORS FOR PRINTING ======================================================= ##
   ## Initialize internal word document formatting functions
   {
-    set_flextable_defaults(font.family = "Open Sans",font.size = 11)
+    set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 
     normal_portrait <- block_section(
       prop_section(page_size = page_size(orient = "portrait"), type = "continuous")
@@ -365,7 +365,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
         )
     })
 
-    tb.note.summarytab <- as_paragraph("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2 aggregated over the full sample and Tables S9a-32a and S9b-32b are summary tables by country.")
+    tb.note.summarytab <- as_paragraph(as_chunk("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2 aggregated over the full sample and Tables S9a-32a and S9b-32b are summary tables by country.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
     sumtab.toprint <- sumtab %>%
       as_flex_table() %>%
@@ -374,7 +374,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
       set_caption(
         as_paragraph(
           as_chunk(paste0("Table ", tb.num ,". Weighted sample demographic summary statistics."),
-                   props = fp_text_default(font.family = "Open Sans"))
+                   props = fp_text_default(font.family = "Open Sans", font.size = 11))
         ),
         align_with_table = TRUE
       ) %>%
@@ -394,8 +394,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
       vec.id <- c("theta.rma", "theta.rma.ci.bon", "tau","global.pvalue")
       vec.rr <- c("rr.theta", "rr.theta.ci.bon", "rr.tau","global.pvalue")
     }
-    vec.wopc <- c("RR", "ES","95% CI","τ", "Global p-value")
-    vec.wpc <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+    vec.wopc <- c("RR", "ES","95% CI","tau", "Global p-value")
+    vec.wpc <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
     cnames <- c(
       "Outcome",
       vec.wopc,
@@ -490,13 +490,13 @@ gfs_generate_main_doc <- function(df.raw=NULL, meta.wopc=NULL, meta.wpc=NULL, fo
 
 
     # footnote information:
-    tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; τ (heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
+    tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; tau (heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
 
-Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; immigration status; frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
-An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
-P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," ǂEstimate of τ (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
+P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," ǂEstimate of tau (heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
 
     meta.outcomewide.toprint <- meta.outcomewide %>%
       flextable() %>%
@@ -645,7 +645,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     )
     p2 <- p2[[1]][[1]] +
       patchwork::plot_annotation(
-        subtitle = str_wrap("(B) Controlling for demographic, childhood, and other Wave 1 confounders (Via PCs) variables.",80),
+        subtitle = str_wrap("(B) Controlling for demographic, childhood, and other Wave 1 confounders.",80),
         title = NULL,
         caption = NULL
       )
@@ -763,22 +763,20 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 #'
 #'
 gfs_generate_supplemental_docs <- function(
-    df.raw = NULL, file.imp.data = NULL, out.dir = NULL,
-    dir.primary="results-primary", dir.supp="results-cca", dir.unstd = "results-unstd",
-    dir.attr.models = "results-attr",
+    df.raw = NULL, file.imp.data = NULL,
     focal.predictor = NULL, focal.better.name="Focal Predictor",
     focal.predictor.reference.value="estimated population mean of focal predictor",
+    dir.primary="results-primary", dir.supp="results-cca", dir.attr.models = "results-attr",
+    file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds",
+    file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds",
+    file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds",
+    file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds",
+    file.cca.wopc = "0_meta_analyzed_results_primary_wopc.rds",
+    file.cca.wpc = "0_meta_analyzed_results_primary_wpc.rds",
     p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL,
-    wgt = as.name("WGT0"), wgt1 = as.name("ANNUAL_WEIGHT_R2"), wgt2 = as.name("AVG.SAMP.ATTR.WGT"),
-    psu = as.name("PSU"), strata = as.name("STRATA"),
+    wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     res.dir = "results", included.countries=NULL,
     ci.bonferroni = FALSE, single.file = TRUE, single.file.num.sequential = FALSE, what = "all"){
-
-  dir.primary <- here(out.dir, dir.primary)
-  dir.supp <- here(out.dir, dir.supp)
-  dir.unstd <- here(out.dir, dir.unstd)
-  dir.attr.models <- here(out.dir, dir.attr.models)
-  res.dir <- here(out.dir, res.dir)
 
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
 
@@ -820,7 +818,7 @@ gfs_generate_supplemental_docs <- function(
     tmp.file.pdf <- here::here(res.dir,"tmp_doc.pdf")
     tmp.file.pdf2 <- here::here(res.dir,"tmp_doc2.pdf")
     # text formatting
-    set_flextable_defaults(font.family = "Open Sans",font.size = 11)
+    set_flextable_defaults(font.family = "Open Sans",font.size = 10)
     gfs_title1_prop <- fp_text(color = "black", bold = TRUE, font.size = 14, font.family = "Open Sans")
 
     # page formatting
@@ -1189,14 +1187,13 @@ gfs_generate_supplemental_docs <- function(
   #	(1) Summary statistics of OUTCOMES by wave (raw data)
   # ========================= #
   if(what == "all" | what == "S1"){
-    # initialize output object
-    supp_doc <- read_docx() |>
-      body_add_fpar(
-        fpar(ftext("GFS Online Supplement", gfs_title1_prop)), style="centered"
-      ) %>%
-      #body_add_par("...general caveats...")
-      body_end_section_continuous() %>%
-      body_add_break()
+    if(single.file.num.sequential | single.file){
+      out.file <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.pdf <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".pdf"))
+    } else {
+      out.file <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".docx"))
+      out.file.pdf <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".pdf"))
+    }
     ## ========================================================================================== ##
     ## ====== Construct summary tables ========================================================== ##
     {
@@ -1509,11 +1506,11 @@ gfs_generate_supplemental_docs <- function(
         vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
         vec.id <- c("theta.rma", "theta.rma.ci", "tau","global.pvalue")
         vec.rr <- c("rr.theta", "rr.theta.ci", "rr.tau","global.pvalue")
-        vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
-        vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+        vec.a <- c("RR", "ES","95% CI","tau", "Global p-value")
+        vec.b <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
         if(ci.bonferroni){
-          vec.a <- c("RR", "ES",paste0(.round(p.bonferroni*100,1),"% CI"),"τ", "Global p-value")
-          vec.b <- c("RR\r", "ES\r",paste0(.round(p.bonferroni*100,1),"% CI\r"),"τ\r", "Global p-value\r")
+          vec.a <- c("RR", "ES",paste0(.round(p.bonferroni*100,1),"% CI"),"tau", "Global p-value")
+          vec.b <- c("RR\r", "ES\r",paste0(.round(p.bonferroni*100,1),"% CI\r"),"tau\r", "Global p-value\r")
         }
         cnames <- c(
           "Outcome",
@@ -1538,7 +1535,7 @@ gfs_generate_supplemental_docs <- function(
             )
             ## ====== Random effects meta - estimates withOUT PCs ======================================= ##
             tmp.a <- load_meta_result(
-              file = here::here(dir.primary, "0_meta_analyzed_results_primary_wopc.rds"),
+              file = here::here(dir.primary, file.primary.wopc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = vec.get
@@ -1574,7 +1571,7 @@ gfs_generate_supplemental_docs <- function(
               )
             ## ====== Supplemental random effects meta - estimates withOUT PCs ==================== ##
             tmp.b <- load_meta_result(
-              file = here::here(dir.supp, "0_meta_analyzed_results_cca_wopc.rds"),
+              file = here::here(dir.supp, file.cca.wopc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = vec.get
@@ -1631,13 +1628,13 @@ gfs_generate_supplemental_docs <- function(
 
 
         # footnote information:
-        tb.note.meta.outcomewide <-as_paragraph(paste0("Notes. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; τ (heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.meta.outcomewide <-as_paragraph(paste0("Notes. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; tau (heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
-Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; subjective financial status growing up growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available.
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available.
 
-An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
-P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
+P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," ǂEstimate of tau (heterogeneity) is likely unstable."))
 
 
         tb.cap = paste0("Table S",tb.num,". Meta-analyzed associations of ", focal.better.name[f0] ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 1 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
@@ -1668,8 +1665,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
         vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
         vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
-        vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
-        vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+        vec.a <- c("RR", "ES","95% CI","tau", "Global p-value")
+        vec.b <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
         cnames <- c(
           "Outcome",
           vec.a,
@@ -1693,7 +1690,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             )
             ## ====== Random effects meta - estimates with PCs ======================================= ##
             tmp.a <- load_meta_result(
-              file = here::here(dir.primary, "0_meta_analyzed_results_primary_wpc.rds"),
+              file = here::here(dir.primary, file.primary.wpc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = vec.get
@@ -1729,7 +1726,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               )
             ## ====== Supplemental random effects meta - estimates with PCs ==================== ##
             tmp.b <- load_meta_result(
-              file = here::here(dir.supp, "0_meta_analyzed_results_cca_wpc.rds"),
+              file = here::here(dir.supp, file.cca.wpc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = vec.get
@@ -1786,13 +1783,13 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
 
         # footnote information:
-        tb.note.meta.outcomewide <-as_paragraph(paste0("Notes. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: ", paste0(focal.predictor.reference.value, collapse="; "),"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; τ (heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.meta.outcomewide <-as_paragraph(paste0("Notes. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: ", paste0(focal.predictor.reference.value, collapse="; "),"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; tau (heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
-Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up growing up; immigration status; frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. The first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at Wave 2.
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
-An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
-P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', (1-p.bonferroni/2)*100,'% CIs;'), ';')," ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
+P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', (1-p.bonferroni/2)*100,'% CIs;'), ';')," ǂEstimate of tau (heterogeneity) is likely unstable."))
 
         tb.cap = paste0("Table S",tb.num,".  Meta-analyzed associations of ", focal.better.name[f0] ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 2 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
         tb.num = tb.num + 1
@@ -1832,8 +1829,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         vec.wpc.mi <- c("EE\r\r\r", "ECI\r\r\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
         cnames <- c(
           "Outcome",
-          vec.wopc.attr, "\r", vec.wpc.attr, "\r\r",
-          vec.wopc.mi, "\r\r\r", vec.wpc.mi
+          vec.wopc.mi, "\r\r\r", vec.wpc.mi, "\r\r",
+          vec.wopc.attr, "\r", vec.wpc.attr
         )
 
         meta.evalues <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
@@ -1852,29 +1849,29 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
               .default = vec.rr
             )
-            ## ====== Attr wgt - random effects meta - estimates withOUT PCs ====================== ##
-            tmp.wopc.attr <- load_meta_result(
-              file = here::here(dir.primary, "0_meta_analyzed_results_primary_wopc.rds"),
-              predictor = focal.predictor[f0],
-              outcome = OUTCOME.VEC[i],
-              what = tmp.vec
-            ) %>%
-              dplyr::mutate(
-                dplyr::across(where(is.numeric),\(x) .round(x,2)),
-              )
-            ## ====== Attr wgt - random effects meta - estimates WITH PCs ========================= ##
-            tmp.wpc.attr <- load_meta_result(
-              file = here::here(dir.primary, "0_meta_analyzed_results_primary_wpc.rds"),
-              predictor = focal.predictor[f0],
-              outcome = OUTCOME.VEC[i],
-              what = tmp.vec
-            ) %>%
-              dplyr::mutate(
-                dplyr::across(where(is.numeric),\(x) .round(x,2)),
-              )
-            ## ====== Supplement MI - random effects meta - estimates withOUT PCs ================= ##
+            ## ====== Primary MI - random effects meta - estimates withOUT PCs ====================== ##
             tmp.wopc.mi <- load_meta_result(
-              file = here::here(dir.supp, "0_meta_analyzed_results_cca_wopc.rds"),
+              file = here::here(dir.primary, file.primary.wopc),
+              predictor = focal.predictor[f0],
+              outcome = OUTCOME.VEC[i],
+              what = tmp.vec
+            ) %>%
+              dplyr::mutate(
+                dplyr::across(where(is.numeric),\(x) .round(x,2)),
+              )
+            ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
+            tmp.wpc.mi <- load_meta_result(
+              file = here::here(dir.primary, file.primary.wpc),
+              predictor = focal.predictor[f0],
+              outcome = OUTCOME.VEC[i],
+              what = tmp.vec
+            ) %>%
+              dplyr::mutate(
+                dplyr::across(where(is.numeric),\(x) .round(x,2)),
+              )
+            ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
+            tmp.wopc.attr <- load_meta_result(
+              file = here::here(dir.supp, file.cca.wopc ),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = tmp.vec
@@ -1882,9 +1879,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               dplyr::mutate(
                 dplyr::across(where(is.numeric),\(x) .round(x,2)),
               )
-            ## ====== Supplement MI - random effects meta - estimates WITH PCs ==================== ##
-            tmp.wpc.mi <- load_meta_result(
-              file = here::here(dir.supp, "0_meta_analyzed_results_cca_wpc.rds"),
+            ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
+            tmp.wpc.attr <- load_meta_result(
+              file = here::here(dir.supp, file.cca.wpc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = tmp.vec
@@ -1922,12 +1919,12 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
                  j = 1) %>%
           add_header_row(
             values = c("", "Model 1: Demographics and Childhood Variables as Covariates", "", "Model 2: Demographics, Childhood, and Other Wave 1 Confounders (Via Principal Components) as Covariates", "", "Model 1: Demographics and Childhood Variables as Covariates", "", "Model 2: Demographics, Childhood, and Other Wave 1 Confounders (Via Principal Components) as Covariates"),
-            colwidths = c(1, length(vec.wopc.attr), 1, length(vec.wpc.attr), 1, length(vec.wopc.mi), 1, length(vec.wpc.mi)),
+            colwidths = c(1, length(vec.wopc.mi), 1, length(vec.wpc.mi), 1, length(vec.wopc.attr), 1, length(vec.wpc.attr)),
             top = TRUE
           ) %>%
           add_header_row(
             values = c("", "Multiple Imputation", "", "Complete Case w/ Attrition Weights" ),
-            colwidths = c(1, length(vec.wopc.attr)+1+length(vec.wpc.attr), 1, length(vec.wopc.mi)+1+length(vec.wpc.mi)),
+            colwidths = c(1, length(vec.wopc.mi)+1+length(vec.wpc.mi), 1, length(vec.wopc.attr)+1+length(vec.wpc.attr)),
             top = TRUE
           ) %>%
           add_footer_row(
@@ -1952,8 +1949,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
         vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
         vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
-        vec.a <- c("RR", "ES","95% CI","τ", "Global p-value")
-        vec.b <- c("RR\r", "ES\r","95% CI\r","τ\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+        vec.a <- c("RR", "ES","95% CI","tau", "Global p-value")
+        vec.b <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
         cnames <- c(
           "Outcome",
           vec.a,
@@ -1977,7 +1974,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             )
             ## ====== Random effects meta - estimates without PCs ======================================= ##
             tmp.a <- load_meta_result(
-              file = here::here(dir.unstd, "0_meta_analyzed_results_unstd_wopc.rds"),
+              file = here::here(dir.primary, file.unstd.wopc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = vec.get
@@ -2013,7 +2010,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               )
             ## ====== Random effects meta - estimates with PCs ==================== ##
             tmp.b <- load_meta_result(
-              file = here::here(dir.unstd, "0_meta_analyzed_results_unstd_wpc.rds"),
+              file = here::here(dir.primary, file.unstd.wpc),
               predictor = focal.predictor[f0],
               outcome = OUTCOME.VEC[i],
               what = vec.get
@@ -2070,13 +2067,13 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
 
         # footnote information:
-        tb.note.meta.outcomewide <-as_paragraph(paste0("Notes. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: a value of `0` on the predcitor; RR, risk-ratio, null effect is 1.00; ES, effect size measure for regression coefficient, null effect is 0.00; CI, confidence interval; τ (heterogeneity, tau), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.meta.outcomewide <-as_paragraph(paste0("Notes. N_{multiple imputation}=", n1.print ,"; N_{complete-case}=",n2.print ,"; Reference for focal predictor: a value of `0` on the predcitor; RR, risk-ratio, null effect is 1.00; ES, effect size measure for regression coefficient, null effect is 0.00; CI, confidence interval; tau (heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
-Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; subjective financial status growing up growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. The first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at Wave 2.
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
 An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES, and no standardization was conducted prior to estimating the model.
 
-P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', (1-p.bonferroni/2)*100,'% CIs;'), ';')," ǂEstimate of τ (tau, heterogeneity) is likely unstable."))
+P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," ǂEstimate of tau (heterogeneity) is likely unstable please see forest plots to investigate heterogeneity in effect across countries."))
 
         tb.cap = paste0("Table S",tb.num,". Unstandardized effects sizes for the raw score of ", focal.better.name[f0]," (multiple imputation results only).")
         tb.num = tb.num + 1
@@ -2216,29 +2213,15 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     #    )  |>
     #    body_add_break()
 
-    if(single.file.num.sequential | single.file){
-      out.file <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".docx"))
-      out.file.pdf <- here::here(res.dir,paste0("GFS-Wave 2 Online Supplement_", paste0(focal.better.name, collapse=" "),".pdf"))
-    } else {
-      out.file <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".docx"))
-      out.file.pdf <- here::here(res.dir,paste0("GFS-S1 Online Supplement Part 1_", paste0(focal.better.name, collapse=" "),".pdf"))
-
-    }
-
-    ## print tmp file
-    print(tmp_doc, target = tmp.file)
-    supp_doc <- read_docx(out.file)
-    supp_doc <- supp_doc |> body_add_docx(tmp.file)
-    print(supp_doc, target = out.file)
-    doconv::to_pdf(input = tmp.file, output = tmp.file.pdf)
-
-    tmp.dir <- tempdir()
-    tmp.dir.file.i <- here::here(tmp.dir,"tmp_pdf_file.pdf")
-    res.dir.file.i <- here::here(res.dir,"tmp_pdf_file.pdf")
-    file.copy(out.file.pdf, tmp.dir,overwrite=TRUE)
-    file.rename(tmp.dir.file, tmp.dir.file.i)
-    file.copy(tmp.dir.file.i, res.dir,overwrite=TRUE)
-    qpdf::pdf_combine(c(res.dir.file.i,tmp.file.pdf), output = out.file.pdf)
+    # 1. save to word document
+    gfs_print_docx(tmp_doc, out.file.docx, res.dir)
+    # 2. convert to pdf document
+    pandoc::pandoc_convert(
+      from = "docx", to = "pdf",
+      file = out.file.docx, output = here::here(res.dir, "tmp_pdf.pdf")
+    )
+    # 3. append temp PDF to pdf outcome
+    gfs_append_pdf(out.file.pdf, res.dir)
 
 
   }
@@ -2934,11 +2917,11 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         #coun.outcomewide <- na.omit(coun.outcomewide)
 
         # footnote information:
-        tb.note.coun.outcomewide <-as_paragraph(paste0("Notes. Reference for focal predictor: ", focal.predictor.reference.value,". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.coun.outcomewide <-as_paragraph(paste0("Notes. Reference for focal predictor: ", focal.predictor.reference.value,". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
-Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors: Relationship with mother growing up; Relationship with father growing up; parent marital status around age 12; Experienced abuse growing up (except for Israel); Felt like an outsider in family growing up; Self-rated health growing up; subjective financial status growing up growing up; Immigration status; Frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Models with PC (principal components), the first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at Wave 2.
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
-An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a B, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
 P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing using Bonferroni adjusted significant threshold."))
 
@@ -3081,11 +3064,11 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         #coun.outcomewide <- na.omit(coun.outcomewide)
 
         # footnote information:
-        tb.note.coun.outcomewide <-as_paragraph(paste0("Notes. Reference for focal predictor: ", focal.predictor.reference.value,". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero;   (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index;  (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index;  (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index;  (d) item part of the Character & Virtue domain of the Secure Flourishing Index;  (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index;  (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        tb.note.coun.outcomewide <-as_paragraph(paste0("Notes. Reference for focal predictor: ", focal.predictor.reference.value,". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
-All models controlled for sociodemographic and childhood factors: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; Self-rated health growing up; subjective financial status growing up growing up; immigration status; frequency of religious service attendance around age 12; year of birth; gender; religious affiliation at age 12; and racial/ethnic identity when available. For Models with PC (principal components), the first seven principal components of the full set of contemporaneous confounders were included as additional predictors of the outcomes at Wave 2.
+Attrition weights were computed to adjust the complete case data (those who responded at Wave 2 to at least 50% of the questions) and multiple imputation was used to impute missing data on all remaining within wave on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
-An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate a B, where all continuous outcomes were standardized using the within country mean and standard deviation prior to estimating the model.
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor[f0]) == "linear", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
 P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round_p(p.bonferroni),"***, correction for multiple testing using Bonferroni adjusted significant threshold."))
 
@@ -3628,21 +3611,15 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
       body_end_block_section(value = extra_wide_landscape) |>
       body_add_break()
 
-    ## print tmp file
-    print(tmp_doc, target = tmp.file)
-    ## Print out tables for current country
-    supp_doc <- read_docx(out.file)
-    supp_doc <- supp_doc |> body_add_docx(tmp.file)
-    print(supp_doc, target = out.file)
-    doconv::to_pdf(input = tmp.file, output = tmp.file.pdf)
-
-    tmp.dir <- tempdir()
-    tmp.dir.file.i <- here::here(tmp.dir,"tmp_pdf_file.pdf")
-    res.dir.file.i <- here::here(res.dir,"tmp_pdf_file.pdf")
-    file.copy(out.file.pdf, tmp.dir,overwrite=TRUE)
-    file.rename(tmp.dir.file, tmp.dir.file.i)
-    file.copy(tmp.dir.file.i, res.dir,overwrite=TRUE)
-    qpdf::pdf_combine(c(res.dir.file.i,tmp.file.pdf), output = out.file.pdf)
+    # 1. save to word document
+    gfs_print_docx(tmp_doc, out.file.docx, res.dir)
+    # 2. convert to pdf document
+    pandoc::pandoc_convert(
+      from = "docx", to = "pdf",
+      file = out.file.docx, output = here::here(res.dir, "tmp_pdf.pdf")
+    )
+    # 3. append temp PDF to pdf outcome
+    gfs_append_pdf(out.file.pdf, res.dir)
 
     # create comparable files but as CSV
     readr::write_csv(df.tmp0, file=here::here(res.dir,paste0("GFS_Outcomewide_Results_Comparison_", paste0(focal.better.name, collapse=" "),".csv")))
@@ -3716,22 +3693,21 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
             ) |>
             body_end_block_section(value = landscape_two_columns)
 
-          ## print tmp file
-          print(tmp_doc, target = tmp.file)
-          ## Print out tables for current country
-          supp_doc <- read_docx(out.file)
-          supp_doc <- supp_doc |> body_add_docx(tmp.file)
-          print(supp_doc, target = out.file)
-          doconv::to_pdf(input = tmp.file, output = tmp.file.pdf)
-          qpdf::pdf_subset(input = tmp.file.pdf, output = tmp.file.pdf2, pages = 1)
-
-          tmp.dir <- tempdir()
-          tmp.dir.file.i <- here::here(tmp.dir,"tmp_pdf_file.pdf")
-          res.dir.file.i <- here::here(res.dir,"tmp_pdf_file.pdf")
-          file.copy(out.file.pdf, tmp.dir,overwrite=TRUE)
-          file.rename(tmp.dir.file, tmp.dir.file.i)
-          file.copy(tmp.dir.file.i, res.dir,overwrite=TRUE)
-          qpdf::pdf_combine(c(res.dir.file.i, tmp.file.pdf2), output = out.file.pdf)
+          # 1. save to word document
+          gfs_print_docx(tmp_doc, out.file.docx, res.dir)
+          # 2. convert to pdf document
+          pandoc::pandoc_convert(
+            from = "docx", to = "pdf",
+            file = out.file.docx, output = here::here(res.dir, "tmp_pdf0.pdf")
+          )
+          # 3. for the forest plots an extra page get printed and needs to be removed
+          qpdf::pdf_subset(
+            input = here::here(res.dir, "tmp_pdf0.pdf"),
+            output = here::here(res.dir, "tmp_pdf.pdf"),
+            pages = 1
+          )
+          # 4. append temp PDF to pdf outcome
+          gfs_append_pdf(out.file.pdf, res.dir)
 
           fig.num = fig.num + 1
 
