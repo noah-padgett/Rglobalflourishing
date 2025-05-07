@@ -1,0 +1,117 @@
+---
+classoption: landscape
+output:
+  pdf_document:
+    latex_engine: lualatex
+  word_document:
+    reference_docx: "template_landscape.docx"
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+  - \usepackage{subcaption}
+params: 
+  OUTCOME.VEC: ""
+  MYLABEL: ""
+  focal.predictor: ""
+  focal.better.name: ""
+  dir: ""
+  file.wopc: ""
+  file.wpc: ""
+  fig.num: 1
+  res.dir: ""
+  n.print: "207,919"
+---
+\pagestyle{empty}
+\setmainfont{opensans}
+
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+OUTCOME.VEC = params$OUTCOME.VEC
+MYLABEL = params$MYLABEL
+focal.predictor = params$focal.predictor
+focal.better.name = params$focal.better.name
+dir = params$dir
+file.wopc = params$file.wopc
+file.wpc = params$file.wpc
+fig.num = params$fig.num
+n.print = params$n.print
+res.dir <- params$res.dir
+
+```
+
+
+```{r}
+#| label: build-figures
+
+
+tb.cap.fig1 <- paste0("Figure ",fig.num,". Heterogeneity in the effects of ", focal.better.name ," at Wave 1 on composite Secure Flourishing Index scores at Wave 2 across countries (N=", n.print, "). (Panel A) adjusting for demographic and childhood variables; and (Panel B) adjusting for demographic, childhood, and other Wave 1 confounders (Via Principal Components).")
+
+    p1 <- load_meta_result(
+      file = here::here(dir, file.wopc),
+      predictor = focal.predictor,
+      outcome = "COMPOSITE_FLOURISHING_SECURE_Y2",
+      what = "forest.plot"
+    )
+    p1 <- p1[[1]][[1]] +
+      patchwork::plot_annotation(
+        subtitle = str_wrap("(A) Controlling for demographic and childhood variables.",80),
+        title = NULL,
+        caption = NULL
+      )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")),
+      plot=p1, units="in", width=6, height=5, dpi = 1000
+    )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.pdf")),
+      plot=p1, units="in", width=6, height=5
+    )
+
+    p2 <- load_meta_result(
+      file = here::here(dir, file.wpc),
+      predictor = focal.predictor,
+      outcome = "COMPOSITE_FLOURISHING_SECURE_Y2",
+      what = "forest.plot"
+    )
+    p2 <- p2[[1]][[1]] +
+      patchwork::plot_annotation(
+        subtitle = str_wrap("(B) Controlling for demographic, childhood, and other Wave 1 confounders.",80),
+        title = NULL,
+        caption = NULL
+      )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.png")),
+      plot=p2, units="in", width=6, height=5, dpi = 1000
+    )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.pdf")),
+      plot=p2, units="in", width=6, height=5
+    )
+
+```
+
+
+`r tb.cap.fig1`
+
+```{r}
+#| label: print-figures
+#| echo: FALSE
+#| out.width: "45%"
+#| fig.ncol: 2
+
+
+knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.pdf")))
+knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.pdf")))
+
+```
+

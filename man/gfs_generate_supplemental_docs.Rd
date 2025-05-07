@@ -6,7 +6,6 @@
 \usage{
 gfs_generate_supplemental_docs(
   df.raw = NULL,
-  file.imp.data = NULL,
   focal.predictor = NULL,
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",

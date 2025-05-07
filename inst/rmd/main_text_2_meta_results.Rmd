@@ -1,0 +1,207 @@
+---
+classoption: landscape
+output:
+  pdf_document:
+    latex_engine: lualatex
+  word_document:
+    reference_docx: "template_landscape.docx"
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+params: 
+  OUTCOME.VEC: ""
+  MYLABEL: ""
+  focal.predictor: ""
+  focal.better.name: ""
+  focal.predictor.reference.value: ""
+  dir: ""
+  file.wopc: ""
+  file.wpc: ""
+  ci.bonferroni: FALSE
+  p.bonferroni: 0.05
+  tb.num: 2
+  n.print: "207,919"
+---
+\pagestyle{empty}
+\setmainfont{opensans}
+
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+OUTCOME.VEC = params$OUTCOME.VEC
+MYLABEL = params$MYLABEL
+focal.predictor = params$focal.predictor
+focal.better.name = params$focal.better.name
+focal.predictor.reference.value = params$focal.predictor.reference.value
+dir = params$dir
+file.wopc = params$file.wopc
+file.wpc = params$file.wpc
+ci.bonferroni = params$ci.bonferroni
+p.bonferroni = params$p.bonferroni
+tb.num = params$tb.num
+n.print = params$n.print
+
+```
+
+
+```{r}
+#| label: build-table
+
+
+vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
+vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
+if(ci.bonferroni){
+  vec.id <- c("theta.rma", "theta.rma.ci.bon", "tau","global.pvalue")
+  vec.rr <- c("rr.theta", "rr.theta.ci.bon", "rr.tau","global.pvalue")
+}
+vec.wopc <- c("RR", "ES","95% CI","tau", "Global p-value")
+vec.wpc <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+cnames <- c(
+  "Outcome",
+  vec.wopc,
+  "\r",
+  vec.wpc
+)
+
+meta.outcomewide <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
+colnames(meta.outcomewide) <- cnames
+meta.outcomewide$"\r" <- ""
+i = ii = 1
+for (i in 1:length(OUTCOME.VEC)) {
+  if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
+    meta.outcomewide[i, 1] <- MYLABEL[ii]
+    ii <- ii + 1
+  } else {
+    meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = FALSE, rm.text="Composite"))
+    tmp.vec <- case_when(
+      get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
+      .default = vec.rr
+    )
+    ## ====== Random effects meta - estimates withOUT PCs ======================================= ##
+    tmp.wopc <- load_meta_result(
+      file = here::here(dir, file.wopc),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC[i],
+      what = tmp.vec
+    )
+    tmp.wopc <- tmp.wopc %>%
+      dplyr::mutate(
+        dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
+        dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
+          case_when(
+            x < 0.01 ~ "<0.01\u2020",
+            x >= 0.01 ~ .round(x,2)
+          )
+        }),
+        dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
+          case_when(
+            x < p.bonferroni ~ paste0(.round_p(x),"***"),
+            x < 0.005 ~ paste0(.round_p(x),"**"),
+            x < 0.05 ~ paste0(.round(x,3),"*"),
+            x > 0.05 ~ .round(x,3)
+          )
+        })
+      )
+    ## ====== Random effects meta - estimates WITH PCs ======================================= ##
+    tmp.wpc <- load_meta_result(
+      file = here::here(dir, file.wpc),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC[i],
+      what = tmp.vec
+    )
+    tmp.wpc <- tmp.wpc %>%
+      dplyr::mutate(
+        dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
+        dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
+          case_when(
+            x < 0.01 ~ "<0.01\u2020",
+            x >= 0.01 ~ .round(x,2)
+          )
+        }),
+        dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
+          case_when(
+            x < p.bonferroni ~ paste0(.round_p(x),"***"),
+            x < 0.005 ~ paste0(.round_p(x),"**"),
+            x < 0.05 ~ paste0(.round(x,3),"*"),
+            x > 0.05 ~ .round(x,3)
+          )
+        })
+      )
+    ## ====== Add Results to output object ====================================================== ##
+    if(nrow(tmp.wopc) > 0){
+      if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        meta.outcomewide[i,vec.wopc[-1]] <- tmp.wopc[tmp.vec]
+      }
+      if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        meta.outcomewide[i,vec.wopc[-2]] <- tmp.wopc[tmp.vec]
+      }
+    }
+    if(nrow(tmp.wpc) > 0){
+      if(get_outcome_scale(OUTCOME.VEC[i]) == "cont"){
+        meta.outcomewide[i,vec.wpc[-1]] <- tmp.wpc[tmp.vec]
+      }
+      if(get_outcome_scale(OUTCOME.VEC[i]) != "cont"){
+        meta.outcomewide[i,vec.wpc[-2]] <- tmp.wpc[tmp.vec]
+      }
+    }
+  }
+}
+#meta.outcomewide <- na.omit(meta.outcomewide)
+
+
+# footnote information:
+tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; tau (heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
+
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
+
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
+
+P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of tau (heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
+
+```
+
+
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+
+
+meta.outcomewide.toprint <- meta.outcomewide %>%
+  flextable() %>%
+  italic(part = "body",
+         i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
+         j = 1) %>%
+  add_footer_row(
+    values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
+  ) %>%
+  add_header_row(
+    values = c("", "Model 1: Demographic and Childhood Variables as Covariates", "", "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates"),
+    colwidths = c(1,length(vec.wopc), 1, length(vec.wpc))
+  ) %>%
+  add_header_lines(
+    as_paragraph(
+      as_chunk(paste0("Table ", tb.num,". Meta-analyzed associations of ", focal.better.name ," at Wave 1 with well-being and other outcomes at Wave 2."),
+               props = fp_text_default(font.family = "Open Sans"))
+    )
+  ) %>%
+  theme_meta_outcome_wide()
+
+
+meta.outcomewide.toprint
+
+```

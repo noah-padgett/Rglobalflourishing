@@ -1,0 +1,121 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+
+params: 
+  df.raw.long: data.frame()
+  focal.predictor0: ""
+  wgt: WGT0
+  psu: PSU
+  strata: STRATA
+  tb.num: 1
+---
+
+\pagestyle{empty}
+\setmainfont{opensans}
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+## extract parameters
+df.rawdf.raw.long = params$df.raw.long
+focal.predictor0 = params$focal.predictor0
+wgt = params$wgt
+psu = params$psu
+strata = params$strata
+tb.num = params$tb.num
+
+```
+
+
+```{r}
+#| label: build-table
+
+## create table
+  suppressWarnings({
+    sumtab <- df.raw.long %>%
+    as_survey_design(
+      ids = {{psu}},
+      strata = {{strata}},
+      weights = {{wgt}}
+    ) %>%
+      tbl_svysummary(
+        by = WAVE0,
+        include = c(
+          any_of(focal.predictor0),
+          AGE_GRP,
+          GENDER,
+          EDUCATION_3,
+          COUNTRY
+        ),
+        label =  list(
+          AGE_GRP ~ "Year of birth",
+          GENDER ~ "Gender",
+          EDUCATION_3 ~ "Education (years)",
+          COUNTRY ~ "Country of respondent"
+        ),
+        type = list(
+          all_continuous() ~ "continuous2"
+        ),
+        statistic = list(
+          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+          all_categorical() ~ "{n} ({p}%)"
+        ),
+        digits = list(
+          all_continuous() ~ c(1,1,1,1),
+          all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
+          #n = label_style_number(digits=0),
+          #p = label_style_percent(suffix = "%", digits = 2)
+        ),
+        missing_text = "    (Missing)",
+        missing_stat = "{N_miss} ({p_miss}%)"
+      ) %>%
+      italicize_labels() %>%
+      add_stat_label(
+        label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+      )
+  })
+  
+tb.note.summarytab <- as_paragraph(as_chunk("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2 aggregated over the full sample and Tables S9a-32a and S9b-32b are summary tables by country.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+  
+```
+
+
+ 
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+  sumtab.toprint <- sumtab %>%
+    as_flex_table() %>%
+    autofit() %>%
+    format_flex_table(pg.width = 21 / 2.54 - 2) %>%
+    add_header_lines(as_paragraph(
+        as_chunk(paste0("Table ", tb.num ,". Weighted sample demographic summary statistics."),
+                 props = fp_text_default(font.family = "Open Sans", font.size = 11))
+      )) %>%
+    add_footer_row(
+      values = tb.note.summarytab, top = FALSE,colwidths=3
+    )
+
+sumtab.toprint
+
+```

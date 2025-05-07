@@ -1,0 +1,140 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+params: 
+  OUTCOME.VEC: ""
+  MYLABEL: ""
+  focal.predictor: ""
+  focal.better.name: ""
+  dir: ""
+  file.wopc: ""
+  file.wpc: ""
+  tb.num: 2
+  n.print: "207,919"
+---
+\pagestyle{empty}
+\setmainfont{opensans}
+
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+OUTCOME.VEC = params$OUTCOME.VEC
+MYLABEL = params$MYLABEL
+focal.predictor = params$focal.predictor
+focal.better.name = params$focal.better.name
+dir = params$dir
+file.wopc = params$file.wopc
+file.wpc = params$file.wpc
+tb.num = params$tb.num
+n.print = params$n.print
+
+```
+
+
+```{r}
+#| label: build-table
+
+
+vec.id <- c("theta.rma.EE", "theta.rma.ECI")
+    vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
+    vec.wopc <- c("E-value","E-value for CI")
+    vec.wpc <- c("E-value\r","E-value for CI\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+    cnames <- c(
+      "Outcome",
+      vec.wopc, "\r",
+      vec.wpc
+    )
+
+    meta.evalues <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
+    colnames(meta.evalues) <- cnames
+    meta.evalues$"\r" <- ""
+    i = ii = 1
+    for (i in 1:length(OUTCOME.VEC)) {
+      if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
+        meta.evalues[i, 1] <- MYLABEL[ii]
+        ii <- ii + 1
+      } else {
+        meta.evalues[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, rm.text="Composite"))
+        tmp.vec <- case_when(
+          get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
+          .default = vec.rr
+        )
+        ## ====== Random effects meta - estimates withOUT PCs =================================== ##
+        tmp.wopc <- load_meta_result(
+          file = here::here(dir, file.wopc),
+          predictor = focal.predictor,
+          outcome = OUTCOME.VEC[i],
+          what = tmp.vec
+        )
+        tmp.wopc <- tmp.wopc %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+          )
+        ## ====== Random effects meta - estimates WITH PCs ====================================== ##
+        tmp.wpc <- load_meta_result(
+          file = here::here(dir, file.wpc),
+          predictor = focal.predictor,
+          outcome = OUTCOME.VEC[i],
+          what = tmp.vec
+        )
+        tmp.wpc <- tmp.wpc %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+          )
+        ## ====== Add Results to output object ================================================== ##
+        if(nrow(tmp.wopc) > 0) meta.evalues[i,vec.wopc] <- tmp.wopc[tmp.vec]
+        if(nrow(tmp.wpc) > 0) meta.evalues[i,vec.wpc] <- tmp.wpc[tmp.vec]
+      }
+    }
+    #meta.evalues <- na.omit(meta.evalues)
+
+    # footnote information:
+    tb.note.evalues <-as_paragraph("Notes. N=", .round(n.print,0), "; The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")
+
+```
+
+
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+
+meta.evalues %>%
+      flextable() %>%
+      italic(part = "body",
+             i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
+             j = 1) %>%
+            add_footer_row(
+        values = tb.note.evalues, top = FALSE, colwidths = ncol(meta.evalues)
+      ) %>%
+      add_header_row(
+        values = c("", "Model 1: Demographic and Childhood Variables as Covariates", "", "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates"),
+        colwidths = c(1, length(vec.wopc), 1, length(vec.wpc))
+      ) %>%
+        add_header_lines(
+    as_paragraph(
+          as_chunk(paste0("Table ", tb.num ,". E-value sensitivity analysis for unmeasured confounding for the association between ", focal.better.name, " and subsequent well-being and other outcomes."),
+                   props = fp_text_default(font.family = "Open Sans"))
+        )
+  ) %>%
+      theme_meta_evalues()
+
+```

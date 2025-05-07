@@ -1,27 +1,5 @@
-#' Construct GFS Main text results
-#'
-#' Generated a word document containing the results for the meta-analytic outcome wide results for the GFS coordinated analyses.
-#'
-#' @param df.raw a data.frame containing the raw data with values coded as labels
-#' @param dir.meta subdirectory where primary results are stored ('results-primary')
-#' @param file.wopc file containing the nested-data.frame(.) containing the meta-analyzed results without principal components
-#' @param file.wopc file containing the nested-data.frame(.) containing the meta-analyzed results with principal components included
-#' @param focal.better.name a character that is used as the printed name in tables/captions to denote the focal predictor
-#' @param p.bonferroni a number (e.g., 0.00081), is internally determined based on number of rows in meta.wopc if not provided
-#' @param baseline.pred a vector of characters defining which baseline characteristics were used as control variables. This can be used to force the inclusion some variable into the main text summary table.
-#' @param outcome.vec a character vector of outcomes names (e.g., "HAPPY_Y2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the meta.wopc (meta.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.
-#' @param mylabels an optional character vector that will be printed out in specific rows of tables 2/3 depending on the specification pf outcome.vec
-#' @param focal.predictor.reference.value (character) describing the baseline/reference group for the focal predictor.
-#' @param res.dir (character) defaults to "results", and will be created if needed to story results document
-#' @param ... other arguments as needed
-#' @returns a word document saved to the current 'results/' directory
-#' @examples {
-#'   # TO-DO
-#' }
-#' @export
-#' @description
-#' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE){
+
+gfs_generate_main_doc2 <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE){
 
   n.print = df.raw %>%
     summarize(
@@ -448,58 +426,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
 }
 
 
-#' Construct GFS Online Supplement results
-#'
-#' Generated two word documents containing the supplemental results for the outcome wide results for the GFS coordinated analyses.
-#'
-#' @param df.raw a data.frame containing the raw data with values coded as labels
-#' @param coun.wopc a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did NOT include the principal components in the country-specific regression analyses
-#' @param coun.wpc a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did INCLUDED the principal components in the country-specific regression analyses
-#' @param meta.wopc a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did NOT include the principal components in the country-specific regression analyses
-#' @param meta.wpc a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did INCLUDED the principal components in the country-specific regression analyses
-#' @param focal.predictor a character defining the focal predictor
-#' @param focal.better.name a character that is used as the printed name in tables/captions to denote the focal predictor
-#' @param p.bonferroni a number (e.g., 0.007), is internally determined based on number of rows in coun.wopc
-#' @param baseline.pred a vector of characters defining which baseline characteristics were used as control variables. This can be used to force the inclusion some variable into the main text summary table.
-#' @param outcome.vec a character vector of outcomes names (e.g., "HAPPY_Y2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the coun.wopc (coun.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.
-#' @param mylabels an optional character vector that will be printed out in specific rows of tables 2/3 depending on the specification pf outcome.vec
-#' @param included.countries a character vector of which countries to include in output -- defaults to all.
-#' @param res.dir (character) defaults to "results", and will be created if needed to story results document
-#' @param focal.predictor.reference.value (character) describing the baseline/reference group for the focal predictor.
-#' @param what (character) options include: "all", "S1", "S2", "S3".
-#' @param ... other arguments as needed
-#' @returns a word document saved to the current 'results/' directory
-#' @examples {
-#'   # TO-DO
-#' }
-#' @export
-#' @description
-#' Generates three online supplements.
-#'
-#' Supplement 1: Supplemental main-text results
-#'
-#' (1) Summary statistics of outcomes by wave (raw data + imputed data)
-#' (2) Supplemental meta-analyzed results
-#'    - Compare attrition weights results with multiple-imputation results (one for each model)
-#'
-#' Supplement 2: Country-specific results
-#'
-#'    - Summary statistics by wave for demographics (similar to main text Table 1)
-#'    - Summary statistics by wave for outcomes (similar to Table S1)
-#'	  - Summary of attrition model and distribution of attrition weights
-#'    - Summary statistics of principal components by outcome (# retained, % prop explained, cumsum % prop explained)
-#'    - Outcome-wide results-attrition weights & multiple imputation (similar to main text Table 2-extra-wide p. format)
-#'    - Outcome-wide E-values (similar to main text Table 3)
-#'
-#' Supplement 3: Restructured country-specific results + forest plots
-#'
-#' (1) Summary statistics of demographics by country (raw data)
-#' (2) Summary statistics of outcomes by country (raw data)
-#' (3) Forest plots of all effects
-#'     - Model 1 (No PCs -- attrition weights)
-#'     - Model 2 (w/ PCs -- attrition weights)
-#'
-#'
+
 gfs_generate_supplemental_docs <- function(
     df.raw = NULL,
     focal.predictor = NULL, focal.better.name="Focal Predictor",
@@ -513,7 +440,7 @@ gfs_generate_supplemental_docs <- function(
     file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds",
     p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL,
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
-   # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA")";
+    # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA")";
     res.dir = "results", included.countries=NULL,
     ci.bonferroni = FALSE, single.file = TRUE, single.file.num.sequential = FALSE, what = "all"){
 
@@ -1090,7 +1017,7 @@ gfs_generate_supplemental_docs <- function(
         add_footer_row(
           values = tb.note.summarytab, top = FALSE,colwidths=3
         )
-      }
+    }
     gc()
     ## ========================================================================================== ##
     ## ====== Construct summary tables ========================================================== ##

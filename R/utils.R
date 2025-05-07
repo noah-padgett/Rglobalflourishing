@@ -197,7 +197,7 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all") %>%
     border_remove() %>%
-    hline_top(part = "header") %>%
+    #hline_top(part = "header") %>%
     hline_bottom(part = "header") %>%
     hline_bottom(part = "body")
   tb.temp <-
@@ -209,7 +209,7 @@ format_flex_table <- function(xtb, pg.width = 6.5) {
 
 #' @rdname utils
 #' @export
-theme_meta_outcome_wide <- function(xtb, pg.width = 29.7/2.54 - 2, .ncol = 12) {
+theme_meta_outcome_wide <- function(xtb, pg.width = 9, .ncol = 12) {
   tb.temp <- xtb %>%
     theme_apa() %>%
     font(part = "all", fontname = "Open Sans") %>%
@@ -221,9 +221,9 @@ theme_meta_outcome_wide <- function(xtb, pg.width = 29.7/2.54 - 2, .ncol = 12) {
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all")  %>%
     width(j=1,width=2.25)%>%
-    width(j=c(2:3,5,8:9,11),width=0.45)%>%
-    width(j=c(4,10),width=0.85)%>%
-    width(j=c(6,12),width=1.0)%>%
+    width(j=c(2:3,5,8:9,11),width=0.4)%>%
+    width(j=c(4,10),width=0.8)%>%
+    width(j=c(6,12),width=0.9)%>%
     width(j=7,width=0.10)
 
   tb.temp <-
@@ -232,20 +232,21 @@ theme_meta_outcome_wide <- function(xtb, pg.width = 29.7/2.54 - 2, .ncol = 12) {
     )
 
     tb.temp <- tb.temp %>%
-    align(i = 1, j = NULL, align = "center", part = "header") %>%
+    align(i = 2, j = NULL, align = "center", part = "header") %>%
     align(part = "footer", align = "left", j = 1:.ncol) %>%
     border_remove()  %>%
     hline_bottom(part = "body") %>%
-    hline_top(part = "header") %>%
+    #hline_top(part = "header") %>%
     hline_bottom(part = "header") %>%
-    hline(i=1,j=c(2:6,8:12), part="header")
+    hline(i=2,j=c(2:6,8:12), part="header") %>%
+    hline(i=1, part="header")
 
   tb.temp
 }
 
 #' @rdname utils
 #' @export
-theme_meta_evalues <- function(xtb, pg.width = 21 / 2.54 - 2, .ncol = 6) {
+theme_meta_evalues <- function(xtb, pg.width = 6.5, .ncol = 6) {
   tb.temp <- xtb %>%
     theme_apa() %>%
     font(part = "all", fontname = "Open Sans") %>%
@@ -260,13 +261,15 @@ theme_meta_evalues <- function(xtb, pg.width = 21 / 2.54 - 2, .ncol = 6) {
     width(j=c(2,5),width=0.60)%>%
     width(j=c(3,6),width=0.90)%>%
     width(j=c(4),width=0.10)%>%
-    align(i = 1, j = NULL, align = "center", part = "header") %>%
+    align(i = 2, j = NULL, align = "center", part = "header") %>%
     align(part = "footer", align = "left", j = 1:.ncol) %>%
     border_remove()  %>%
     hline_bottom(part = "body") %>%
-    hline_top(part = "header") %>%
+    #hline_top(part = "header") %>%
     hline_bottom(part = "header") %>%
-    hline(i=1,j=c(2:3,5:6), part="header")
+    hline(i=2,j=c(2:3,5:6), part="header") %>%
+    hline(i=1, part="header")
+
 
   tb.temp
 }
@@ -544,18 +547,18 @@ gfs_print_docx <- function(doc, file, dir){
 #' @export
 gfs_append_pdf <- function(file, dir){
   tmp.dir <- tempdir()
-  tmp.pdf <- here::here(res.dir, "tmp_pdf.pdf")
+  tmp.pdf <- here::here(dir, "tmp_pdf.pdf")
   tmp.dir.file <- here::here(tmp.dir, "tmp_pdf2.pdf")
   res.dir.file <- here::here(dir, "tmp_pdf2.pdf")
   file.copy(file, tmp.dir, overwrite=TRUE)
   file.rename(here::here(tmp.dir, "tmp_pdf.pdf"), tmp.dir.file)
   file.copy(tmp.dir.file, dir, overwrite=TRUE)
-  qpdf::pdf_combine(c(res.dir.file, tmp.pdf), output = file)
+  qpdf::pdf_combine(c(dir.file, tmp.pdf), output = file)
 }
 
 
-#' @export
-style_percent <- function (x,
+#' @keyword Internal
+style_percent0 <- function (x,
                            digits = 0,
                            big.mark = ifelse(decimal.mark == ",", " ", ","),
                            decimal.mark = getOption("OutDec"),
@@ -564,7 +567,7 @@ style_percent <- function (x,
                            symbol,
                            ...)
 {
-  set_cli_abort_call()
+  gtsummary:::set_cli_abort_call()
   if (!missing(symbol)) {
     lifecycle::deprecate_soft(
       when = "2.0.3",
@@ -574,19 +577,21 @@ style_percent <- function (x,
     if (isTRUE(symbol))
       suffix = "%"
   }
-  if (missing(decimal.mark)) {
-    decimal.mark <- get_theme_element("style_number-arg:decimal.mark", default = decimal.mark)
-  }
-  if (missing(big.mark)) {
-    big.mark <- get_theme_element("style_number-arg:big.mark",
-                                  default = ifelse(decimal.mark == ",", " ", ","))
-  }
   y <- dplyr::case_when(
-    x * 100 >= 10 ~ style_number( x * 100, digits = digits + 1, big.mark = big.mark, decimal.mark = decimal.mark, prefix = prefix, suffix = suffix, ... ),
-    x * 100 >= 10^(-(digits + 1)) ~ style_number( x * 100, digits = digits + 1, big.mark = big.mark, decimal.mark = decimal.mark, prefix = prefix, suffix = suffix, ... ),
-    x > 0 ~ paste0("<", style_number( x = 10^(-(digits + 1)), digits = digits + 1,  big.mark = big.mark, decimal.mark = decimal.mark,  prefix = prefix, suffix = suffix,...) ),
+    x * 100 >= 10 ~ style_number( x * 100, digits = digits , big.mark = big.mark, decimal.mark = decimal.mark, prefix = prefix, suffix = suffix, ... ),
+    x * 100 >= 10^(-(digits + 1)) ~ style_number( x * 100, digits = digits , big.mark = big.mark, decimal.mark = decimal.mark, prefix = prefix, suffix = suffix, ... ),
+    x > 0 ~ paste0("<", style_number( x = 10^(-(digits + 1)), digits = digits ,  big.mark = big.mark, decimal.mark = decimal.mark,  prefix = prefix, suffix = suffix,...) ),
     x == 0 ~ paste0(prefix, "0", suffix)
   )
   attributes(y) <- attributes(unclass(x))
   return(y)
+}
+
+#' @keyword Internal
+label_style_percent0 <- function (prefix = "", suffix = "", digits = 0, big.mark = ifelse(decimal.mark ==
+                                                                    ",", " ", ","), decimal.mark = getOption("OutDec"), ...)
+{
+  function(x) style_percent0(x, prefix = prefix, suffix = suffix,
+                            digits = digits, big.mark = big.mark, decimal.mark = decimal.mark,
+                            ...)
 }
