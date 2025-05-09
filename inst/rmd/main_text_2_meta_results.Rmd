@@ -35,7 +35,11 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = ""
+  tab.cap.pre = "", tab.cap.sep = "",
+  cache = TRUE,
+  cache.extra = list(
+    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
+  )
 )
 OUTCOME.VEC = params$OUTCOME.VEC
 MYLABEL = params$MYLABEL
@@ -63,8 +67,8 @@ if(ci.bonferroni){
   vec.id <- c("theta.rma", "theta.rma.ci.bon", "tau","global.pvalue")
   vec.rr <- c("rr.theta", "rr.theta.ci.bon", "rr.tau","global.pvalue")
 }
-vec.wopc <- c("RR", "ES","95% CI","tau", "Global p-value")
-vec.wpc <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+vec.wopc <- c("RR", "ES","95% CI","\u03c4", "Global p-value")
+vec.wpc <- c("RR\r", "ES\r","95% CI\r","\u03c4\r", "Global p-value\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
 cnames <- c(
   "Outcome",
   vec.wopc,
@@ -159,13 +163,13 @@ for (i in 1:length(OUTCOME.VEC)) {
 
 
 # footnote information:
-tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; tau (heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
+tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
 An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
-P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of tau (heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
+P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of \u03c4 (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects."))
 
 ```
 

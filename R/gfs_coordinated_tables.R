@@ -429,8 +429,28 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   print(main_doc, target=out.file)
   i = 1
   for(i in 1:length(main.text.docx)){
+    tmp_doc <- read_docx(main.text.docx[i])
+    sec.prop <- tmp_doc$sect_dim
+    if(length(sec.prop$page) == 2){
+      ps <- prop_section(
+        page_size = page_size(
+          orient = ifelse(sec.prop$landscape, "landscape", "portrait"),
+          width = sec.prop$page[1]/1440,
+          height = sec.prop$page[2]/1440,
+          unit = "in"
+        )
+      )
+    } else {
+      ps <- prop_section(
+        page_size = page_size(
+          orient = "portrait"
+        )
+      )
+    }
     main_doc <- read_docx(path = out.file) |>
-      body_add_docx(main.text.docx[i])
+      body_add_docx(main.text.docx[i]) |>
+      body_end_block_section(value = block_section(ps))
+
     print(main_doc, target=out.file)
   }
 

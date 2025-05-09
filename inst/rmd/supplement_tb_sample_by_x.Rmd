@@ -30,7 +30,12 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = ""
+  tab.cap.pre = "", tab.cap.sep = "",
+  warning = FALSE, message = FALSE,
+  cache = TRUE,
+  cache.extra = list(
+    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
+  )
 )
 ## extract parameters
 x = params$x
