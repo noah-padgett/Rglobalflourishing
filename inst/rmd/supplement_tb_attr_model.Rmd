@@ -1,0 +1,117 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+
+params: 
+  dir: ""
+  country.i: ""
+  tb.cap: "Sample summary."
+  fn.txt: ""
+---
+
+\pagestyle{empty}
+\setmainfont{opensans}
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+## extract parameters
+dir = params$dir
+country.i = params$country.i
+tb.cap = params$tb.cap
+fn.txt = params$fn.txt
+
+```
+
+
+```{r}
+#| label: build-table
+
+        tmp.attr.mod <- get_fitted_attrition_model(dir, country.i)
+        tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
+        tmp.included.vars <- str_remove(tmp.included.vars0, "COV_")
+        lab.list <- list()
+        for(ii in 1:length(tmp.included.vars)){
+          ## manually adjust for specific variables
+          if(str_detect(tmp.included.vars0[ii], "INCOME")){
+            if(country.i %in% c("United States", "Australia")){
+              lab.list[[tmp.included.vars0[ii]]] = "Annual household income"
+              tmp.included.vars[ii] <- "Annual household income"
+            } else {
+              lab.list[[tmp.included.vars0[ii]]] = "Monthly household income"
+              tmp.included.vars[ii] <- "Monthly household income"
+            }
+          } else if(str_detect(tmp.included.vars0[ii], "ATTEND_SVCS")){
+            lab.list[[tmp.included.vars0[ii]]] = "Religious attendance"
+            tmp.included.vars[ii] <- "Religious attendance"
+          } else if(str_detect(tmp.included.vars0[ii], "EMPLOYMENT")){
+            lab.list[[tmp.included.vars0[ii]]] = "Employment status"
+            tmp.included.vars[ii] <- "Employment status"
+          } else {
+            lab.list[[tmp.included.vars0[ii]]] = get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+            tmp.included.vars[ii] <- get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+          }
+
+
+        }
+        
+        attr.model = tbl_regression(
+          tmp.attr.mod, exponentiate = TRUE,
+          pvalue_fun = function(x) {
+            if_else(
+              is.na(x),
+              NA_character_,
+              if_else(x < 0.001, format(x, digits = 3, scientific = TRUE), format(round(x, 3), scientific = F))
+            )
+          },
+          label = lab.list
+        )  |>
+          bold_labels() |>
+          italicize_levels() |>
+          modify_header(estimate = "**Odds Ratio**")
+  
+
+tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+  
+```
+
+
+ 
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+
+
+attr.model |> 
+  as_flex_table() |>
+          autofit() |>
+          format_flex_table(pg.width = 21 / 2.54 - 2) |>
+    add_footer_lines(
+      values = tb.note, top = FALSE
+    ) %>%
+    add_header_lines(
+      as_paragraph(
+        as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
+      )
+    )
+
+
+```

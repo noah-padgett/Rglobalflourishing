@@ -1,0 +1,292 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+  word_document:
+    reference_docx: "template_landscape_long1.docx"
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+geometry: "paperheight=21.5in,paperwidth=11in,margin=1in"
+params: 
+  OUTCOME.VEC: ""
+  MYLABEL: ""
+  focal.predictor: ""
+  focal.better.name: ""
+  focal.predictor.reference.value: ""
+  dir.a: ""
+  dir.b: ""
+  dir.c: ""
+  dir.d: ""
+  file.a: ""
+  file.b: ""
+  file.c: ""
+  file.d: ""
+  header.a: ""
+  header.b: ""
+  header.c: ""
+  header.d: ""
+  country.i: ""
+  ci.bonferroni: FALSE
+  p.bonferroni: 0.05
+  p.ci: 0.05
+  tb.num: 0
+  n.print: "207,919"
+  tb.cap: "Outcome wide results"
+  fn.txt: ""
+  is.meta: TRUE
+---
+
+\pagestyle{empty}
+\setmainfont{opensans}
+
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+is.meta = params$is.meta
+OUTCOME.VEC = params$OUTCOME.VEC
+MYLABEL = params$MYLABEL
+focal.predictor = params$focal.predictor
+focal.better.name = params$focal.better.name
+focal.predictor.reference.value = params$focal.predictor.reference.value
+dir.a = params$dir.a
+dir.b = params$dir.b
+dir.c = params$dir.c
+dir.d = params$dir.d
+file.a = params$file.a
+file.b = params$file.b
+file.c = params$file.c
+file.d = params$file.d
+header.a = params$header.a
+header.b = params$header.b
+header.c = params$header.c
+header.d = params$header.d
+country.i = params$country.i
+ci.bonferroni = params$ci.bonferroni
+p.bonferroni = params$p.bonferroni
+p.ci = params$p.ci
+tb.num = params$tb.num
+n.print = params$n.print
+tb.cap = params$tb.cap
+fn.txt = params$fn.txt
+
+```
+
+
+```{r}
+#| label: build-table
+
+if(is.meta){
+  vec.id <- c("theta.rma.EE", "theta.rma.ECI")
+  vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
+} else {
+  vec.id <- c("EE", "ECI")
+}
+
+vec.a <- c("EE", "ECI")
+vec.b <- c("EE\r", "ECI\r")
+vec.c <- c("EE\r\r", "ECI\r\r")
+vec.d <- c("EE\r\r\r", "ECI\r\r\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+cnames <- c(
+  "Outcome",
+  vec.a, "\r\r\r", vec.b, "\r\r",
+  vec.c, "\r", vec.d
+)
+
+evalues <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
+colnames(evalues) <- cnames
+evalues$"\r" <- ""
+evalues$"\r\r" <- ""
+evalues$"\r\r\r" <- ""
+i = ii = 1
+for (i in 1:length(OUTCOME.VEC)) {
+  if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
+    evalues[i, 1] <- MYLABEL[ii]
+    ii <- ii + 1
+  } else {
+    evalues[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE))
+    
+    if(!is.meta){
+      if ( (str_detect(OUTCOME.VEC[i],"APPROVE_GOVT") & COUNTRY_LABELS[i] %in% c("China","Egypt") ) |
+        (str_detect(OUTCOME.VEC[i],"BELIEVE_GOD") & COUNTRY_LABELS[i] %in% c("Egypt") ) |
+        (str_detect(OUTCOME.VEC[i],"BELONGING") & COUNTRY_LABELS[i] %in% c("China") )   |
+        (str_detect(OUTCOME.VEC[i],"SAY_IN_GOVT") & COUNTRY_LABELS[i] %in% c("China") )
+      ) {
+        outcomewide[i, c(2:6,8:12)] <- "-"
+        next
+      }
+    } 
+    
+    if(is.meta){
+      tmp.vec <- case_when(
+        get_outcome_scale(OUTCOME.VEC[i]) == "cont" ~ vec.id,
+        .default = vec.rr
+      )
+    } else {
+      tmp.vec <- vec.id
+    }
+    ## ====== Primary MI - random effects meta - estimates withOUT PCs ====================== ##
+    if(is.meta){
+      tmp.a <- load_meta_result(
+        file = here::here(dir.a, file.a),
+        predictor = focal.predictor,
+        outcome = OUTCOME.VEC[i],
+        what = tmp.vec
+      ) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    } else {
+      tmp.a <- get_country_specific_regression_results(
+        res.dir = dir.a,
+        country = country.i,
+        predictor = focal.predictor,
+        outcome =  OUTCOME.VEC[i],
+        appnd.txt = file.a
+      ) %>%
+        dplyr::select(tidyr::any_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    }
+    ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
+    if(is.meta){
+      tmp.b <- load_meta_result(
+        file = here::here(dir.b, file.b),
+        predictor = focal.predictor,
+        outcome = OUTCOME.VEC[i],
+        what = tmp.vec
+      ) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    } else {
+      tmp.b <- get_country_specific_regression_results(
+        res.dir = dir.b,
+        country = country.i,
+        predictor = focal.predictor,
+        outcome =  OUTCOME.VEC[i],
+        appnd.txt = file.b
+      ) %>%
+        dplyr::select(tidyr::any_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    }
+    ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
+    if(is.meta){
+      tmp.c <- load_meta_result(
+        file = here::here(dir.c, file.c),
+        predictor = focal.predictor,
+        outcome = OUTCOME.VEC[i],
+        what = tmp.vec
+      ) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    }  else {
+      tmp.c <- get_country_specific_regression_results(
+        res.dir = dir.c,
+        country = country.i,
+        predictor = focal.predictor,
+        outcome =  OUTCOME.VEC[i],
+        appnd.txt = file.c
+      ) %>%
+        dplyr::select(tidyr::any_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    }
+    ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
+    if(is.meta){
+      tmp.d <- load_meta_result(
+        file = here::here(dir.d, file.d),
+        predictor = focal.predictor,
+        outcome = OUTCOME.VEC[i],
+        what = tmp.vec
+      ) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    } else {
+      tmp.d <- get_country_specific_regression_results(
+        res.dir = dir.d,
+        country = country.i,
+        predictor = focal.predictor,
+        outcome =  OUTCOME.VEC[i],
+        appnd.txt = file.d
+      ) %>%
+        dplyr::select(tidyr::any_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+        )
+    }
+    ## ====== Add Results to output object ====================================================== ##
+    if(nrow(tmp.a) > 0) evalues[i,vec.a] <- tmp.a[tmp.vec]
+    if(nrow(tmp.b) > 0) evalues[i,vec.b] <- tmp.b[tmp.vec]
+    if(nrow(tmp.c) > 0) evalues[i,vec.c] <- tmp.c[tmp.vec]
+    if(nrow(tmp.d) > 0) evalues[i,vec.d] <- tmp.d[tmp.vec]
+  }
+}
+
+
+# footnote information:
+tb.note.evalues <- as_paragraph(as_chunk("Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+
+```
+
+
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+evalues %>%
+  flextable() %>%
+  italic(part = "body",
+         i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
+         j = 1) %>%
+  add_footer_lines(
+    values = tb.note.evalues, top = FALSE
+  ) %>%
+  add_header_row(
+    values = c("", "Model 1: Demographics and Childhood Variables as Covariates", "", "Model 2: Demographics, Childhood, and Other Wave 1 Confounders (Via Principal Components) as Covariates", "", "Model 1: Demographics and Childhood Variables as Covariates", "", "Model 2: Demographics, Childhood, and Other Wave 1 Confounders (Via Principal Components) as Covariates"),
+    colwidths = c(1, length(vec.a), 1, length(vec.b), 1, length(vec.c), 1, length(vec.d)),
+    top = TRUE
+  ) %>%
+  add_header_row(
+    values = c("", "Multiple Imputation", "", "Complete Case w/ Attrition Weights" ),
+    colwidths = c(1, length(vec.a)+1+length(vec.b), 1, length(vec.c)+1+length(vec.d)),
+    top = TRUE
+  ) %>%
+  add_header_lines(
+    as_paragraph(
+      as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans"))
+    )
+  ) %>%
+  width(j=1,width=2.5)%>%
+  format_flex_table(pg.width = 29.7/2.54 - 2) %>%
+  align(i = 2:3, j = NULL, align = "center", part = "header") %>%
+  align(part = "footer", align = "left", j = 1:ncol(evalues)) %>%
+  border_remove()  %>%
+  hline_bottom(part = "body") %>%
+  hline_bottom(part = "header") %>%
+  hline(i=1, part="header") %>%
+  hline(i=2,j=c(2:6,8:12), part="header") %>%
+  hline(i=3,j=c(2:3,5:6,8:9,11:12), part="header")
+
+```

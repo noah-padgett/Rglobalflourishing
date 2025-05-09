@@ -1,0 +1,108 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+
+params: 
+  dir: ""
+  country.i: ""
+  OUTCOME.VEC: ""
+  focal.predictor: ""
+  tb.cap: "Sample summary."
+  fn.txt: ""
+---
+
+\pagestyle{empty}
+\setmainfont{opensans}
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+## extract parameters
+dir = params$dir
+country.i = params$country.i
+OUTCOME.VEC = params$OUTCOME.VEC
+focal.predictor = params$focal.predictor
+tb.cap = params$tb.cap
+fn.txt = params$fn.txt
+
+
+```
+
+
+```{r}
+#| label: build-table
+
+coun.fit.pca <- get_country_pca_summary(
+  res.dir = dir,
+  country = country.i,
+  outcome = OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)][1],
+  predictor = focal.predictor,
+  "_primary_wpc"
+)
+
+vec.id <- c("prop.var", "Cumulative_Proportion_Explained")
+vec.pc <- c("Percent Explained by each PC", "Cumulative Percent Explained")
+cnames <- c(
+  "PC",
+  vec.pc
+)
+
+coun.pca <- as.data.frame(matrix(nrow = 20, ncol = length(cnames)))
+colnames(coun.pca) <- cnames
+tmp.pca <- coun.fit.pca %>%
+  dplyr::filter( PC <= 20 ) %>%
+  dplyr::select(PC,tidyr::any_of(vec.id)) %>%
+  dplyr::mutate(
+    across(tidyr::any_of(vec.id),\(x) .round(x*100,1) )
+  )
+coun.pca$PC <- 1:20
+coun.pca[vec.pc] <- tmp.pca[vec.id]
+
+tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+```
+
+
+
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+coun.pca %>%
+  flextable() %>%
+  add_footer_lines(
+    values = tb.note, top = FALSE
+  ) %>%
+  add_header_lines(
+    as_paragraph(
+      as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
+    )
+  ) %>%
+  format_flex_table(pg.width = 21 / 2.54 - 4) %>%
+  align(i = 2, j = NULL, align = "center", part = "header") %>%
+  align(part = "footer", align = "left", j = 1:ncol(coun.pca)) %>%
+  bold(i=7,j=1:3) %>%
+  border_remove()  %>%
+  hline_bottom(part = "body") %>%
+  hline(i=1,part = "header") %>%
+  hline_bottom(part = "header")
+
+
+```

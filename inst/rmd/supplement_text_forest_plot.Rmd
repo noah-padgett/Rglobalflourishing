@@ -1,0 +1,108 @@
+---
+classoption: landscape
+output:
+  pdf_document:
+    latex_engine: lualatex
+  word_document:
+    reference_docx: "template_landscape.docx"
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+  - \usepackage{subcaption}
+params: 
+  OUTCOME.VEC: ""
+  MYLABEL: ""
+  focal.predictor: ""
+  focal.better.name: ""
+  outcome: ""
+  dir: ""
+  file.a: ""
+  file.b: ""
+  fig.num: 1
+  fig.cap: ""
+  res.dir: ""
+  n.print: "207,919"
+---
+\pagestyle{empty}
+\setmainfont{opensans}
+
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+OUTCOME.VEC = params$OUTCOME.VEC
+MYLABEL = params$MYLABEL
+focal.predictor = params$focal.predictor
+focal.better.name = params$focal.better.name
+outcome = params$outcome
+dir = params$dir
+file.a = params$file.a
+file.b = params$file.b
+fig.num = params$fig.num
+fig.cap = params$fig.cap
+n.print = params$n.print
+res.dir = params$res.dir
+
+```
+
+
+```{r}
+#| label: build-figures
+
+suppressWarnings({
+    p1 <- load_meta_result(
+      file = here::here(dir, file.a),
+      predictor = focal.predictor,
+      outcome = outcome,
+      what = "forest.plot"
+    )
+    p1 <- p1[[1]][[1]]
+    ggsave(
+      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".png")),
+      plot=p1, units="in", width=6, height=5, dpi = 1000
+    )
+    ggsave(
+      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".pdf")),
+      plot=p1, units="in", width=6, height=5
+    )
+
+    p2 <- load_meta_result(
+      file = here::here(dir, file.b),
+      predictor = focal.predictor,
+      outcome = outcome,
+      what = "forest.plot"
+    )
+    p2 <- p2[[1]][[1]]
+    ggsave(
+      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".png")),
+      plot=p2, units="in", width=6, height=5, dpi = 1000
+    )
+    ggsave(
+      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".pdf")),
+      plot=p2, units="in", width=6, height=5
+    )
+})
+```
+
+
+`r fig.cap`
+
+```{r}
+#| label: print-figures
+#| echo: FALSE
+#| out.width: "45%"
+#| fig.ncol: 2
+
+knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".pdf")))
+knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".pdf")))
+
+```
+

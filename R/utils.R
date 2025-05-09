@@ -519,7 +519,7 @@ get_fitted_attrition_models <- function(res.dir) {
 #' @export
 get_fitted_attrition_model <- function(res.dir, country) {
   local({
-    tmp.attr.files <- list.files(res.dir)
+    tmp.attr.files <- list.files(here::here(res.dir))
     tmp.attr.files <- tmp.attr.files[str_detect(tmp.attr.files, country)]
     load(here::here(res.dir, tmp.attr.files))
     return(df.attr$fit.attr[[1]])
@@ -542,22 +542,25 @@ gfs_print_docx <- function(doc, file, dir){
 }
 
 #' @rdname utils
-#' @param file name of pdf file needed to be file appended to
 #' @param dir name of directory to print out file to
+#' @param cur.doc name of pdf file needed to be file appended to
+#' @param add name of file in directory to appended to cur.doc
 #' @export
-gfs_append_pdf <- function(file, dir){
+gfs_append_pdf <- function(dir, cur.doc, add){
   tmp.dir <- tempdir()
-  tmp.pdf <- here::here(dir, "tmp_pdf.pdf")
-  tmp.dir.file <- here::here(tmp.dir, "tmp_pdf2.pdf")
-  res.dir.file <- here::here(dir, "tmp_pdf2.pdf")
-  file.copy(file, tmp.dir, overwrite=TRUE)
-  file.rename(here::here(tmp.dir, "tmp_pdf.pdf"), tmp.dir.file)
+  tmp.dir.file <- here::here(tmp.dir, "tmp_pdf_0.pdf")
+  dir.file <- here::here(dir, "tmp_pdf_0.pdf")
+  file.copy(here::here(dir, cur.doc), tmp.dir, overwrite=TRUE)
+  file.rename(here::here(tmp.dir, cur.doc), tmp.dir.file)
   file.copy(tmp.dir.file, dir, overwrite=TRUE)
-  qpdf::pdf_combine(c(dir.file, tmp.pdf), output = file)
+  qpdf::pdf_combine(
+    input = c(dir.file, add),
+    output = here::here(dir, cur.doc)
+  )
 }
 
 
-#' @keyword Internal
+#' @keywords internal
 style_percent0 <- function (x,
                            digits = 0,
                            big.mark = ifelse(decimal.mark == ",", " ", ","),
@@ -587,7 +590,7 @@ style_percent0 <- function (x,
   return(y)
 }
 
-#' @keyword Internal
+#' @keywords internal
 label_style_percent0 <- function (prefix = "", suffix = "", digits = 0, big.mark = ifelse(decimal.mark ==
                                                                     ",", " ", ","), decimal.mark = getOption("OutDec"), ...)
 {

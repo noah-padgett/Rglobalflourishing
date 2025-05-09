@@ -30,15 +30,12 @@ gfs_generate_supplemental_docs(
   res.dir = "results",
   included.countries = NULL,
   ci.bonferroni = FALSE,
-  single.file = TRUE,
-  single.file.num.sequential = FALSE,
+  num.sequential = FALSE,
   what = "all"
 )
 }
 \arguments{
 \item{df.raw}{a data.frame containing the raw data with values coded as labels}
-
-\item{focal.predictor}{a character defining the focal predictor}
 
 \item{focal.better.name}{a character that is used as the printed name in tables/captions to denote the focal predictor}
 
@@ -57,14 +54,6 @@ gfs_generate_supplemental_docs(
 \item{included.countries}{a character vector of which countries to include in output -- defaults to all.}
 
 \item{what}{(character) options include: "all", "S1", "S2", "S3".}
-
-\item{coun.wopc}{a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did NOT include the principal components in the country-specific regression analyses}
-
-\item{coun.wpc}{a data.frame of country-specific results (e.g., input of meta-analytic) function (see gfs_meta_analysis(.)) of the results that did INCLUDED the principal components in the country-specific regression analyses}
-
-\item{meta.wopc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did NOT include the principal components in the country-specific regression analyses}
-
-\item{meta.wpc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did INCLUDED the principal components in the country-specific regression analyses}
 
 \item{...}{other arguments as needed}
 }

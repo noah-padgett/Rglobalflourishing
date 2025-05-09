@@ -1,0 +1,147 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+  word_document:
+    reference_docx: "template_landscape_wide1.docx"
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+geometry: "paperheight=18in,paperwidth=32in,margin=1in"
+params: 
+  dir: ""
+  res.dir: ""
+  OUTCOME.VEC: ""
+  focal.predictor: ""
+  file: ""
+  tb.cap: "Sample summary."
+  fn.txt: ""
+---
+
+\pagestyle{empty}
+\setmainfont{opensans}
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 9)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+## extract parameters
+dir = params$dir
+res.dir = params$res.dir
+OUTCOME.VEC = params$OUTCOME.VEC
+focal.predictor = params$focal.predictor
+file = params$file
+tb.num = params$tb.num
+tb.cap = params$tb.cap
+fn.txt = params$fn.txt
+
+```
+
+
+```{r}
+#| label: build-table
+
+vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
+
+df.tmp <- get_country_specific_output(
+  res.dir = dir,
+  outcomes =  OUTCOME.VEC[str_detect(OUTCOME.VEC,"blank",negate=TRUE)],
+  predictors = focal.predictor,
+  appnd.txt = file
+) %>%
+  filter(Variable == "FOCAL_PREDICTOR") %>%
+  select(COUNTRY, OUTCOME, id.Est, rr.Est)
+
+for(i in 1:nrow(df.tmp)){
+  if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
+    df.tmp$rr.Est[i] <- NA
+  }
+  if(get_outcome_scale(df.tmp$OUTCOME[i]) != "cont"){
+    df.tmp$id.Est[i] <- NA
+  }
+  df.tmp$OUTCOME[i] <- get_outcome_better_name(df.tmp$OUTCOME[i], FALSE, FALSE, include.fid = TRUE)
+}
+df.tmp <- df.tmp %>%
+  pivot_wider(
+    names_from = COUNTRY,
+    values_from = c(id.Est, rr.Est),
+  )
+df.tmp <- df.tmp[, c(1, c(rbind(2:24, 25:47)) )]
+
+df.tmp[is.na(df.tmp)] <- "-"
+
+df.tmp0 <- as.data.frame(matrix(ncol=ncol(df.tmp), nrow=length(OUTCOME.VEC)))
+colnames(df.tmp0) <- colnames(df.tmp)
+i <- ii <- j <- 1
+for(i in 1:nrow(df.tmp0)){
+    if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
+    df.tmp0[i, 1] <- MYLABEL[ii]
+    ii <- ii + 1
+  } else {
+    df.tmp0[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = TRUE))
+    df.tmp0[i, -1] = df.tmp[j,-1]
+    j <- j + 1
+  }
+}
+
+df.tmp <- df.tmp0
+header_l1 <- sort(unique(str_split(colnames(df.tmp), "_",simplify = T)[-1,2]))
+colnames(df.tmp) <- c("Outcome", rep(c("ES", "RR"), length(header_l1)))
+for(i in 2:length(colnames(df.tmp))){
+  colnames(df.tmp)[i] <- paste0(colnames(df.tmp)[i], paste0(rep("\r",i-2), collapse = ""))
+}
+
+# create comparable files but as CSV
+readr::write_csv(df.tmp0, file=here::here(res.dir, paste0("GFS_Outcomewide_Results_Comparison_", paste0(focal.predictor, collapse="_"),".csv")))
+
+
+tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+```
+
+
+
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+
+df.tmp %>%
+  flextable() %>%
+  italic(part = "body",
+         i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
+         j = 1) %>%
+  autofit() %>%
+  width(j=1,3.5) %>%
+  format_flex_table(pg.width = 30) %>%
+  add_header_row(
+    values = c("", header_l1),
+    colwidths = c(1, rep(2, length(header_l1)))
+  ) %>%
+  bg(
+    j = c(2 + seq(0,ncol(df.tmp),4), 3 + seq(0,ncol(df.tmp),4)), bg="grey90",part = "all"
+  ) %>%
+  add_footer_lines(
+    values = tb.note, top = FALSE
+  ) %>%
+  add_header_lines(
+    as_paragraph(
+      as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
+    )
+  ) %>%
+  hline(i=1, part = "header") %>%
+  align(i=2, align = "center", part = "header")
+
+```

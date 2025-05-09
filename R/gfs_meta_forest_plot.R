@@ -86,7 +86,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   myci <- confint(tmp.fit, type = "PL")
 
   tmp.het <- paste0(
-    "τ=", .round(sqrt(tmp.fit$tau2), 3),
+    "\u03c4 =", .round(sqrt(tmp.fit$tau2), 3),
     "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ", .round(myci$random[2, 3], 3), "]",
     "; Q(df=", tmp.fit$k - tmp.fit$QMdf[1], ")=",
     .round(tmp.fit$QE), ", p=", format.pval(tmp.fit$QEp, digits=3, scientific=TRUE),

@@ -480,7 +480,7 @@ df.raw <- gfs_get_labelled_raw_data(
 df.raw <- append_attrition_weights_to_df(data=df.raw)
 
 # main text
-gfs_generate_main_doc2(
+gfs_generate_main_doc(
   df.raw = df.raw,
   focal.predictor = FOCAL_PREDICTOR,
   focal.better.name = FOCAL_PREDICTOR_BETTER_NAME,

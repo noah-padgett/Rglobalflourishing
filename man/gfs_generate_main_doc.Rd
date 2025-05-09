@@ -6,8 +6,9 @@
 \usage{
 gfs_generate_main_doc(
   df.raw = NULL,
-  meta.wopc = here::here("results-primary", "0_meta_analyzed_results_primary_wopc.rds"),
-  meta.wpc = here::here("results-primary", "0_meta_analyzed_results_primary_wpc.rds"),
+  dir.meta = "results-primary",
+  file.wopc = "0_meta_analyzed_results_primary_wopc.rds",
+  file.wpc = "0_meta_analyzed_results_primary_wpc.rds",
   focal.better.name = "Focal Predictor",
   focal.predictor.reference.value = "estimated population mean of focal predictor",
   focal.predictor = NULL,
@@ -27,9 +28,9 @@ gfs_generate_main_doc(
 \arguments{
 \item{df.raw}{a data.frame containing the raw data with values coded as labels}
 
-\item{meta.wopc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did NOT include the principal components in the country-specific regression analyses}
+\item{dir.meta}{subdirectory where primary results are stored ('results-primary')}
 
-\item{meta.wpc}{a nested data.frame of results from the meta-analysis function (see gfs_meta_analysis(.)) of the meta-analytic results that did INCLUDED the principal components in the country-specific regression analyses}
+\item{file.wopc}{file containing the nested-data.frame(.) containing the meta-analyzed results with principal components included}
 
 \item{focal.better.name}{a character that is used as the printed name in tables/captions to denote the focal predictor}
 

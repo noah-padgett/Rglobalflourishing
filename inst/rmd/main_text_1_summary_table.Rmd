@@ -83,9 +83,11 @@ tb.num = params$tb.num
         missing_stat = "{N_miss} ({p_miss}%)"
       ) %>%
       italicize_labels() %>%
+      modify_header(label ~ "**Characteristic**") %>%
       add_stat_label(
         label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
       )
+    
   })
   
 tb.note.summarytab <- as_paragraph(as_chunk("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2 aggregated over the full sample and Tables S9a-32a and S9b-32b are summary tables by country.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))

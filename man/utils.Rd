@@ -39,9 +39,9 @@ quickpred2(
 
 format_flex_table(xtb, pg.width = 6.5)
 
-theme_meta_outcome_wide(xtb, pg.width = 29.7/2.54 - 2, .ncol = 12)
+theme_meta_outcome_wide(xtb, pg.width = 9, .ncol = 12)
 
-theme_meta_evalues(xtb, pg.width = 21/2.54 - 2, .ncol = 6)
+theme_meta_evalues(xtb, pg.width = 6.5, .ncol = 6)
 
 .round(x, digits = 2)
 
@@ -63,7 +63,7 @@ theme_Publication(base_size = 14)
 
 gfs_print_docx(doc, file, dir)
 
-gfs_append_pdf(file, dir)
+gfs_append_pdf(dir, cur.doc, add)
 }
 \arguments{
 \item{x}{(character vector) of a vector of variable names in data}
@@ -105,9 +105,13 @@ this is used to help troubleshoot and resolve non-invertible predictor matrices}
 
 \item{doc}{officer object to be printed out}
 
-\item{file}{name of pdf file needed to be file appended to}
+\item{file}{name of file to print out internal officer object}
 
 \item{dir}{name of directory to print out file to}
+
+\item{cur.doc}{name of pdf file needed to be file appended to}
+
+\item{add}{name of file in directory to appended to cur.doc}
 }
 \value{
 a vector of standardized scores
