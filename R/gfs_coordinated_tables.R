@@ -1731,7 +1731,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           if(length(sec.prop$page) == 2){
             ps <- prop_section(
               page_size = page_size(
-                orient = "portrait",
+                orient = ifelse(sec.prop$landscape, "landscape", "portrait"),
                 width = sec.prop$page[1]/1440,
                 height = sec.prop$page[2]/1440,
                 unit = "in"
@@ -1902,7 +1902,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         if(length(sec.prop$page) == 2){
           ps <- prop_section(
             page_size = page_size(
-              orient = "portrait",
+              orient = ifelse(sec.prop$landscape, "landscape", "portrait"),
               width = sec.prop$page[1]/1440,
               height = sec.prop$page[2]/1440,
               unit = "in"

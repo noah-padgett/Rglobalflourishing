@@ -12,17 +12,17 @@
 #   "play nice" with other packages.
 
 # install.packages("remotes")
-#remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
-#library(Rglobalflourishing)
+remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
+library(Rglobalflourishing)
 
 # Analysis Set-Up
 
 # Add the directory where the dataset is stored on your computer
-data.dir <- "data"
+data.dir <- "~/Documents/GitHub/global-flourishing-study/3-GFS-Core-Wave-2/gfs-wave-2/data"
 dataset.name <- "gfs_all_countries_wave2.sav"
 
 # Here is YOUR wave 1 construct variable
-FOCAL_PREDICTOR <- c("PHYSICAL_HLTH_Y1")
+FOCAL_PREDICTOR <-  c("PHYSICAL_HLTH_Y1")
 FOCAL_PREDICTOR_BETTER_NAME <- c("self-rated physical health at wave 1")
 FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean score within country")
 
@@ -60,21 +60,6 @@ options(
   future.plan = "multisession"
 )
 handlers(global = TRUE)
-
-# Generating the online supplement is a complicated process. We start here to ensure the internal document conversation can be conducted.
-# First, run the next 6 lines.
-# Running lines () will ask you to give R permission to access Word. Please say "Yes".
-if(!(dir.exists(here("results")))) dir.create(here("results"))
-
-library(pandoc)
-out.file <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".docx"))
-out.file.pdf <- here::here("results",paste0("GFS-Wave 2 Online Supplement_", paste0(FOCAL_PREDICTOR_BETTER_NAME, collapse=" "),".pdf"))
-file.copy(here::here("data","supp_page_1.docx"), here::here("results"))
-file.rename(here::here("results","supp_page_1.docx"), out.file)
-pandoc::pandoc_convert(
-  from = "docx", to = "pdf",
-  file = out.file, output = out.file.pdf
-)
 
 if (availableCores(constraints = "connections") == 2) {
   num_cores <- 1

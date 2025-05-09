@@ -12,8 +12,8 @@
 #   "play nice" with other packages.
 
 # install.packages("remotes")
-#remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
-#library(Rglobalflourishing)
+remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
+library(Rglobalflourishing)
 
 # Analysis Set-Up
 
