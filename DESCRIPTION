@@ -37,7 +37,8 @@ Imports:
     gtsummary,
     tidyr,
     tidyselect,
-    utils
+    utils,
+    cardx
 Suggests:
     gtsummary,
     EValue,

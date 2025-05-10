@@ -1528,7 +1528,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
 
         # footnote information:
-        tb.note <- as_paragraph("Notes.  N=",country.n1.print,"; PCA was conducted using 'survey::svyprcomp(.)' function using all available contemporaneous (with focal predictor) exposures at wave 1. All PCs were standardized prior to being used as predictors. The bolded row represented the number of retained components for analysis was 7.")
+        tb.note <- as_paragraph("Notes.  N=",country.n1.print,"; PCA was conducted using 'survey::svyprcomp(.)' function using all available contemporaneous exposures at wave 1. All PCs were standardized prior to being used as predictors. The bolded row represented the number of retained components for analysis was 7.")
 
         if(num.sequential){
           tb.cap.i <- paste0("Table S",tb.num,". Summary of principal components in ", COUNTRY_LABELS[i])
