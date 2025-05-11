@@ -4,7 +4,6 @@
 *.Ruserdata
 docs
 .Rproj.user
-*.docx
 results/*
 results-attr/*
 results-wopc/*
@@ -18,3 +17,4 @@ results-unstd/*
 .DS_Store
 test/tmp_workspace
 unweighted_res.csv
+test/*ignore/*
