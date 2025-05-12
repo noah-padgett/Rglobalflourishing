@@ -51,8 +51,9 @@ tb.num = params$tb.num
   suppressWarnings({
     sumtab <- df.raw.long %>%
     as_survey_design(
+      ids = ~1,
       #ids = {{psu}},
-      strata = {{strata}},
+      #strata = {{strata}},
       weights = {{wgt}}
     ) %>%
       tbl_svysummary(
