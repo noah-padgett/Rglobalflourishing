@@ -96,11 +96,11 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   )
 
 
-  xlims <- max(c(abs(tmp.dat$ci.lb), abs(tmp.dat$ci.ub))) + 0.20
+  xlims <- max(c(abs(tmp.dat$ci.lb.i), abs(tmp.dat$ci.ub.i))) + 0.20
 
   tmp.dat <- tmp.dat |>
     mutate(
-      est_lab = paste0(.round(yi), " (", .round(ci.lb), ", ", .round(ci.ub), ")")
+      est_lab = paste0(.round(yi), " (", .round(ci.lb.i), ", ", .round(ci.ub.i), ")")
       # update country label for "turkey" to have umlat? or not?
       # Türkiye
       #Country = case_when(
