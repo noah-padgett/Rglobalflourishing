@@ -51,8 +51,8 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
           mutate(
             yi = {{yi}},
             sei = {{sei}},
-            ci.lb.i = yi - qt(ci.alpha/2, df, lower.tail = FALSE),
-            ci.ub.i = yi + qt(ci.alpha/2, df, lower.tail = FALSE)
+            ci.lb.i = yi - sei*qt(ci.alpha/2, df, lower.tail = FALSE),
+            ci.ub.i = yi + sei*qt(ci.alpha/2, df, lower.tail = FALSE)
           )
       }),
       ## ====== random effects meta results ===================================================== ##
