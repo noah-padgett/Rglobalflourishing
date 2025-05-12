@@ -127,7 +127,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     tmp.dat |>
     ggplot(aes(y = reorder(Country, yi))) +
     geom_point(aes(x = yi), shape = 15, size = 3) +
-    geom_linerange(aes(xmin = ci.lb, xmax = ci.ub)) +
+    geom_linerange(aes(xmin = ci.lb.i, xmax = ci.ub.i)) +
     geom_vline(xintercept = 0, linetype = "dashed") +
     .geom_stripes() +
     labs(x = xLab) +
