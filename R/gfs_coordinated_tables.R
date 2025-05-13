@@ -914,7 +914,7 @@ gfs_generate_supplemental_docs <- function(
         filter(CASE_OBSERVED_Y2 == 1) %>%
         select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, RACE1, contains("_Y1")) %>%
         mutate(
-          "{{wgt}}" := {{wgt1}}
+          "{{wgt}}" := n() * {{wgt1}} / sum( {{wgt1}} )
         )
       colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
       df.w1$WAVE0 <- "Retained--Observed in Wave 2"
@@ -943,6 +943,7 @@ gfs_generate_supplemental_docs <- function(
           INCOME, RACE1
         ) %>%
         mutate(
+          UNITWGT = 1,
           INCOME = forcats::fct(INCOME),
           RACE1 = forcats::fct(RACE1),
           across(any_of(c("COUNTRY", focal.predictor0, OUTCOME.VEC0, baseline.pred0, "INCOME", "RACE1")), \(x){
@@ -1052,7 +1053,7 @@ gfs_generate_supplemental_docs <- function(
       params.tb <- list(
         data = df.raw.attr.retained,
         focal.predictor0 = focal.predictor0,
-        wgt = as.name("WGT0"),
+        wgt = as.name("UNITWGT"),
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         tb.num = tb.num,
@@ -1078,7 +1079,7 @@ gfs_generate_supplemental_docs <- function(
         data = df.raw.attr.retained,
         OUTCOME.VEC0 = OUTCOME.VEC0,
         OUTCOME.VEC.LABELS = OUTCOME.VEC.LABELS,
-        wgt = as.name("WGT0"),
+        wgt = as.name("UNITWGT"),
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         tb.num = tb.num,
@@ -1219,6 +1220,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         p.bonferroni = p.bonferroni,
         p.ci = 0.05,
         tb.cap = tb.cap.i,
+        tb.num = tb.num,
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-evalues-",f0,".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE
@@ -1261,6 +1263,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         p.bonferroni = p.bonferroni,
         p.ci = 0.05,
         tb.cap = tb.cap.i,
+        tb.num = tb.num,
         header.a = "Model 1: Demographic and Childhood Variables as Covariates",
         header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
         fn.txt = fn.txt.i,
@@ -1399,6 +1402,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
+          tb.num = tb.num,
           fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData")),
           start.time = run.start.time.i,
@@ -1437,6 +1441,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
+          tb.num = tb.num,
           fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData")),
           start.time = run.start.time.i,
@@ -1489,6 +1494,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
+          tb.num = tb.num,
           fn.txt = "",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData")),
           start.time = run.start.time.i,
@@ -1527,6 +1533,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
+          tb.num = tb.num,
           fn.txt = "",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData")),
           start.time = run.start.time.i,
@@ -1561,6 +1568,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           dir = dir.attr.models,
           country.i = COUNTRY_LABELS[i],
           tb.cap = tb.cap.i,
+          tb.num = tb.num,
           fn.txt = tb.note,
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie.RData")),
           start.time = run.start.time.i,
@@ -1598,6 +1606,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           OUTCOME.VEC = OUTCOME.VEC,
           focal.predictor = focal.predictor,
           tb.cap = tb.cap.i,
+          tb.num = tb.num,
           fn.txt = tb.note,
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif.RData")),
           start.time = run.start.time.i,
@@ -1654,6 +1663,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
             tb.cap = tb.cap.i,
+            tb.num = tb.num,
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
             fn.txt = fn.txt.i,
@@ -1706,6 +1716,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
             tb.cap = tb.cap.i,
+            tb.num = tb.num,
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
             fn.txt = fn.txt.i,
@@ -1754,6 +1765,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
             tb.cap = tb.cap.i,
+            tb.num = tb.num,
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE
