@@ -13,6 +13,8 @@ params:
   psu: PSU
   strata: STRATA
   tb.num: 1
+  cache.file: ""
+  start.time: ""
 ---
 
 \pagestyle{empty}
@@ -27,11 +29,7 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = "",
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  tab.cap.pre = "", tab.cap.sep = ""
 )
 ## extract parameters
 df.raw.long = params$df.raw.long
@@ -40,7 +38,8 @@ wgt = params$wgt
 psu = params$psu
 strata = params$strata
 tb.num = params$tb.num
-#cache.file = params$cache.file
+cache.file = params$cache.file
+start.time = params$start.time
 
 ```
 
@@ -48,8 +47,9 @@ tb.num = params$tb.num
 ```{r}
 #| label: build-table
 
-## create table
-suppressWarnings({
+if( !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  ## create table
+  suppressWarnings({
     sumtab <- df.raw.long %>%
     as_survey_design(
       ids = {{psu}},
@@ -92,8 +92,12 @@ suppressWarnings({
       add_stat_label(
         label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
       )
-    
   })
+  save(sumtab, file=cache.file)
+} else {
+  load(cache.file)
+}
+
   
 tb.note.summarytab <- as_paragraph(as_chunk("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2 aggregated over the full sample and Tables S9a-32a and S9b-32b are summary tables by country.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 

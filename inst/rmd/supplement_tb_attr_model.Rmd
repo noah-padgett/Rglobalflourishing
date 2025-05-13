@@ -11,6 +11,9 @@ params:
   country.i: ""
   tb.cap: "Sample summary."
   fn.txt: ""
+  cache.file: ""
+  start.time: ""
+  ignore.cache: TRUE
 ---
 
 \pagestyle{empty}
@@ -36,6 +39,10 @@ dir = params$dir
 country.i = params$country.i
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
+
 
 ```
 
@@ -43,56 +50,62 @@ fn.txt = params$fn.txt
 ```{r}
 #| label: build-table
 
-        tmp.attr.mod <- get_fitted_attrition_model(dir, country.i)
-        tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
-        tmp.included.vars <- str_remove(tmp.included.vars0, "COV_")
-        lab.list <- list()
-        for(ii in 1:length(tmp.included.vars)){
-          ## manually adjust for specific variables
-          if(str_detect(tmp.included.vars0[ii], "INCOME")){
-            if(country.i %in% c("United States", "Australia")){
-              lab.list[[tmp.included.vars0[ii]]] = "Annual household income"
-              tmp.included.vars[ii] <- "Annual household income"
-            } else {
-              lab.list[[tmp.included.vars0[ii]]] = "Monthly household income"
-              tmp.included.vars[ii] <- "Monthly household income"
-            }
-          } else if(str_detect(tmp.included.vars0[ii], "ATTEND_SVCS")){
-            lab.list[[tmp.included.vars0[ii]]] = "Religious attendance"
-            tmp.included.vars[ii] <- "Religious attendance"
-          } else if(str_detect(tmp.included.vars0[ii], "EMPLOYMENT")){
-            lab.list[[tmp.included.vars0[ii]]] = "Employment status"
-            tmp.included.vars[ii] <- "Employment status"
-          } else {
-            lab.list[[tmp.included.vars0[ii]]] = get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
-            tmp.included.vars[ii] <- get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
-          }
 
-
-        }
-        
-        attr.model = tbl_regression(
-          tmp.attr.mod, exponentiate = TRUE,
-          pvalue_fun = function(x) {
-            if_else(
-              is.na(x),
-              NA_character_,
-              if_else(x < 0.001, format(x, digits = 3, scientific = TRUE), format(round(x, 3), scientific = F))
-            )
-          },
-          label = lab.list
-        )  |>
-          bold_labels() |>
-          italicize_levels() |>
-          modify_header(estimate = "**Odds Ratio**")
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
   
+tmp.attr.mod <- get_fitted_attrition_model(dir, country.i)
+tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
+tmp.included.vars <- str_remove(tmp.included.vars0, "COV_")
+lab.list <- list()
+for(ii in 1:length(tmp.included.vars)){
+  ## manually adjust for specific variables
+  if(str_detect(tmp.included.vars0[ii], "INCOME")){
+    if(country.i %in% c("United States", "Australia")){
+      lab.list[[tmp.included.vars0[ii]]] = "Annual household income"
+      tmp.included.vars[ii] <- "Annual household income"
+    } else {
+      lab.list[[tmp.included.vars0[ii]]] = "Monthly household income"
+      tmp.included.vars[ii] <- "Monthly household income"
+    }
+  } else if(str_detect(tmp.included.vars0[ii], "ATTEND_SVCS")){
+    lab.list[[tmp.included.vars0[ii]]] = "Religious attendance"
+    tmp.included.vars[ii] <- "Religious attendance"
+  } else if(str_detect(tmp.included.vars0[ii], "EMPLOYMENT")){
+    lab.list[[tmp.included.vars0[ii]]] = "Employment status"
+    tmp.included.vars[ii] <- "Employment status"
+  } else {
+    lab.list[[tmp.included.vars0[ii]]] = get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+    tmp.included.vars[ii] <- get_outcome_better_name(tmp.included.vars[ii], include.name = FALSE)
+  }
+  
+  
+}
 
+attr.model = tbl_regression(
+  tmp.attr.mod, exponentiate = TRUE,
+  pvalue_fun = function(x) {
+    if_else(
+      is.na(x),
+      NA_character_,
+      if_else(x < 0.001, format(x, digits = 3, scientific = TRUE), format(round(x, 3), scientific = F))
+    )
+  },
+  label = lab.list
+)  |>
+  bold_labels() |>
+  italicize_levels() |>
+  modify_header(estimate = "**Odds Ratio**")
+  
+  save(attr.model, file=cache.file)
+} else {
+  load(cache.file)
+}
 tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
-  
+
 ```
 
 
- 
+
 ```{r}
 #| label: print-table
 
@@ -106,16 +119,16 @@ knitr::opts_chunk$set(
 
 attr.model |> 
   as_flex_table() |>
-          autofit() |>
-          format_flex_table(pg.width = 21 / 2.54 - 2) |>
-    add_footer_lines(
-      values = tb.note, top = FALSE
-    ) %>%
-    add_header_lines(
-      as_paragraph(
-        as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
-      )
+  autofit() |>
+  format_flex_table(pg.width = 21 / 2.54 - 2) |>
+  add_footer_lines(
+    values = tb.note, top = FALSE
+  ) %>%
+  add_header_lines(
+    as_paragraph(
+      as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
     )
+  )
 
 
 ```

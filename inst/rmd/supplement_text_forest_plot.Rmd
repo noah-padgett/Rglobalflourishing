@@ -22,6 +22,9 @@ params:
   fig.cap: ""
   res.dir: ""
   n.print: "207,919"
+  cache.file: ""
+  start.time: ""
+  ignore.cache: TRUE
 ---
 \pagestyle{empty}
 \setmainfont{opensans}
@@ -37,11 +40,7 @@ knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
   tab.cap.pre = "", tab.cap.sep = "",
-  warning = FALSE, message = FALSE,
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  warning = FALSE, message = FALSE
 )
 OUTCOME.VEC = params$OUTCOME.VEC
 MYLABEL = params$MYLABEL
@@ -55,12 +54,19 @@ fig.num = params$fig.num
 fig.cap = params$fig.cap
 n.print = params$n.print
 res.dir = params$res.dir
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
+
 
 ```
 
 
 ```{r}
 #| label: build-figures
+
+
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 
 suppressWarnings({
     p1 <- load_meta_result(
@@ -95,6 +101,12 @@ suppressWarnings({
       plot=p2, units="in", width=6, height=5
     )
 })
+  
+    save(p1,p2, file=cache.file)
+} else {
+  load(cache.file)
+}  
+  
 ```
 
 

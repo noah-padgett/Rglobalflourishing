@@ -22,6 +22,8 @@
 #' @description
 #' TO-DO
 gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE){
+  cat("\n **Starting...**\n")
+  run.start.time <- Sys.time()
 
   n.print = df.raw %>%
     summarize(
@@ -313,13 +315,15 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
     wgt = as.name("WGT0"),
     psu = as.name("PSU"),
     strata = as.name("STRATA"),
-    tb.num = tb.num
+    tb.num = tb.num,
+    cache.file = here::here(res.dir, "main-text", paste0("cache-tb-sumtb.RData")),
+    start.time = run.start.time
   )
   rmarkdown::render(
     input = system.file("rmd", "main_text_1_summary_table.Rmd", package = "Rglobalflourishing"),
     output_format = c("pdf_document","word_document"),
     output_file = "main_text_tbl_1",
-    output_dir = here::here("results", "main-text"),
+    output_dir = here::here(res.dir, "main-text"),
     params = params.tb1
   )
   tb.num <- tb.num + 1
@@ -343,14 +347,16 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
       ci.bonferroni =ci.bonferroni,
       p.bonferroni = p.bonferroni,
       tb.num = tb.num,
-      n.print = n.print
+      n.print = n.print,
+      cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")),
+      start.time = run.start.time
     )
 
     rmarkdown::render(
       input = system.file("rmd", "main_text_2_meta_results.Rmd", package = "Rglobalflourishing"),
       output_format = c("pdf_document","word_document"),
       output_file = paste0("main_text_tbl_",tb.num),
-      output_dir = here::here("results", "main-text"),
+      output_dir = here::here(res.dir, "main-text"),
       params = params.tb2
     )
     tb.num <- tb.num + 1
@@ -372,14 +378,16 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
       file.wopc = file.wopc,
       file.wpc = file.wpc,
       tb.num = tb.num,
-      n.print = n.print
+      n.print = n.print,
+      cache.file = here::here(res.dir, "main-text", paste0("cache-tb-evalues-",f0,".RData")),
+      start.time = run.start.time
     )
 
     rmarkdown::render(
       input = system.file("rmd", "main_text_3_evalues.Rmd", package = "Rglobalflourishing"),
       output_format = c("pdf_document","word_document"),
       output_file = paste0("main_text_tbl_",tb.num),
-      output_dir = here::here("results", "main-text"),
+      output_dir = here::here(res.dir, "main-text"),
       params = params.tb3
     )
     tb.num <- tb.num + 1
@@ -389,7 +397,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   ## =============================================================================== ##
   ## =============================================================================== ##
   ## Main text figures
-  if("COMPOSITE_FLOURISHING_SECURE_Y2" %in% outcome.vec){
+  if("COMPOSITE_FLOURISHING_SECURE_Y2" %in% OUTCOME.VEC){
     f0=1
     for(f0 in 1:length(focal.predictor)){
 
@@ -402,14 +410,16 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
         file.wopc = file.wopc,
         file.wpc = file.wpc,
         fig.num = f0,
-        res.dir = here::here("results"),
-        n.print = n.print
+        res.dir = res.dir,
+        n.print = n.print,
+        cache.file = here::here(res.dir, "main-text", paste0("cache-fig-",f0,".RData")),
+        start.time = run.start.time
       )
       rmarkdown::render(
         input = system.file("rmd", "main_text_4_figures.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document","word_document"),
         output_file = paste0("main_text_figures"),
-        output_dir = here::here("results", "main-text"),
+        output_dir = here::here(res.dir, "main-text"),
         params = params.fig
       )
     }
@@ -419,8 +429,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
 
 
   ## Word version
-  out.file <- here::here("results", paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".docx"))
-  main.text.docx <- list.files(here::here("results", "main-text"),full.names = TRUE)
+  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".docx"))
+  main.text.docx <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
   main.text.docx <- main.text.docx[str_detect( main.text.docx, ".docx")]
   # make sure ordered correctly
   main.text.docx <- c(
@@ -457,8 +467,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   }
 
   ## PDF version
-  out.file <- here::here("results", paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".pdf"))
-  main.text.pdf <- list.files(here::here("results", "main-text"),full.names = TRUE)
+  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".pdf"))
+  main.text.pdf <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
   main.text.pdf <- main.text.pdf[str_detect( main.text.pdf, ".pdf")]
   # make sure ordered correctly
   main.text.pdf <- c(
@@ -466,7 +476,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
     main.text.pdf[str_detect( main.text.pdf, "figures")]
   )
   qpdf::pdf_combine(input = main.text.pdf, output=out.file)
-
+  cat("\n **Complete.**\n")
 }
 
 
@@ -534,6 +544,8 @@ gfs_generate_supplemental_docs <- function(
     res.dir = "results", included.countries=NULL,
     ci.bonferroni = FALSE, num.sequential = FALSE, what = "all"){
 
+  cat("\n **Starting...**\n")
+  run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
 
   if(!dir.exists(here::here(res.dir))) {
@@ -993,7 +1005,10 @@ gfs_generate_supplemental_docs <- function(
         strata = as.name("STRATA"),
         tb.num = tb.num,
         tb.cap = paste0("Table S",tb.num,". Weighted summary statistics for demographic and childhood variables."),
-        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics."
+        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s1.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1017,7 +1032,10 @@ gfs_generate_supplemental_docs <- function(
         strata = as.name("STRATA"),
         tb.num = tb.num,
         tb.cap = paste0("Table S",tb.num,". Weighted summary statistics for outcome variables by Wave."),
-        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics."
+        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s2.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1038,7 +1056,10 @@ gfs_generate_supplemental_docs <- function(
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         tb.num = tb.num,
-        tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for demographic and childhood  variables by retention status.")
+        tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for demographic and childhood  variables by retention status."),
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s3.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1061,7 +1082,10 @@ gfs_generate_supplemental_docs <- function(
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         tb.num = tb.num,
-        tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables by retention status.")
+        tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables by retention status."),
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s4.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1111,7 +1135,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         tb.cap = tb.cap.i,
         header.a = "Multiple Imputation",
         header.b = "Complete Case with Attrition Weights",
-        fn.txt = fn.txt.i
+        fn.txt = fn.txt.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1153,7 +1180,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         tb.cap = tb.cap.i,
         header.a = "Multiple Imputation",
         header.b = "Complete Case with Attrition Weights",
-        fn.txt = fn.txt.i
+        fn.txt = fn.txt.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1188,7 +1218,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ci.bonferroni = ci.bonferroni,
         p.bonferroni = p.bonferroni,
         p.ci = 0.05,
-        tb.cap = tb.cap.i
+        tb.cap = tb.cap.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-evalues-",f0,".RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_evalues.Rmd", package = "Rglobalflourishing"),
@@ -1230,7 +1263,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         tb.cap = tb.cap.i,
         header.a = "Model 1: Demographic and Childhood Variables as Covariates",
         header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
-        fn.txt = fn.txt.i
+        fn.txt = fn.txt.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-c",f0,".RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1247,26 +1283,26 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     ## ====== Write tables to file  ============================================================= ##
     file.copy(
       here::here("data", "supp_page_1.docx"),
-      here::here("results", "supplement-text"),
+      here::here(res.dir, "supplement-text"),
       overwrite=TRUE
     )
     file.rename(
-      here::here("results", "supplement-text", "supp_page_1.docx"),
-      here::here("results", "supplement-text", "supplement_tbl_0.docx")
+      here::here(res.dir, "supplement-text", "supp_page_1.docx"),
+      here::here(res.dir, "supplement-text", "supplement_tbl_0.docx")
     )
     file.copy(
       here::here("data", "supp_page_1.pdf"),
-      here::here("results", "supplement-text"),
+      here::here(res.dir, "supplement-text"),
       overwrite=TRUE
     )
     file.rename(
-      here::here("results", "supplement-text", "supp_page_1.pdf"),
-      here::here("results", "supplement-text", "supplement_tbl_0.pdf")
+      here::here(res.dir, "supplement-text", "supp_page_1.pdf"),
+      here::here(res.dir, "supplement-text", "supplement_tbl_0.pdf")
     )
 
     ## Word version
     read_docx() |> print(target = here::here(res.dir,out.file.docx))
-    supp.text.docx <- list.files(here::here("results", "supplement-text"),full.names = TRUE)
+    supp.text.docx <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
     supp.text.docx <- supp.text.docx[str_detect( supp.text.docx, ".docx")]
     i = 1
     for(i in 1:length(supp.text.docx)){
@@ -1295,7 +1331,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     }
 
     ## PDF version (this method works for part 1, need a difference method for after out.file.pdf is created)
-    supp.text.pdf <- list.files(here::here("results", "supplement-text"),full.names = TRUE)
+    supp.text.pdf <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
     supp.text.pdf <- supp.text.pdf[str_detect( supp.text.pdf, ".pdf")]
     qpdf::pdf_combine(input = supp.text.pdf, output=here::here(res.dir,out.file.pdf))
 
@@ -1315,6 +1351,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     cat("Starting part 2 -- country-specific results\n")
     i = 1;
     for (i in 1:length(COUNTRY_LABELS)) {
+      run.start.time.i <- Sys.time()
       tb.let = 1
       cat("\nCountry:\t", COUNTRY_LABELS[i])
       ## get country sample size(s)
@@ -1362,7 +1399,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
-          fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics."
+          fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1397,7 +1437,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
-          fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics."
+          fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1446,7 +1489,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
-          fn.txt = ""
+          fn.txt = "",
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1481,7 +1527,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           psu = as.name("PSU"),
           strata = as.name("STRATA"),
           tb.cap = tb.cap.i ,
-          fn.txt = ""
+          fn.txt = "",
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1512,7 +1561,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           dir = dir.attr.models,
           country.i = COUNTRY_LABELS[i],
           tb.cap = tb.cap.i,
-          fn.txt = tb.note
+          fn.txt = tb.note,
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie.RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_attr_model.Rmd", package = "Rglobalflourishing"),
@@ -1546,7 +1598,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           OUTCOME.VEC = OUTCOME.VEC,
           focal.predictor = focal.predictor,
           tb.cap = tb.cap.i,
-          fn.txt = tb.note
+          fn.txt = tb.note,
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif.RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_pca_summary.Rmd", package = "Rglobalflourishing"),
@@ -1601,7 +1656,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             tb.cap = tb.cap.i,
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
-            fn.txt = fn.txt.i
+            fn.txt = fn.txt.i,
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif-",f0,".RData")),
+            start.time = run.start.time.i,
+            ignore.cache = FALSE
           )
           rmarkdown::render(
             input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1650,7 +1708,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             tb.cap = tb.cap.i,
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
-            fn.txt = fn.txt.i
+            fn.txt = fn.txt.i,
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
+            start.time = run.start.time.i,
+            ignore.cache = FALSE
           )
           rmarkdown::render(
             input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1692,7 +1753,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             ci.bonferroni = ci.bonferroni,
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
-            tb.cap = tb.cap.i
+            tb.cap = tb.cap.i,
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
+            start.time = run.start.time.i,
+            ignore.cache = FALSE
           )
           rmarkdown::render(
             input = system.file("rmd", "supplement_tb_evalues.Rmd", package = "Rglobalflourishing"),
@@ -1799,7 +1863,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       strata = as.name("STRATA"),
       countries.included = COUNTRY_LABELS,
       tb.cap = tb.cap.i,
-      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics."
+      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+      cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+      start.time = run.start.time,
+      ignore.cache = FALSE
     )
     rmarkdown::render(
       input = system.file("rmd", "supplement_tb_sample_extra_wide.Rmd", package = "Rglobalflourishing"),
@@ -1833,7 +1900,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       strata = as.name("STRATA"),
       countries.included = COUNTRY_LABELS,
       tb.cap = tb.cap.i,
-      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics."
+      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+      cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
+      start.time = run.start.time,
+      ignore.cache = FALSE
     )
     rmarkdown::render(
       input = system.file("rmd", "supplement_tb_outcomes_extra_wide.Rmd", package = "Rglobalflourishing"),
@@ -1865,7 +1935,10 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         focal.predictor = focal.predictor[f0],
         file = "_primary_wpc",
         tb.cap = tb.cap.i,
-        fn.txt = fn.txt.i
+        fn.txt = fn.txt.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_country_pnt_est.Rmd", package = "Rglobalflourishing"),
@@ -1948,6 +2021,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
     tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
     i = 1
     for(i in  1:length(tmp.out)){
+      run.start.time.i <- Sys.time()
       f0=1
       for(f0 in 1:length(focal.predictor)){
         myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[i], include.name = FALSE))
@@ -1963,9 +2037,12 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
           file.a = file.primary.wopc,
           file.b = file.primary.wpc,
           fig.num = fig.num,
-          res.dir = here::here("results"),
+          res.dir = here::here(res.dir),
           n.print = n.print,
-          fig.cap = fig.cap.i
+          fig.cap = fig.cap.i,
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_text_forest_plot.Rmd", package = "Rglobalflourishing"),
@@ -2014,6 +2091,6 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
     }
   }
 
-  cat("Complete.\n")
+  cat("\n **Complete.**\n")
 
 }

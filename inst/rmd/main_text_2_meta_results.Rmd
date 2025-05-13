@@ -21,6 +21,8 @@ params:
   p.bonferroni: 0.05
   tb.num: 2
   n.print: "207,919"
+  cache.file: ""
+  start.time: ""
 ---
 \pagestyle{empty}
 \setmainfont{opensans}
@@ -35,11 +37,7 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = "",
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  tab.cap.pre = "", tab.cap.sep = ""
 )
 OUTCOME.VEC = params$OUTCOME.VEC
 MYLABEL = params$MYLABEL
@@ -53,6 +51,8 @@ ci.bonferroni = params$ci.bonferroni
 p.bonferroni = params$p.bonferroni
 tb.num = params$tb.num
 n.print = params$n.print
+cache.file = params$cache.file
+start.time = params$start.time
 
 ```
 
@@ -60,6 +60,8 @@ n.print = params$n.print
 ```{r}
 #| label: build-table
 
+
+if( !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 
 vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
 vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
@@ -161,6 +163,11 @@ for (i in 1:length(OUTCOME.VEC)) {
 }
 #meta.outcomewide <- na.omit(meta.outcomewide)
 
+    
+  save(meta.outcomewide, file=cache.file)
+} else {
+  load(cache.file)
+}
 
 # footnote information:
 tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.

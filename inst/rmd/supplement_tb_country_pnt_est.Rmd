@@ -16,6 +16,9 @@ params:
   file: ""
   tb.cap: "Sample summary."
   fn.txt: ""
+  cache.file: ""
+  start.time: ""
+  ignore.cache: TRUE
 ---
 
 \pagestyle{empty}
@@ -46,6 +49,10 @@ file = params$file
 tb.num = params$tb.num
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
+
 
 ```
 
@@ -53,6 +60,9 @@ fn.txt = params$fn.txt
 ```{r}
 #| label: build-table
 
+
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  
 vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
 
 df.tmp <- get_country_specific_output(
@@ -106,6 +116,10 @@ for(i in 2:length(colnames(df.tmp))){
 # create comparable files but as CSV
 readr::write_csv(df.tmp0, file=here::here(res.dir, paste0("GFS_Outcomewide_Results_Comparison_", paste0(focal.predictor, collapse="_"),".csv")))
 
+  save(df.tmp,header_l1, file=cache.file)
+} else {
+  load(cache.file)
+}
 
 tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 

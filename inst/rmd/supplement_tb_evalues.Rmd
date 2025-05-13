@@ -35,6 +35,9 @@ params:
   tb.cap: "Outcome wide results"
   fn.txt: ""
   is.meta: TRUE
+  start.time: ""
+  cache.file: ""
+  ignore.cache: TRUE
 ---
 
 \pagestyle{empty}
@@ -78,6 +81,10 @@ tb.num = params$tb.num
 n.print = params$n.print
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
+
 
 ```
 
@@ -85,6 +92,10 @@ fn.txt = params$fn.txt
 ```{r}
 #| label: build-table
 
+
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  
+  
 if(is.meta){
   vec.id <- c("theta.rma.EE", "theta.rma.ECI")
   vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
@@ -238,6 +249,10 @@ for (i in 1:length(OUTCOME.VEC)) {
   }
 }
 
+  save(evalues,vec.a,vec.b, file=cache.file)
+} else {
+  load(cache.file)
+}
 
 # footnote information:
 tb.note.evalues <- as_paragraph(as_chunk("Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))

@@ -20,6 +20,8 @@ params:
   fig.num: 1
   res.dir: ""
   n.print: "207,919"
+  cache.file: ""
+  start.time: ""
 ---
 \pagestyle{empty}
 \setmainfont{opensans}
@@ -34,11 +36,7 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = "",
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  tab.cap.pre = "", tab.cap.sep = ""
 )
 OUTCOME.VEC = params$OUTCOME.VEC
 MYLABEL = params$MYLABEL
@@ -50,6 +48,8 @@ file.wpc = params$file.wpc
 fig.num = params$fig.num
 n.print = params$n.print
 res.dir <- params$res.dir
+cache.file = params$cache.file
+start.time = params$start.time
 
 ```
 
@@ -60,6 +60,8 @@ res.dir <- params$res.dir
 
 tb.cap.fig1 <- paste0("Figure ",fig.num,". Heterogeneity in the effects of ", focal.better.name ," at Wave 1 on composite Secure Flourishing Index scores at Wave 2 across countries (N=", n.print, "). (Panel A) adjusting for demographic and childhood variables; and (Panel B) adjusting for demographic, childhood, and other Wave 1 confounders (Via Principal Components).")
 
+if( !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  
     p1 <- load_meta_result(
       file = here::here(dir, file.wopc),
       predictor = focal.predictor,
@@ -101,6 +103,11 @@ tb.cap.fig1 <- paste0("Figure ",fig.num,". Heterogeneity in the effects of ", fo
       filename = here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.pdf")),
       plot=p2, units="in", width=6, height=5
     )
+    
+    save(p1,p2, file=cache.file)
+} else {
+  load(cache.file)
+}
 
 ```
 

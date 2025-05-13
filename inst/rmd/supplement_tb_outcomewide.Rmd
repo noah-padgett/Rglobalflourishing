@@ -29,6 +29,9 @@ params:
   header.b: ""
   fn.txt: ""
   is.meta: TRUE
+  cache.file: ""
+  start.time: ""
+  ignore.cache: TRUE
 ---
 
 \pagestyle{empty}
@@ -45,11 +48,7 @@ knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
   tab.cap.pre = "", tab.cap.sep = "",
-  warning = FALSE, message = FALSE,
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  warning = FALSE, message = FALSE
 )
 is.meta = params$is.meta
 OUTCOME.VEC = params$OUTCOME.VEC
@@ -71,12 +70,19 @@ tb.cap = params$tb.cap
 header.a = params$header.a
 header.b = params$header.b
 fn.txt = params$fn.txt
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
+
 
 ```
 
 
 ```{r}
 #| label: build-table
+
+
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 
 if(is.meta){
   vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
@@ -267,6 +273,11 @@ for (i in 1:length(OUTCOME.VEC)) {
       }
     }
   }
+}
+
+  save(outcomewide,vec.a,vec.b, file=cache.file)
+} else {
+  load(cache.file)
 }
 
 # footnote information:

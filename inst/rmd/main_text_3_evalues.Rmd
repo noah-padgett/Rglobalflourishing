@@ -15,6 +15,8 @@ params:
   file.wpc: ""
   tb.num: 2
   n.print: "207,919"
+  cache.file: ""
+  start.time: ""
 ---
 \pagestyle{empty}
 \setmainfont{opensans}
@@ -29,11 +31,7 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = "",
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  tab.cap.pre = "", tab.cap.sep = ""
 )
 OUTCOME.VEC = params$OUTCOME.VEC
 MYLABEL = params$MYLABEL
@@ -44,12 +42,17 @@ file.wopc = params$file.wopc
 file.wpc = params$file.wpc
 tb.num = params$tb.num
 n.print = params$n.print
+cache.file = params$cache.file
+start.time = params$start.time
 
 ```
 
 
 ```{r}
 #| label: build-table
+
+
+if( !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 
 
 vec.id <- c("theta.rma.EE", "theta.rma.ECI")
@@ -104,6 +107,10 @@ vec.id <- c("theta.rma.EE", "theta.rma.ECI")
       }
     }
     #meta.evalues <- na.omit(meta.evalues)
+  save(meta.evalues, file=cache.file)
+} else {
+  load(cache.file)
+}
 
     # footnote information:
     tb.note.evalues <-as_paragraph("Notes. N=", .round(n.print,0), "; The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")

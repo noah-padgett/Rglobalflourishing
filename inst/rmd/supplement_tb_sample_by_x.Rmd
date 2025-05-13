@@ -16,6 +16,9 @@ params:
   tb.num: 1
   tb.cap: "Sample summary."
   fn.txt: ""
+  cache.file: ""
+  start.time: ""
+  ignore.cache: TRUE
 ---
 
 \pagestyle{empty}
@@ -31,11 +34,7 @@ knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
   tab.cap.pre = "", tab.cap.sep = "",
-  warning = FALSE, message = FALSE,
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  warning = FALSE, message = FALSE
 )
 ## extract parameters
 x = params$x
@@ -47,6 +46,9 @@ strata = params$strata
 tb.num = params$tb.num
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
 
 ```
 
@@ -54,6 +56,7 @@ fn.txt = params$fn.txt
 ```{r}
 #| label: build-table
 
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 ## create table
   suppressWarnings({
     sumtab <-  data %>%
@@ -118,7 +121,10 @@ fn.txt = params$fn.txt
             modify_header(label ~ "**Characteristic**") %>%
             italicize_labels()
   })
-  
+  save(sumtab, file=cache.file)
+} else {
+  load(cache.file)
+}
 
 footnote.text <- "Note. N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding."
 footnote.text <- paste(footnote.text, fn.txt)

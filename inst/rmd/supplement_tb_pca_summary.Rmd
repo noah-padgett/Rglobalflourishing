@@ -13,6 +13,9 @@ params:
   focal.predictor: ""
   tb.cap: "Sample summary."
   fn.txt: ""
+  cache.file: ""
+  start.time: ""
+  ignore.cache: TRUE
 ---
 
 \pagestyle{empty}
@@ -28,11 +31,7 @@ knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
   tab.cap.pre = "", tab.cap.sep = "",
-  warning = FALSE, message = FALSE,
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  warning = FALSE, message = FALSE
 )
 ## extract parameters
 dir = params$dir
@@ -41,6 +40,10 @@ OUTCOME.VEC = params$OUTCOME.VEC
 focal.predictor = params$focal.predictor
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
+cache.file = params$cache.file
+start.time = params$start.time
+ignore.cache = params$ignore.cache
+
 
 
 ```
@@ -48,6 +51,8 @@ fn.txt = params$fn.txt
 
 ```{r}
 #| label: build-table
+
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 
 coun.fit.pca <- get_country_pca_summary(
   res.dir = dir,
@@ -74,6 +79,12 @@ tmp.pca <- coun.fit.pca %>%
   )
 coun.pca$PC <- 1:20
 coun.pca[vec.pc] <- tmp.pca[vec.id]
+
+
+  save(coun.pca, file=cache.file)
+} else {
+  load(cache.file)
+}
 
 tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
