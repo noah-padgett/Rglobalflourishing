@@ -13,7 +13,7 @@ params:
   wgt: WGT0
   psu: PSU
   strata: STRATA
-  tb.num: 1
+  tb.num: 0
   tb.cap: "Sample summary."
   fn.txt: ""
   cache.file: ""

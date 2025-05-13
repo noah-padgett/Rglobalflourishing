@@ -18,6 +18,7 @@ params:
   psu: PSU
   strata: STRATA
   tb.cap: "Sample summary."
+  tb.num: 0
   fn.txt: ""
   countries.included: ""
   cache.file: ""
@@ -50,6 +51,7 @@ wgt = params$wgt
 psu = params$psu
 strata = params$strata
 tb.cap = params$tb.cap
+tb.num = params$tb.num
 fn.txt = params$fn.txt
 countries.included = params$countries.included
 cache.file = params$cache.file

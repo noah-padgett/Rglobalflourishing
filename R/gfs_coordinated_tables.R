@@ -1875,6 +1875,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       strata = as.name("STRATA"),
       countries.included = COUNTRY_LABELS,
       tb.cap = tb.cap.i,
+      tb.num = tb.num,
       fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
       cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
       start.time = run.start.time,
@@ -1912,6 +1913,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       strata = as.name("STRATA"),
       countries.included = COUNTRY_LABELS,
       tb.cap = tb.cap.i,
+      tb.num = tb.num,
       fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
       cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
       start.time = run.start.time,
@@ -1948,6 +1950,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         file = "_primary_wpc",
         tb.cap = tb.cap.i,
         fn.txt = fn.txt.i,
+        tb.num = tb.num,
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE

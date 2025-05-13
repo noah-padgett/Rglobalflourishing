@@ -18,6 +18,7 @@ params:
   psu: PSU
   strata: STRATA
   tb.cap: "Sample summary."
+  tb.num: 0
   fn.txt: ""
   countries.included: ""
   cache.file: ""

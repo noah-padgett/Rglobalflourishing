@@ -10,6 +10,7 @@ params:
   dir: ""
   country.i: ""
   tb.cap: "Sample summary."
+  tb.num: 1
   fn.txt: ""
   cache.file: ""
   start.time: ""
@@ -38,6 +39,7 @@ knitr::opts_chunk$set(
 dir = params$dir
 country.i = params$country.i
 tb.cap = params$tb.cap
+tb.num = params$tb.num
 fn.txt = params$fn.txt
 cache.file = params$cache.file
 start.time = params$start.time
