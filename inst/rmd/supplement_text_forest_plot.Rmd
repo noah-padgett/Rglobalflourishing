@@ -18,7 +18,7 @@ params:
   dir: ""
   file.a: ""
   file.b: ""
-  fig.num: 1
+  fig.num0: 1
   fig.cap: ""
   res.dir: ""
   n.print: "207,919"
@@ -50,7 +50,7 @@ outcome = params$outcome
 dir = params$dir
 file.a = params$file.a
 file.b = params$file.b
-fig.num = params$fig.num
+fig.num0 = params$fig.num0
 fig.cap = params$fig.cap
 n.print = params$n.print
 res.dir = params$res.dir

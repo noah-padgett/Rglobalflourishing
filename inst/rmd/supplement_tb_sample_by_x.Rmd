@@ -13,7 +13,6 @@ params:
   wgt: WGT0
   psu: PSU
   strata: STRATA
-  tb.num: 0
   tb.cap: "Sample summary."
   fn.txt: ""
   cache.file: ""
@@ -43,7 +42,6 @@ focal.predictor0 = params$focal.predictor0
 wgt = params$wgt
 psu = params$psu
 strata = params$strata
-tb.num = params$tb.num
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
 cache.file = params$cache.file

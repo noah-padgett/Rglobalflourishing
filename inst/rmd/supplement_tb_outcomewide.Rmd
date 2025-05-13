@@ -22,7 +22,6 @@ params:
   ci.bonferroni: FALSE
   p.bonferroni: 0.05
   p.ci: 0.05
-  tb.num: 0
   n.print: "207,919"
   tb.cap: "Outcome wide results"
   header.a: ""
@@ -64,7 +63,6 @@ country.i = params$country.i
 ci.bonferroni = params$ci.bonferroni
 p.bonferroni = params$p.bonferroni
 p.ci = params$p.ci
-tb.num = params$tb.num
 n.print = params$n.print
 tb.cap = params$tb.cap
 header.a = params$header.a

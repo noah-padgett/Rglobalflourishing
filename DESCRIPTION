@@ -38,7 +38,8 @@ Imports:
     tidyr,
     tidyselect,
     utils,
-    cardx
+    cardx,
+    broom.helpers (>= 1.17.0)
 Suggests:
     gtsummary,
     EValue,

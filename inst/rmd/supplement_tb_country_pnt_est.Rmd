@@ -15,7 +15,6 @@ params:
   focal.predictor: ""
   file: ""
   tb.cap: "Sample summary."
-  tb.num: 0
   fn.txt: ""
   cache.file: ""
   start.time: ""
@@ -47,7 +46,6 @@ res.dir = params$res.dir
 OUTCOME.VEC = params$OUTCOME.VEC
 focal.predictor = params$focal.predictor
 file = params$file
-tb.num = params$tb.num
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
 cache.file = params$cache.file

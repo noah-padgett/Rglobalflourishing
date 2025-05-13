@@ -14,7 +14,6 @@ params:
   wgt: WGT0
   psu: PSU
   strata: STRATA
-  tb.num: 2
   tb.cap: "Sample summary."
   fn.txt: ""
   cache.file: ""
@@ -44,7 +43,6 @@ OUTCOME.VEC.LABELS = params$OUTCOME.VEC.LABELS
 wgt = params$wgt
 psu = params$psu
 strata = params$strata
-tb.num = params$tb.num
 tb.cap = params$tb.cap
 fn.txt = params$fn.txt
 cache.file = params$cache.file
