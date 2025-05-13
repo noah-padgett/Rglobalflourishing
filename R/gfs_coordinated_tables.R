@@ -401,7 +401,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
       file.wopc = file.wopc,
       file.wpc = file.wpc,
       fig.num = f0,
-      res.dir = here::here("results"),
+      res.dir = "results",
       n.print = n.print
     )
     rmarkdown::render(

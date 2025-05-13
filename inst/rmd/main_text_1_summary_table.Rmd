@@ -34,12 +34,13 @@ knitr::opts_chunk$set(
   )
 )
 ## extract parameters
-df.rawdf.raw.long = params$df.raw.long
+df.raw.long = params$df.raw.long
 focal.predictor0 = params$focal.predictor0
 wgt = params$wgt
 psu = params$psu
 strata = params$strata
 tb.num = params$tb.num
+#cache.file = params$cache.file
 
 ```
 
@@ -48,12 +49,11 @@ tb.num = params$tb.num
 #| label: build-table
 
 ## create table
-  suppressWarnings({
+suppressWarnings({
     sumtab <- df.raw.long %>%
     as_survey_design(
-      ids = ~1,
-      #ids = {{psu}},
-      #strata = {{strata}},
+      ids = {{psu}},
+      strata = {{strata}},
       weights = {{wgt}}
     ) %>%
       tbl_svysummary(
