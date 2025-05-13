@@ -389,31 +389,33 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   ## =============================================================================== ##
   ## =============================================================================== ##
   ## Main text figures
-  f0=1
-  for(f0 in 1:length(focal.predictor)){
+  if("COMPOSITE_FLOURISHING_SECURE_Y2" %in% outcome.vec){
+    f0=1
+    for(f0 in 1:length(focal.predictor)){
 
-    params.fig <- list(
-      OUTCOME.VEC = OUTCOME.VEC,
-      MYLABEL = MYLABEL,
-      focal.predictor = focal.predictor[f0],
-      focal.better.name = focal.better.name[f0],
-      dir = dir.meta ,
-      file.wopc = file.wopc,
-      file.wpc = file.wpc,
-      fig.num = f0,
-      res.dir = "results",
-      n.print = n.print
-    )
-    rmarkdown::render(
-      input = system.file("rmd", "main_text_4_figures.Rmd", package = "Rglobalflourishing"),
-      output_format = c("pdf_document","word_document"),
-      output_file = paste0("main_text_figures"),
-      output_dir = here::here("results", "main-text"),
-      params = params.fig
-    )
+      params.fig <- list(
+        OUTCOME.VEC = OUTCOME.VEC,
+        MYLABEL = MYLABEL,
+        focal.predictor = focal.predictor[f0],
+        focal.better.name = focal.better.name[f0],
+        dir = dir.meta ,
+        file.wopc = file.wopc,
+        file.wpc = file.wpc,
+        fig.num = f0,
+        res.dir = here::here("results"),
+        n.print = n.print
+      )
+      rmarkdown::render(
+        input = system.file("rmd", "main_text_4_figures.Rmd", package = "Rglobalflourishing"),
+        output_format = c("pdf_document","word_document"),
+        output_file = paste0("main_text_figures"),
+        output_dir = here::here("results", "main-text"),
+        params = params.fig
+      )
+    }
+    remove(params.fig)
+    gc()
   }
-  remove(params.fig)
-  gc()
 
 
   ## Word version
