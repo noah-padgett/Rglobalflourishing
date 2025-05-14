@@ -33,6 +33,8 @@ load_packages <- function(...) {
     "ggthemes",
     "pandoc",
     "qpdf",
+    "flexlsx",
+    "openxlsx2",
 
     # utility packages
     "tidyverse",
