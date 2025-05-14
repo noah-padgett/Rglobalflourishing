@@ -569,15 +569,21 @@ gfs_append_pdf <- function(dir, cur.doc, add){
 gfs_append_to_xlsx <- function(file, ft, tb){
   # 1. check is file exists
   if(!file.exists(file)){
-    wb <- wb_workbook()
+    wb <- openxlsx2::wb_workbook()
   } else {
-    wb <- wb_load(file)
+    wb <- openxlsx2::wb_load(file)
   }
   # 2. create new sheet
   tb <- strsplit(tb, "\\.")[[1]][1] # extract only the "Table SXX" part of caption
-  wb <- wb_add_worksheet(wb,sheet = tb)
-  wb <- wb_add_flextable(wb, sheet = tb, ft = ft)
-  wb$save(file)
+  # 3. a little backup in case the table already got printed
+  sheet.names <- openxlsx2::wb_get_sheet_names(wb)
+  if( tb %in% sheet.names ){
+    message(paste0("Table not printed to Excel. Sheet `", tb, "` already in file."))
+  } else {
+    wb <- openxlsx2::wb_add_worksheet(wb, sheet = tb)
+    wb <- flexlsx::wb_add_flextable(wb, sheet = tb, ft = ft)
+    wb$save(file)
+  }
 }
 
 

@@ -1672,7 +1672,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
             fn.txt = fn.txt.i,
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif-",f0,".RData")),
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx)
@@ -1725,7 +1725,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
             fn.txt = fn.txt.i,
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx)
@@ -1771,7 +1771,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
             tb.cap = tb.cap.i,
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx)

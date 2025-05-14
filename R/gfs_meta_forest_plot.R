@@ -44,9 +44,10 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   if("FOCAL_PREDICTOR" %in% colnames(tmp.dat)){
 
   	focal.pred <- tmp.dat$FOCAL_PREDICTOR[1]
-  	focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
   	if (!is.null(better.name)) {
-   	 focal.pred <- better.name
+   	 focal.pred <- better.name[focal.pred]
+  	} else {
+  	  focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
   	}
   	tmp.outcome.scale <- get_outcome_scale(tmp.dat$OUTCOME[1])
   	tmp.outcome <- tmp.dat$OUTCOME[1]
