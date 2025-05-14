@@ -39,7 +39,9 @@ Imports:
     tidyselect,
     utils,
     cardx,
-    broom.helpers (>= 1.17.0)
+    broom.helpers (>= 1.17.0),
+    flexlsx,
+    openxlsx2
 Suggests:
     gtsummary,
     EValue,
