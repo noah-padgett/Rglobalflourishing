@@ -560,6 +560,28 @@ gfs_append_pdf <- function(dir, cur.doc, add){
 }
 
 
+#' @rdname utils
+#' @param file full file name and path, e.g., here(path,filename)
+#' @param ft flextable object to be added to excel file
+#' @param tb table caption
+#' @import flexlsx openxlsx2
+#' @export
+gfs_append_to_xlsx <- function(file, ft, tb){
+  # 1. check is file exists
+  if(!file.exists(file)){
+    wb <- wb_workbook()
+  } else {
+    wb <- wb_load(file)
+  }
+  # 2. create new sheet
+  tb <- strsplit(tb, "\\.")[[1]][1] # extract only the "Table SXX" part of caption
+  wb <- wb_add_worksheet(wb,sheet = tb)
+  wb <- wb_add_flextable(wb, sheet = tb, ft = ft)
+  wb$save(file)
+}
+
+
+
 #' @keywords internal
 style_percent0 <- function (x,
                            digits = 0,

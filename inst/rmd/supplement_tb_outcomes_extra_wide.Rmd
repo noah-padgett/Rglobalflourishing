@@ -23,6 +23,7 @@ params:
   cache.file: ""
   start.time: ""
   ignore.cache: TRUE
+  file.xlsx: ""
 ---
 
 \pagestyle{empty}
@@ -55,6 +56,7 @@ countries.included = params$countries.included
 cache.file = params$cache.file
 start.time = params$start.time
 ignore.cache = params$ignore.cache
+file.xlsx = params$file.xlsx
 
 
 ```
@@ -68,18 +70,20 @@ nC <- 1 + 2*length(countries.included)
 
 if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 ## create table
-suppressWarnings({
+  sumtab <- NULL
+  sum.error <- "none"
+  try({
   sumtab <- data %>%
     #filter(COUNTRY %in% countries.included) %>%
-    as_survey_design(
-      strata = {{strata}},
-      weights = {{wgt}}
-    ) %>%
+    # as_survey_design(
+    # #  strata = {{strata}},
+    #   weights = {{wgt}}
+    # ) %>%
     tbl_strata(
       strata = {{y}},
       .tbl_fun = \(xdat){
         xdat |>
-          tbl_svysummary(
+          tbl_summary(
             by = {{x}},
             include = c(
               any_of(OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "INCOME_QUINTILE", negate=TRUE)])
@@ -112,10 +116,9 @@ suppressWarnings({
       .header = "**{strata}**"
     ) %>%
     italicize_labels()
-  
-})
+  })
 
-    save(sumtab, file=cache.file)
+
 } else {
   load(cache.file)
 }
@@ -138,8 +141,9 @@ knitr::opts_chunk$set(
 )
 
 
-
-sumtab %>%
+if(sum.error == "none"){
+    try({
+ft <- sumtab %>%
   as_flex_table() %>%
   autofit() %>%
   format_flex_table(pg.width = 40) %>%
@@ -157,5 +161,15 @@ sumtab %>%
   hline(i=1, part = "header") %>%
   align(i=2, align = "center", part = "header")
 
+ft
+})
+} else {
+  print("Could not construct summary table.")
+}
 
+## only needs to be ran once
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
+    save(sumtab, sum.error, file=cache.file)
+}
 ```

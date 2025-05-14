@@ -37,6 +37,7 @@ params:
   start.time: ""
   cache.file: ""
   ignore.cache: TRUE
+  file.xlsx: ""
 ---
 
 \pagestyle{empty}
@@ -82,6 +83,7 @@ fn.txt = params$fn.txt
 cache.file = params$cache.file
 start.time = params$start.time
 ignore.cache = params$ignore.cache
+file.xlsx = params$file.xlsx
 
 
 ```
@@ -247,7 +249,6 @@ for (i in 1:length(OUTCOME.VEC)) {
   }
 }
 
-  save(evalues,vec.a,vec.b, file=cache.file)
 } else {
   load(cache.file)
 }
@@ -268,7 +269,7 @@ knitr::opts_chunk$set(
   tab.cap.pre = "", tab.cap.sep = ""
 )
 
-evalues %>%
+ft <- evalues %>%
   flextable() %>%
   italic(part = "body",
          i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
@@ -301,5 +302,14 @@ evalues %>%
   hline(i=1, part="header") %>%
   hline(i=2,j=c(2:6,8:12), part="header") %>%
   hline(i=3,j=c(2:3,5:6,8:9,11:12), part="header")
+
+
+ft
+
+## only needs to be ran once
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
+  save(evalues,vec.a,vec.b, file=cache.file)
+}
 
 ```

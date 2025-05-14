@@ -16,6 +16,7 @@ params:
   cache.file: ""
   start.time: ""
   ignore.cache: TRUE
+  file.xlsx: ""
 ---
 
 \pagestyle{empty}
@@ -43,6 +44,7 @@ fn.txt = params$fn.txt
 cache.file = params$cache.file
 start.time = params$start.time
 ignore.cache = params$ignore.cache
+file.xlsx = params$file.xlsx
 
 
 
@@ -81,7 +83,6 @@ coun.pca$PC <- 1:20
 coun.pca[vec.pc] <- tmp.pca[vec.id]
 
 
-  save(coun.pca, file=cache.file)
 } else {
   load(cache.file)
 }
@@ -101,7 +102,7 @@ knitr::opts_chunk$set(
   tab.cap.pre = "", tab.cap.sep = ""
 )
 
-coun.pca %>%
+ft <- coun.pca %>%
   flextable() %>%
   add_footer_lines(
     values = tb.note, top = FALSE
@@ -120,5 +121,11 @@ coun.pca %>%
   hline(i=1,part = "header") %>%
   hline_bottom(part = "header")
 
+ft
 
+## only needs to be ran once
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
+  save(coun.pca, file=cache.file)
+}
 ```

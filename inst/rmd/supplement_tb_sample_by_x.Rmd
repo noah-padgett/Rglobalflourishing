@@ -18,6 +18,7 @@ params:
   cache.file: ""
   start.time: ""
   ignore.cache: TRUE
+  file.xlsx: ""
 ---
 
 \pagestyle{empty}
@@ -47,6 +48,7 @@ fn.txt = params$fn.txt
 cache.file = params$cache.file
 start.time = params$start.time
 ignore.cache = params$ignore.cache
+file.xlsx = params$file.xlsx
 
 ```
 
@@ -120,7 +122,6 @@ if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < st
             modify_header(label ~ "**Characteristic**") %>%
             italicize_labels()
   })
-  save(sumtab, file=cache.file)
 } else {
   load(cache.file)
 }
@@ -143,7 +144,7 @@ knitr::opts_chunk$set(
   tab.cap.pre = "", tab.cap.sep = ""
 )
 
-  sumtab %>%
+ ft <-  sumtab %>%
     as_flex_table() %>%
     autofit() %>%
     format_flex_table(pg.width = 21 / 2.54 - 2)  %>%
@@ -156,5 +157,11 @@ knitr::opts_chunk$set(
       )
     )
 
+ft
 
+## only needs to be ran once
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
+  save(sumtab, file=cache.file)
+}
 ```

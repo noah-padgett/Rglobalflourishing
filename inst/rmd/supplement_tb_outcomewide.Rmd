@@ -31,6 +31,7 @@ params:
   cache.file: ""
   start.time: ""
   ignore.cache: TRUE
+  file.xlsx: ""
 ---
 
 \pagestyle{empty}
@@ -71,6 +72,7 @@ fn.txt = params$fn.txt
 cache.file = params$cache.file
 start.time = params$start.time
 ignore.cache = params$ignore.cache
+file.xlsx = params$file.xlsx
 
 
 ```
@@ -272,8 +274,6 @@ for (i in 1:length(OUTCOME.VEC)) {
     }
   }
 }
-
-  save(outcomewide,vec.a,vec.b, file=cache.file)
 } else {
   load(cache.file)
 }
@@ -294,7 +294,7 @@ knitr::opts_chunk$set(
   tab.cap.pre = "", tab.cap.sep = ""
 )
 
-outcomewide %>%
+ft <- outcomewide %>%
   flextable() %>%
   italic(part = "body",
          i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
@@ -313,5 +313,13 @@ outcomewide %>%
   ) %>%
   theme_meta_outcome_wide()
 
+
+ft
+
+## only needs to be ran once
+if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+  gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
+  save(outcomewide,vec.a,vec.b, file=cache.file)
+}
 
 ```

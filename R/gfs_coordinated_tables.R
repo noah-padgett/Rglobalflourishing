@@ -544,6 +544,8 @@ gfs_generate_supplemental_docs <- function(
     res.dir = "results", included.countries=NULL,
     ci.bonferroni = FALSE, num.sequential = FALSE, what = "all"){
 
+
+  # dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; what = "all";
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
@@ -983,8 +985,12 @@ gfs_generate_supplemental_docs <- function(
   gc()
   ## ============================================================================================ ##
   ## ============================================================================================ ##
-  out.file.docx <- paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".docx")
-  out.file.pdf <- paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".pdf")
+  out.file.docx <- stringr::str_replace_all(paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".docx"), " ", "_")
+  out.file.pdf <- stringr::str_replace_all(paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".pdf"), " ", "_")
+  out.file.xlsx <- stringr::str_replace_all(paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".xlsx"), " ", "_")
+  file.remove(here::here(res.dir,out.file.docx))
+  file.remove(here::here(res.dir,out.file.pdf))
+  file.remove(here::here(res.dir,out.file.xlsx))
   tb.num <- 1
   fig.num <- 1
   ## ============================================================================================ ##
@@ -1008,7 +1014,8 @@ gfs_generate_supplemental_docs <- function(
         fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s1.RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1034,7 +1041,8 @@ gfs_generate_supplemental_docs <- function(
         fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s2.RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1057,7 +1065,8 @@ gfs_generate_supplemental_docs <- function(
         tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for demographic and childhood  variables by retention status."),
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s3.RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1082,7 +1091,8 @@ gfs_generate_supplemental_docs <- function(
         tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables by retention status."),
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s4.RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1134,7 +1144,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         fn.txt = fn.txt.i,
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1179,7 +1190,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         fn.txt = fn.txt.i,
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1217,7 +1229,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         tb.cap = tb.cap.i,
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-evalues-",f0,".RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_evalues.Rmd", package = "Rglobalflourishing"),
@@ -1262,7 +1275,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         fn.txt = fn.txt.i,
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-c",f0,".RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1345,34 +1359,34 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   # ========================= #
   if(what == "all" | what == "S2"){
     cat("Starting part 2 -- country-specific results\n")
-    i = 1;
-    for (i in 1:length(COUNTRY_LABELS)) {
+    iter = 1;
+    for (iter in 1:length(COUNTRY_LABELS)) {
       run.start.time.i <- Sys.time()
       tb.let = 1
-      cat("\nCountry:\t", COUNTRY_LABELS[i])
+      cat("\nCountry:\t", COUNTRY_LABELS[iter])
       ## get country sample size(s)
       country.n1.print <- w1.n1.print %>%ungroup() %>%
         mutate(COUNTRY = str_trim(COUNTRY)) %>%
-        filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
+        filter(str_detect(COUNTRY, COUNTRY_LABELS[iter])) %>%
         select(N) %>% as.numeric()
       country.n2.print <- w2.n2.print %>% ungroup() %>%
         mutate(COUNTRY = str_trim(COUNTRY)) %>%
-        filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
+        filter(str_detect(COUNTRY, COUNTRY_LABELS[iter])) %>%
         select(N) %>% as.numeric()
       ## ======================================================================================== ##
-      ## ====== Table Sia. summary statistics -- demographics variables ========================= ##
+      ## ====== Table Si-a. summary statistics -- demographics variables ======================== ##
       {
 
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter])
           tb.let <- tb.let + 1
         }
         temp.dat <- df.raw.long %>%
           mutate(COUNTRY = str_trim(COUNTRY)) %>%
-          filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
+          filter(str_detect(COUNTRY, COUNTRY_LABELS[iter])) %>%
           mutate(
             #RACE1 = factor(RACE1),
             RACE1 = droplevels(RACE1),
@@ -1398,7 +1412,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData")),
           start.time = run.start.time.i,
-          ignore.cache = FALSE
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx)
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1411,18 +1426,18 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         gc()
         }
       ## ======================================================================================== ##
-      ## ====== Table Sib. summary statistics -- outcome variables ============================== ##
+      ## ====== Table Si-b. summary statistics -- outcome variables ============================= ##
       {
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for outcome variables in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for outcome variables in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for outcome variables  in ", COUNTRY_LABELS[i])
+          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for outcome variables  in ", COUNTRY_LABELS[iter])
           tb.let <- tb.let + 1
         }
         temp.dat <- df.raw.long %>%
           mutate(COUNTRY = str_trim(COUNTRY)) %>%
-          filter(str_detect(COUNTRY, COUNTRY_LABELS[i]))
+          filter(str_detect(COUNTRY, COUNTRY_LABELS[iter]))
 
         params.tb <- list(
           x = as.name("WAVE0"),
@@ -1436,7 +1451,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData")),
           start.time = run.start.time.i,
-          ignore.cache = FALSE
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx)
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1450,19 +1466,19 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
       }
       ## ======================================================================================== ##
-      ## ====== Table Sic. Unweighted summary statistics -- demo + child by retention status ==== ##
+      ## ====== Table Si-c. Unweighted summary statistics -- demo + child by retention status === ##
       {
 
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[i]," by retention status")
+          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter]," by retention status")
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[i]," by retention status")
+          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter]," by retention status")
           tb.let <- tb.let + 1
         }
         temp.dat <- df.raw.attr.retained %>%
           mutate(COUNTRY = str_trim(COUNTRY)) %>%
-          filter(str_detect(COUNTRY, COUNTRY_LABELS[i])) %>%
+          filter(str_detect(COUNTRY, COUNTRY_LABELS[iter])) %>%
           mutate(
             #RACE1 = factor(RACE1),
             RACE1 = droplevels(RACE1),
@@ -1488,7 +1504,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           fn.txt = "",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData")),
           start.time = run.start.time.i,
-          ignore.cache = FALSE
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx)
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_sample_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1501,18 +1518,18 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         gc()
       }
       ## ======================================================================================== ##
-      ## == Table Sid. Unweighted summary statistics -- outcome variables by retention status === ##
+      ## == Table Si-d. Unweighted summary statistics -- outcome variables by retention status == ##
       {
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables in ", COUNTRY_LABELS[i], " by retention status.")
+          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for outcome variables  in ", COUNTRY_LABELS[i], " by retention status.")
+          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for outcome variables  in ", COUNTRY_LABELS[iter], " by retention status.")
           tb.let <- tb.let + 1
         }
         temp.dat <- df.raw.attr.retained %>%
           mutate(COUNTRY = str_trim(COUNTRY)) %>%
-          filter(str_detect(COUNTRY, COUNTRY_LABELS[i]))
+          filter(str_detect(COUNTRY, COUNTRY_LABELS[iter]))
 
         params.tb <- list(
           x = as.name("WAVE0"),
@@ -1526,7 +1543,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           fn.txt = "",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData")),
           start.time = run.start.time.i,
-          ignore.cache = FALSE
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx)
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
@@ -1540,27 +1558,29 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
       }
       ## ======================================================================================== ##
-      ## ====== Table Sie. Summary of Attrition Model =========================================== ##
+      ## ====== Table Si-e. Summary of Attrition Model ========================================== ##
       {
 
-        tb.note <- as_paragraph(paste0("Notes. N=",country.n1.print,"; attrition weights were estimated using the 'survey::svyglm(family=quasibinomial('logit'))' function. All continuous predictors were standardized and all categorical predictors used the most common category as the reference group. Reported p-values are based on the fitted regression model and no adjustments for multiple testing were done within this table."))
-
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Summary of fitted attrition model in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num,". Summary of fitted attrition model in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Summary of fitted attrition model in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Summary of fitted attrition model in ", COUNTRY_LABELS[iter])
           tb.let <- tb.let + 1
         }
 
+
+        tb.note <- paste0("Notes. N=",country.n1.print,"; attrition weights were estimated using the 'survey::svyglm(family=quasibinomial('logit'))' function. All continuous predictors were standardized and all categorical predictors used the most common category as the reference group. Reported p-values are based on the fitted regression model and no adjustments for multiple testing were done within this table.")
+
         params.tb <- list(
           dir = dir.attr.models,
-          country.i = COUNTRY_LABELS[i],
+          country.i = COUNTRY_LABELS[iter],
           tb.cap = tb.cap.i,
           fn.txt = tb.note,
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie.RData")),
           start.time = run.start.time.i,
-          ignore.cache = FALSE
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx)
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_attr_model.Rmd", package = "Rglobalflourishing"),
@@ -1573,31 +1593,30 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         gc()
       }
       ## ======================================================================================== ##
-      ## ====== Table Sif. Country specific PCA Summary ========================================= ##
+      ## ====== Table Si-f. Country specific PCA Summary ======================================== ##
       {
-
-
-        # footnote information:
-        tb.note <- as_paragraph("Notes.  N=",country.n1.print,"; PCA was conducted using 'survey::svyprcomp(.)' function using all available contemporaneous exposures at wave 1. All PCs were standardized prior to being used as predictors. The bolded row represented the number of retained components for analysis was 7.")
-
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Summary of principal components in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num,". Summary of principal components in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Summary of principal components in ", COUNTRY_LABELS[i])
+          tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Summary of principal components in ", COUNTRY_LABELS[iter])
           tb.let <- tb.let + 1
         }
 
+        # footnote information:
+        tb.note <- paste0("Notes.  N=",country.n1.print,"; PCA was conducted using 'survey::svyprcomp(.)' function using all available contemporaneous exposures at wave 1. All PCs were standardized prior to being used as predictors. The bolded row represented the number of retained components for analysis was 7.")
+
         params.tb <- list(
           dir = dir.primary,
-          country.i = COUNTRY_LABELS[i],
+          country.i = COUNTRY_LABELS[iter],
           OUTCOME.VEC = OUTCOME.VEC,
           focal.predictor = focal.predictor,
           tb.cap = tb.cap.i,
           fn.txt = tb.note,
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif.RData")),
           start.time = run.start.time.i,
-          ignore.cache = FALSE
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx)
         )
         rmarkdown::render(
           input = system.file("rmd", "supplement_tb_pca_summary.Rmd", package = "Rglobalflourishing"),
@@ -1612,17 +1631,17 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
       }
       ## ======================================================================================== ##
-      ## ====== Table Sig-x. Country specific outcome wide results ============================== ##
+      ## ====== Table Si-ghi. Country specific outcome wide results ============================= ##
       f0 <- 1
       for(f0 in 1:length(focal.predictor)){
         ##======================================================================================= ##
         ## Model estimated using multiple imputation
         {
           if(num.sequential){
-            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[i])
+            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
             tb.num <- tb.num + 1
           } else {
-            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[i])
+            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
             tb.let <- tb.let + 1
           }
           # footnote information:
@@ -1645,7 +1664,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             dir.b = dir.primary,
             file.a = "_primary_wopc",
             file.b = "_primary_wpc",
-            country.i = COUNTRY_LABELS[i],
+            country.i = COUNTRY_LABELS[iter],
             ci.bonferroni = ci.bonferroni,
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
@@ -1655,7 +1674,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             fn.txt = fn.txt.i,
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif-",f0,".RData")),
             start.time = run.start.time.i,
-            ignore.cache = FALSE
+            ignore.cache = FALSE,
+            file.xlsx = here::here(res.dir, out.file.xlsx)
           )
           rmarkdown::render(
             input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1671,10 +1691,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ## Results based on complete-case analysis w/ attrition weights
         {
           if(num.sequential){
-            tb.cap <- paste0("Table S",tb.num,". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[i], " using complete-case analyses with attrition weights.")
+            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter], " using complete-case analyses with attrition weights.")
             tb.num <- tb.num + 1
           } else{
-            tb.cap <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[i], " using complete-case analyses with attrition weights.")
+            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter], " using complete-case analyses with attrition weights.")
             tb.let <- tb.let + 1
           }
           # footnote information:
@@ -1697,7 +1717,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             dir.b = dir.supp,
             file.a = "_cca_wopc",
             file.b = "_cca_wpc",
-            country.i = COUNTRY_LABELS[i],
+            country.i = COUNTRY_LABELS[iter],
             ci.bonferroni = ci.bonferroni,
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
@@ -1707,7 +1727,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             fn.txt = fn.txt.i,
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
             start.time = run.start.time.i,
-            ignore.cache = FALSE
+            ignore.cache = FALSE,
+            file.xlsx = here::here(res.dir, out.file.xlsx)
           )
           rmarkdown::render(
             input = system.file("rmd", "supplement_tb_outcomewide.Rmd", package = "Rglobalflourishing"),
@@ -1723,10 +1744,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ## Country Specific E-values output table =============================== ##
         {
           if(num.sequential){
-            tb.cap <- paste0("Table S",tb.num,". Sensitivity analysis of ", focal.better.name[f0] ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[i])
+            tb.cap.i <- paste0("Table S",tb.num,". Sensitivity analysis of ", focal.better.name[f0] ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
             tb.num <- tb.num + 1
           } else{
-            tb.cap <-  paste0("Table S",tb.num,letters[tb.let],". Sensitivity analysis of ", focal.better.name[f0] ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[i])
+            tb.cap.i <-  paste0("Table S",tb.num,letters[tb.let],". Sensitivity analysis of ", focal.better.name[f0] ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
             tb.let <- tb.let + 1
           }
 
@@ -1745,14 +1766,15 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             file.b = "_primary_wpc",
             file.c = "_cca_wopc",
             file.d = "_cca_wpc",
-            country.i = COUNTRY_LABELS[i],
+            country.i = COUNTRY_LABELS[iter],
             ci.bonferroni = ci.bonferroni,
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
             tb.cap = tb.cap.i,
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
             start.time = run.start.time.i,
-            ignore.cache = FALSE
+            ignore.cache = FALSE,
+            file.xlsx = here::here(res.dir, out.file.xlsx)
           )
           rmarkdown::render(
             input = system.file("rmd", "supplement_tb_evalues.Rmd", package = "Rglobalflourishing"),
@@ -1777,7 +1799,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
         tmp.txt <- fpar(
           ftext(
-            paste0(COUNTRY_LABELS[i], " Specific Results"),
+            paste0(COUNTRY_LABELS[iter], " Specific Results"),
             prop = fp_text(font.family = "Open Sans", font.size = 14, bold = TRUE)
           )
         )
@@ -1820,8 +1842,6 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         gfs_append_pdf(res.dir, out.file.pdf, add = here::here(res.dir, "tmp_pdf_1.pdf"))
 
       }
-
-      ## need to update table number if NOT sequentially updated
       if(!num.sequential){
         tb.num <- tb.num + 1
       }
@@ -1841,7 +1861,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
     ## ========================================================================================== ##
     ## ====== Table S1. summary statistics -- demographics variables by country ================= ##
-    tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of demographic and childhood variables data across countries.")
+    tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics of demographic and childhood variables data across countries.")
     params.tb <- list(
       x = as.name("WAVE0"),
       y = as.name("COUNTRY"),
@@ -1859,10 +1879,11 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       strata = as.name("STRATA"),
       countries.included = COUNTRY_LABELS,
       tb.cap = tb.cap.i,
-      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+      fn.txt = "All reported summary statistics are unweighted.",
       cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
       start.time = run.start.time,
-      ignore.cache = FALSE
+      ignore.cache = FALSE,
+      file.xlsx = here::here(res.dir, out.file.xlsx)
     )
     rmarkdown::render(
       input = system.file("rmd", "supplement_tb_sample_extra_wide.Rmd", package = "Rglobalflourishing"),
@@ -1874,8 +1895,6 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     tb.num <- tb.num + 1
     remove(params.tb)
     gc()
-
-
     ## ========================================================================================== ##
     ## ====== Table S2. summary statistics -- outcome variables by country ====================== ##
     tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
@@ -1899,7 +1918,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
       cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
       start.time = run.start.time,
-      ignore.cache = FALSE
+      ignore.cache = FALSE,
+      file.xlsx = here::here(res.dir, out.file.xlsx)
     )
     rmarkdown::render(
       input = system.file("rmd", "supplement_tb_outcomes_extra_wide.Rmd", package = "Rglobalflourishing"),
@@ -1916,7 +1936,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     f0 = 1
     for(f0 in 1:length(focal.predictor)){
 
-      tb.cap.i <- paste0("Table S",tb.num,". Model 2 outcome-wide results for ", focal.better.name[f0] ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
+      tb.cap.i <- paste0("Table S",tb.num,". Model 2 (controlling for demographic, childhood, and contemporaneous exposures) outcome-wide results for ", focal.better.name[f0] ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
 
       fn.txt.i <- paste0("Notes. N =", n1.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00. Please review the country-specific results tables or forest plots to evaluate the uncertainty in all estimated effects.
 
@@ -1932,9 +1952,10 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         file = "_primary_wpc",
         tb.cap = tb.cap.i,
         fn.txt = fn.txt.i,
-        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3.RData")),
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")),
         start.time = run.start.time,
-        ignore.cache = FALSE
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
       )
       rmarkdown::render(
         input = system.file("rmd", "supplement_tb_country_pnt_est.Rmd", package = "Rglobalflourishing"),
@@ -2015,12 +2036,12 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
       print(target=here::here(res.dir,out.file.docx))
 
     tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
-    i = 1
-    for(i in  1:length(tmp.out)){
+    iter = 1
+    for(iter in  1:length(tmp.out)){
       run.start.time.i <- Sys.time()
       f0=1
       for(f0 in 1:length(focal.predictor)){
-        myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[i], include.name = FALSE))
+        myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
         fig.cap.i <- paste0("Figure S",fig.num,". Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
 
         params.fig <- list(
@@ -2028,13 +2049,13 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
           MYLABEL = MYLABEL,
           focal.predictor = focal.predictor[f0],
           focal.better.name = focal.better.name[f0],
-          outcome = tmp.out[i],
+          outcome = tmp.out[iter],
           dir = dir.primary ,
           file.a = file.primary.wopc,
           file.b = file.primary.wpc,
-          fig.num = fig.num,
+          #fig.num = fig.num,
           res.dir = here::here(res.dir),
-          n.print = n.print,
+          n.print = n1.print,
           fig.cap = fig.cap.i,
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
           start.time = run.start.time.i,

@@ -16,6 +16,7 @@
 \alias{theme_Publication}
 \alias{gfs_print_docx}
 \alias{gfs_append_pdf}
+\alias{gfs_append_to_xlsx}
 \title{Standardized with Complex Survey Adjusted Mean and Variance}
 \format{
 An object of class \code{GeomStripes} (inherits from \code{Geom}, \code{ggproto}, \code{gg}) of length 5.
@@ -64,6 +65,8 @@ theme_Publication(base_size = 14)
 gfs_print_docx(doc, file, dir)
 
 gfs_append_pdf(dir, cur.doc, add)
+
+gfs_append_to_xlsx(file, ft, tb)
 }
 \arguments{
 \item{x}{(character vector) of a vector of variable names in data}
@@ -105,13 +108,17 @@ this is used to help troubleshoot and resolve non-invertible predictor matrices}
 
 \item{doc}{officer object to be printed out}
 
-\item{file}{name of file to print out internal officer object}
+\item{file}{full file name and path, e.g., here(path,filename)}
 
 \item{dir}{name of directory to print out file to}
 
 \item{cur.doc}{name of pdf file needed to be file appended to}
 
 \item{add}{name of file in directory to appended to cur.doc}
+
+\item{ft}{flextable object to be added to excel file}
+
+\item{tb}{table caption}
 }
 \value{
 a vector of standardized scores
