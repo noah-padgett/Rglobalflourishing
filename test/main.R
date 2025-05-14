@@ -1,6 +1,6 @@
 # Script: main.R
 # Created by: R. Noah Padgett & Chris Felton
-# Last edited on: 2024-05-05
+# Last edited on: 2024-05-15
 
 # WARNING: The package was set up to be as user-friendly as possible for researchers
 #	part of the GFS core team who mainly have experience with other statistical analysis
@@ -11,19 +11,47 @@
 #   "tidyness" in mind. As such, we make no guarantees that the package will integrate or
 #   "play nice" with other packages.
 
-# install.packages("remotes")
-remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 1. R environment preparation
+
+#install.packages("remotes")
+#remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
 library(Rglobalflourishing)
-
-# Analysis Set-Up
-
+source("")
 # Add the directory where the dataset is stored on your computer
-data.dir <- "~/Documents/GitHub/global-flourishing-study/3-GFS-Core-Wave-2/gfs-wave-2/data"
+data.dir <- "data"
 dataset.name <- "gfs_all_countries_wave2.sav"
 
+# The following function loads the required packages for the remainder of the script to work.
+load_packages()
+# global options
+options(
+  survey.lonely.psu = "certainty",
+  future.plan = "multisession"
+)
+handlers(global = TRUE)
+if (availableCores(constraints = "connections") == 2) {
+  num_cores <- 1
+} else if (availableCores(constraints = "connections") %% 2 == 0) {
+  num_cores <- availableCores(constraints = "connections")/2
+} else if (availableCores(constraints = "connections") %% 2 == 1) {
+  num_cores <- availableCores(constraints = "connections")/2 - 0.5
+}
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 2. Set up what your focal exposure/predictor is from Wave 1
+
 # Here is YOUR wave 1 construct variable
+#   MUST be the variable name from the GFS Codebook for the variable in the dataset.
+#   The name must end in "_Y1"
 FOCAL_PREDICTOR <-  c("PHYSICAL_HLTH_Y1")
-FOCAL_PREDICTOR_BETTER_NAME <- c("self-rated physical health at wave 1")
+
+# label/title you want to give your variable.
+#   Note, most table, by default already contain "... at Wave 1..." in the title so
+#   you do not need to add that here.
+FOCAL_PREDICTOR_BETTER_NAME <- c("Self-rated physical health")
+# what category labels or value (e.g., mean) represents the reference group/value for your focal predictor
 FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean score within country")
 
 # IF your predictor (focal exposure) is binary/categorical, use the code below to define how you
@@ -31,6 +59,8 @@ FOCAL_PREDICTOR_REFERENCE_VALUE <- c("mean score within country")
 #   consistency across studies.
 VALUES_DEFINING_UPPER_CATEGORY <- list(NULL)
 VALUES_DEFINING_LOWER_CATEGORY <- list(NULL)
+
+# Advanced options
 # Note 1: if your focal predictor is continuous (all items with 7+ response options), you can force the responses
 # 	to be categorized as 0/1 using the above with the below option changed to TRUE. This can be useful
 # 	when testing the sensitivity of results or for composite outcomes such as anxiety (sum of
@@ -46,31 +76,13 @@ FORCE_CONTINUOUS <- c(FALSE)
 # Note 3: if you need to define a subpopulation for domain analysis. (in-development)
 SUBPOPULATION <- list(NULL)
 
-names(FORCE_CONTINUOUS) <- names(FORCE_BINARY) <- names(VALUES_DEFINING_UPPER_CATEGORY)  <- names(VALUES_DEFINING_LOWER_CATEGORY) <- names(SUBPOPULATION) <- FOCAL_PREDICTOR
-# ================================================================================================ #
-# ================================================================================================ #
-# environment prep
+names(FORCE_CONTINUOUS) <-
+  names(FORCE_BINARY) <-
+  names(VALUES_DEFINING_UPPER_CATEGORY)  <-
+  names(VALUES_DEFINING_LOWER_CATEGORY) <-
+  names(SUBPOPULATION) <-
+  names(FOCAL_PREDICTOR_BETTER_NAME) <- FOCAL_PREDICTOR
 
-# Note:
-# The following function loads the required packages for the remainder of the script to work.
-load_packages()
-# global options
-options(
-  survey.lonely.psu = "certainty",
-  future.plan = "multisession"
-)
-handlers(global = TRUE)
-
-if (availableCores(constraints = "connections") == 2) {
-  num_cores <- 1
-} else if (availableCores(constraints = "connections") %% 2 == 0) {
-  num_cores <- availableCores(constraints = "connections")/2
-} else if (availableCores(constraints = "connections") %% 2 == 1) {
-  num_cores <- availableCores(constraints = "connections")/2 - 0.5
-}
-
-# ================================================================================================ #
-# ================================================================================================ #
 
 # outcome vectors
 LIST.COMPOSITES <- get_variable_codes('LIST.COMPOSITES')
@@ -89,18 +101,21 @@ RECODE.DEFAULTS <- list(
   USE_DEFAULT = !(FORCE_BINARY | FORCE_CONTINUOUS)
 )
 
-# get "raw data"
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 3. Load in "raw data"
 df.raw <- gfs_get_labelled_raw_data(
   file = here::here(data.dir, dataset.name),
   list.composites = LIST.COMPOSITES
 )
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 4. Imputing missing data
 
-# ================================================================================================ #
-# ================================================================================================ #
-# Imputing missing data
-
-run.imp <- TRUE
+run.imp <- FALSE # turn back to TRUE after chris runs it.
 if (run.imp) {
+  # Default set of baseline predictors.
+  # Note. Internally, all (*)_Y1 variables are also used to predict (*)_Y2 variables
   pred0 <- c(
     'ANNUAL_WEIGHT_R2', 'MODE_RECRUIT',
     'AGE_Y1', 'GENDER_Y1', 'RACE_PLURALITY1', 'MARITAL_STATUS_Y1',
@@ -120,22 +135,20 @@ if (run.imp) {
   )
 }
 
-
-# ================================================================================================ #
-# ================================================================================================ #
-# Recode the imputed data for easily use in analyses
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 5. Recode the imputed data for easily use in analyses
 # ~~
 recode_imp_by_country(
   data.dir,
-  nimp = 20,
   list.default = RECODE.DEFAULTS,
   list.composites = LIST.COMPOSITES,
   wgt = "ANNUAL_WEIGHT_R2"
 )
-# ================================================================================================ #
-# ================================================================================================ #
-# CHECK VARIABLE CODING/COLLAPSING
-#
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 6. CHECK VARIABLE CODING/COLLAPSING
+
 # the following checks the imputed data back with the raw data
 tmp.dat1 <- df.raw %>%
   filter(COUNTRY == "United States") %>%
@@ -148,11 +161,11 @@ for(i in 1:length(FOCAL_PREDICTOR)){
   print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))
 }
 
-# ================================================================================================ #
-# ================================================================================================ #
-# Attrition Weights
-
-
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 7. Attrition model and adding attrition weights to recoded data
+## model: Y = 1 if case responded to at least 50% of items at Wave 2; Y = 0 if not.
+##  Pr(Y = 1 | X) ~
 run_attrition_model_by_country(
   data.dir,
   obs.id.var = "CASE_OBSERVED_Y2",
@@ -251,6 +264,7 @@ meta.input <- LIST.RES %>%
 # if predictor & outcome are binary, change in risk of being in upper category for being in upper category on predictor compared to lower category
 META.RES <- gfs_meta_analysis(
   meta.input, yi = std.est, sei = std.se,
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Excluded -- Full Imputation Approach"
 )
 readr::write_rds(
@@ -265,6 +279,7 @@ readr::write_rds(
 # if predictor & outcome are binary, change in risk of being in upper category for being in upper category on predictor compared to lower category
 META.RES <- gfs_meta_analysis(
   meta.input, yi = est, sei = se,
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Excluded -- Full Imputation Approach"
 )
 readr::write_rds(
@@ -316,6 +331,7 @@ meta.input <- LIST.RES %>%
 
 META.RES <- gfs_meta_analysis(
   meta.input, yi = std.est, sei = std.se,
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Included -- Full Imputation Approach"
 )
 readr::write_rds(
@@ -330,6 +346,7 @@ readr::write_rds(
 # if predictor & outcome are binary, change in risk of being in upper category for being in upper category on predictor compared to lower category
 META.RES <- gfs_meta_analysis(
   meta.input, yi = est, sei = se,
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Included -- Full Imputation Approach"
 )
 readr::write_rds(
@@ -386,6 +403,7 @@ meta.input <- LIST.RES %>%
 
 META.RES <- gfs_meta_analysis(
   meta.input, yi = std.est, sei = std.se,
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Excluded -- Complete Case Analysis"
 )
 readr::write_rds(
@@ -439,6 +457,7 @@ meta.input <- LIST.RES %>%
 
 META.RES <- gfs_meta_analysis(
   meta.input, yi = std.est, sei = std.se,
+  better.name = FOCAL_PREDICTOR_BETTER_NAME,
   p.subtitle = "Principal Components Included -- Complete Case Analysis"
 )
 readr::write_rds(
@@ -494,161 +513,4 @@ gfs_generate_supplemental_docs(
   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE
 )
-
-
-# ================================================================================================ #
-# ================================================================================================ #
-# Code to fiddle/tinker with forest plots (main text plots)
-{
-  META.RES <- readr::read_rds(file = here::here("results-primary", "0_meta_analyzed_results_wpc.rds"))
-
-  # Base plot:
-  p1 <- META.RES %>% ungroup() %>%
-    filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_W2") %>%
-    select(forest.plot)
-  p1
-
-  # IF desired, the code to re-create the figure and fiddle as desired is below:
-  tmp.fit <- META.RES %>% ungroup() %>%
-    filter(OUTCOME0 == "COMPOSITE_FLOURISHING_SECURE_Y2")
-  tmp.fit <- tmp.fit$fit[[1]]
-  tmp.dat <- tmp.fit$data
-  ALL.COUNTRIES <- c(
-    "Australia","Hong Kong","India","Indonesia","Japan","Philippines","Egypt","Germany","Israel",
-    "Kenya","Nigeria","Poland", "South Africa","Spain", "Sweden","Tanzania","Turkey", "United Kingdom",
-    "United States","Argentina","Brazil","Mexico", "China"
-  )
-
-  focal.pred <- tmp.dat$FOCAL_PREDICTOR[1]
-  focal.pred <- get_outcome_better_name(focal.pred, include.name = FALSE)
-  if (!is.null(better.name)) {
-    focal.pred <- better.name
-  }
-  tmp.outcome <- tmp.dat$OUTCOME[1]
-  tmp.outcome <- get_outcome_better_name(tmp.outcome, include.name = FALSE, include.wave = TRUE)
-
-  focal.pred <- str_to_sentence(focal.pred)
-  tmp.outcome <- str_to_sentence(tmp.outcome)
-
-  for (i in 1:length(tmp.dat$Country)) {
-    tmp.dat$Country[i] <- stringr::str_split_fixed(tmp.dat$Country[i], "\\. ", 2)[,2]
-  }
-  # identify countries omitted from meta-analysis
-  tmp.included.countries <- tmp.dat$Country
-  tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
-  tmp.included.countries <- str_trim(tmp.included.countries, "both")
-  tmp.excluded.countries <- ALL.COUNTRIES[!(ALL.COUNTRIES %in% tmp.included.countries)]
-  tmp.excluded.countries <- ifelse(
-    !is_empty(tmp.excluded.countries),
-    paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
-    ""
-  )
-
-  # X-axis label
-  xLab <- "Standardized Effect"
-
-  # construct heterogeneity statement...
-  myci <- confint(tmp.fit, type = "PL")
-  tmp.het <- paste0(
-    "τ=", .round(sqrt(tmp.fit$tau2), 3),
-    "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ", .round(myci$random[2, 3], 3), "]",
-    "; Q(df=", tmp.fit$k - tmp.fit$QMdf[1], ")=",
-    .round(tmp.fit$QE), ", p", ifelse(tmp.fit$QEp > 0.001, .round(tmp.fit$QEp, 3), "<.001"),
-    "; I^2=", .round(tmp.fit$I2),
-    ";\n",
-    tmp.excluded.countries
-  )
-  xlims <- max(c(abs(tmp.dat$ci.lb), abs(tmp.dat$ci.ub))) + 0.20
-  tmp.dat <- tmp.dat |>
-    mutate(
-      est_lab = paste0(.round(yi), " (", .round(ci.lb), ", ", .round(ci.ub), ")")
-    )
-
-  dat.below <- data.frame(
-    label = "Overall",
-    est = as.numeric(fit$b),
-    ci.lb = as.numeric(fit$ci.lb),
-    ci.ub = as.numeric(fit$ci.ub)
-  ) |>
-    mutate(
-      ci = paste0("(", .round(ci.lb), ",", .round(ci.ub), ")"),
-      CI = paste0(.round(est), " ", ci)
-    )
-  # below are the actual plots being constructed...
-  p_mid <-
-    tmp.dat |>
-    ggplot(aes(y = reorder(Country, yi))) +
-    geom_point(aes(x = yi), shape = 15, size = 3) +
-    geom_linerange(aes(xmin = ci.lb, xmax = ci.ub)) +
-    geom_vline(xintercept = 0, linetype = "dashed") +
-    .geom_stripes() +
-    labs(x = xLab) +
-    lims(x = c(-xlims, xlims)) +
-    theme_classic() +
-    theme(
-      axis.ticks = element_blank(),
-      axis.title = element_blank(),
-      axis.text.y = element_text(face = "bold"),
-      axis.line.y = element_blank(),
-      axis.text.x = element_blank()
-    )
-
-  # right side of plot - estimates
-  p_right <-
-    tmp.dat |>
-    ggplot(aes(y = reorder(Country, yi))) +
-    geom_text(aes(x = 0, label = est_lab), hjust = 0.45) +
-    .geom_stripes() +
-    theme_void()
-
-  p_below <- dat.below %>%
-    ggplot(aes(x = est, y = label)) +
-    geom_point(shape = 18, size = 5) +
-    geom_linerange(aes(xmin = ci.lb, xmax = ci.ub)) +
-    geom_vline(xintercept = 0, linetype = "dashed") +
-    labs(x = xLab, y = NULL) +
-    lims(x = c(-xlims, xlims)) +
-    theme_classic() +
-    theme(
-      axis.line.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.title.y = element_blank(),
-      axis.text = element_text(face = "bold")
-    )
-
-  p_below_right <-
-    dat.below |>
-    ggplot(aes(y = label)) +
-    geom_text(aes(x = 0, label = CI), hjust = 0.45) +
-    theme_void()
-
-  # Pull everything together
-  p <- (p_mid + plot_spacer() + p_right +
-          plot_spacer() + plot_spacer() + plot_spacer() +
-          p_below + plot_spacer() + p_below_right) +
-    plot_layout(
-      byrow = TRUE,
-      widths = c(2, -0.175, 1),
-      heights = c(10, -0.75, 1)
-    ) +
-    plot_annotation(
-      title = str_wrap(paste0("`", focal.pred, "` predicts `", tmp.outcome, "`"), 75),
-      subtitle = NULL,
-      caption = NULL
-    )
-
-  p
-  ggsave(
-    filename = here::here(paste0("figure_1_secure_flourishing_index.png")),
-    plot = p,
-    units = "in", width = 6, height = 5
-  )
-  ggsave(
-    filename = here::here(paste0("figure_1_secure_flourishing_index.pdf")),
-    plot = p,
-    units = "in", width = 6, height = 5
-  )
-}
-
-
 
