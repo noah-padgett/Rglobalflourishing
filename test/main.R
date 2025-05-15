@@ -18,7 +18,7 @@
 #install.packages("remotes")
 #remotes::install_github("noah-padgett/Rglobalflourishing", force = TRUE)
 library(Rglobalflourishing)
-source("")
+
 # Add the directory where the dataset is stored on your computer
 data.dir <- "data"
 dataset.name <- "gfs_all_countries_wave2.sav"
@@ -160,7 +160,8 @@ for(i in 1:length(FOCAL_PREDICTOR)){
   print(FOCAL_PREDICTOR[i])
   print(table(tmp.dat1[[FOCAL_PREDICTOR[i]]], tmp.dat2[[FOCAL_PREDICTOR[i]]], dnn = dnn0, useNA = "ifany"))
 }
-
+remove(tmp.dat2,tmp.dat1)
+gc()
 ## ============================================================================================== ##
 ## ============================================================================================== ##
 ## Part 7. Attrition model and adding attrition weights to recoded data
@@ -186,9 +187,11 @@ run_attrition_model_by_country(
 ## append attrition weights to imputed data
 append_attr_wgts_to_imp_data(data.dir, attr.dir = "results-attr")
 
-# ================================================================================================ #
-# ================================================================================================ #
-# Run primary country-wise analyses -- Full imputation based approach
+remove(df.raw)
+gc()
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 7. Run primary country-wise analyses -- Full imputation based approach
 
 VARIABLES.VEC <- RECODE.DEFAULTS[['VARIABLES.VEC']]
 OUTCOME.VEC <- VARIABLES.VEC[str_detect(VARIABLES.VEC, "_Y2")]
@@ -356,9 +359,9 @@ readr::write_rds(
 )
 remove(meta.input, LIST.RES, META.RES)
 
-# ================================================================================================ #
-# ================================================================================================ #
-# Run supplemental country-wise analyses -- "Complete Case Analysis"
+## ============================================================================================== ##
+## ============================================================================================== ##
+## Part 8. Run supplemental country-wise analyses -- "Complete Case Analysis"
 # - Uses attrition-weight adjusted sampling weights
 
 # Supplemental analysis set 1: Run without principal components

@@ -7,7 +7,7 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-geometry: "paperheight=21.5in,paperwidth=11in,margin=1in"
+geometry: "paperheight=21.5in,paperwidth=13in,margin=1in"
 params: 
   OUTCOME.VEC: ""
   MYLABEL: ""
@@ -292,8 +292,11 @@ ft <- evalues %>%
       as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans"))
     )
   ) %>%
-  width(j=1,width=2.5)%>%
-  format_flex_table(pg.width = 29.7/2.54 - 2) %>%
+  width(j=1,width=3.5)%>%
+  width(j=c(2,5,8,11),width=0.75)%>%
+  width(j=c(3,6,9,12),width=1.0)%>%
+  width(j=c(4,7,10),width=0.10)%>%
+  format_flex_table(pg.width = 9) %>%
   align(i = 2:3, j = NULL, align = "center", part = "header") %>%
   align(part = "footer", align = "left", j = 1:ncol(evalues)) %>%
   border_remove()  %>%

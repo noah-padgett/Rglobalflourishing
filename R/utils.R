@@ -582,7 +582,10 @@ gfs_append_to_xlsx <- function(file, ft, tb){
   } else {
     wb <- openxlsx2::wb_add_worksheet(wb, sheet = tb)
     wb <- flexlsx::wb_add_flextable(wb, sheet = tb, ft = ft)
-    wb$save(file)
+    try({
+      openxlsx2::wb_save(wb, file = file)
+    })
+
   }
 }
 

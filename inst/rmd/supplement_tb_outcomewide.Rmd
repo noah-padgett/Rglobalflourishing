@@ -88,8 +88,8 @@ if(is.meta){
   vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
   vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue", "theta.rma.se")
   vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue", "theta.rma.se")
-  vec.a <- c("RR", "ES","95% CI","tau", "Global p-value")
-  vec.b <- c("RR\r", "ES\r","95% CI\r","tau\r", "Global p-value\r") 
+  vec.a <- c("RR", "ES","95% CI","\u03c4", "Global p-value")
+  vec.b <- c("RR\r", "ES\r","95% CI\r","\u03c4\r", "Global p-value\r") 
 } else {
   vec.id <- c("id.Est","id.CI", "id.SE","p.value")
   vec.rr <- c("rr.Est", "rr.CI", "logrr.SE","p.value")

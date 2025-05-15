@@ -5,7 +5,7 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-
+geometry: "paperheight=22in,paperwidth=8.5in,margin=1in"
 params: 
   dir: ""
   country.i: ""
@@ -29,11 +29,7 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = "",
-  cache = TRUE,
-  cache.extra = list(
-    R.version, sessionInfo(), format(Sys.Date(), '%Y-%m')
-  )
+  tab.cap.pre = "", tab.cap.sep = ""
 )
 ## extract parameters
 dir = params$dir

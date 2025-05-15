@@ -7,7 +7,7 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-geometry: "paperheight=18in,paperwidth=32in,margin=1in"
+geometry: "paperheight=25in,paperwidth=32in,margin=1in"
 params: 
   dir: ""
   res.dir: ""
@@ -142,8 +142,9 @@ ft <- df.tmp %>%
          i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
          j = 1) %>%
   autofit() %>%
-  width(j=1,3.5) %>%
   format_flex_table(pg.width = 30) %>%
+  width(j=1,width=3.5)%>%
+  width(j=2:ncol(df.tmp), width = 0.55)%>%
   add_header_row(
     values = c("", header_l1),
     colwidths = c(1, rep(2, length(header_l1)))
@@ -162,7 +163,7 @@ ft <- df.tmp %>%
   hline(i=1, part = "header") %>%
   align(i=2, align = "center", part = "header")
 
-
+ft <- width( ft, width = dim(ft)$widths * 30/ (flextable_dim(ft)$widths) )
 ft
 
 ## only needs to be ran once
