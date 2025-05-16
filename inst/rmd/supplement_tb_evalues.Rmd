@@ -7,7 +7,7 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-geometry: "paperheight=21.5in,paperwidth=13in,margin=1in"
+geometry: "paperheight=21.5in,paperwidth=11in,margin=1in"
 params: 
   OUTCOME.VEC: ""
   MYLABEL: ""

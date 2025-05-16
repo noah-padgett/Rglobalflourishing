@@ -1523,7 +1523,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         gc()
       }
       ## ======================================================================================== ##
-      ## == Table Si-d. Unweighted summary statistics -- outcome variables by retention status == ##
+      ## ====== Table Si-d. Unweighted summary statistics -- outcome vars by retention status === ##
       {
         if(num.sequential){
           tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
