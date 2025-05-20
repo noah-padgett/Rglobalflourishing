@@ -31,6 +31,7 @@ load_packages <- function(...) {
     "officer",
     "patchwork",
     "ggthemes",
+    "ggstance",
     "pandoc",
     "qpdf",
     "flexlsx",

@@ -7,7 +7,7 @@
 #' @param file.wopc file containing the nested-data.frame(.) containing the meta-analyzed results without principal components
 #' @param file.wopc file containing the nested-data.frame(.) containing the meta-analyzed results with principal components included
 #' @param focal.better.name a character that is used as the printed name in tables/captions to denote the focal predictor
-#' @param p.bonferroni a number (e.g., 0.00081), is internally determined based on number of rows in meta.wopc if not provided
+#' @param p.bonferroni a number (e.g., 0.00081), is internally determined based on length of outcome.vec if not provided
 #' @param baseline.pred a vector of characters defining which baseline characteristics were used as control variables. This can be used to force the inclusion some variable into the main text summary table.
 #' @param outcome.vec a character vector of outcomes names (e.g., "HAPPY_Y2") that are to be printed in the main text meta-analytic summary table. Name MUST be included in the meta.wopc (meta.wpc) nested data.frames column (OUTCOME0), otherwise the variable won't be printed.
 #' @param mylabels an optional character vector that will be printed out in specific rows of tables 2/3 depending on the specification pf outcome.vec
@@ -21,7 +21,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE){
+gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE, forest.plots.inc.est = FALSE){
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
 
@@ -401,27 +401,50 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
     f0=1
     for(f0 in 1:length(focal.predictor)){
 
-      params.fig <- list(
-        OUTCOME.VEC = OUTCOME.VEC,
-        MYLABEL = MYLABEL,
-        focal.predictor = focal.predictor[f0],
-        focal.better.name = focal.better.name[f0],
-        dir = dir.meta ,
-        file.wopc = file.wopc,
-        file.wpc = file.wpc,
-        fig.num = f0,
-        res.dir = res.dir,
-        n.print = n.print,
-        cache.file = here::here(res.dir, "main-text", paste0("cache-fig-",f0,".RData")),
-        start.time = run.start.time
-      )
-      rmarkdown::render(
-        input = system.file("rmd", "main_text_4_figures.Rmd", package = "Rglobalflourishing"),
-        output_format = c("pdf_document","word_document"),
-        output_file = paste0("main_text_figures"),
-        output_dir = here::here(res.dir, "main-text"),
-        params = params.fig
-      )
+      if(!forest.plots.inc.est){
+        params.fig <- list(
+          focal.predictor = focal.predictor[f0],
+          focal.better.name = focal.better.name[f0],
+          dir = dir.meta ,
+          file.wopc = file.wopc,
+          file.wpc = file.wpc,
+          fig.num = f0,
+          res.dir = res.dir,
+          n.print = n.print,
+          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+          start.time = run.start.time,
+          include.estimates = forest.plots.inc.est
+        )
+        rmarkdown::render(
+          input = system.file("rmd", "main_text_5_figures.Rmd", package = "Rglobalflourishing"),
+          output_format = c("pdf_document","word_document"),
+          output_file = paste0("main_text_figures_combined"),
+          output_dir = here::here(res.dir, "main-text"),
+          params = params.fig
+        )
+
+      } else {
+        params.fig <- list(
+          focal.predictor = focal.predictor[f0],
+          focal.better.name = focal.better.name[f0],
+          dir = dir.meta ,
+          file.wopc = file.wopc,
+          file.wpc = file.wpc,
+          fig.num = f0,
+          res.dir = res.dir,
+          n.print = n.print,
+          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+          start.time = run.start.time
+        )
+        rmarkdown::render(
+          input = system.file("rmd", "main_text_6_figures.Rmd", package = "Rglobalflourishing"),
+          output_format = c("pdf_document","word_document"),
+          output_file = paste0("main_text_figures_combined"),
+          output_dir = here::here(res.dir, "main-text"),
+          params = params.fig
+        )
+      }
+
     }
     remove(params.fig)
     gc()
@@ -542,7 +565,7 @@ gfs_generate_supplemental_docs <- function(
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA");
     res.dir = "results", included.countries=NULL,
-    ci.bonferroni = FALSE, num.sequential = FALSE, what = "all"){
+    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all"){
 
 
   # dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; what = "all";
@@ -2046,8 +2069,6 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
       run.start.time.i <- Sys.time()
       f0=1
       for(f0 in 1:length(focal.predictor)){
-        myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
-        fig.cap.i <- paste0("Figure S",fig.num,". Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
 
         params.fig <- list(
           OUTCOME.VEC = OUTCOME.VEC,
@@ -2061,18 +2082,38 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
           #fig.num = fig.num,
           res.dir = here::here(res.dir),
           n.print = n1.print,
-          fig.cap = fig.cap.i,
+          fig.cap = "Figure.",
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE
         )
-        rmarkdown::render(
-          input = system.file("rmd", "supplement_text_forest_plot.Rmd", package = "Rglobalflourishing"),
-          output_format = c("pdf_document","word_document"),
-          output_file = paste0("tmp_fig"),
-          output_dir = here::here(res.dir, "supplement-text"),
-          params = params.fig
-        )
+
+        if(forest.plot.type == "panelled"){
+          myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
+          fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries*. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
+          params.fig[['fig.cap']] <- fig.cap.i
+          rmarkdown::render(
+            input = system.file("rmd", "supplement_fig_forest_plot_panneled.Rmd", package = "Rglobalflourishing"),
+            output_format = c("pdf_document","word_document"),
+            output_file = paste0("tmp_fig"),
+            output_dir = here::here(res.dir, "supplement-text"),
+            params = params.fig
+          )
+        }
+        if(forest.plot.type == "combined"){
+          myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
+          fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries.* N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. The plot compares the estimates between Model 1 which controls for demographic and childhood variables only and Model 2 which controls for demographic variables, childhood variances, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
+          params.fig[['fig.cap']] <- fig.cap.i
+
+          rmarkdown::render(
+            input = system.file("rmd", "supplement_fig_forest_plot_panneled.Rmd", package = "Rglobalflourishing"),
+            output_format = c("pdf_document","word_document"),
+            output_file = paste0("tmp_fig"),
+            output_dir = here::here(res.dir, "supplement-text"),
+            params = params.fig
+          )
+        }
+
         fig.num = fig.num + 1
 
         ## Word version

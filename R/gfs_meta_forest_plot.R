@@ -97,7 +97,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   )
 
 
-  xlims <- max(c(abs(tmp.dat$ci.lb.i), abs(tmp.dat$ci.ub.i))) + 0.20
+  xlims <- max(c(abs(tmp.dat$ci.lb.i), abs(tmp.dat$ci.ub.i))) + 0.05
 
   tmp.dat <- tmp.dat |>
     mutate(

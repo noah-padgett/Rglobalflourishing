@@ -57,6 +57,7 @@ res.dir = params$res.dir
 cache.file = params$cache.file
 start.time = params$start.time
 ignore.cache = params$ignore.cache
+include.estimates = params$include.estimates
 
 
 ```

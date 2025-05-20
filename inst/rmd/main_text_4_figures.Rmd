@@ -121,8 +121,8 @@ if( !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
 #| fig.ncol: 2
 
 
-knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.pdf")))
-knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.pdf")))
+knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")))
+knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.png")))
 
 ```
 

@@ -118,7 +118,7 @@ if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < st
             all_categorical() ~ list(label_style_percent0(digits = 1))
           ),
           missing_text = "    (Missing)",
-          missing_stat = "{N_miss}"
+          missing_stat = "{p_miss}%"
         ) %>%
         #modify_header(all_stat_cols() ~ "**{level}**") %>%
         modify_header(label ~ "**Characteristic**") %>%
