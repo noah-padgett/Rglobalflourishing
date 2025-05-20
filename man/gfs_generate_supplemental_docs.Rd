@@ -31,6 +31,7 @@ gfs_generate_supplemental_docs(
   included.countries = NULL,
   ci.bonferroni = FALSE,
   num.sequential = FALSE,
+  forest.plot.type = "combined",
   what = "all"
 )
 }

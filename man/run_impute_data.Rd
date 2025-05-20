@@ -10,7 +10,6 @@ run_impute_data(
   Nimp = 20,
   Miter = 5,
   pred.vars = NULL,
-  file.name = NULL,
   use.log.poly = FALSE,
   ...
 )
@@ -25,8 +24,6 @@ run_impute_data(
 \item{Miter}{number of iteration per imputed dataset to use during imputatiuon (uses mice default of 5)}
 
 \item{pred.vars}{(optional) character vector of variable names to to as potential predictors in missing data model (see details for more information)}
-
-\item{file.name}{(optional) character string of the file name, must end in ".RData"}
 
 \item{use.log.poly}{(FALSE) whether to use logistic/mutlinomial logistic regression for factor variables.}
 

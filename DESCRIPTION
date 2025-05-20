@@ -2,7 +2,7 @@ Type: Package
 Package: Rglobalflourishing
 Title: Combined Analysis Workflow for the Global Flourishing Study Core
     Team
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Noah", "Padgett", , "npadgett@hsph.harvard.edu", role = c("aut", "cre")),
     person("Chris", "Felton", , "chris_felton@baylor.edu", role = c("aut", "ctb")),
@@ -16,7 +16,7 @@ Description: A structured set of analyses for analyzing data from the
     of analyses to help facilitate the use ease of use of the GFS data
     such as relative simple regression analyses and summary statistics.
 License: MIT + file LICENSE
-Depends: R (>= 4.1.0)
+Depends: R (>= 4.4.0)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2

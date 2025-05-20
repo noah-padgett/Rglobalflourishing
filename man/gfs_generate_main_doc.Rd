@@ -22,7 +22,8 @@ gfs_generate_main_doc(
   wgt2 = AVG.SAMP.ATTR.WGT,
   psu = PSU,
   strata = STRATA,
-  ci.bonferroni = FALSE
+  ci.bonferroni = FALSE,
+  forest.plots.inc.est = FALSE
 )
 }
 \arguments{
@@ -36,7 +37,7 @@ gfs_generate_main_doc(
 
 \item{focal.predictor.reference.value}{(character) describing the baseline/reference group for the focal predictor.}
 
-\item{p.bonferroni}{a number (e.g., 0.00081), is internally determined based on number of rows in meta.wopc if not provided}
+\item{p.bonferroni}{a number (e.g., 0.00081), is internally determined based on length of outcome.vec if not provided}
 
 \item{baseline.pred}{a vector of characters defining which baseline characteristics were used as control variables. This can be used to force the inclusion some variable into the main text summary table.}
 

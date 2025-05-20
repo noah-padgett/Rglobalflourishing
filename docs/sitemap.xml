@@ -6,10 +6,13 @@
 <url><loc>/index.html</loc></url>
 <url><loc>/news/index.html</loc></url>
 <url><loc>/reference/Rglobalflourishing-package.html</loc></url>
+<url><loc>/reference/append_attr_wgts_to_imp_data.html</loc></url>
+<url><loc>/reference/append_attrition_weights_to_df.html</loc></url>
 <url><loc>/reference/append_attrition_wgts.html</loc></url>
 <url><loc>/reference/append_pc_to_df.html</loc></url>
-<url><loc>/reference/check_variance.html</loc></url>
 <url><loc>/reference/compute_calibrated.html</loc></url>
+<url><loc>/reference/create_attr_wgts.html</loc></url>
+<url><loc>/reference/fit_attrition_model.html</loc></url>
 <url><loc>/reference/get_demo_childhood_variables.html</loc></url>
 <url><loc>/reference/get_eigenvalues.html</loc></url>
 <url><loc>/reference/get_missing_codes.html</loc></url>
@@ -17,6 +20,7 @@
 <url><loc>/reference/get_outcome_better_name_no_code.html</loc></url>
 <url><loc>/reference/get_outcome_scale.html</loc></url>
 <url><loc>/reference/get_variable_codes.html</loc></url>
+<url><loc>/reference/get_wave_flag.html</loc></url>
 <url><loc>/reference/gfs_add_variable_labels.html</loc></url>
 <url><loc>/reference/gfs_compute_evalue.html</loc></url>
 <url><loc>/reference/gfs_data_to_wide.html</loc></url>
@@ -29,10 +33,8 @@
 <url><loc>/reference/gfs_run_regression_single_outcome.html</loc></url>
 <url><loc>/reference/gfs_svyglm.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/keep_variable.html</loc></url>
 <url><loc>/reference/load_packages.html</loc></url>
 <url><loc>/reference/pipe.html</loc></url>
-<url><loc>/reference/quickpred2.html</loc></url>
 <url><loc>/reference/recode_imputed_data.html</loc></url>
 <url><loc>/reference/recode_labels.html</loc></url>
 <url><loc>/reference/recode_race_to_plurality.html</loc></url>
@@ -40,7 +42,9 @@
 <url><loc>/reference/recode_to_type.html</loc></url>
 <url><loc>/reference/reorder_levels.html</loc></url>
 <url><loc>/reference/run_attrition_model.html</loc></url>
+<url><loc>/reference/run_attrition_model_by_country.html</loc></url>
 <url><loc>/reference/run_impute_data.html</loc></url>
 <url><loc>/reference/svy_scale.html</loc></url>
+<url><loc>/reference/utils.html</loc></url>
 </urlset>
 
