@@ -13,6 +13,7 @@ params:
   y: COUNTRY
   data: data.frame()
   focal.predictor0: ""
+  focal.better.name: ""
   baseline.pred0: ""
   wgt: WGT0
   psu: PSU
@@ -46,6 +47,7 @@ x = params$x
 y = params$y
 data = params$data
 focal.predictor0 = params$focal.predictor0
+focal.better.name = params$focal.better.name
 baseline.pred0 = params$baseline.pred0
 wgt = params$wgt
 psu = params$psu
@@ -73,17 +75,18 @@ if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < st
   sum.error <- "none"
   try({
   sumtab <- data %>%
-    #filter(COUNTRY %in% countries.included) %>%
-    # as_survey_design(
-    #   #strata = {{strata}},
-    #   weights = {{wgt}}
-    # ) %>%
+    filter(COUNTRY %in% countries.included) %>%
+     as_survey_design(
+       ids = 0,
+     #  strata = {{strata}},
+       weights = {{wgt}}
+     ) %>%
     tbl_strata(
-      strata = {{y}},
+      strata = {{x}},
       .tbl_fun = \(xdat){
         xdat |>
-        tbl_summary(
-          by = {{x}},
+          tbl_svysummary(
+            by = {{y}},
           include = c(
             any_of(focal.predictor0),
             any_of(baseline.pred0)
@@ -96,6 +99,7 @@ if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < st
             all_categorical() ~ "{p}%"
           ),
           label = list(
+            contains(focal.predictor0) ~ focal.better.name,
             AGE_GRP ~ "Year of birth",
             GENDER ~ "Gender",
             MARITAL_STATUS ~ "Respondent marital status",
@@ -153,16 +157,14 @@ knitr::opts_chunk$set(
   tab.cap.pre = "", tab.cap.sep = ""
 )
 
-
-if(sum.error == "none"){
-  
-  try({
+ft <- NULL
+try({
 ft <- sumtab %>%
   as_flex_table() %>%
   autofit() %>%
   format_flex_table(pg.width = 40) %>%
   bg(
-    j = c(2 + seq(0,nC,4), 3 + seq(0,nC,4)), bg="grey90",part = "all"
+    j = c(2 + seq(0,nC-2,2)), bg="grey90",part = "all"
   ) %>%
   add_footer_lines(
     values = tb.note, top = FALSE
@@ -178,13 +180,16 @@ ft <- sumtab %>%
 ft
 
 })
-} else {
+
+if(is.null(ft)){
   print("Could not construct summary table.")
 }
 
 ## only needs to be ran once
 if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
-  gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
-  save(sumtab, sum.error, file=cache.file)
+  try({
+    gfs_append_to_xlsx(file.xlsx, ft, tb.cap)
+  })
+  save(sumtab, file=cache.file)
 }
 ```

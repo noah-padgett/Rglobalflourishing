@@ -568,7 +568,7 @@ gfs_generate_supplemental_docs <- function(
     ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all"){
 
 
-  # dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; what = "all";
+  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all";
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
@@ -1014,11 +1014,14 @@ gfs_generate_supplemental_docs <- function(
   out.file.docx <- stringr::str_replace_all(paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".docx"), " ", "_")
   out.file.pdf <- stringr::str_replace_all(paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".pdf"), " ", "_")
   out.file.xlsx <- stringr::str_replace_all(paste0("GFS_Wave_2_Online_Supplement_", paste0(focal.predictor, collapse="_"),".xlsx"), " ", "_")
-  suppressWarnings({
-    file.remove(here::here(res.dir,out.file.docx))
-    file.remove(here::here(res.dir,out.file.pdf))
-    file.remove(here::here(res.dir,out.file.xlsx))
-  })
+  if(what == "all" | what == "S1"){
+    suppressWarnings({
+      file.remove(here::here(res.dir,out.file.docx))
+      file.remove(here::here(res.dir,out.file.pdf))
+      file.remove(here::here(res.dir,out.file.xlsx))
+    })
+  }
+
   tb.num <- 1
   fig.num <- 1
   ## ============================================================================================ ##
@@ -1107,7 +1110,7 @@ gfs_generate_supplemental_docs <- function(
       remove(params.tb)
       gc()
 
-      ## Table S4. summary of outcomes (at wave 1) by retention status
+      ## Table S4. summary of wave 1 outcomes by retention status
       params.tb <- list(
         x = as.name("WAVE0"),
         data = df.raw.attr.retained,
@@ -1116,7 +1119,7 @@ gfs_generate_supplemental_docs <- function(
         wgt = as.name("UNITWGT"),
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
-        tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables by retention status."),
+        tb.cap = paste0("Table S",tb.num,". Unweighted summary statistics for Wave 1 outcome variables by retention status."),
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s4.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
@@ -1319,24 +1322,45 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     }
     ## ========================================================================================== ##
     ## ====== Write tables to file  ============================================================= ##
-    file.copy(
-      here::here("data", "supp_page_1.docx"),
-      here::here(res.dir, "supplement-text"),
-      overwrite=TRUE
-    )
-    file.rename(
-      here::here(res.dir, "supplement-text", "supp_page_1.docx"),
-      here::here(res.dir, "supplement-text", "supplement_tbl_0.docx")
-    )
-    file.copy(
-      here::here("data", "supp_page_1.pdf"),
-      here::here(res.dir, "supplement-text"),
-      overwrite=TRUE
-    )
-    file.rename(
-      here::here(res.dir, "supplement-text", "supp_page_1.pdf"),
-      here::here(res.dir, "supplement-text", "supplement_tbl_0.pdf")
-    )
+    if(num.sequential){
+      file.copy(
+        here::here("data", "supp_page_num_seq.docx"),
+        here::here(res.dir, "supplement-text"),
+        overwrite=TRUE
+      )
+      file.rename(
+        here::here(res.dir, "supplement-text", "supp_page_num_seq.docx"),
+        here::here(res.dir, "supplement-text", "supplement_tbl_0.docx")
+      )
+      file.copy(
+        here::here("data", "supp_page_num_seq.pdf"),
+        here::here(res.dir, "supplement-text"),
+        overwrite=TRUE
+      )
+      file.rename(
+        here::here(res.dir, "supplement-text", "supp_page_num_seq.pdf"),
+        here::here(res.dir, "supplement-text", "supplement_tbl_0.pdf")
+      )
+    } else {
+      file.copy(
+        here::here("data", "supp_page_default.docx"),
+        here::here(res.dir, "supplement-text"),
+        overwrite=TRUE
+      )
+      file.rename(
+        here::here(res.dir, "supplement-text", "supp_page_default.docx"),
+        here::here(res.dir, "supplement-text", "supplement_tbl_0.docx")
+      )
+      file.copy(
+        here::here("data", "supp_page_default.pdf"),
+        here::here(res.dir, "supplement-text"),
+        overwrite=TRUE
+      )
+      file.rename(
+        here::here(res.dir, "supplement-text", "supp_page_default.pdf"),
+        here::here(res.dir, "supplement-text", "supplement_tbl_0.pdf")
+      )
+    }
 
     ## Word version
     read_docx() |> print(target = here::here(res.dir,out.file.docx))
@@ -1549,10 +1573,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       ## ====== Table Si-d. Unweighted summary statistics -- outcome vars by retention status === ##
       {
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
+          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for Wave 1 outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for outcome variables  in ", COUNTRY_LABELS[iter], " by retention status.")
+          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for Wave 1 outcome variables  in ", COUNTRY_LABELS[iter], " by retention status.")
           tb.let <- tb.let + 1
         }
         temp.dat <- df.raw.attr.retained %>%
@@ -1888,44 +1912,47 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     cat("Starting part 3 - extra-wide format and forest plots\n")
 
     ## ========================================================================================== ##
-    ## ====== Table S1. summary statistics -- demographics variables by country ================= ##
-    tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics of demographic and childhood variables data across countries.")
-    params.tb <- list(
-      x = as.name("WAVE0"),
-      y = as.name("COUNTRY"),
-      data = df.raw.long %>%
-        mutate(
-          WAVE0 = case_when(
-            WAVE0 == "Wave 1" ~ "W1",
-            WAVE0 == "Wave 2" ~ "W2"
-          )
-        ),
-      focal.predictor0 = focal.predictor0,
-      baseline.pred0 = baseline.pred0[str_detect(baseline.pred0, "RACE1", negate=TRUE)],
-      wgt = as.name("WGT0"),
-      psu = as.name("PSU"),
-      strata = as.name("STRATA"),
-      countries.included = COUNTRY_LABELS,
-      tb.cap = tb.cap.i,
-      fn.txt = "All reported summary statistics are unweighted.",
-      cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
-      start.time = run.start.time,
-      ignore.cache = FALSE,
-      file.xlsx = here::here(res.dir, out.file.xlsx)
-    )
-    rmarkdown::render(
-      input = system.file("rmd", "supplement_tb_sample_extra_wide.Rmd", package = "Rglobalflourishing"),
-      output_format = c("pdf_document","word_document"),
-      output_file = "supplement_tbl_w1",
-      output_dir = here::here(res.dir, "supplement-text"),
-      params = params.tb
-    )
-    tb.num <- tb.num + 1
-    remove(params.tb)
-    gc()
+    ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
+    {
+      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of demographic and childhood variables data across countries.")
+      params.tb <- list(
+        x = as.name("WAVE0"),
+        y = as.name("COUNTRY"),
+        data = df.raw.long %>%
+          mutate(
+            WAVE0 = case_when(
+              WAVE0 == "Wave 1" ~ "W1",
+              WAVE0 == "Wave 2" ~ "W2"
+            )
+          ),
+        focal.predictor0 = focal.predictor0,
+        focal.better.name = focal.better.name,
+        baseline.pred0 = baseline.pred0[str_detect(baseline.pred0, "RACE1", negate=TRUE)],
+        wgt = as.name("WGT0"),
+        psu = as.name("PSU"),
+        strata = as.name("STRATA"),
+        countries.included = COUNTRY_LABELS,
+        tb.cap = tb.cap.i,
+        fn.txt = "All reported summary statistics are unweighted.",
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx)
+      )
+      rmarkdown::render(
+        input = system.file("rmd", "supplement_tb_sample_extra_wide.Rmd", package = "Rglobalflourishing"),
+        output_format = c("pdf_document","word_document"),
+        output_file = "supplement_tbl_w1",
+        output_dir = here::here(res.dir, "supplement-text"),
+        params = params.tb
+      )
+      tb.num <- tb.num + 1
+      remove(params.tb)
+      gc()
+    }
     ## ========================================================================================== ##
-    ## ====== Table S2. summary statistics -- outcome variables by country ====================== ##
-    tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics of outcomes variables data across countries.")
+    ## ====== Table S33. summary statistics -- outcome variables by country ====================== ##
+    tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
     params.tb <- list(
       x = as.name("WAVE0"),
       y = as.name("COUNTRY"),
@@ -1960,10 +1987,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     remove(params.tb)
     gc()
     ## ========================================================================================== ##
-    ## ====== Table S3. Reformatted outcome-wide results by country ============================= ##
+    ## ====== Table S34-x. Reformatted outcome-wide results by country ============================= ##
     f0 = 1
     for(f0 in 1:length(focal.predictor)){
-
       tb.cap.i <- paste0("Table S",tb.num,". Model 2 (controlling for demographic, childhood, and contemporaneous exposures) outcome-wide results for ", focal.better.name[f0] ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
 
       fn.txt.i <- paste0("Notes. N =", n1.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00. Please review the country-specific results tables or forest plots to evaluate the uncertainty in all estimated effects.
@@ -2041,7 +2067,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         print(supp_doc, target=here::here(res.dir,out.file.docx))
       }
 
-      ## PDF version (this method works for part 1, need a difference method for after out.file.pdf is created)
+      ## PDF version
       supp.text.pdf <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
       supp.text.pdf <- supp.text.pdf[str_detect(supp.text.pdf, "supplement_tbl_w")]
       supp.text.pdf <- supp.text.pdf[str_detect( supp.text.pdf, ".pdf")]
@@ -2093,7 +2119,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
           fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries*. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
           params.fig[['fig.cap']] <- fig.cap.i
           rmarkdown::render(
-            input = system.file("rmd", "supplement_fig_forest_plot_panneled.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "supplement_fig_forest_plot_panelled.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document","word_document"),
             output_file = paste0("tmp_fig"),
             output_dir = here::here(res.dir, "supplement-text"),
@@ -2106,7 +2132,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
           params.fig[['fig.cap']] <- fig.cap.i
 
           rmarkdown::render(
-            input = system.file("rmd", "supplement_fig_forest_plot_panneled.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "supplement_fig_forest_plot_combined.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document","word_document"),
             output_file = paste0("tmp_fig"),
             output_dir = here::here(res.dir, "supplement-text"),

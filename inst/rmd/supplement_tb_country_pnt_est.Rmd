@@ -7,7 +7,7 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-geometry: "paperheight=25in,paperwidth=32in,margin=1in"
+geometry: "paperheight=20in,paperwidth=32in,margin=1in"
 params: 
   dir: ""
   res.dir: ""
@@ -157,7 +157,7 @@ ft <- df.tmp %>%
   ) %>%
   add_header_lines(
     as_paragraph(
-      as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
+      as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans"))
     )
   ) %>%
   hline(i=1, part = "header") %>%

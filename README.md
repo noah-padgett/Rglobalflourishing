@@ -35,6 +35,8 @@ The package is currently not available on CRAN or bioconductor.
 
 ``` r
 library(Rglobalflourishing)
+#> This is Rglobalflourishing 0.2.0
+#> Rglobalflourishing is FREE software! Please report any bugs.
 
 # load required packages
 # load_packages()
