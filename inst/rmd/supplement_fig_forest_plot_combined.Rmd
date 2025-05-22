@@ -321,7 +321,7 @@ p <- (p_mid + plot_spacer() + p_right_w + plot_spacer() + p_right_wo +
 #| fig.ncol: 1
 #| fig.align: 'center'
 
-knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num,"_", outcome,"_regressed_on_", focal.predictor,".png")))
+knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num,"_", outcome,"_regressed_on_", focal.predictor,".pdf")))
 
 ```
 

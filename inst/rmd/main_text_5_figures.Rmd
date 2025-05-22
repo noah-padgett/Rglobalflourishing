@@ -324,7 +324,7 @@ p_legend_wo <- ggplot() +
 
 
 knitr::include_graphics(
-  here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name,".png"))
+  here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name,".pdf"))
 )
 
 

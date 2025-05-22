@@ -335,8 +335,8 @@ p_legend_wo <- ggplot() +
 #| fig.ncol: 2
 
 
-knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")))
-knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.png")))
+knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.pdf")))
+knitr::include_graphics(here::here(res.dir, paste0("figure_",fig.num,"B_SFI on ",focal.better.name," with PCs.pdf")))
 
 ```
 

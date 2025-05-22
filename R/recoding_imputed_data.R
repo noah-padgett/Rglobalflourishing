@@ -83,6 +83,31 @@ recode_imputed_data <- function(
   ## ============================================================================================ ##
   ## ====== WAVE SPECIFIC CODE ================================================================== ##
   ## TO-DO: develop a generalized approach...
+  ## Check 'list.default' focal predictor for more than one element
+  ##    if more than one, check if names are the same -> implies alternative coding schemes
+  if(length(list.default$FOCAL_PREDICTOR) > 1){
+    if(list.default$FOCAL_PREDICTOR[1] == list.default$FOCAL_PREDICTOR[2]){
+      dup.var.name <- paste0("RC_", list.default$FOCAL_PREDICTOR[2])
+      list.default$FOCAL_PREDICTOR[2] <- dup.var.name
+      dup.var.name <- sym(dup.var.name)
+      org.var.name <- sym(list.default$FOCAL_PREDICTOR[1])
+      df.imp.long <- df.imp.long %>%
+        mutate(
+          "{{dup.var.name}}" := {{org.var.name}}
+        )
+      ## update list names
+      names(list.default$FOCAL_PREDICTOR) <-
+        names(list.default$FORCE_BINARY) <-
+        names(list.default$FORCE_CONTINUOUS) <-
+        names(list.default$VALUES_DEFINING_UPPER_CATEGORY) <-
+        names(list.default$VALUES_DEFINING_LOWER_CATEGORY) <-
+        names(list.default$USE_DEFAULT) <- list.default$FOCAL_PREDICTOR
+
+    }
+  }
+
+
+
   ## Wave 1
   if(wave == 1 | wave == "W1" | wave == "w1" | wave == "Y1"){
     df.imp.long <- df.imp.long %>%
@@ -585,7 +610,8 @@ recode_imputed_data <- function(
   # 	Must do this last as a few composites are formed from the
   # 	categorical Likert-type items
   tmp.var <- list.default[["VARIABLES.VEC"]][1]
-  for (tmp.var in list.default[["VARIABLES.VEC"]]) {
+  all.vars <- unique(c(list.default[["VARIABLES.VEC"]], list.default[["FOCAL_PREDICTOR"]]))
+  for (tmp.var in  al.vars){
     # print(tmp.var)
     x <- df.imp.long[, tmp.var, drop = TRUE]
     if ((tmp.var %in% list.default[["FOCAL_PREDICTOR"]]) & !(all(list.default[["USE_DEFAULT"]]))) {
