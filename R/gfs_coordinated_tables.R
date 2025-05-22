@@ -1373,7 +1373,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       if(length(sec.prop$page) == 2){
         ps <- prop_section(
           page_size = page_size(
-            orient = "portrait",
+            orient = ifelse(!sec.prop$landscape, "portrait", "landscape"),
             width = sec.prop$page[1]/1440,
             height = sec.prop$page[2]/1440,
             unit = "in"
@@ -1411,6 +1411,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   # ========================= #
   if(what == "all" | what == "S2"){
     cat("Starting part 2 -- country-specific results\n")
+    if(what == "S2"){
+      tb.num <- 9
+    }
     iter = 1;
     for (iter in 1:length(COUNTRY_LABELS)) {
       run.start.time.i <- Sys.time()
@@ -1910,6 +1913,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   ## ============================================================================================== ##
   if(what == "all" | what == "S3"){
     cat("Starting part 3 - extra-wide format and forest plots\n")
+    if(what == "S3"){
+      tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
+    }
 
     ## ========================================================================================== ##
     ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
@@ -1933,7 +1939,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         strata = as.name("STRATA"),
         countries.included = COUNTRY_LABELS,
         tb.cap = tb.cap.i,
-        fn.txt = "All reported summary statistics are unweighted.",
+        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
@@ -1970,7 +1976,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       strata = as.name("STRATA"),
       countries.included = COUNTRY_LABELS,
       tb.cap = tb.cap.i,
-      fn.txt = "All reported summary statistics are unweighted.",
+      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
       cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
       start.time = run.start.time,
       ignore.cache = FALSE,
