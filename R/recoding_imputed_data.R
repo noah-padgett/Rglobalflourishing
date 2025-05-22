@@ -611,7 +611,7 @@ recode_imputed_data <- function(
   # 	categorical Likert-type items
   tmp.var <- list.default[["VARIABLES.VEC"]][1]
   all.vars <- unique(c(list.default[["VARIABLES.VEC"]], list.default[["FOCAL_PREDICTOR"]]))
-  for (tmp.var in  al.vars){
+  for (tmp.var in  all.vars){
     # print(tmp.var)
     x <- df.imp.long[, tmp.var, drop = TRUE]
     if ((tmp.var %in% list.default[["FOCAL_PREDICTOR"]]) & !(all(list.default[["USE_DEFAULT"]]))) {
