@@ -625,6 +625,10 @@ recode_imputed_data <- function(
         } else {
           x <- recode_to_type(x, tmp.var)
           x <- reorder_levels(x, tmp.var)
+          if(str_detect(tmp.var, "PEACE") | str_detect(tmp.var, "BALANCE")){
+            # add
+            x <- fct_rev(as.factor(x))
+          }
           x <- recode_to_numeric(x, tmp.var)
         }
       } else if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
