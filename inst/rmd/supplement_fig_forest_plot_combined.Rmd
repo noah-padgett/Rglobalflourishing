@@ -130,7 +130,7 @@ if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < st
   build_het_statement <- function(fit, txt){
     myci <- confint(fit, type = "PL")
     paste0(txt,
-      "\u03c4 =", .round(sqrt(fit$tau2), 3),
+      "  \u03c4 (tau)=", .round(sqrt(fit$tau2), 3),
       "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ", .round(myci$random[2, 3], 3), "]",
       "; Q(df=", fit$k - fit$QMdf[1], ")=",
       .round(fit$QE), ", p=", format.pval(fit$QEp, digits=3, scientific=TRUE),

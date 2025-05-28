@@ -30,6 +30,7 @@ run_impute_data <- function(data,
                             Miter = 5,
                             pred.vars = NULL,
                             use.log.poly = FALSE,
+                            includes.midyr = FALSE,
                             ...) {
 
   data <- data %>%
@@ -93,20 +94,26 @@ run_impute_data <- function(data,
     var.ignore0 <- c(
       "COUNTRY",
       "WAVE",
+      'WAVE_MY',
+      'MIDYEAR_TYPE_MY',
       "MODE_RECRUIT",
       "MODE_ANNUAL",
       "RECRUIT_TYPE",
       "DOI_RECRUIT",
       "DOI_ANNUAL",
+      'DOI_MY',
       "STRATA",
       "PSU",
       "FULL_PARTIAL",
+      "FULL_PARTIAL_MY",
       "ANNUAL_WEIGHT1",
       "ANNUAL_WEIGHT_C2",
       "ANNUAL_WEIGHT_L2",
       "ANNUAL_WEIGHT_R2",
       "RETENTION_WEIGHT_C",
       "RETENTION_WEIGHT_L",
+      "RETENTION_WEIGHT_L_1M",
+      "RETENTION_WEIGHT_L_1M2",
 
       "AGE_GRP",
       "CNTRY_REL_BUD",
@@ -127,7 +134,8 @@ run_impute_data <- function(data,
       "RACE",
       var.ignore0,
       paste0(var.ignore0, "_Y1"),
-      paste0(var.ignore0, "_Y2")
+      paste0(var.ignore0, "_Y2"),
+      paste0(var.ignore0, "_MY")
     )
     ## =================================================================== ##
     var.class <- df.tmp %>%
@@ -203,6 +211,12 @@ run_impute_data <- function(data,
       #tmp.pred[t2,][tmp.pred[t2,] == 1]
     }
     tmp.pred[t2,t1] <- 1
+    ## =================================================================== ##
+    ## mid-year items
+    if(includes.midyr){
+      tmy <- c('ACHIEVING_MY', 'BEAUTY_MY', 'DILIGENT_MY', 'ENGAGE_ARTS_MY', 'FOOD_INSECURE_MY', 'GOOD_PERSON_MY', 'GOOD_RELATION_MY', 'HAPPY_IMPORT_MY', 'HEALTHY_MY', 'MEANINGFUL_MY', 'MIND_FOCUSED_MY', 'MONEY_MY', 'NATURE_MY', 'REL_LIFE_MY', 'TIME_MEDIA_MY')
+      tmp.pred[tmy,t1] <- 1
+    }
     ## =================================================================== ##
     fit.imp <- NULL
     try({

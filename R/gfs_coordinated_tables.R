@@ -565,10 +565,10 @@ gfs_generate_supplemental_docs <- function(
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA");
     res.dir = "results", included.countries=NULL,
-    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all"){
+    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0){
 
 
-  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all";
+  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0;
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
@@ -1916,6 +1916,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     if(what == "S3"){
       tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
     }
+    if(!only.figs){
 
     ## ========================================================================================== ##
     ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
@@ -2081,9 +2082,10 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
       gfs_append_pdf(res.dir, out.file.pdf, add = here::here(res.dir, "tmp_pdf_1.pdf"))
 
     }
-
+    }
     ## ========================================================================================== ##
     ## ====== Supplemental Forest plots ========================================================= ##
+    gc() ## clean up junk prior to forest plots, helps run faster.
     tmp.txt <- fpar(
       ftext(
         paste0("Forest Plots of Estimated Effects across Countries"),
@@ -2097,6 +2099,9 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
 
     tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
     iter = 1
+    if(fig.num.start > 0){
+      fig.num = fig.num.start
+    }
     for(iter in  1:length(tmp.out)){
       run.start.time.i <- Sys.time()
       f0=1
@@ -2182,7 +2187,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
 
       }
       remove(params.fig)
-      gc()
+      gc() ## clean up between forest plots.
     }
   }
 
