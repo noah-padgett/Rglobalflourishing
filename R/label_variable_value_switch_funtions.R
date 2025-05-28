@@ -308,6 +308,7 @@ get_outcome_better_name <- function(var, include.name = TRUE, include.wave = FAL
 #' }
 #' @export
 get_outcome_scale <- function(var) {
+  try({
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_Y", i))) {
       var = stringr::str_remove(var, paste0("_Y", i))
@@ -319,6 +320,7 @@ get_outcome_scale <- function(var) {
       var = stringr::str_remove(var, paste0("_MY"))
     }
   }
+  })
   {
     out = switch(
       var,
@@ -537,6 +539,7 @@ get_outcome_scale <- function(var) {
 #' }
 #' @export
 get_missing_codes <- function(var) {
+try({
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_Y", i))) {
       var = stringr::str_remove(var, paste0("_Y", i))
@@ -548,6 +551,7 @@ get_missing_codes <- function(var) {
       var = stringr::str_remove(var, paste0("_MY"))
     }
   }
+})
   switch(
     var,
     ID = c(-98),
@@ -729,6 +733,7 @@ get_missing_codes <- function(var) {
 #' }
 #' @export
 recode_to_type <- function(x, var) {
+
   for (i in 1:5) {
     if (stringr::str_detect(var, paste0("_Y", i))) {
       var = stringr::str_remove(var, paste0("_Y", i))
