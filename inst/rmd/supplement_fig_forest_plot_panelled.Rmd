@@ -63,52 +63,54 @@ include.estimates = params$include.estimates
 ```
 
 
-```{r}
-#| label: build-figures
+
+<!-- ```{r} -->
+<!-- #| label: build-figures -->
 
 
-if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){
+<!-- if(ignore.cache | !(file.exists(cache.file)) | (file.info(cache.file)$ctime < start.time) ){ -->
 
-suppressWarnings({
-    p1 <- load_meta_result(
-      file = here::here(dir, file.a),
-      predictor = focal.predictor,
-      outcome = outcome,
-      what = "forest.plot"
-    )
-    p1 <- p1[[1]][[1]]
-    ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".png")),
-      plot=p1, units="in", width=6, height=5, dpi = 1000
-    )
-    ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".pdf")),
-      plot=p1, units="in", width=6, height=5
-    )
+<!-- suppressWarnings({ -->
+<!--     p1 <- load_meta_result( -->
+<!--       file = here::here(dir, file.a), -->
+<!--       predictor = focal.predictor, -->
+<!--       outcome = outcome, -->
+<!--       what = "forest.plot" -->
+<!--     ) -->
+<!--     p1 <- p1[[1]][[1]] -->
+<!--     ggsave( -->
+<!--       filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".png")), -->
+<!--       plot=p1, units="in", width=6, height=5, dpi = 1000 -->
+<!--     ) -->
+<!--     ggsave( -->
+<!--       filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".pdf")), -->
+<!--       plot=p1, units="in", width=6, height=5 -->
+<!--     ) -->
 
-    p2 <- load_meta_result(
-      file = here::here(dir, file.b),
-      predictor = focal.predictor,
-      outcome = outcome,
-      what = "forest.plot"
-    )
-    p2 <- p2[[1]][[1]]
-    ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".png")),
-      plot=p2, units="in", width=6, height=5, dpi = 1000
-    )
-    ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".pdf")),
-      plot=p2, units="in", width=6, height=5
-    )
-})
-  
-    save(p1,p2, file=cache.file)
-} else {
-  load(cache.file)
-}  
-  
-```
+<!--     p2 <- load_meta_result( -->
+<!--       file = here::here(dir, file.b), -->
+<!--       predictor = focal.predictor, -->
+<!--       outcome = outcome, -->
+<!--       what = "forest.plot" -->
+<!--     ) -->
+<!--     p2 <- p2[[1]][[1]] -->
+<!--     ggsave( -->
+<!--       filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".png")), -->
+<!--       plot=p2, units="in", width=6, height=5, dpi = 1000 -->
+<!--     ) -->
+<!--     ggsave( -->
+<!--       filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".pdf")), -->
+<!--       plot=p2, units="in", width=6, height=5 -->
+<!--     ) -->
+<!-- }) -->
+
+<!--     save(p1,p2, file=cache.file) -->
+<!-- } else { -->
+<!--   load(cache.file) -->
+<!-- }   -->
+
+<!-- ``` -->
+
 
 
 `r fig.cap`
@@ -119,8 +121,8 @@ suppressWarnings({
 #| out.width: "45%"
 #| fig.ncol: 2
 
-knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".pdf")))
-knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".pdf")))
+knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num0,"A_WOPC_", outcome,"_regressed_on_", focal.predictor,".pdf")))
+knitr::include_graphics(here::here(res.dir, "fig", paste0("figure_S",fig.num0,"B_WPC_", outcome,"_regressed_on_", focal.predictor,".pdf")))
 
 ```
 

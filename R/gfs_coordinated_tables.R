@@ -520,7 +520,127 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
 #' @param ... other arguments as needed
 #' @returns a word document saved to the current 'results/' directory
 #' @examples {
-#'   # TO-DO
+#' ## Generate online supplement in parts
+#' #
+#' # ## Part 1. Global summary statistics and supplemental meta-analytic results
+#' # # set what = "S1"
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S1"
+#' # )
+#' #
+#' # ## Part 2. Country specific results
+#' # # set what = "S2"
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S2"
+#' # )
+#'
+#' ## Note. This can also be done is subcomponents if the above crashes
+#' ##   Uses the 'included.countries' arguments.
+#'
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S2",
+#' #   included.countries = c('Argentina', 'Australia', 'Brazil', 'China', 'Egypt')
+#' # )
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S2",
+#' #   included.countries = c('Germany', 'Hong Kong', 'India', 'Indonesia', 'Israel', 'Japan', 'Kenya', 'Mexico')
+#' # )
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S2",
+#' #   included.countries = c('Nigeria', 'Philippines', 'Poland', 'South Africa', 'Spain', 'Sweden')
+#' # )
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S2",
+#' #   included.countries = c('Tanzania', 'Turkey', 'United Kingdom', 'United States')
+#' # )
+#'
+#' #
+#' # ## Part 3. Summary statistics by country + wave in LARGE tables
+#' # # set what = "S3"
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S3"
+#' # )
+#' #
+#' # ## Part 4. Forest plots -- can be done is pieces as well.
+#' # # set what = "S4"
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S4"
+#' # )
+#'
+#' ## only a subset of figures at a time
+#' ##   Please note: this requires specifying the outcome AND the figure number
+#'
+#' ## Example 1. Same the above because it uses the entire set of outcomes
+#'
+#' # my.vec <- c( "COMPOSITE_FLOURISHING_SECURE_Y2", "COMPOSITE_FLOURISHING_Y2", "COMPOSITE_HAPPI_LIFE_SAT_Y2", "COMPOSITE_HEALTH_Y2", "COMPOSITE_MEANING_PURPOSE_Y2", "COMPOSITE_CHARACTER_Y2", "COMPOSITE_SUBJECTIVE_SOC_CONN_Y2", "COMPOSITE_FINL_MAT_WORRY_Y2", 'HAPPY_Y2',  'LIFE_SAT_Y2', 'WB_TODAY_Y2', 'WB_FIVEYRS_Y2', 'EXPECT_GOOD_Y2', 'FREEDOM_Y2', 'PEACE_Y2', 'LIFE_BALANCE_Y2', 'CAPABLE_Y2', 'WORTHWHILE_Y2', 'LIFE_PURPOSE_Y2', 'MENTAL_HEALTH_Y2', 'THREAT_LIFE_Y2', 'COMPOSITE_DEPRESSION_Y2', 'DEPRESSED_Y2', 'INTEREST_Y2', 'COMPOSITE_ANXIETY_Y2', 'FEEL_ANXIOUS_Y2', 'CONTROL_WORRY_Y2', 'SUFFERING_Y2', 'CONTENT_Y2', 'SAT_RELATNSHP_Y2', 'PEOPLE_HELP_Y2', 'CLOSE_TO_Y2', 'APPROVE_GOVT_Y2', 'SAY_IN_GOVT_Y2', 'BELONGING_Y2', 'SAT_LIVE_Y2', 'TRUST_PEOPLE_Y2', 'MARITAL_STATUS_EVER_MARRIED_Y2', 'MARITAL_STATUS_DIVORCED_Y2', 'NUM_CHILDREN_Y2', 'GROUP_NOT_REL_Y2', 'ATTEND_SVCS_Y2', 'LONELY_Y2', 'DISCRIMINATED_Y2', 'PROMOTE_GOOD_Y2', 'GIVE_UP_Y2', 'HOPE_FUTURE_Y2', 'GRATEFUL_Y2', 'SHOW_LOVE_Y2', 'FORGIVE_Y2', 'DONATED_Y2', 'HELP_STRANGER_Y2', 'VOLUNTEERED_Y2', 'PHYSICAL_HLTH_Y2', 'HEALTH_PROB_Y2', 'BODILY_PAIN_Y2', 'CIGARETTES_BINARY_Y2', 'DRINKS_Y2', 'DAYS_EXERCISE_Y2', 'EXPENSES_Y2', 'WORRY_SAFETY_Y2', 'EDUCATION_3_Y2', 'EMPLOYMENT_Y2', 'INCOME_FEELINGS_Y2', 'OWN_RENT_HOME_Y2', 'INCOME_QUINTILE_Y2', 'CONNECTED_REL_Y2', 'AFTER_DEATH_Y2', 'REL_EXPERIENC_Y2', 'SACRED_TEXTS_Y2', 'PRAY_MEDITATE_Y2', 'BELIEVE_GOD_Y2', 'LIFE_APPROACH_Y2', 'COMFORT_REL_Y2', 'LOVED_BY_GOD_Y2', 'GOD_PUNISH_Y2', 'CRITICAL_Y2', 'TELL_BELIEFS_Y2' )
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S4",
+#' #   outcome.vec = my.vec,
+#' #   fig.num.start = 1
+#' # )
+#'
+#' #
+#' # ## Example 2. figures in pieces
+#' # # the first 8 "composite outcomes forest plots were created. The below specification adds the next 12 figures
+#' # my.vec <- c( 'HAPPY_Y2',  'LIFE_SAT_Y2', 'WB_TODAY_Y2', 'WB_FIVEYRS_Y2', 'EXPECT_GOOD_Y2', 'FREEDOM_Y2', 'PEACE_Y2', 'LIFE_BALANCE_Y2', 'CAPABLE_Y2', 'WORTHWHILE_Y2', 'LIFE_PURPOSE_Y2', 'MENTAL_HEALTH_Y2')
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S4",
+#' #   outcome.vec = my.vec,
+#' #   fig.num.start = 9 # 8 were already created, so start with figure number 9
+#' # )
+#' #
+#' # ## create remaining figures
+#' # my.vec <- c('THREAT_LIFE_Y2', 'COMPOSITE_DEPRESSION_Y2', 'DEPRESSED_Y2', 'INTEREST_Y2', 'COMPOSITE_ANXIETY_Y2', 'FEEL_ANXIOUS_Y2', 'CONTROL_WORRY_Y2', 'SUFFERING_Y2', 'CONTENT_Y2', 'SAT_RELATNSHP_Y2', 'PEOPLE_HELP_Y2', 'CLOSE_TO_Y2', 'APPROVE_GOVT_Y2', 'SAY_IN_GOVT_Y2', 'BELONGING_Y2', 'SAT_LIVE_Y2', 'TRUST_PEOPLE_Y2', 'MARITAL_STATUS_EVER_MARRIED_Y2', 'MARITAL_STATUS_DIVORCED_Y2', 'NUM_CHILDREN_Y2', 'GROUP_NOT_REL_Y2', 'ATTEND_SVCS_Y2', 'LONELY_Y2', 'DISCRIMINATED_Y2', 'PROMOTE_GOOD_Y2', 'GIVE_UP_Y2', 'HOPE_FUTURE_Y2', 'GRATEFUL_Y2', 'SHOW_LOVE_Y2', 'FORGIVE_Y2', 'DONATED_Y2', 'HELP_STRANGER_Y2', 'VOLUNTEERED_Y2', 'PHYSICAL_HLTH_Y2', 'HEALTH_PROB_Y2', 'BODILY_PAIN_Y2', 'CIGARETTES_BINARY_Y2', 'DRINKS_Y2', 'DAYS_EXERCISE_Y2', 'EXPENSES_Y2', 'WORRY_SAFETY_Y2', 'EDUCATION_3_Y2', 'EMPLOYMENT_Y2', 'INCOME_FEELINGS_Y2', 'OWN_RENT_HOME_Y2', 'INCOME_QUINTILE_Y2', 'CONNECTED_REL_Y2', 'AFTER_DEATH_Y2', 'REL_EXPERIENC_Y2', 'SACRED_TEXTS_Y2', 'PRAY_MEDITATE_Y2', 'BELIEVE_GOD_Y2', 'LIFE_APPROACH_Y2', 'COMFORT_REL_Y2', 'LOVED_BY_GOD_Y2', 'GOD_PUNISH_Y2', 'CRITICAL_Y2', 'TELL_BELIEFS_Y2' )
+#' # gfs_generate_supplemental_docs(
+#' #   df.raw = df.raw,
+#' #   focal.predictor = FOCAL_PREDICTOR,
+#' #   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#' #   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#' #   what = "S4",
+#' #   outcome.vec = my.vec,
+#' #   fig.num.start = 21 # 8 + 12 figures already created, start with 21
+#' # )
+#' #
 #' }
 #' @export
 #' @description
@@ -549,7 +669,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
 #'     - Model 1 (No PCs -- attrition weights)
 #'     - Model 2 (w/ PCs -- attrition weights)
 #'
-#'
+
 gfs_generate_supplemental_docs <- function(
     df.raw = NULL,
     focal.predictor = NULL, focal.better.name="Focal Predictor",
@@ -824,7 +944,19 @@ gfs_generate_supplemental_docs <- function(
           )
         )
     } else {
+
       COUNTRY_LABELS = included.countries
+      start.country = 0 ## set to 0 unless updated below
+      if(what == "S2"){
+        base.countries <- sort( c( "Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil", "Mexico", "China") )
+        ## get what country number to start with to adjust table number in S2
+        start.country = which(base.countries == COUNTRY_LABELS[1])
+        if(num.sequential){
+          start.country = start.country*9 #adjust by multiple of 9 if numbered sequentially
+        }
+
+      }
+
     }
   }
   if(is.null(p.bonferroni)){
@@ -1412,7 +1544,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   if(what == "all" | what == "S2"){
     cat("Starting part 2 -- country-specific results\n")
     if(what == "S2"){
-      tb.num <- 9
+      tb.num <- 9 + start.country
     }
     iter = 1;
     for (iter in 1:length(COUNTRY_LABELS)) {
@@ -1907,16 +2039,12 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   # Supplement 3:
   # (1) Summary statistics of demographics by country & wave (raw data)
   #	(2) Summary statistics of OUTCOMES by country & wave (raw data)
-  #	(3) Forest plots of all effects
-  #     - Model 1 (No PCs)
-  #     - Model 2 (w/ PCs)
   ## ============================================================================================== ##
   if(what == "all" | what == "S3"){
-    cat("Starting part 3 - extra-wide format and forest plots\n")
+    cat("Starting part 3 - extra-wide format tables\n")
     if(what == "S3"){
       tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
     }
-    if(!only.figs){
 
     ## ========================================================================================== ##
     ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
@@ -1959,7 +2087,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     }
     ## ========================================================================================== ##
     ## ====== Table S33. summary statistics -- outcome variables by country ====================== ##
-    tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
+    {
+      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
     params.tb <- list(
       x = as.name("WAVE0"),
       y = as.name("COUNTRY"),
@@ -1993,6 +2122,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     tb.num <- tb.num + 1
     remove(params.tb)
     gc()
+    }
     ## ========================================================================================== ##
     ## ====== Table S34-x. Reformatted outcome-wide results by country ============================= ##
     f0 = 1
@@ -2082,113 +2212,136 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
       gfs_append_pdf(res.dir, out.file.pdf, add = here::here(res.dir, "tmp_pdf_1.pdf"))
 
     }
-    }
+
+  }
+
+  ## ============================================================================================== ##
+  # Supplement 4:
+  # (1) Supplemental forest plots
+  ## ============================================================================================== ##
+  if(what == "all" | what == "S4"){
+    cat("Starting part 4 - forest plots\n")
+
     ## ========================================================================================== ##
     ## ====== Supplemental Forest plots ========================================================= ##
     gc() ## clean up junk prior to forest plots, helps run faster.
-    tmp.txt <- fpar(
-      ftext(
-        paste0("Forest Plots of Estimated Effects across Countries"),
-        prop = fp_text(font.family = "Open Sans", font.size = 14, bold = TRUE)
+
+      if(fig.num.start %in% 0:1){
+      tmp.txt <- fpar(
+        ftext(
+          paste0("Forest Plots of Estimated Effects across Countries"),
+          prop = fp_text(font.family = "Open Sans", font.size = 14, bold = TRUE)
+        )
       )
-    )
-    read_docx(path = here::here(res.dir,out.file.docx)) |>
-      body_add_break() |>
-      body_add_fpar(tmp.txt) |>
-      print(target=here::here(res.dir,out.file.docx))
-
-    tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
-    iter = 1
-    if(fig.num.start > 0){
-      fig.num = fig.num.start
-    }
-    for(iter in  1:length(tmp.out)){
-      run.start.time.i <- Sys.time()
-      f0=1
-      for(f0 in 1:length(focal.predictor)){
-
-        params.fig <- list(
-          OUTCOME.VEC = OUTCOME.VEC,
-          MYLABEL = MYLABEL,
-          focal.predictor = focal.predictor[f0],
-          focal.better.name = focal.better.name[f0],
-          outcome = tmp.out[iter],
-          dir = dir.primary ,
-          file.a = file.primary.wopc,
-          file.b = file.primary.wpc,
-          #fig.num = fig.num,
-          res.dir = here::here(res.dir),
-          n.print = n1.print,
-          fig.cap = "Figure.",
-          cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
-          start.time = run.start.time.i,
-          ignore.cache = FALSE
-        )
-
-        if(forest.plot.type == "panelled"){
-          myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
-          fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries*. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
-          params.fig[['fig.cap']] <- fig.cap.i
-          rmarkdown::render(
-            input = system.file("rmd", "supplement_fig_forest_plot_panelled.Rmd", package = "Rglobalflourishing"),
-            output_format = c("pdf_document","word_document"),
-            output_file = paste0("tmp_fig"),
-            output_dir = here::here(res.dir, "supplement-text"),
-            params = params.fig
-          )
-        }
-        if(forest.plot.type == "combined"){
-          myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
-          fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries.* N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. The plot compares the estimates between Model 1 which controls for demographic and childhood variables only and Model 2 which controls for demographic variables, childhood variances, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
-          params.fig[['fig.cap']] <- fig.cap.i
-
-          rmarkdown::render(
-            input = system.file("rmd", "supplement_fig_forest_plot_combined.Rmd", package = "Rglobalflourishing"),
-            output_format = c("pdf_document","word_document"),
-            output_file = paste0("tmp_fig"),
-            output_dir = here::here(res.dir, "supplement-text"),
-            params = params.fig
-          )
-        }
-
-        fig.num = fig.num + 1
-
-        ## Word version
-        tmp.file <- here::here(res.dir, "supplement-text","tmp_fig.docx")
-        tmp_doc <- read_docx(tmp.file)
-        sec.prop <- tmp_doc$sect_dim
-        if(length(sec.prop$page) == 2){
-          ps <- prop_section(
-            page_size = page_size(
-              orient = "landscape",
-              width = sec.prop$page[1]/1440,
-              height = sec.prop$page[2]/1440,
-              unit = "in"
-            )
-          )
-        } else {
-          ps <- prop_section(
-            page_size = page_size(
-              orient = "landscape"
-            )
-          )
-        }
-        supp_doc <- read_docx(path = here::here(res.dir,out.file.docx)) |>
-          body_add_docx(tmp.file) |>
-          body_end_block_section(value = block_section(ps))
-        print(supp_doc, target=here::here(res.dir,out.file.docx))
-
-        ## PDF version
-        gfs_append_pdf(
-          dir = res.dir,
-          cur.doc = out.file.pdf,
-          add = here::here(res.dir, "supplement-text", "tmp_fig.pdf")
-        )
+      read_docx(path = here::here(res.dir,out.file.docx)) |>
+        body_add_break() |>
+        body_add_fpar(tmp.txt) |>
+        print(target=here::here(res.dir,out.file.docx))
 
       }
-      remove(params.fig)
-      gc() ## clean up between forest plots.
-    }
+
+      tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
+      iter = 1
+      if(fig.num.start > 0){
+        fig.num = fig.num.start
+      }
+      for(iter in  1:length(tmp.out)){
+        run.start.time.i <- Sys.time()
+        f0=1
+        for(f0 in 1:length(focal.predictor)){
+
+          params.fig <- list(
+            OUTCOME.VEC = OUTCOME.VEC,
+            MYLABEL = MYLABEL,
+            focal.predictor = focal.predictor[f0],
+            focal.better.name = focal.better.name[f0],
+            outcome = tmp.out[iter],
+            dir = dir.primary ,
+            file.a = file.primary.wopc,
+            file.b = file.primary.wpc,
+            fig.num0 = fig.num,
+            res.dir = res.dir,
+            n.print = n1.print,
+            fig.cap = "Figure.",
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
+            start.time = run.start.time.i,
+            ignore.cache = FALSE
+          )
+
+
+
+          if(forest.plot.type == "panelled"){
+            myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
+            fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries*. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
+            params.fig[['fig.cap']] <- fig.cap.i
+            ## build plot
+            #
+            gfs_supp_forest_plot(params.fig, forest.plot.type)
+            #
+            ## print to pdf/word file
+            rmarkdown::render(
+              input = system.file("rmd", "supplement_fig_forest_plot_panelled.Rmd", package = "Rglobalflourishing"),
+              output_format = c("pdf_document","word_document"),
+              output_file = paste0("tmp_fig"),
+              output_dir = here::here(res.dir, "supplement-text"),
+              params = params.fig
+            )
+          }
+          if(forest.plot.type == "combined"){
+            myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
+            fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries.* N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. The plot compares the estimates between Model 1 which controls for demographic and childhood variables only and Model 2 which controls for demographic variables, childhood variances, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
+            params.fig[['fig.cap']] <- fig.cap.i
+            ## build plot
+            #
+            gfs_supp_forest_plot(params.fig, forest.plot.type)
+            #
+            ## print to pdf/word file
+            rmarkdown::render(
+              input = system.file("rmd", "supplement_fig_forest_plot_combined.Rmd", package = "Rglobalflourishing"),
+              output_format = c("pdf_document","word_document"),
+              output_file = paste0("tmp_fig"),
+              output_dir = here::here(res.dir, "supplement-text"),
+              params = params.fig
+            )
+          }
+          fig.num = fig.num + 1
+          ## Word version
+          tmp.file <- here::here(res.dir, "supplement-text","tmp_fig.docx")
+          tmp_doc <- read_docx(tmp.file)
+          sec.prop <- tmp_doc$sect_dim
+          if(length(sec.prop$page) == 2){
+            ps <- prop_section(
+              page_size = page_size(
+                orient = "landscape",
+                width = sec.prop$page[1]/1440,
+                height = sec.prop$page[2]/1440,
+                unit = "in"
+              )
+            )
+          } else {
+            ps <- prop_section(
+              page_size = page_size(
+                orient = "landscape"
+              )
+            )
+          }
+          supp_doc <- read_docx(path = here::here(res.dir,out.file.docx)) |>
+            body_add_docx(tmp.file) |>
+            body_end_block_section(value = block_section(ps))
+          print(supp_doc, target=here::here(res.dir,out.file.docx))
+
+          ## PDF version
+          gfs_append_pdf(
+            dir = res.dir,
+            cur.doc = out.file.pdf,
+            add = here::here(res.dir, "supplement-text", "tmp_fig.pdf")
+          )
+
+        }
+        remove(params.fig)
+        gc() ## clean up between forest plots.
+      }
+
   }
 
   cat("\n **Complete.**\n")
