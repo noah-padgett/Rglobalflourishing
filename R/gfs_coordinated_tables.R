@@ -943,6 +943,7 @@ gfs_generate_supplemental_docs <- function(
             "China"
           )
         )
+      start.country = 0
     } else {
 
       COUNTRY_LABELS = included.countries
