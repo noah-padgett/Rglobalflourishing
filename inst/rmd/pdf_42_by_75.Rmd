@@ -1,0 +1,47 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+header-includes:
+  - \usepackage[default,oldstyle,scale=0.95]{opensans}
+  - \usepackage[T1]{fontenc}
+geometry: "paperheight=75in,paperwidth=42in,margin=1in"
+params: 
+  cache.file: ""
+---
+
+\pagestyle{empty}
+\setmainfont{opensans}
+
+
+```{r}
+#| label: setup
+#| include: FALSE
+
+set_flextable_defaults(font.family = "Open Sans",font.size = 10)
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = "",
+  warning = FALSE, message = FALSE
+)
+
+load(cache.file)
+
+
+```
+
+
+```{r}
+#| label: print-table
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
+  tab.cap.pre = "", tab.cap.sep = ""
+)
+
+print.tb
+
+```
