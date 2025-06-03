@@ -32,7 +32,7 @@ load(params$cache.file)
 ```
 
 
-`r tb.cap.fig1`
+`r fig.cap`
 
 ```{r}
 #| label: print-figures
