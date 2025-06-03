@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
   warning = FALSE, message = FALSE
 )
 
-load(cache.file)
+load(params$cache.file)
 
 
 ```

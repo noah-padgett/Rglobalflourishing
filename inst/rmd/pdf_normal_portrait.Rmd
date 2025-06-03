@@ -5,7 +5,7 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-
+geometry: "paperheight=11in,paperwidth=8.5in,margin=1in"
 params: 
   cache.file: ""
 ---

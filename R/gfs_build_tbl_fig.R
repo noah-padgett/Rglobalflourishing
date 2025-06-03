@@ -532,6 +532,86 @@ print.tb <- sumtab %>%
 
 #' @export
 #' @rdname build-functions
+build_tbl_variable_by_x <- function(params, font.name = "Open Sans", font.size = 10){
+
+  set_flextable_defaults(font.family = font.name,font.size = font.size)
+
+  ## extract parameters
+  data = params$data
+  x = params$x
+  OUTCOME.VEC0 = params$OUTCOME.VEC0
+  OUTCOME.VEC.LABELS = params$OUTCOME.VEC.LABELS
+  wgt = params$wgt
+  psu = params$psu
+  strata = params$strata
+  tb.cap = params$tb.cap
+  fn.txt = params$fn.txt
+  cache.file = params$cache.file
+  start.time = params$start.time
+  ignore.cache = params$ignore.cache
+  file.xlsx = params$file.xlsx
+
+  ## create table
+  suppressWarnings({
+    sumtab <-  data %>%
+      as_survey_design(
+        #ids = {{psu}},
+        strata = {{strata}},
+        weights = {{wgt}}
+      ) %>%
+      tbl_svysummary(
+        by = {{x}},
+        include = c( any_of(OUTCOME.VEC0) ),
+        label = OUTCOME.VEC.LABELS,
+        type = list(
+          all_continuous() ~ "continuous2"
+        ),
+        statistic = list(
+          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+          all_categorical() ~ "{n} ({p}%)"
+        ),
+        digits = list(
+          all_continuous() ~ c(1,1,1,1),
+          all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
+        ),
+        missing_text = "    (Missing)",
+        missing_stat = "{N_miss} ({p_miss}%)"
+      ) %>%
+      add_stat_label(
+        label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
+      ) %>%
+      modify_header(label ~ "**Variable**") %>%
+      italicize_labels()
+
+  })
+
+  footnote.text <- "*Note*. N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding."
+  footnote.text <- paste(footnote.text, fn.txt)
+
+  tb.note.summarytab <- as_paragraph(as_chunk(footnote.text, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+
+  print.tb <- sumtab %>%
+    as_flex_table() %>%
+    autofit() %>%
+    #width(j=2,width=1.5)%>%
+    #width(j=3,width=1.5)%>%
+    format_flex_table(pg.width = 21 / 2.54 - 2)  %>%
+    add_footer_lines(
+      values = tb.note.summarytab, top = FALSE
+    ) %>%
+    add_header_lines(
+      as_paragraph(
+        as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans", font.size = 11))
+      )
+    )
+
+  gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
+  save(print.tb, file=cache.file)
+}
+
+#' @export
+#' @rdname build-functions
 build_tbl_attr_model <- function(params, font.name = "Open Sans", font.size = 10){
 
   set_flextable_defaults(font.family = font.name,font.size = font.size)
@@ -624,6 +704,7 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  mylabels = params$mylabels
 
   vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
 
@@ -659,7 +740,7 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
   i <- ii <- j <- 1
   for(i in 1:nrow(df.tmp0)){
     if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
-      df.tmp0[i, 1] <- MYLABEL[ii]
+      df.tmp0[i, 1] <- mylabels[ii]
       ii <- ii + 1
     } else {
       df.tmp0[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = TRUE))
@@ -751,6 +832,35 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+
+  COUNTRY_LABELS <-
+    sort(
+      c(
+        "Australia",
+        "Hong Kong",
+        "India",
+        "Indonesia",
+        "Japan",
+        "Philippines",
+        "Egypt",
+        "Germany",
+        "Israel",
+        "Kenya",
+        "Nigeria",
+        "Poland",
+        "South Africa",
+        "Spain",
+        "Sweden",
+        "Tanzania",
+        "Turkey",
+        "United Kingdom",
+        "United States",
+        "Argentina",
+        "Brazil",
+        "Mexico",
+        "China"
+      )
+    )
 
   if(is.meta){
     vec.id <- c("theta.rma.EE", "theta.rma.ECI")
@@ -981,6 +1091,35 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+
+  COUNTRY_LABELS <-
+    sort(
+      c(
+        "Australia",
+        "Hong Kong",
+        "India",
+        "Indonesia",
+        "Japan",
+        "Philippines",
+        "Egypt",
+        "Germany",
+        "Israel",
+        "Kenya",
+        "Nigeria",
+        "Poland",
+        "South Africa",
+        "Spain",
+        "Sweden",
+        "Tanzania",
+        "Turkey",
+        "United Kingdom",
+        "United States",
+        "Argentina",
+        "Brazil",
+        "Mexico",
+        "China"
+      )
+    )
 
   if(is.meta){
     vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
@@ -1221,77 +1360,20 @@ build_tbl_outcomes_exta_wide <- function(params, font.name = "Open Sans", font.s
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  stored.file = params$stored.file
 
   nC <- 1 + 2*length(countries.included)
+  ## load in package saved memory intensive table
 
-  sumtab <- NULL
-  sum.error <- "none"
+  load(stored.file)
 
-  ## build table depending on the amount of available RAM
-  meminfo <- memuse::Sys.meminfo()
-  if(meminfo$freeram >= 10){
-    try({
-      suppressWarnings({
-      sumtab <- data %>%
-        filter(COUNTRY %in% countries.included) %>%
-        as_survey_design(
-          ids = 0,
-          #  strata = {{strata}},
-          weights = {{wgt}}
-        ) %>%
-        tbl_strata(
-          strata = {{x}},
-          .tbl_fun = \(xdat){
-            xdat |>
-              tbl_svysummary(
-                by = {{y}},
-                include = c(
-                  any_of(OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "INCOME_QUINTILE", negate=TRUE)])
-                ),
-                label = OUTCOME.VEC.LABELS,
-                type = list(
-                  all_continuous() ~ "continuous2",
-                  contains("NUM_CHILDREN") ~ "continuous2",
-                  contains("CIGARETTES") ~ "continuous2",
-                  contains("DAYS_EXERCISE") ~ "continuous2",
-                  contains("DRINKS") ~ "continuous2"
-                ),
-                statistic = list(
-                  all_continuous() ~ c("    {mean}", "    {sd}"),
-                  all_categorical() ~ "{p}%"
-                ),
-                digits = list(
-                  all_continuous() ~ c(1,1),
-                  all_categorical() ~ list(label_style_percent0(digits = 1))
-                ),
-                missing_text = "    (Missing)",
-                missing_stat = "{p_miss}%"
-              ) %>%
-              #modify_header(all_stat_cols() ~ "**{level}**") %>%
-              modify_header(label ~ "**Outcome**") %>%
-              add_stat_label(
-                label = all_continuous() ~ c("    Mean", "    Standard Deviation")
-              )
-          },
-          .header = "**{strata}**"
-        ) %>%
-        italicize_labels()
-      })
-    })
-  } else {
-    # if not make in parts
-    # TODO
-  }
   footnote.text <- "Note. N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding."
   footnote.text <- paste(footnote.text, fn.txt)
 
   tb.note <- as_paragraph(as_chunk(footnote.text, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
-  print.tb <- NULL
-  try({
-    suppressWarnings({
   print.tb <- sumtab %>%
-    as_flex_table() %>%
+    #as_flex_table() %>%
     autofit() %>%
     format_flex_table(pg.width = 40) %>%
     bg(
@@ -1308,12 +1390,7 @@ build_tbl_outcomes_exta_wide <- function(params, font.name = "Open Sans", font.s
     hline(i=1, part = "header") %>%
     align(i=2, align = "center", part = "header")
 
-    })
-
   gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
-
-  })
-
 
   save(print.tb, file=cache.file)
 }
@@ -1326,7 +1403,6 @@ build_tbl_sample_extra_wide <- function(params, font.name = "Open Sans", font.si
 
   ## extract parameters
   x = params$x
-  y = params$y
   data = params$data
   focal.predictor0 = params$focal.predictor0
   focal.better.name = params$focal.better.name
@@ -1341,90 +1417,23 @@ build_tbl_sample_extra_wide <- function(params, font.name = "Open Sans", font.si
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  stored.file = params$stored.file
 
-  sumtab <- NULL
-  sum.error <- "none"
 
-  ## build table depending on the amount of available RAM
-  meminfo <- memuse::Sys.meminfo()
-  if(meminfo$freeram >= 10){
-    try({
-      suppressWarnings({
-      sumtab <- data %>%
-        filter(COUNTRY %in% countries.included) %>%
-        as_survey_design(
-          ids = 0,
-          #  strata = {{strata}},
-          weights = {{wgt}}
-        ) %>%
-        tbl_strata(
-          strata = {{x}},
-          .tbl_fun = \(xdat){
-            xdat |>
-              tbl_svysummary(
-                by = {{y}},
-                include = c(
-                  any_of(focal.predictor0),
-                  any_of(baseline.pred0)
-                ),
-                type = list(
-                  all_continuous() ~ "continuous2"
-                ),
-                statistic = list(
-                  all_continuous() ~ c("    {mean}", "    {sd}"),
-                  all_categorical() ~ "{p}%"
-                ),
-                label = list(
-                  contains(focal.predictor0) ~ focal.better.name,
-                  AGE_GRP ~ "Year of birth",
-                  GENDER ~ "Gender",
-                  MARITAL_STATUS ~ "Respondent marital status",
-                  EMPLOYMENT ~ "Employment status",
-                  ATTEND_SVCS ~ "Current religious service attendance",
-                  EDUCATION_3 ~ "Education (years)",
-                  BORN_COUNTRY ~ "Immigration status",
-                  PARENTS_12YRS ~ "Parental marital status around age 12",
-                  MOTHER_RELATN ~ "Relationship with mother when growing up",
-                  FATHER_RELATN ~ "Relationship with father when growing up",
-                  OUTSIDER ~ "Felt like an outsider in family when growing up",
-                  ABUSED ~ "Experienced abuse when growing up",
-                  HEALTH_GROWUP ~ "Self-rated health when growing up",
-                  INCOME_12YRS ~ "Subjective financial status of family growing up",
-                  SVCS_12YRS ~ "Religious service attendance around age 12",
-                  REL1 ~ "Religious affiliation growing up"
-                ),
-                digits = list(
-                  all_continuous() ~ c(1,1),
-                  all_categorical() ~ list(label_style_percent0(digits = 1))
-                ),
-                missing_text = "    (Missing)",
-                missing_stat = "{p_miss}%"
-              ) %>%
-              #modify_header(all_stat_cols() ~ "**{level}**") %>%
-              modify_header(label ~ "**Characteristic**") %>%
-              add_stat_label(
-                label = all_continuous() ~ c("    Mean", "    Standard Deviation")
-              )
-          },
-          .header = "**{strata}**"
-        ) %>%
-        italicize_labels()
-      })
-    })
-  } else {
-    # if not make in parts
-    # TODO
-  }
+  nC <- 1 + 2*length(countries.included)
+
+  ## load in package saved memory intensive table
+
+  load(stored.file)
+
   footnote.text <- "Note. N (%); this table is based on non-imputed data. Cumulative percentages for variables may not add up to 100% due to rounding."
   footnote.text <- paste(footnote.text, fn.txt)
 
   tb.note <- as_paragraph(as_chunk(footnote.text, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
-
   print.tb <- NULL
-  try({
     print.tb <- sumtab %>%
-      as_flex_table() %>%
+      #as_flex_table() %>%
       autofit() %>%
       format_flex_table(pg.width = 40) %>%
       bg(
@@ -1441,9 +1450,6 @@ build_tbl_sample_extra_wide <- function(params, font.name = "Open Sans", font.si
       hline(i=1, part = "header") %>%
       align(i=2, align = "center", part = "header")
     gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
-  })
-
-
   save(print.tb, file=cache.file)
 }
 
@@ -1469,7 +1475,7 @@ build_tbl_pca_summary <- function(params, font.name = "Open Sans", font.size = 1
     res.dir = dir,
     country = country.i,
     outcome = OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)][1],
-    predictor = focal.predictor,
+    predictor = focal.predictor[1],
     "_primary_wpc"
   )
 
@@ -2206,7 +2212,7 @@ generate_docx_wide_landscape <- function(cache.file, print.file){
 
 }
 
-generate_docx_fig <- function(cache.file, print.file, fig.file, orient = "p", h = 6, w = 4){
+generate_docx_fig <- function(cache.file, print.file, fig.file, orient = "p", h = 6, w = 5){
 
   if(orient == "p"){
     style <- block_section(

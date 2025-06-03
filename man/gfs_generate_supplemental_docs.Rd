@@ -32,7 +32,9 @@ gfs_generate_supplemental_docs(
   ci.bonferroni = FALSE,
   num.sequential = FALSE,
   forest.plot.type = "combined",
-  what = "all"
+  what = "all",
+  only.figs = FALSE,
+  fig.num.start = 0
 )
 }
 \arguments{
@@ -92,6 +94,126 @@ Generated two word documents containing the supplemental results for the outcome
 }
 \examples{
 {
-  # TO-DO
+## Generate online supplement in parts
+#
+# ## Part 1. Global summary statistics and supplemental meta-analytic results
+# # set what = "S1"
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S1"
+# )
+#
+# ## Part 2. Country specific results
+# # set what = "S2"
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S2"
+# )
+
+## Note. This can also be done is subcomponents if the above crashes
+##   Uses the 'included.countries' arguments.
+
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S2",
+#   included.countries = c('Argentina', 'Australia', 'Brazil', 'China', 'Egypt')
+# )
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S2",
+#   included.countries = c('Germany', 'Hong Kong', 'India', 'Indonesia', 'Israel', 'Japan', 'Kenya', 'Mexico')
+# )
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S2",
+#   included.countries = c('Nigeria', 'Philippines', 'Poland', 'South Africa', 'Spain', 'Sweden')
+# )
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S2",
+#   included.countries = c('Tanzania', 'Turkey', 'United Kingdom', 'United States')
+# )
+
+#
+# ## Part 3. Summary statistics by country + wave in LARGE tables
+# # set what = "S3"
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S3"
+# )
+#
+# ## Part 4. Forest plots -- can be done is pieces as well.
+# # set what = "S4"
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S4"
+# )
+
+## only a subset of figures at a time
+##   Please note: this requires specifying the outcome AND the figure number
+
+## Example 1. Same the above because it uses the entire set of outcomes
+
+# my.vec <- c( "COMPOSITE_FLOURISHING_SECURE_Y2", "COMPOSITE_FLOURISHING_Y2", "COMPOSITE_HAPPI_LIFE_SAT_Y2", "COMPOSITE_HEALTH_Y2", "COMPOSITE_MEANING_PURPOSE_Y2", "COMPOSITE_CHARACTER_Y2", "COMPOSITE_SUBJECTIVE_SOC_CONN_Y2", "COMPOSITE_FINL_MAT_WORRY_Y2", 'HAPPY_Y2',  'LIFE_SAT_Y2', 'WB_TODAY_Y2', 'WB_FIVEYRS_Y2', 'EXPECT_GOOD_Y2', 'FREEDOM_Y2', 'PEACE_Y2', 'LIFE_BALANCE_Y2', 'CAPABLE_Y2', 'WORTHWHILE_Y2', 'LIFE_PURPOSE_Y2', 'MENTAL_HEALTH_Y2', 'THREAT_LIFE_Y2', 'COMPOSITE_DEPRESSION_Y2', 'DEPRESSED_Y2', 'INTEREST_Y2', 'COMPOSITE_ANXIETY_Y2', 'FEEL_ANXIOUS_Y2', 'CONTROL_WORRY_Y2', 'SUFFERING_Y2', 'CONTENT_Y2', 'SAT_RELATNSHP_Y2', 'PEOPLE_HELP_Y2', 'CLOSE_TO_Y2', 'APPROVE_GOVT_Y2', 'SAY_IN_GOVT_Y2', 'BELONGING_Y2', 'SAT_LIVE_Y2', 'TRUST_PEOPLE_Y2', 'MARITAL_STATUS_EVER_MARRIED_Y2', 'MARITAL_STATUS_DIVORCED_Y2', 'NUM_CHILDREN_Y2', 'GROUP_NOT_REL_Y2', 'ATTEND_SVCS_Y2', 'LONELY_Y2', 'DISCRIMINATED_Y2', 'PROMOTE_GOOD_Y2', 'GIVE_UP_Y2', 'HOPE_FUTURE_Y2', 'GRATEFUL_Y2', 'SHOW_LOVE_Y2', 'FORGIVE_Y2', 'DONATED_Y2', 'HELP_STRANGER_Y2', 'VOLUNTEERED_Y2', 'PHYSICAL_HLTH_Y2', 'HEALTH_PROB_Y2', 'BODILY_PAIN_Y2', 'CIGARETTES_BINARY_Y2', 'DRINKS_Y2', 'DAYS_EXERCISE_Y2', 'EXPENSES_Y2', 'WORRY_SAFETY_Y2', 'EDUCATION_3_Y2', 'EMPLOYMENT_Y2', 'INCOME_FEELINGS_Y2', 'OWN_RENT_HOME_Y2', 'INCOME_QUINTILE_Y2', 'CONNECTED_REL_Y2', 'AFTER_DEATH_Y2', 'REL_EXPERIENC_Y2', 'SACRED_TEXTS_Y2', 'PRAY_MEDITATE_Y2', 'BELIEVE_GOD_Y2', 'LIFE_APPROACH_Y2', 'COMFORT_REL_Y2', 'LOVED_BY_GOD_Y2', 'GOD_PUNISH_Y2', 'CRITICAL_Y2', 'TELL_BELIEFS_Y2' )
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S4",
+#   outcome.vec = my.vec,
+#   fig.num.start = 1
+# )
+
+#
+# ## Example 2. figures in pieces
+# # the first 8 "composite outcomes forest plots were created. The below specification adds the next 12 figures
+# my.vec <- c( 'HAPPY_Y2',  'LIFE_SAT_Y2', 'WB_TODAY_Y2', 'WB_FIVEYRS_Y2', 'EXPECT_GOOD_Y2', 'FREEDOM_Y2', 'PEACE_Y2', 'LIFE_BALANCE_Y2', 'CAPABLE_Y2', 'WORTHWHILE_Y2', 'LIFE_PURPOSE_Y2', 'MENTAL_HEALTH_Y2')
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S4",
+#   outcome.vec = my.vec,
+#   fig.num.start = 9 # 8 were already created, so start with figure number 9
+# )
+#
+# ## create remaining figures
+# my.vec <- c('THREAT_LIFE_Y2', 'COMPOSITE_DEPRESSION_Y2', 'DEPRESSED_Y2', 'INTEREST_Y2', 'COMPOSITE_ANXIETY_Y2', 'FEEL_ANXIOUS_Y2', 'CONTROL_WORRY_Y2', 'SUFFERING_Y2', 'CONTENT_Y2', 'SAT_RELATNSHP_Y2', 'PEOPLE_HELP_Y2', 'CLOSE_TO_Y2', 'APPROVE_GOVT_Y2', 'SAY_IN_GOVT_Y2', 'BELONGING_Y2', 'SAT_LIVE_Y2', 'TRUST_PEOPLE_Y2', 'MARITAL_STATUS_EVER_MARRIED_Y2', 'MARITAL_STATUS_DIVORCED_Y2', 'NUM_CHILDREN_Y2', 'GROUP_NOT_REL_Y2', 'ATTEND_SVCS_Y2', 'LONELY_Y2', 'DISCRIMINATED_Y2', 'PROMOTE_GOOD_Y2', 'GIVE_UP_Y2', 'HOPE_FUTURE_Y2', 'GRATEFUL_Y2', 'SHOW_LOVE_Y2', 'FORGIVE_Y2', 'DONATED_Y2', 'HELP_STRANGER_Y2', 'VOLUNTEERED_Y2', 'PHYSICAL_HLTH_Y2', 'HEALTH_PROB_Y2', 'BODILY_PAIN_Y2', 'CIGARETTES_BINARY_Y2', 'DRINKS_Y2', 'DAYS_EXERCISE_Y2', 'EXPENSES_Y2', 'WORRY_SAFETY_Y2', 'EDUCATION_3_Y2', 'EMPLOYMENT_Y2', 'INCOME_FEELINGS_Y2', 'OWN_RENT_HOME_Y2', 'INCOME_QUINTILE_Y2', 'CONNECTED_REL_Y2', 'AFTER_DEATH_Y2', 'REL_EXPERIENC_Y2', 'SACRED_TEXTS_Y2', 'PRAY_MEDITATE_Y2', 'BELIEVE_GOD_Y2', 'LIFE_APPROACH_Y2', 'COMFORT_REL_Y2', 'LOVED_BY_GOD_Y2', 'GOD_PUNISH_Y2', 'CRITICAL_Y2', 'TELL_BELIEFS_Y2' )
+# gfs_generate_supplemental_docs(
+#   df.raw = df.raw,
+#   focal.predictor = FOCAL_PREDICTOR,
+#   focal.better.name =  FOCAL_PREDICTOR_BETTER_NAME,
+#   focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE,
+#   what = "S4",
+#   outcome.vec = my.vec,
+#   fig.num.start = 21 # 8 + 12 figures already created, start with 21
+# )
+#
 }
 }

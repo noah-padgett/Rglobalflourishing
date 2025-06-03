@@ -365,15 +365,15 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
     Rglobalflourishing:::build_tbl_2(params.tb2)
 
     rmarkdown::render(
-      input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
+      input = system.file("rmd", "pdf_normal_landscape.Rmd", package = "Rglobalflourishing"),
       output_format = c("pdf_document"),
       output_file = paste0("main_text_tbl_",tb.num),
       output_dir = here::here(res.dir, "main-text"),
       params = list(cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")))
     )
-    Rglobalflourishing:::generate_docx_normal_portrait(
+    Rglobalflourishing:::generate_docx_normal_landscape(
       cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")),
-      print.file = here::here(res.dir, "main-text", "main_text_tbl_2.docx")
+      print.file = here::here(res.dir, "main-text", paste0("main_text_tbl_",tb.num,".docx"))
     )
 
     tb.num <- tb.num + 1
@@ -1202,7 +1202,7 @@ gfs_generate_supplemental_docs <- function(
       rmarkdown::render(
         input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
-        output_file = "supplement_tbl_1",,
+        output_file = "supplement_tbl_1",
         output_dir = here::here(res.dir, "supplement-text"),
         params = list(
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s1.RData"))
@@ -1239,7 +1239,7 @@ gfs_generate_supplemental_docs <- function(
       rmarkdown::render(
         input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
-        output_file = "supplement_tbl_2",,
+        output_file = "supplement_tbl_2",
         output_dir = here::here(res.dir, "supplement-text"),
         params = list(
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s2.RData"))
@@ -1303,20 +1303,13 @@ gfs_generate_supplemental_docs <- function(
         ignore.cache = FALSE,
         file.xlsx = here::here(res.dir, out.file.xlsx)
       )
-      rmarkdown::render(
-        input = system.file("rmd", "supplement_tb_outcomes_by_x.Rmd", package = "Rglobalflourishing"),
-        output_format = c("pdf_document","word_document"),
-        output_file = "supplement_tbl_4",
-        output_dir = here::here(res.dir, "supplement-text"),
-        params = params.tb
-      )
 
       Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
 
       rmarkdown::render(
         input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
-        output_file = "supplement_tbl_4",,
+        output_file = "supplement_tbl_4",
         output_dir = here::here(res.dir, "supplement-text"),
         params = list(
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s4.RData"))
@@ -1386,7 +1379,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData"))
         )
       )
-      Rglobalflourishing:::generate_docx_normal_portrait(
+      Rglobalflourishing:::generate_docx_wide_landscape(
         cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData")),
         print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_",tb.num,".docx"))
       )
@@ -1443,7 +1436,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData"))
         )
       )
-      Rglobalflourishing:::generate_docx_normal_portrait(
+      Rglobalflourishing:::generate_docx_wide_landscape(
         cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData")),
         print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_",tb.num,".docx"))
       )
@@ -1491,7 +1484,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-evalues-",f0,".RData"))
         )
       )
-      Rglobalflourishing:::generate_docx_normal_portrait(
+      Rglobalflourishing:::generate_docx_wide_landscape(
         cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-evalues-",f0,".RData")),
         print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_",tb.num,".docx"))
       )
@@ -1546,7 +1539,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-c",f0,".RData"))
         )
       )
-      Rglobalflourishing:::generate_docx_normal_portrait(
+      Rglobalflourishing:::generate_docx_wide_landscape(
         cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-meta-c",f0,".RData")),
         print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_",tb.num,".docx"))
       )
@@ -1601,6 +1594,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     read_docx() |> print(target = here::here(res.dir,out.file.docx))
     supp.text.docx <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
     supp.text.docx <- supp.text.docx[str_detect( supp.text.docx, ".docx")]
+    supp.text.docx <- supp.text.docx[order(as.numeric(str_remove(str_sub(supp.text.docx, -7,-6),"_")))]
     i = 1
     for(i in 1:length(supp.text.docx)){
       tmp_doc <- read_docx(supp.text.docx[i])
@@ -1630,6 +1624,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     ## PDF version (this method works for part 1, need a difference method for after out.file.pdf is created)
     supp.text.pdf <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
     supp.text.pdf <- supp.text.pdf[str_detect( supp.text.pdf, ".pdf")]
+    supp.text.pdf <- supp.text.pdf[order(as.numeric(str_remove(str_sub(supp.text.pdf, -6,-5),"_")))]
     qpdf::pdf_combine(input = supp.text.pdf, output=here::here(res.dir,out.file.pdf))
 
     cat("Part 1 complete.\n")
@@ -1647,7 +1642,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   if(what == "all" | what == "S2"){
     cat("Starting part 2 -- country-specific results\n")
     if(what == "S2"){
-      tb.num <- 9 + start.country
+      tb.num <- 4 + 4*length(focal.predictor) + start.country
     }
     iter = 1;
     for (iter in 1:length(COUNTRY_LABELS)) {
@@ -2168,6 +2163,13 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         supp.text.docx <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
         supp.text.docx <- supp.text.docx[str_detect(supp.text.docx, "tmp_tbl_")]
         supp.text.docx <- supp.text.docx[str_detect( supp.text.docx, ".docx")]
+        file.ord <- supp.text.docx |>
+          str_sub(-7,-5) |>
+          str_remove("_") |>
+          str_remove("\\.") |>
+          mixedsort() |>
+          order()
+        supp.text.docx <- supp.text.docx[file.ord]
 
         tmp.txt <- fpar(
           ftext(
@@ -2210,6 +2212,13 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         supp.text.pdf <- list.files(here::here(res.dir, "supplement-text"),full.names = TRUE)
         supp.text.pdf <- supp.text.pdf[str_detect(supp.text.pdf, "tmp_tbl_")]
         supp.text.pdf <- supp.text.pdf[str_detect( supp.text.pdf, ".pdf")]
+        file.ord <- supp.text.pdf |>
+          str_sub(-7,-5) |>
+          str_remove("_") |>
+          str_remove("\\.") |>
+          mixedsort() |>
+          order()
+        supp.text.pdf <- supp.text.pdf[file.ord]
         qpdf::pdf_combine(input = supp.text.pdf, output = here::here(res.dir, "tmp_pdf_1.pdf"))
         gfs_append_pdf(res.dir, out.file.pdf, add = here::here(res.dir, "tmp_pdf_1.pdf"))
 
@@ -2245,9 +2254,6 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               WAVE0 == "Wave 2" ~ "W2"
             )
           ),
-        focal.predictor0 = focal.predictor0,
-        focal.better.name = focal.better.name,
-        baseline.pred0 = baseline.pred0[str_detect(baseline.pred0, "RACE1", negate=TRUE)],
         wgt = as.name("WGT0"),
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
@@ -2257,9 +2263,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        stored.file = system.file("tbls", "saved_sample_tb.RData", package = "Rglobalflourishing")
       )
-
       Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
       rmarkdown::render(
         input = system.file("rmd", "pdf_42_by_25.Rmd", package = "Rglobalflourishing"),
@@ -2270,10 +2276,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData"))
         )
       )
-      Rglobalflourishing:::generate_docx_wide_landscape(
-        cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
-        print.file = here::here(res.dir, "supplement-text", "supplement_tbl_w1.docx")
-      )
+      # Rglobalflourishing:::generate_docx_wide_landscape(
+      #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+      #   print.file = here::here(res.dir, "supplement-text", "supplement_tbl_w1.docx")
+      # )
       tb.num <- tb.num + 1
       remove(params.tb)
       gc()
@@ -2303,7 +2309,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
       start.time = run.start.time,
       ignore.cache = FALSE,
-      file.xlsx = here::here(res.dir, out.file.xlsx)
+      file.xlsx = here::here(res.dir, out.file.xlsx),
+      stored.file = system.file("tbls", "saved_outcomes_tb.RData", package = "Rglobalflourishing")
     )
     Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
     rmarkdown::render(
@@ -2315,10 +2322,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData"))
       )
     )
-    Rglobalflourishing:::generate_docx_wide_landscape(
-      cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
-      print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_2.docx"))
-    )
+    # Rglobalflourishing:::generate_docx_wide_landscape(
+    #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
+    #   print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_2.docx"))
+    # )
     tb.num <- tb.num + 1
     remove(params.tb)
     gc()
@@ -2346,7 +2353,8 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        mylabels = MYLABEL
       )
       Rglobalflourishing:::build_tbl_country_point_estimates(params.tb)
       rmarkdown::render(

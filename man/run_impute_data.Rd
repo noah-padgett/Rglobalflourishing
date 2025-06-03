@@ -11,6 +11,7 @@ run_impute_data(
   Miter = 5,
   pred.vars = NULL,
   use.log.poly = FALSE,
+  includes.midyr = FALSE,
   ...
 )
 }
