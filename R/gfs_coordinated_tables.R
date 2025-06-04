@@ -300,7 +300,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   for (i in 1:length(focal.predictor0)) {
     if(any(str_detect(colnames(df.raw.long), focal.predictor0[i]))){
       try({
-        attr(df.raw.long[[focal.predictor0[i]]], which = "label") <- focal.better.name[i]
+        attr(df.raw.long[[focal.predictor0[i]]], which = "label") <- str_to_sentence(focal.better.name[i])
       })
     }
   }
@@ -1057,7 +1057,7 @@ gfs_generate_supplemental_docs <- function(
       for (i in 1:length(focal.predictor0)) {
         if(any(str_detect(colnames(df.raw.long), focal.predictor0[i]))){
           try({
-            attr(df.raw.long[[focal.predictor0[i]]], which = "label") <- focal.better.name[i]
+            attr(df.raw.long[[focal.predictor0[i]]], which = "label") <- str_to_sentence(focal.better.name[i])
           })
         }
       }
@@ -1147,7 +1147,7 @@ gfs_generate_supplemental_docs <- function(
       for (i in 1:length(focal.predictor0)) {
         if(any(str_detect(colnames(df.raw.attr.retained), focal.predictor0[i]))){
           try({
-            attr(df.raw.attr.retained[[focal.predictor0[i]]], which = "label") <- focal.better.name[i]
+            attr(df.raw.attr.retained[[focal.predictor0[i]]], which = "label") <- str_to_sentence(focal.better.name[i])
           })
         }
       }
@@ -1273,7 +1273,7 @@ gfs_generate_supplemental_docs <- function(
       rmarkdown::render(
         input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
-        output_file = "supplement_tbl_3",,
+        output_file = "supplement_tbl_3",
         output_dir = here::here(res.dir, "supplement-text"),
         params = list(
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s3.RData"))
@@ -1333,9 +1333,9 @@ gfs_generate_supplemental_docs <- function(
     for(f0 in 1:length(focal.predictor)){
       ## ======================================================================================== ##
       ## Model 1 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
-      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", focal.better.name[f0] ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 1 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(focal.better.name[f0]) ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 1 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
-      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available.
 
@@ -1390,9 +1390,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       gc()
       ## ======================================================================================== ##
       ## Model 2 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
-      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", focal.better.name[f0] ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 2 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(focal.better.name[f0]) ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 2 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
-      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For the PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
@@ -1446,7 +1446,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       gc()
       ## ======================================================================================== ##
       ## E-values for estimates ================================================================= ##
-      tb.cap.i = paste0("Table S",tb.num,". ", focal.better.name[f0], " for comparing estimated E-values across models and how missingness at Wave 2 was handled.")
+      tb.cap.i = paste0("Table S",tb.num,". ", str_to_sentence(focal.better.name[f0]), " for comparing estimated E-values across models and how missingness at Wave 2 was handled.")
 
       params.tb <- list(
         is.meta = TRUE,
@@ -1493,9 +1493,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       gc()
       ## ======================================================================================== ##
       ## Model 1 & 2 - Meta-analyzed unstandardized estimates ================================ ##
-      tb.cap.i <- paste0("Table S",tb.num,". Unstandardized effects sizes for the raw score of ", focal.better.name[f0]," (multiple imputation results only).")
+      tb.cap.i <- paste0("Table S",tb.num,". Unstandardized effects sizes for the raw score of ", str_to_lower(focal.better.name[f0])," (multiple imputation results only).")
 
-      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for unstandardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for unstandardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For the PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
@@ -1979,14 +1979,14 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ## Model estimated using multiple imputation
         {
           if(num.sequential){
-            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
+            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", str_to_lower(focal.better.name[f0]) ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
             tb.num <- tb.num + 1
           } else {
-            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
+            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", str_to_lower(focal.better.name[f0]) ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
             tb.let <- tb.let + 1
           }
           # footnote information:
-          fn.txt.i <- paste0("Notes. N=", country.n1.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+          fn.txt.i <- paste0("Notes. N=", country.n1.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
@@ -2040,14 +2040,14 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ## Results based on complete-case analysis w/ attrition weights
         {
           if(num.sequential){
-            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter], " using complete-case analyses with attrition weights.")
+            tb.cap.i <- paste0("Table S",tb.num,". Associations of ", str_to_lower(focal.better.name[f0]) ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter], " using complete-case analyses with attrition weights.")
             tb.num <- tb.num + 1
           } else{
-            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", focal.better.name[f0] ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter], " using complete-case analyses with attrition weights.")
+            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Associations of ", str_to_lower(focal.better.name[f0]) ," with adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter], " using complete-case analyses with attrition weights.")
             tb.let <- tb.let + 1
           }
           # footnote information:
-          fn.txt.i <- paste0("Notes. N=", country.n2.print ,"; Reference for focal predictor: ", focal.predictor.reference.value[f0],". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+          fn.txt.i <- paste0("Notes. N=", country.n2.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),". RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; SE, standard error, the SE reported for binary/Likert-type outcomes where risk-ratios are on the log(RR) scale; CI, confidence interval; p-value, a Wald-type test of the null hypothesis that the effect of the focal predictor is zero; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Attrition weights were computed to adjust the complete case data (those who responded at Wave 2 to at least 50% of the questions) and multiple imputation was used to impute missing data on all remaining within wave on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
@@ -2101,10 +2101,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         ## Country Specific E-values output table =============================== ##
         {
           if(num.sequential){
-            tb.cap.i <- paste0("Table S",tb.num,". Sensitivity analysis of ", focal.better.name[f0] ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
+            tb.cap.i <- paste0("Table S",tb.num,". Sensitivity analysis of ", str_to_lower(focal.better.name[f0]) ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
             tb.num <- tb.num + 1
           } else{
-            tb.cap.i <-  paste0("Table S",tb.num,letters[tb.let],". Sensitivity analysis of ", focal.better.name[f0] ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
+            tb.cap.i <-  paste0("Table S",tb.num,letters[tb.let],". Sensitivity analysis of ", str_to_lower(focal.better.name[f0])," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
             tb.let <- tb.let + 1
           }
 
@@ -2334,7 +2334,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     ## ====== Table S34-x. Reformatted outcome-wide results by country ============================= ##
     f0 = 1
     for(f0 in 1:length(focal.predictor)){
-      tb.cap.i <- paste0("Table S",tb.num,". Model 2 (controlling for demographic, childhood, and contemporaneous exposures) outcome-wide results for ", focal.better.name[f0] ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
+      tb.cap.i <- paste0("Table S",tb.num,". Model 2 (controlling for demographic, childhood, and contemporaneous exposures) outcome-wide results for ", str_to_lower(focal.better.name[f0]) ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
 
       fn.txt.i <- paste0("Notes. N =", n1.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00. Please review the country-specific results tables or forest plots to evaluate the uncertainty in all estimated effects.
 
@@ -2467,7 +2467,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
             OUTCOME.VEC = OUTCOME.VEC,
             MYLABEL = MYLABEL,
             focal.predictor = focal.predictor[f0],
-            focal.better.name = focal.better.name[f0],
+            focal.better.name = str_to_sentence(focal.better.name[f0]),
             outcome = tmp.out[iter],
             dir = dir.primary ,
             file.a = file.primary.wopc,
