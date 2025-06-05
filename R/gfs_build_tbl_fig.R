@@ -1525,22 +1525,6 @@ build_tbl_pca_summary <- function(params, font.name = "Open Sans", font.size = 1
   save(print.tb, file=cache.file)
 }
 
-#
-# #' @export
-# #' @rdname build-functions
-# build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
-#
-#   set_flextable_defaults(font.family = font.name,font.size = font.size)
-#
-#   gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
-#   save(print.tb, file=cache.file)
-# }
-#
-
-
-## =================================================================================== ##
-## =================================================================================== ##
-## Figures
 
 #' @export
 #' @rdname build-functions
@@ -2150,10 +2134,6 @@ gfs_supp_forest_plot <- function(params, plot.type = "combined", ...) {
 
 }
 
-## =================================================================================== ##
-## =================================================================================== ##
-## Word file printing functions -- these take in the cache file then print the docx
-
 #' @export
 #' @rdname build-functions
 generate_docx_normal_portrait <- function(cache.file, print.file){
@@ -2212,6 +2192,8 @@ generate_docx_wide_landscape <- function(cache.file, print.file){
 
 }
 
+#' @export
+#' @rdname build-functions
 generate_docx_fig <- function(cache.file, print.file, fig.file, orient = "p", h = 6, w = 5){
 
   if(orient == "p"){

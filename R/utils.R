@@ -1,4 +1,3 @@
-# Utility functions for Rglobalflourishing package
 
 #' Standardized with Complex Survey Adjusted Mean and Variance
 #'
@@ -274,7 +273,6 @@ theme_meta_evalues <- function(xtb, pg.width = 6.5, .ncol = 6) {
   tb.temp
 }
 
-# A better rounding function for printing/concatenating results
 #' @rdname utils
 #' @export
 .round <- function(x, digits = 2) {
@@ -631,7 +629,6 @@ label_style_percent0 <- function (prefix = "", suffix = "", digits = 0, big.mark
 }
 
 
-# the following two sort functions were pulled form the gtools packages and replicated here to remove a dependency
 #' @keywords internal
 mixedorder <- function (x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE,  numeric.type = c("decimal", "roman"), roman.case = c("upper", "lower", "both"), scientific = TRUE){
   numeric.type <- match.arg(numeric.type)
