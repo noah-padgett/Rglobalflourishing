@@ -465,6 +465,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
 
     }
     remove(params.fig)
+
     gc()
   }
 
