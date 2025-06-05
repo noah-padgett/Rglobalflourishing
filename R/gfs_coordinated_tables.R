@@ -460,7 +460,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
           fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".png")),
           print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
           orient = "p",
-          w = 4, h = 6
+          w = 5, h = 6
         )
 
     }
