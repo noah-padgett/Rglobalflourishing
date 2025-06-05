@@ -8,6 +8,7 @@
 #' @param method.income method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'.
 #' @param data.is.wide (FALSE) change to TRUE only if the data are in long format
 #' @param reverse.code.cont (FALSE) reverse code numeric variables (e.g., lonely) for computing summary statistics. DO NOT apply this recoding before conducting imputation. THIS IS ONLY FOR SUMMARY STATISTICS.
+#' @param to.numeric (optional) FALSE
 #' @param ... other arguments
 #' @returns a dataset with attrition weights appended
 #' @examples {
@@ -16,7 +17,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, reverse.code.cont = FALSE, ...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, reverse.code.cont = FALSE, to.numeric = FALSE,...) {
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -367,6 +368,27 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           x <- recode_to_numeric(x, "LONELY")
           x
         })
+      )
+  }
+  if(to.numeric){
+    df.original <- df.original %>%
+      mutate(
+        across(where(is.factor), \(x){
+          if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
+            x <- sub("\\..*", "", x)
+            x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+              as.numeric()
+          }
+          if(str_detect(cur_column(), "BORN_COUNTRY")){
+            x <- sub("\\..*", "", x)
+            x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+              as.numeric()
+          }
+          x
+        }),
+        dplyr::across(!(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_Y2",  paste0("INCOME",c("","_Y1","_Y2")),  paste0("INCOME_QUINTILE",c("","_Y1","_Y2")), paste0("SELFID1",c("")),  paste0("SELFID2",c("")),  paste0("DOI_RECRUIT",c("","_Y1","_Y2")),  paste0("DOI_ANNUAL",c("","_Y1"))))), \(x){
+            recode_to_numeric(x, cur_column())
+          }, .names = "{.col}")
       )
   }
   ## ============================================================================================ ##

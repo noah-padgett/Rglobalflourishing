@@ -35,6 +35,9 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   if (!dir.exists(here::here(res.dir))) {
     dir.create(here::here(res.dir))
   }
+  if(!dir.exits(here::here(res.dir, "main-text"))){
+    dir.create(here::here(res.dir, "main-text"))
+  }
   ## ============================================================================================ ##
   ## ====== INTERNAL VECTORS FOR PRINTING ======================================================= ##
   ## Initialize internal word document formatting functions
