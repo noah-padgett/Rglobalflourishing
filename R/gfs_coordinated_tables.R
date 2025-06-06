@@ -2238,7 +2238,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   # (1) Summary statistics of demographics by country & wave (raw data)
   #	(2) Summary statistics of OUTCOMES by country & wave (raw data)
   ## ============================================================================================== ##
-  if(what == "all" | what == "S3" | what == "S4"){
+  if(what == "all" | what == "S3"){
     cat("Starting part 3 - extra-wide format tables\n")
     if(what == "S3"){
       tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
