@@ -715,11 +715,11 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
     appnd.txt = file
   ) %>%
     filter(Variable == "FOCAL_PREDICTOR") %>%
-    select(COUNTRY, OUTCOME, id.Std.Est, rr.Est)
+    select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est)
 
   for(i in 1:nrow(df.tmp)){
     if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
-      df.tmp$rr.Est[i] <- NA
+      df.tmp$rr.Std.Est[i] <- NA
     }
     if(get_outcome_scale(df.tmp$OUTCOME[i]) != "cont"){
       df.tmp$id.Std.Est[i] <- NA
@@ -729,7 +729,7 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
   df.tmp <- df.tmp %>%
     pivot_wider(
       names_from = COUNTRY,
-      values_from = c(id.Std.Est, rr.Est),
+      values_from = c(id.Std.Est, rr.Std.Est),
     )
   df.tmp <- df.tmp[, c(1, c(rbind(2:24, 25:47)) )]
 

@@ -35,7 +35,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   if (!dir.exists(here::here(res.dir))) {
     dir.create(here::here(res.dir))
   }
-  if(!dir.exits(here::here(res.dir, "main-text"))){
+  if(!dir.exists(here::here(res.dir, "main-text"))){
     dir.create(here::here(res.dir, "main-text"))
   }
   ## ============================================================================================ ##
@@ -2238,16 +2238,60 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   # (1) Summary statistics of demographics by country & wave (raw data)
   #	(2) Summary statistics of OUTCOMES by country & wave (raw data)
   ## ============================================================================================== ##
-  if(what == "all" | what == "S3"){
+  if(what == "all" | what == "S3" | what == "S4"){
     cat("Starting part 3 - extra-wide format tables\n")
     if(what == "S3"){
       tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
     }
 
-    ## ========================================================================================== ##
-    ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
-    {
-      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of demographic and childhood variables data across countries.")
+      ## ========================================================================================== ##
+      ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
+      {
+        tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of demographic and childhood variables data across countries.")
+        params.tb <- list(
+          x = as.name("WAVE0"),
+          y = as.name("COUNTRY"),
+          data = df.raw.long %>%
+            mutate(
+              WAVE0 = case_when(
+                WAVE0 == "Wave 1" ~ "W1",
+                WAVE0 == "Wave 2" ~ "W2"
+              )
+            ),
+          wgt = as.name("WGT0"),
+          psu = as.name("PSU"),
+          strata = as.name("STRATA"),
+          countries.included = COUNTRY_LABELS,
+          tb.cap = tb.cap.i,
+          fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+          start.time = run.start.time,
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          stored.file = system.file("tbls", "saved_sample_tb.RData", package = "Rglobalflourishing")
+        )
+        Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
+        rmarkdown::render(
+          input = system.file("rmd", "pdf_42_by_25.Rmd", package = "Rglobalflourishing"),
+          output_format = c("pdf_document"),
+          output_file = "supplement_tbl_w1",
+          output_dir = here::here(res.dir, "supplement-text"),
+          params = list(
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData"))
+          )
+        )
+        # Rglobalflourishing:::generate_docx_wide_landscape(
+        #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+        #   print.file = here::here(res.dir, "supplement-text", "supplement_tbl_w1.docx")
+        # )
+        tb.num <- tb.num + 1
+        remove(params.tb)
+        gc()
+      }
+      ## ========================================================================================== ##
+      ## ====== Table S33. summary statistics -- outcome variables by country ====================== ##
+      {
+        tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
       params.tb <- list(
         x = as.name("WAVE0"),
         y = as.name("COUNTRY"),
@@ -2258,82 +2302,38 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
               WAVE0 == "Wave 2" ~ "W2"
             )
           ),
+        OUTCOME.VEC0 = OUTCOME.VEC0,
+        OUTCOME.VEC.LABELS = OUTCOME.VEC.LABELS,
         wgt = as.name("WGT0"),
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         countries.included = COUNTRY_LABELS,
         tb.cap = tb.cap.i,
         fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
-        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
         file.xlsx = here::here(res.dir, out.file.xlsx),
-        stored.file = system.file("tbls", "saved_sample_tb.RData", package = "Rglobalflourishing")
+        stored.file = system.file("tbls", "saved_outcomes_tb.RData", package = "Rglobalflourishing")
       )
       Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
       rmarkdown::render(
-        input = system.file("rmd", "pdf_42_by_25.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_42_by_75.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
-        output_file = "supplement_tbl_w1",
+        output_file = "supplement_tbl_w2",
         output_dir = here::here(res.dir, "supplement-text"),
         params = list(
-          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData"))
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData"))
         )
       )
       # Rglobalflourishing:::generate_docx_wide_landscape(
-      #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
-      #   print.file = here::here(res.dir, "supplement-text", "supplement_tbl_w1.docx")
+      #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
+      #   print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_2.docx"))
       # )
       tb.num <- tb.num + 1
       remove(params.tb)
       gc()
-    }
-    ## ========================================================================================== ##
-    ## ====== Table S33. summary statistics -- outcome variables by country ====================== ##
-    {
-      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
-    params.tb <- list(
-      x = as.name("WAVE0"),
-      y = as.name("COUNTRY"),
-      data = df.raw.long %>%
-        mutate(
-          WAVE0 = case_when(
-            WAVE0 == "Wave 1" ~ "W1",
-            WAVE0 == "Wave 2" ~ "W2"
-          )
-        ),
-      OUTCOME.VEC0 = OUTCOME.VEC0,
-      OUTCOME.VEC.LABELS = OUTCOME.VEC.LABELS,
-      wgt = as.name("WGT0"),
-      psu = as.name("PSU"),
-      strata = as.name("STRATA"),
-      countries.included = COUNTRY_LABELS,
-      tb.cap = tb.cap.i,
-      fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
-      cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
-      start.time = run.start.time,
-      ignore.cache = FALSE,
-      file.xlsx = here::here(res.dir, out.file.xlsx),
-      stored.file = system.file("tbls", "saved_outcomes_tb.RData", package = "Rglobalflourishing")
-    )
-    Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
-    rmarkdown::render(
-      input = system.file("rmd", "pdf_42_by_75.Rmd", package = "Rglobalflourishing"),
-      output_format = c("pdf_document"),
-      output_file = "supplement_tbl_w2",
-      output_dir = here::here(res.dir, "supplement-text"),
-      params = list(
-        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData"))
-      )
-    )
-    # Rglobalflourishing:::generate_docx_wide_landscape(
-    #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-2.RData")),
-    #   print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_2.docx"))
-    # )
-    tb.num <- tb.num + 1
-    remove(params.tb)
-    gc()
-    }
+      }
     ## ========================================================================================== ##
     ## ====== Table S34-x. Reformatted outcome-wide results by country ============================= ##
     f0 = 1
