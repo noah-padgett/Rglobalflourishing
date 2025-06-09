@@ -392,7 +392,7 @@ gfs_run_regression_single_outcome <- function(
                   if (run.analysis) {
                     cur.country <- x[["variables"]][["COUNTRY2"]][1]
                     # Next check each variable to make sure all have at least 2 levels, if only 1, exclude
-                    keep.var <- keep_variable(covariates, data = x[["variables"]])
+                    keep.var <- keep_variable(covariates, data = x[["variables"]], reason = "any")
                     if (str_to_lower(pc.rule) == "omit") {
                       tmp.model <- reformulate(
                         response = "PRIMARY_OUTCOME",
@@ -436,7 +436,7 @@ gfs_run_regression_single_outcome <- function(
           keep.var <- rep(FALSE, length(covariates))
           for(i in 1:length(keep.var)){
             if(covariates[i] %in% colnames(tmp.dat$data[[1]])){
-              keep.var[i] <- keep_variable(covariates[i], data = tmp.dat$data[[1]])
+              keep.var[i] <- keep_variable(covariates[i], data = tmp.dat$data[[1]], reason = "any")
             }
           }
           if (str_to_lower(pc.rule) == "omit") {

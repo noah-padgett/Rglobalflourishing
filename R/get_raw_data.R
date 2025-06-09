@@ -340,6 +340,41 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
                 )
               )
           }
+          if(method.income == "quintiles.top.random"){
+            set.seed(314150)
+            x <- x %>%
+              mutate(
+                across(contains("INCOME_QUINTILE"), \(x){
+                  xm <- which(is.na(x))
+                  xnm <- which(!is.na(x))
+                  x0 <- na.omit(x)
+                  y <- case_when(
+                    x == 5 ~ 1,
+                    x %in% 1:4 ~ 0
+                  )
+                  ym <- which(is.na(y))
+                  ynm <- which(!is.na(y))
+                  y0 <- na.omit(y)
+                  y.mean = mean(y0, na.rm=TRUE)
+                  if(y.mean > 0.20){
+                    n0 <- length(y0)
+                    nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                    y0[y0==1][sample(1:(length(y0[y0==1])), nq, replace = FALSE)] <- 0
+                  }
+                  if(y.mean < 0.20){
+                    n0 <- length(y0)
+                    nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                    x0[x0==4][sample(1:(length(x0[x0==4])), nq, replace = FALSE)] <- 5
+                    y0 <- case_when(
+                      x0 == 5 ~ 1,
+                      x0 %in% 1:4 ~ 0
+                    )
+                  }
+                  y[ynm] <- y0
+                  y
+                })
+              )
+          }
           x
         }),
         data = map(data, \(x){

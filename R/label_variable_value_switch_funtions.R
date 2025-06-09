@@ -3650,14 +3650,7 @@ nurse)",
         x >= 80 & x < 100 ~ "1943 or earlier (current age: 80+ years)",
         .default = "(Missing)"
       ),
-      INCOME_QUINTILE = case_when(
-        x == 1 ~ "Q1 Low Income",
-        x == 2 ~ "Q2",
-        x == 3 ~ "Q3",
-        x == 4 ~ "Q4",
-        x == 5 ~ "Q5 High Income",
-        .default = "(Missing)"
-      ),
+      INCOME_QUINTILE = x,
       CIGARETTES_BINARY = case_when(
         x == 0 ~ "Non-smoker",
         x== 1 ~ "Smoker",

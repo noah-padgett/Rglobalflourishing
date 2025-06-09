@@ -576,15 +576,14 @@ gfs_append_to_xlsx <- function(file, ft, tb){
   # 3. a little backup in case the table already got printed
   sheet.names <- openxlsx2::wb_get_sheet_names(wb)
   if( tb %in% sheet.names ){
-    message(paste0("Table not printed to Excel. Sheet `", tb, "` already in file."))
+    wb <- openxlsx2::wb_clean_sheet(wb, sheet = tb)
   } else {
     wb <- openxlsx2::wb_add_worksheet(wb, sheet = tb)
-    wb <- flexlsx::wb_add_flextable(wb, sheet = tb, ft = ft)
-    try({
-      openxlsx2::wb_save(wb, file = file)
-    })
-
   }
+  wb <- flexlsx::wb_add_flextable(wb, sheet = tb, ft = ft)
+  try({
+    openxlsx2::wb_save(wb, file = file)
+  })
 }
 
 
