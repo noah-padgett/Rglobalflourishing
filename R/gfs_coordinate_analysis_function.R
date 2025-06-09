@@ -122,40 +122,39 @@ gfs_run_regression_single_outcome <- function(
           # zero change from wave 1, or zero variation in outcome within country
           if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
             if(cur.country %in% c("China","Egypt") ){
-              out <- FALSE
+              out <- FALSE & out
             }
           }
           if (str_detect(your.outcome,"ABUSED") | str_detect(your.pred,"ABUSED")) {
 
             if(cur.country %in% c("Israel") ){
-              out <- FALSE
+              out <- FALSE & out
             }
 
           }
           if(str_detect(your.outcome,"BELIEVE_GOD") | str_detect(your.pred,"BELIEVE_GOD")) {
             if(cur.country %in% c("Egypt") ){
-              out <- FALSE
+              out <- FALSE & out
             }
           }
           if (str_detect(your.outcome,"BELONGING") | str_detect(your.pred,"BELONGING")) {
             if(cur.country %in% c("China") ){
-              out <- FALSE
-            }
-          }
-          if (str_detect(your.outcome,"SAY_IN_GOVT") | str_detect(your.pred,"SAY_IN_GOVT")) {
-            if(cur.country %in% c("China") ){
-              out <- FALSE
+              out <- FALSE & out
             }
           }
           if (str_detect(your.outcome, "EDUCATION_3")){
             if(cur.country %in% c("China")){
-              out <- TRUE
+              out <- TRUE & out
               # update covariates to EXCLUDE education wave 1
               # not enough time has passed from wave 1 to wave 2 for education to change
               covariates <- covariates[covariates != "COV_EDUCATION_3_Y1"]
             }
           }
-
+          if (str_detect(your.outcome,"SAY_IN_GOVT") | str_detect(your.pred,"SAY_IN_GOVT")) {
+            if(cur.country %in% c("China") ){
+              out <- FALSE & out
+            }
+          }
           out
         }
         .get_data <- function(file){
