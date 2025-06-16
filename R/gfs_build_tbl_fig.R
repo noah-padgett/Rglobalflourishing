@@ -705,8 +705,11 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
   mylabels = params$mylabels
+  countries.included = params$countries.included
 
   vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
+
+  nC <- 1 + 2*length(countries.included)
 
   df.tmp <- get_country_specific_output(
     res.dir = dir,
@@ -731,7 +734,8 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
       names_from = COUNTRY,
       values_from = c(id.Std.Est, rr.Std.Est),
     )
-  df.tmp <- df.tmp[, c(1, c(rbind(2:24, 25:47)) )]
+
+  df.tmp <- df.tmp[, c(1, c(rbind(2:( (nC-1)/2 +1 ), ((nC-1)/2+2):nC)) )]
 
   df.tmp[is.na(df.tmp)] <- "-"
 
@@ -777,7 +781,7 @@ ft <- df.tmp %>%
     colwidths = c(1, rep(2, length(header_l1)))
   ) %>%
   bg(
-    j = c(2 + seq(0,ncol(df.tmp),4), 3 + seq(0,ncol(df.tmp),4)), bg="grey90",part = "all"
+    j = c(seq(2,ncol(df.tmp),4), seq(3,ncol(df.tmp),4)), bg="grey90",part = "all"
   ) %>%
   add_footer_lines(
     values = tb.note, top = FALSE
@@ -1544,7 +1548,7 @@ build_fig_1 <- function(params, forest.plots.inc.est = FALSE, font.name = "Open 
   start.time = params$start.time
   include.estimates = params$include.estimates
 
-  fig.cap <- paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name ," at Wave 1 on composite Secure Flourishing Index scores at Wave 2 across countries (N=", n.print, ").*\n The plot compares the estimates between Model 1 which controls for demographic and childhood variables only and Model 2 which controls for demographic variables, childhood variances, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogenetiy.")
+  fig.cap <- paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name ," at Wave 1 on composite Secure Flourishing Index scores at Wave 2 across countries (N=", n.print, ").*\n The plot compares the estimates between Model 1, which controls for demographic and childhood variables only, and Model 2, which controls for demographic variables, childhood variables, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogeneity.")
 
   ALL.COUNTRIES <- c(
     "Australia",

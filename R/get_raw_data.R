@@ -406,25 +406,76 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       )
   }
   if(to.numeric){
+
+    # for(v in all.vars){
+    #   #cat(v, ":\t", class(df.original[[v]]),"\n")
+    #   if(class(df.original[[v]]) == "factor" & str_detect(v, "AGE_GRP", negate=TRUE)){
+    #     cat(v, "\n")
+    #     x <- df.original[,v, drop=TRUE]
+    #     if(str_detect(v, "COUNTRY", negate=TRUE)){
+    #       x <- sub("\\..*", "", x)
+    #       x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+    #     }
+    #     if(str_detect(v, "BORN_COUNTRY")){
+    #       x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+    #         as.numeric()
+    #     }
+
     df.original <- df.original %>%
       mutate(
         across(where(is.factor), \(x){
-          if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
-            x <- sub("\\..*", "", x)
-            x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-              as.numeric()
-          }
-          if(str_detect(cur_column(), "BORN_COUNTRY")){
-            x <- sub("\\..*", "", x)
-            x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-              as.numeric()
+          if(str_detect(cur_column(), "AGE_GRP", negate=TRUE)){
+            if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
+              x <- sub("\\..*", "", x)
+              x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+                as.numeric()
+            }
+            if(str_detect(cur_column(), "BORN_COUNTRY")){
+              x <- sub("\\..*", "", x)
+              x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+                as.numeric()
+            }
           }
           x
         }),
-        dplyr::across(!(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_Y2",  paste0("INCOME",c("","_Y1","_Y2")),  paste0("INCOME_QUINTILE",c("","_Y1","_Y2")), paste0("SELFID1",c("")),  paste0("SELFID2",c("")),  paste0("DOI_RECRUIT",c("","_Y1","_Y2")),  paste0("DOI_ANNUAL",c("","_Y1"))))), \(x){
-            recode_to_numeric(x, cur_column())
-          }, .names = "{.col}")
+        CIGARETTES_BINARY_Y1 = case_when(
+          CIGARETTES_Y1 == 0 ~ 0,
+          CIGARETTES_Y1 %in% 1:97 ~ 1
+        ),
+        CIGARETTES_BINARY_Y2 = case_when(
+          CIGARETTES_Y2 == 0 ~ 0,
+          CIGARETTES_Y2 %in% 1:97 ~ 1
+        ),
+        MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, MARITAL_STATUS_Y1 %in% c(1,6) ~ 0),
+        MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, MARITAL_STATUS_Y2 %in% c(1,6) ~ 0),
+        MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, MARITAL_STATUS_Y1 %in% c(1:3,5:6) ~ 0),
+        MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, MARITAL_STATUS_Y2 %in% c(1:3,5:6) ~ 0)
       )
+
+    all.vars <- unique(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2"))
+    for (tmp.var in  all.vars){
+      # print(tmp.var)
+      x <- df.original[, tmp.var, drop = TRUE]
+
+        if (str_detect(tmp.var, "COMPOSITE")) {
+          is.sum <- ifelse(
+            str_detect(tmp.var, "COMPOSITE_DEPRESSION") |
+              str_detect(tmp.var, "COMPOSITE_ANXIETY") |
+              str_detect(tmp.var, "COMPOSITE_DEP_ANX_COMBO"),
+            TRUE, FALSE
+          )
+          x <- recode_to_numeric(x, tmp.var, is.sum)
+        } else if (get_outcome_scale(tmp.var) == "cont") {
+          x <- recode_to_type(x, tmp.var)
+          x <- reorder_levels(x, tmp.var)
+          x <- recode_to_numeric(x, tmp.var)
+        } else {
+          x <- recode_to_numeric(x, tmp.var)
+        }
+      if (!is.null(x)) {
+        df.original[, tmp.var] <- x
+      }
+    }
   }
   ## ============================================================================================ ##
   df.original

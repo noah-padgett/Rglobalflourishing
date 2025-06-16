@@ -219,7 +219,7 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
   }
 
   if(is.null(p.bonferroni)){
-    p.bonferroni = 0.05/length(OUTCOME.VEC[OUTCOME.VEC != "blank"])
+    p.bonferroni = 0.05/length(OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank",negate=TRUE)])
   }
 
   n.print <- df.raw %>%
@@ -989,6 +989,11 @@ gfs_generate_supplemental_docs <- function(
     suppressWarnings({
 
       df.raw <- gfs_add_variable_labels(df.raw, OUTCOME.VEC)
+      df.raw <- df.raw |>
+        filter(COUNTRY %in% COUNTRY_LABELS) |>
+        mutate(
+          COUNTRY = fct_drop(COUNTRY)
+        )
 
       tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "Y1"]
       tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
@@ -2358,7 +2363,8 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         start.time = run.start.time,
         ignore.cache = FALSE,
         file.xlsx = here::here(res.dir, out.file.xlsx),
-        mylabels = MYLABEL
+        mylabels = MYLABEL,
+        countries.included = COUNTRY_LABELS
       )
       Rglobalflourishing:::build_tbl_country_point_estimates(params.tb)
       rmarkdown::render(
