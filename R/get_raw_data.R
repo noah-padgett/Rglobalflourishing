@@ -407,6 +407,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
   }
   if(to.numeric){
 
+    # all.vars <- colnames(df.original)
     # for(v in all.vars){
     #   #cat(v, ":\t", class(df.original[[v]]),"\n")
     #   if(class(df.original[[v]]) == "factor" & str_detect(v, "AGE_GRP", negate=TRUE)){
@@ -415,11 +416,15 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     #     if(str_detect(v, "COUNTRY", negate=TRUE)){
     #       x <- sub("\\..*", "", x)
     #       x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+    #         as.numeric()
     #     }
     #     if(str_detect(v, "BORN_COUNTRY")){
+    #       x <- sub("\\..*", "", x)
     #       x = case_when(x == "(Missing)" ~ NA, .default = x) |>
     #         as.numeric()
     #     }
+    #   }
+    # }
 
     df.original <- df.original %>%
       mutate(

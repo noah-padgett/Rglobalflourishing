@@ -704,7 +704,7 @@ gfs_generate_supplemental_docs <- function(
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA");
     res.dir = "results", included.countries=NULL,
-    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0){
+    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL){
 
 
   # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0;
@@ -962,11 +962,11 @@ gfs_generate_supplemental_docs <- function(
             "China"
           )
         )
-      start.country = 0
+      start.country = 1
     } else {
 
       COUNTRY_LABELS = included.countries
-      start.country = 0 ## set to 0 unless updated below
+      start.country = 1 ## set to 0 unless updated below
       if(what == "S2"){
         base.countries <- sort( c( "Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil", "Mexico", "China") )
         ## get what country number to start with to adjust table number in S2
@@ -980,7 +980,7 @@ gfs_generate_supplemental_docs <- function(
     }
   }
   if(is.null(p.bonferroni)){
-    p.bonferroni = 0.05/length(OUTCOME.VEC[OUTCOME.VEC != "blank"])
+    p.bonferroni = 0.05/length(OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank",negate=TRUE)])
   }
   ## ============================================================================================ ##
   ## Restructing raw data
@@ -1187,6 +1187,11 @@ gfs_generate_supplemental_docs <- function(
   # ========================= #
   if(what == "all" | what == "S1"){
     cat("Starting part 1 - supplemental meta-analysis results\n")
+    if(what == "S1"){
+    if(!is.null(tb.start.num)){
+      tb.num <- tb.start.num
+    }
+    }
     ## ========================================================================================== ##
     ## ====== Construct summary tables ========================================================== ##
     {
@@ -1652,6 +1657,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     cat("Starting part 2 -- country-specific results\n")
     if(what == "S2"){
       tb.num <- 4 + 4*length(focal.predictor) + start.country
+      if(!is.null(tb.start.num)){
+        tb.num <- tb.start.num
+      }
     }
     iter = 1;
     for (iter in 1:length(COUNTRY_LABELS)) {
@@ -2247,6 +2255,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     cat("Starting part 3 - extra-wide format tables\n")
     if(what == "S3"){
       tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
+      if(!is.null(tb.start.num)){
+        tb.num <- tb.start.num
+      }
     }
 
       ## ========================================================================================== ##
