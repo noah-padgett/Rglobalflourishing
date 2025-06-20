@@ -718,7 +718,9 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
     appnd.txt = file
   ) %>%
     filter(Variable == "FOCAL_PREDICTOR") %>%
-    select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est)
+    select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est) |>
+    arrange(COUNTRY)
+
 
   for(i in 1:nrow(df.tmp)){
     if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
@@ -794,7 +796,7 @@ ft <- df.tmp %>%
   hline(i=1, part = "header") %>%
   align(i=2, align = "center", part = "header")
 
-print.tb  <- width( ft, width = dim(ft)$widths * 30/ (flextable_dim(ft)$widths) )
+  print.tb  <- width( ft, width = dim(ft)$widths * 30/ (flextable_dim(ft)$widths) )
 
 
   gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
