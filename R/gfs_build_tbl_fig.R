@@ -105,6 +105,7 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
   n.print = params$n.print
   cache.file = params$cache.file
   start.time = params$start.time
+  digits = params$digits
 
     vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue")
     vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue")
@@ -144,11 +145,11 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
         )
         tmp.wopc <- tmp.wopc %>%
           dplyr::mutate(
-            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
+            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
             dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
               case_when(
                 x < 0.01 ~ "<0.01\u2020",
-                x >= 0.01 ~ .round(x,2)
+                x >= 0.01 ~ .round(x,digits)
               )
             }),
             dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
@@ -169,11 +170,11 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
         )
         tmp.wpc <- tmp.wpc %>%
           dplyr::mutate(
-            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
+            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
             dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
               case_when(
                 x < 0.01 ~ "<0.01\u2020",
-                x >= 0.01 ~ .round(x,2)
+                x >= 0.01 ~ .round(x,digits)
               )
             }),
             dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
@@ -258,6 +259,7 @@ build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
   n.print = params$n.print
   cache.file = params$cache.file
   start.time = params$start.time
+  digits = params$digits
 
   vec.id <- c("theta.rma.EE", "theta.rma.ECI")
   vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
@@ -292,7 +294,7 @@ build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
       )
       tmp.wopc <- tmp.wopc %>%
         dplyr::mutate(
-          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+          dplyr::across(where(is.numeric),\(x) .round(x,digits)),
         )
       ## ====== Random effects meta - estimates WITH PCs ====================================== ##
       tmp.wpc <- load_meta_result(
@@ -303,7 +305,7 @@ build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
       )
       tmp.wpc <- tmp.wpc %>%
         dplyr::mutate(
-          dplyr::across(where(is.numeric),\(x) .round(x,2)),
+          dplyr::across(where(is.numeric),\(x) .round(x,digits)),
         )
       ## ====== Add Results to output object ================================================== ##
       if(nrow(tmp.wopc) > 0) meta.evalues[i,vec.wopc] <- tmp.wopc[tmp.vec]
@@ -624,6 +626,7 @@ build_tbl_attr_model <- function(params, font.name = "Open Sans", font.size = 10
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  digits = params$digits
 
   tmp.attr.mod <- get_fitted_attrition_model(dir, country.i)
   tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
@@ -706,6 +709,7 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
   file.xlsx = params$file.xlsx
   mylabels = params$mylabels
   countries.included = params$countries.included
+  digits = params$digits
 
   vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
 
@@ -718,23 +722,26 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
     appnd.txt = file
   ) %>%
     filter(Variable == "FOCAL_PREDICTOR") %>%
-    select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est) |>
+    select(COUNTRY, OUTCOME, std.estimate.pooled, id.Std.Est, rr.Std.Est) |>
     arrange(COUNTRY)
 
 
   for(i in 1:nrow(df.tmp)){
     if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
+      df.tmp$id.Std.Est[i] <- .round(df.tmp$std.estimate.pooled[i], digits)
       df.tmp$rr.Std.Est[i] <- NA
     }
     if(get_outcome_scale(df.tmp$OUTCOME[i]) != "cont"){
       df.tmp$id.Std.Est[i] <- NA
+      df.tmp$rr.Std.Est[i] <- .round(exp(df.tmp$std.estimate.pooled[i]), digits)
     }
     df.tmp$OUTCOME[i] <- get_outcome_better_name(df.tmp$OUTCOME[i], FALSE, FALSE, include.fid = TRUE)
   }
   df.tmp <- df.tmp %>%
+    select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est) %>%
     pivot_wider(
       names_from = COUNTRY,
-      values_from = c(id.Std.Est, rr.Std.Est),
+      values_from = c(id.Std.Est, rr.Std.Est)
     )
 
   df.tmp <- df.tmp[, c(1, c(rbind(2:( (nC-1)/2 +1 ), ((nC-1)/2+2):nC)) )]
@@ -838,6 +845,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  digits = params$digits
 
   COUNTRY_LABELS <-
     sort(
@@ -926,7 +934,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           what = tmp.vec
         ) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       } else {
         tmp.a <- get_country_specific_regression_results(
@@ -938,7 +946,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       }
       ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
@@ -950,7 +958,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           what = tmp.vec
         ) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       } else {
         tmp.b <- get_country_specific_regression_results(
@@ -962,7 +970,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       }
       ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
@@ -974,7 +982,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           what = tmp.vec
         ) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       }  else {
         tmp.c <- get_country_specific_regression_results(
@@ -986,7 +994,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       }
       ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
@@ -998,7 +1006,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           what = tmp.vec
         ) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       } else {
         tmp.d <- get_country_specific_regression_results(
@@ -1010,7 +1018,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,2)),
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
       }
       ## ====== Add Results to output object ====================================================== ##
@@ -1097,6 +1105,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  digits = params$digits
 
   COUNTRY_LABELS <-
     sort(
@@ -1184,18 +1193,18 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         tmp.a <- tmp.a %>%
           dplyr::mutate(
             theta.rma.ci = paste0(
-              "(",.round(theta.rma - qnorm(1-p.ci/2)*theta.rma.se, 2), ",",
-              .round(theta.rma + qnorm(1-p.ci/2)*theta.rma.se, 2) ,")"
+              "(",.round(theta.rma - qnorm(1-p.ci/2)*theta.rma.se, digits), ",",
+              .round(theta.rma + qnorm(1-p.ci/2)*theta.rma.se, digits) ,")"
             ),
             rr.theta.ci = paste0(
-              "(",.round(exp(theta.rma - qnorm(1-p.ci/2)*theta.rma.se), 2), ",",
-              .round(exp(theta.rma + qnorm(1-p.ci/2)*theta.rma.se), 2) ,")"
+              "(",.round(exp(theta.rma - qnorm(1-p.ci/2)*theta.rma.se), digits), ",",
+              .round(exp(theta.rma + qnorm(1-p.ci/2)*theta.rma.se), digits) ,")"
             ),
-            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
+            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
             dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
               case_when(
                 x < 0.01 ~ "<0.01\u2020",
-                x >= 0.01 ~ .round(x,2)
+                x >= 0.01 ~ .round(x,digits)
               )
             }),
             dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
@@ -1218,12 +1227,12 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         tmp.a <- tmp.a %>%
           dplyr::mutate(
             id.CI = paste0(
-              "(",.round(estimate.pooled - qnorm(1-p.ci/2)*se.pooled, 2), ",",
-              .round(estimate.pooled + qnorm(1-p.ci/2)*se.pooled, 2) ,")"
+              "(",.round(estimate.pooled - qnorm(1-p.ci/2)*se.pooled, digits), ",",
+              .round(estimate.pooled + qnorm(1-p.ci/2)*se.pooled, digits) ,")"
             ),
             rr.CI = paste0(
-              "(",.round(exp(estimate.pooled - qnorm(1-p.ci/2)*se.pooled), 2), ",",
-              .round(exp(estimate.pooled + qnorm(1-p.ci/2)*se.pooled), 2) ,")"
+              "(",.round(exp(estimate.pooled - qnorm(1-p.ci/2)*se.pooled), digits), ",",
+              .round(exp(estimate.pooled + qnorm(1-p.ci/2)*se.pooled), digits) ,")"
             ),
             dplyr::across(tidyr::any_of(c("p.value")),\(x){
               case_when(
@@ -1246,18 +1255,18 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         tmp.b <- tmp.b %>%
           dplyr::mutate(
             theta.rma.ci = paste0(
-              "(",.round(theta.rma - qnorm(1-p.ci/2)*theta.rma.se, 2), ",",
-              .round(theta.rma + qnorm(1-p.ci/2)*theta.rma.se, 2) ,")"
+              "(",.round(theta.rma - qnorm(1-p.ci/2)*theta.rma.se, digits), ",",
+              .round(theta.rma + qnorm(1-p.ci/2)*theta.rma.se, digits) ,")"
             ),
             rr.theta.ci = paste0(
-              "(",.round(exp(theta.rma - qnorm(1-p.ci/2)*theta.rma.se), 2), ",",
-              .round(exp(theta.rma + qnorm(1-p.ci/2)*theta.rma.se), 2) ,")"
+              "(",.round(exp(theta.rma - qnorm(1-p.ci/2)*theta.rma.se), digits), ",",
+              .round(exp(theta.rma + qnorm(1-p.ci/2)*theta.rma.se), digits) ,")"
             ),
-            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,2)),
+            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
             dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
               case_when(
                 x < 0.01 ~ "<0.01\u2020",
-                x >= 0.01 ~ .round(x,2)
+                x >= 0.01 ~ .round(x,digits)
               )
             }),
             dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
@@ -1281,12 +1290,12 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         tmp.b <- tmp.b %>%
           dplyr::mutate(
             id.CI = paste0(
-              "(",.round(estimate.pooled - qnorm(1-p.ci/2)*se.pooled, 2), ",",
-              .round(estimate.pooled + qnorm(1-p.ci/2)*se.pooled, 2) ,")"
+              "(",.round(estimate.pooled - qnorm(1-p.ci/2)*se.pooled, digits), ",",
+              .round(estimate.pooled + qnorm(1-p.ci/2)*se.pooled, digits) ,")"
             ),
             rr.CI = paste0(
-              "(",.round(exp(estimate.pooled - qnorm(1-p.ci/2)*se.pooled), 2), ",",
-              .round(exp(estimate.pooled + qnorm(1-p.ci/2)*se.pooled), 2) ,")"
+              "(",.round(exp(estimate.pooled - qnorm(1-p.ci/2)*se.pooled), digits), ",",
+              .round(exp(estimate.pooled + qnorm(1-p.ci/2)*se.pooled), digits) ,")"
             ),
             dplyr::across(tidyr::any_of(c("p.value")),\(x){
               case_when(
@@ -1475,6 +1484,7 @@ build_tbl_pca_summary <- function(params, font.name = "Open Sans", font.size = 1
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  digits = params$digits
 
 
   coun.fit.pca <- get_country_pca_summary(
@@ -1498,7 +1508,7 @@ build_tbl_pca_summary <- function(params, font.name = "Open Sans", font.size = 1
     dplyr::filter( PC <= 20 ) %>%
     dplyr::select(PC,tidyr::any_of(vec.id)) %>%
     dplyr::mutate(
-      across(tidyr::any_of(vec.id),\(x) .round(x*100,1) )
+      across(tidyr::any_of(vec.id),\(x) .round(x*100,digits) )
     )
   coun.pca$PC <- 1:20
   coun.pca[vec.pc] <- tmp.pca[vec.id]
@@ -1859,6 +1869,7 @@ gfs_supp_forest_plot <- function(params, plot.type = "combined", ...) {
   cache.file = params$cache.file
   start.time = params$start.time
   ignore.cache = params$ignore.cache
+  digits = params$digits
 
   if(plot.type == "panelled"){
     # panelled is the default "raw" plot for each individual outcome/analyss type
@@ -1992,8 +2003,8 @@ gfs_supp_forest_plot <- function(params, plot.type = "combined", ...) {
       model_type = c("Excluded","Included")
     ) |>
       mutate(
-        ci = paste0("(", .round(ci.lb.i), ",", .round(ci.ub.i), ")"),
-        CI = paste0(.round(yi), " ", ci)
+        ci = paste0("(", .round(ci.lb.i, digits), ",", .round(ci.ub.i, digits), ")"),
+        CI = paste0(.round(yi, digits), " ", ci)
       )
 
     p_mid <- plot_df |>

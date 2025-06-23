@@ -21,7 +21,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE, forest.plots.inc.est = FALSE){
+gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE, forest.plots.inc.est = FALSE, digits=2){
 
   # dir.meta = "results-primary"; file.wopc = "0_meta_analyzed_results_primary_wopc.rds"; file.wpc = "0_meta_analyzed_results_primary_wpc.rds"; focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; res.dir = "results"; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; ci.bonferroni = FALSE; forest.plots.inc.est = FALSE;
 
@@ -362,7 +362,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
       tb.num = tb.num,
       n.print = n.print,
       cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")),
-      start.time = run.start.time
+      start.time = run.start.time,
+      digits = digits
     )
     ## build the table
     Rglobalflourishing:::build_tbl_2(params.tb2)
@@ -400,7 +401,8 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
       tb.num = tb.num,
       n.print = n.print,
       cache.file = here::here(res.dir, "main-text", paste0("cache-tb-evalues-",f0,".RData")),
-      start.time = run.start.time
+      start.time = run.start.time,
+      digits = digits
     )
 
     ## build the table
@@ -704,10 +706,10 @@ gfs_generate_supplemental_docs <- function(
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA");
     res.dir = "results", included.countries=NULL,
-    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL){
+    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL, digits=2){
 
 
-  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0;
+  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0; digits=2;
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
@@ -1270,6 +1272,7 @@ gfs_generate_supplemental_docs <- function(
 
       ## S3. Supplemental summary of sample demographics (at wave 1) by retention status
       params.tb <- list(
+        x = as.name("WAVE0"),
         data = df.raw.attr.retained,
         focal.predictor0 = focal.predictor0,
         wgt = as.name("UNITWGT"),
@@ -1379,7 +1382,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        digits = digits
       )
 
       Rglobalflourishing:::build_tbl_outcomewide(params.tb)
@@ -1436,7 +1440,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        digits = digits
       )
 
       Rglobalflourishing:::build_tbl_outcomewide(params.tb)
@@ -1485,7 +1490,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-evalues-",f0,".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        digits = digits
       )
       Rglobalflourishing:::build_tbl_evalues(params.tb)
 
@@ -1539,7 +1545,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-c",f0,".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        digits = digits
       )
 
       Rglobalflourishing:::build_tbl_outcomewide(params.tb)
@@ -1918,7 +1925,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie.RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx)
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          digits = digits
         )
 
         Rglobalflourishing:::build_tbl_attr_model(params.tb)
@@ -1964,7 +1972,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif.RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx)
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          digits = digits
         )
 
         Rglobalflourishing:::build_tbl_pca_summary(params.tb)
@@ -2033,7 +2042,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
-            file.xlsx = here::here(res.dir, out.file.xlsx)
+            file.xlsx = here::here(res.dir, out.file.xlsx),
+            digits = digits
           )
           Rglobalflourishing:::build_tbl_outcomewide(params.tb)
 
@@ -2094,7 +2104,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
-            file.xlsx = here::here(res.dir, out.file.xlsx)
+            file.xlsx = here::here(res.dir, out.file.xlsx),
+            digits = digits
           )
           Rglobalflourishing:::build_tbl_outcomewide(params.tb)
 
@@ -2148,7 +2159,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
-            file.xlsx = here::here(res.dir, out.file.xlsx)
+            file.xlsx = here::here(res.dir, out.file.xlsx),
+            digits = digits
           )
 
           Rglobalflourishing:::build_tbl_evalues(params.tb)
@@ -2354,6 +2366,48 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     ## ====== Table S34-x. Reformatted outcome-wide results by country ============================= ##
     f0 = 1
     for(f0 in 1:length(focal.predictor)){
+      tb.cap.i <- paste0("Table S",tb.num,". Model 1 (controlling for demographic and childhood) outcome-wide results for ", str_to_lower(focal.better.name[f0]) ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
+
+      fn.txt.i <- paste0("Notes. N =", n1.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00. Please review the country-specific results tables or forest plots to evaluate the uncertainty in all estimated effects.
+
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available.
+
+An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate an RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor[f0]) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor[f0]) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".")
+
+      params.tb <- list(
+        dir = dir.primary,
+        res.dir = res.dir,
+        OUTCOME.VEC = OUTCOME.VEC,
+        focal.predictor = focal.predictor[f0],
+        file = "_primary_wopc",
+        tb.cap = tb.cap.i,
+        fn.txt = fn.txt.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        mylabels = MYLABEL,
+        countries.included = COUNTRY_LABELS,
+        digits = digits
+      )
+      Rglobalflourishing:::build_tbl_country_point_estimates(params.tb)
+      rmarkdown::render(
+        input = system.file("rmd", "pdf_20_by_32.Rmd", package = "Rglobalflourishing"),
+        output_format = c("pdf_document"),
+        output_file = paste0("supplement_tbl_w3",letters[f0]),
+        output_dir = here::here(res.dir, "supplement-text"),
+        params = list(cache.file=here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")))
+      )
+      Rglobalflourishing:::generate_docx_wide_landscape(
+        cache.file=here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")),
+        print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_w3",letters[f0],".docx"))
+      )
+      tb.num = tb.num + 1
+      remove(params.tb)
+      gc()
+
+      ## Model 2 results
+
       tb.cap.i <- paste0("Table S",tb.num,". Model 2 (controlling for demographic, childhood, and contemporaneous exposures) outcome-wide results for ", str_to_lower(focal.better.name[f0]) ,"--point estimates of effect sizes only--re-structured for comparison across countries.")
 
       fn.txt.i <- paste0("Notes. N =", n1.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00. Please review the country-specific results tables or forest plots to evaluate the uncertainty in all estimated effects.
@@ -2370,24 +2424,25 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         file = "_primary_wpc",
         tb.cap = tb.cap.i,
         fn.txt = fn.txt.i,
-        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")),
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-4",letters[f0],".RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
         file.xlsx = here::here(res.dir, out.file.xlsx),
         mylabels = MYLABEL,
-        countries.included = COUNTRY_LABELS
+        countries.included = COUNTRY_LABELS,
+        digits = digits
       )
       Rglobalflourishing:::build_tbl_country_point_estimates(params.tb)
       rmarkdown::render(
         input = system.file("rmd", "pdf_20_by_32.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
-        output_file = paste0("supplement_tbl_w3",letters[f0]),
+        output_file = paste0("supplement_tbl_w4",letters[f0]),
         output_dir = here::here(res.dir, "supplement-text"),
-        params = list(cache.file=here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")))
+        params = list(cache.file=here::here(res.dir, "supplement-text", paste0("cache-tb-extra-4",letters[f0],".RData")))
       )
       Rglobalflourishing:::generate_docx_wide_landscape(
-        cache.file=here::here(res.dir, "supplement-text", paste0("cache-tb-extra-3",letters[f0],".RData")),
-        print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_w3",letters[f0],".docx"))
+        cache.file=here::here(res.dir, "supplement-text", paste0("cache-tb-extra-4",letters[f0],".RData")),
+        print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_w4",letters[f0],".docx"))
       )
       tb.num = tb.num + 1
       remove(params.tb)
@@ -2499,7 +2554,8 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
             fig.cap = "Figure.",
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
             start.time = run.start.time.i,
-            ignore.cache = FALSE
+            ignore.cache = FALSE,
+            digits = digits
           )
 
 
