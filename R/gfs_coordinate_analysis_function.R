@@ -155,6 +155,11 @@ gfs_run_regression_single_outcome <- function(
               out <- FALSE & out
             }
           }
+          if (str_detect(your.outcome,"COVID_DEATH") | str_detect(your.pred,"COVID_DEATH")) {
+            if(cur.country %in% c("China") ){
+              out <- FALSE & out
+            }
+          }
           out
         }
         .get_data <- function(file){
