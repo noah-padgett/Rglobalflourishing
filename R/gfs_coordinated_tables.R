@@ -964,6 +964,19 @@ gfs_generate_supplemental_docs <- function(
             "China"
           )
         )
+      if (str_detect(your.pred,"ABUSED")) {
+        COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "Israel"]
+      }
+      if(str_detect(your.pred,"BELIEVE_GOD") |
+         str_detect(your.pred,"APPROVE_GOVT")) {
+        COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "Egypt"]
+      }
+      if( str_detect(focal.predictor, "COVID_DEATH")  |
+          str_detect(your.pred,"BELONGING")  |
+          str_detect(your.pred,"SAY_IN_GOVT") |
+          str_detect(your.pred,"APPROVE_GOVT")){
+        COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "China"]
+      }
       start.country = 1
     } else {
 
