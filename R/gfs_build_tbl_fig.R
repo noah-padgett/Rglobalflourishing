@@ -1192,7 +1192,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
           file = here::here(dir.a, file.a),
           predictor = focal.predictor,
           outcome = OUTCOME.VEC[i],
-          what = vec.get
+          what = c(tmp.vec, "theta.lb", "theta.ub")
         )
         tmp.a <- tmp.a %>%
           dplyr::mutate(

@@ -23,7 +23,8 @@ gfs_generate_main_doc(
   psu = PSU,
   strata = STRATA,
   ci.bonferroni = FALSE,
-  forest.plots.inc.est = FALSE
+  forest.plots.inc.est = FALSE,
+  digits = 2
 )
 }
 \arguments{

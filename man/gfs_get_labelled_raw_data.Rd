@@ -14,6 +14,7 @@ gfs_get_labelled_raw_data(
   psu = "PSU",
   data.is.long = FALSE,
   reverse.code.cont = FALSE,
+  to.numeric = FALSE,
   ...
 )
 }
@@ -27,6 +28,8 @@ gfs_get_labelled_raw_data(
 \item{method.income}{method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'.}
 
 \item{reverse.code.cont}{(FALSE) reverse code numeric variables (e.g., lonely) for computing summary statistics. DO NOT apply this recoding before conducting imputation. THIS IS ONLY FOR SUMMARY STATISTICS.}
+
+\item{to.numeric}{(optional) FALSE}
 
 \item{...}{other arguments}
 

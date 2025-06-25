@@ -34,7 +34,9 @@ gfs_generate_supplemental_docs(
   forest.plot.type = "combined",
   what = "all",
   only.figs = FALSE,
-  fig.num.start = 0
+  fig.num.start = 0,
+  tb.start.num = NULL,
+  digits = 2
 )
 }
 \arguments{

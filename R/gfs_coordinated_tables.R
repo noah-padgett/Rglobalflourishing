@@ -964,17 +964,17 @@ gfs_generate_supplemental_docs <- function(
             "China"
           )
         )
-      if (str_detect(your.pred,"ABUSED")) {
+      if (any(str_detect(focal.predictor,"ABUSED"))) {
         COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "Israel"]
       }
-      if(str_detect(your.pred,"BELIEVE_GOD") |
-         str_detect(your.pred,"APPROVE_GOVT")) {
+      if (any(str_detect(focal.predictor,"BELIEVE_GOD")) |
+          any(str_detect(focal.predictor,"APPROVE_GOVT"))){
         COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "Egypt"]
       }
-      if( str_detect(focal.predictor, "COVID_DEATH")  |
-          str_detect(your.pred,"BELONGING")  |
-          str_detect(your.pred,"SAY_IN_GOVT") |
-          str_detect(your.pred,"APPROVE_GOVT")){
+      if( any(str_detect(focal.predictor, "COVID_DEATH"))  |
+          any(str_detect(focal.predictor,"BELONGING"))  |
+          any(str_detect(focal.predictor,"SAY_IN_GOVT")) |
+          any(str_detect(focal.predictor,"APPROVE_GOVT"))){
         COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "China"]
       }
       start.country = 1

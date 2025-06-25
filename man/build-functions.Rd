@@ -19,6 +19,7 @@
 \alias{generate_docx_normal_portrait}
 \alias{generate_docx_normal_landscape}
 \alias{generate_docx_wide_landscape}
+\alias{generate_docx_fig}
 \title{Internal Build Table Functions}
 \usage{
 build_tbl_1(params, font.name = "Open Sans", font.size = 10)
@@ -65,6 +66,8 @@ generate_docx_normal_portrait(cache.file, print.file)
 generate_docx_normal_landscape(cache.file, print.file)
 
 generate_docx_wide_landscape(cache.file, print.file)
+
+generate_docx_fig(cache.file, print.file, fig.file, orient = "p", h = 6, w = 5)
 }
 \arguments{
 \item{params}{a list of parameters that were originally passed as parameters in the .Rmd files. Kept for legacy and to reduce need to rewrite code.}
