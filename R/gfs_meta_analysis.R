@@ -67,14 +67,14 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       meta.rma.tidy = map(meta.rma, \(x) tidy(x, conf.int = TRUE)),
       theta.rma = map_dbl(meta.rma.tidy, "estimate"),
       theta.rma.se = map_dbl(meta.rma.tidy, "std.error"),
-      theta.rma.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma", ci.alpha)),
+      theta.rma.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma", ci.alpha, ...)),
       tau2 = map_dbl(meta.rma, "tau2"),
       tau = sqrt(tau2),
       I2 = map_dbl(meta.rma, "I2"),
       Q.stat = map_dbl(meta.rma, "QE"),
       Q.pval = map_dbl(meta.rma, "QEp"),
       Qprof.ci = map_chr(meta.rma, \(x){
-        get_meta_ci(x, type = "Q")
+        get_meta_ci(x, type = "Q", ...)
       }),
       calibrated.yi = map(meta.rma, \(x){
         compute_calibrated(x)
@@ -95,7 +95,7 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       # compute exponentiated (used only when scale is binary/Likert)
       calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),
       rr.theta = exp(theta.rma),
-      rr.theta.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma.rr", ci.alpha, .exp=TRUE)),
+      rr.theta.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma.rr", ci.alpha, .exp=TRUE, ...)),
       rr.tau = sqrt((exp(tau2) - 1) * exp(2 * theta.rma + tau2)),
       prob.rr0.90 = map_dbl(
         calibrated.yi.exp, \(x){
@@ -130,7 +130,7 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
         )
       }),
       theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),
-      theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x) get_meta_ci(x, type = "FE", ci.alpha)),
+      theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x) get_meta_ci(x, type = "FE", ci.alpha, ...)),
       meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),
       ## ====== pooled-pvalue =================================================================== ##
       global.pvalue = map_dbl(data, \(x){

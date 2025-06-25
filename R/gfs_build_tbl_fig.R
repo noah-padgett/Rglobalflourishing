@@ -141,10 +141,12 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
           file = here::here(dir, file.wopc),
           predictor = focal.predictor,
           outcome = OUTCOME.VEC[i],
-          what = tmp.vec
+          what = c(tmp.vec, "theta.lb", "theta.ub")
         )
         tmp.wopc <- tmp.wopc %>%
           dplyr::mutate(
+            theta.rma.ci = paste0("(",.round(theta.lb, digits),",",.round(theta.ub, digits),")"),
+            rr.theta.ci = paste0("(",.round(exp(theta.lb), digits),",",.round(exp(theta.ub), digits),")"),
             dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
             dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
               case_when(
@@ -166,10 +168,12 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
           file = here::here(dir, file.wpc),
           predictor = focal.predictor,
           outcome = OUTCOME.VEC[i],
-          what = tmp.vec
+          what = c(tmp.vec, "theta.lb", "theta.ub")
         )
         tmp.wpc <- tmp.wpc %>%
           dplyr::mutate(
+            theta.rma.ci = paste0("(",.round(theta.lb, digits),",",.round(theta.ub, digits),")"),
+            rr.theta.ci = paste0("(",.round(exp(theta.lb), digits),",",.round(exp(theta.ub), digits),")"),
             dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
             dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
               case_when(
