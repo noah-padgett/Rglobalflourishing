@@ -1141,7 +1141,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
     )
 
   if(is.meta){
-    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
+    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue", "theta.lb", "theta.ub")
     vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue", "theta.rma.se")
     vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue", "theta.rma.se")
     vec.a <- c("RR", "ES","95% CI","\u03c4", "Global p-value")
@@ -1192,7 +1192,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
           file = here::here(dir.a, file.a),
           predictor = focal.predictor,
           outcome = OUTCOME.VEC[i],
-          what = c(tmp.vec, "theta.lb", "theta.ub")
+          what = vec.get
         )
         tmp.a <- tmp.a %>%
           dplyr::mutate(
