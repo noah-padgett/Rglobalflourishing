@@ -741,33 +741,33 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
     }
     df.tmp$OUTCOME[i] <- get_outcome_better_name(df.tmp$OUTCOME[i], FALSE, FALSE, include.fid = TRUE)
   }
-  df.tmp <- df.tmp %>%
+  df.tmp.wide <- df.tmp %>%
     select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est) %>%
     pivot_wider(
       names_from = COUNTRY,
       values_from = c(id.Std.Est, rr.Std.Est)
     )
 
-  df.tmp <- df.tmp[, c(1, c(rbind(2:( (nC-1)/2 +1 ), ((nC-1)/2+2):nC)) )]
+  df.tmp.wide2 <- df.tmp.wide[, c(1, c(rbind(2:( (nC-1)/2 +1 ), ((nC-1)/2+2):nC)) )]
 
-  df.tmp[is.na(df.tmp)] <- "-"
+  df.tmp.wide2[is.na(df.tmp.wide2)] <- "-"
 
-  df.tmp0 <- as.data.frame(matrix(ncol=ncol(df.tmp), nrow=length(OUTCOME.VEC)))
-  colnames(df.tmp0) <- colnames(df.tmp)
-  i <- ii <- j <- 1
-  for(i in 1:nrow(df.tmp0)){
+  df.tmp0 <- as.data.frame(matrix(ncol=ncol(df.tmp.wide2), nrow=length(OUTCOME.VEC)))
+  colnames(df.tmp0) <- colnames(df.tmp.wide2)
+  i <- ii <- 1
+  for(i in seq_along(OUTCOME.VEC)){
     if (stringr::str_detect(OUTCOME.VEC[i], "blank") ) {
       df.tmp0[i, 1] <- mylabels[ii]
       ii <- ii + 1
     } else {
       df.tmp0[i, 1] = paste0("    ",get_outcome_better_name(OUTCOME.VEC[i], include.name = FALSE, include.fid = TRUE))
-      df.tmp0[i, -1] = df.tmp[j,-1]
-      j <- j + 1
+      tmp.dat <- subset(df.tmp.wide2, str_trim(df.tmp.wide2$OUTCOME) == str_trim(df.tmp0[i, 1]))
+      df.tmp0[i, -1] = tmp.dat[,-1]
     }
   }
 
   df.tmp <- df.tmp0
-  header_l1 <- sort(unique(str_split(colnames(df.tmp), "_",simplify = T)[-1,2]))
+  header_l1 <- unique(str_split(colnames(df.tmp), "_",simplify = T)[-1,2])
   colnames(df.tmp) <- c("Outcome", rep(c("ES", "RR"), length(header_l1)))
   for(i in 2:length(colnames(df.tmp))){
     colnames(df.tmp)[i] <- paste0(colnames(df.tmp)[i], paste0(rep("\r",i-2), collapse = ""))
@@ -1231,12 +1231,12 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         tmp.a <- tmp.a %>%
           dplyr::mutate(
             id.CI = paste0(
-              "(",.round(estimate.pooled - qnorm(1-p.ci/2)*se.pooled, digits), ",",
-              .round(estimate.pooled + qnorm(1-p.ci/2)*se.pooled, digits) ,")"
+              "(",.round(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled, digits), ",",
+              .round(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled, digits) ,")"
             ),
             rr.CI = paste0(
-              "(",.round(exp(estimate.pooled - qnorm(1-p.ci/2)*se.pooled), digits), ",",
-              .round(exp(estimate.pooled + qnorm(1-p.ci/2)*se.pooled), digits) ,")"
+              "(",.round(exp(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled), digits), ",",
+              .round(exp(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled), digits) ,")"
             ),
             dplyr::across(tidyr::any_of(c("p.value")),\(x){
               case_when(
@@ -1294,12 +1294,12 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         tmp.b <- tmp.b %>%
           dplyr::mutate(
             id.CI = paste0(
-              "(",.round(estimate.pooled - qnorm(1-p.ci/2)*se.pooled, digits), ",",
-              .round(estimate.pooled + qnorm(1-p.ci/2)*se.pooled, digits) ,")"
+              "(",.round(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled, digits), ",",
+              .round(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled, digits) ,")"
             ),
             rr.CI = paste0(
-              "(",.round(exp(estimate.pooled - qnorm(1-p.ci/2)*se.pooled), digits), ",",
-              .round(exp(estimate.pooled + qnorm(1-p.ci/2)*se.pooled), digits) ,")"
+              "(",.round(exp(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled), digits), ",",
+              .round(exp(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled), digits) ,")"
             ),
             dplyr::across(tidyr::any_of(c("p.value")),\(x){
               case_when(
