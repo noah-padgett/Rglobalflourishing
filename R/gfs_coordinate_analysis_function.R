@@ -65,6 +65,7 @@ gfs_run_regression_single_outcome <- function(
     res.dir = "results",
     list.composites = NULL,
     domain.subset = NULL,
+    family = NULL,
     appnd.txt.to.filename = "", ...) {
   suppressMessages({
     suppressWarnings({
@@ -410,20 +411,27 @@ gfs_run_regression_single_outcome <- function(
                     }
 
                     if (outcome.type == "linear") {
+                      if(is.null(family)){
+                        family = stats::gaussian()
+                      }
                       tmp.fit <- gfs_svyglm(
                         tmp.model,
                         svy.design = x,
-                        family = stats::gaussian(),
+                        family = family,
                         robust.huberM = robust.huberM,
                         robust.tune = robust.tune
                       )
                     }
                     if (outcome.type == "RR") {
+                      if(is.null(family)){
+                        family = stats::quassipoisson()
+                      }
                       tmp.fit <- gfs_svyglm(
                         tmp.model,
                         svy.design = x,
-                        family = stats::quassipoisson(),
-                        robust.huberM = FALSE
+                        family = family,
+                        robust.huberM = robust.huberM,
+                        robust.tune = robust.tune
                       )
                     }
                     tmp.fit

@@ -1141,7 +1141,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
     )
 
   if(is.meta){
-    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue", "theta.lb", "theta.ub")
+    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
     vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue", "theta.rma.se")
     vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue", "theta.rma.se")
     vec.a <- c("RR", "ES","95% CI","\u03c4", "Global p-value")
@@ -1230,10 +1230,14 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
         )
         tmp.a <- tmp.a %>%
           dplyr::mutate(
+            id.Est = .round(std.estimate.pooled, digits),
+            id.SE = .round(std.se.pooled, digits),
             id.CI = paste0(
               "(",.round(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled, digits), ",",
               .round(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled, digits) ,")"
             ),
+            rr.Est = .round(exp(std.estimate.pooled), digits),
+            logrr.SE = .round(std.se.pooled, digits),
             rr.CI = paste0(
               "(",.round(exp(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled), digits), ",",
               .round(exp(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled), digits) ,")"
@@ -1293,10 +1297,14 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
 
         tmp.b <- tmp.b %>%
           dplyr::mutate(
+            id.Est = .round(std.estimate.pooled, digits),
+            id.SE = .round(std.se.pooled, digits),
             id.CI = paste0(
               "(",.round(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled, digits), ",",
               .round(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled, digits) ,")"
             ),
+            rr.Est = .round(exp(std.estimate.pooled), digits),
+            logrr.SE = .round(std.se.pooled, digits),
             rr.CI = paste0(
               "(",.round(exp(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled), digits), ",",
               .round(exp(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled), digits) ,")"

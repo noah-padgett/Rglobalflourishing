@@ -10,6 +10,7 @@
 #' @param list.manual (optional) a list like list.default (to-do)
 #' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
 #' @param method.income (optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'. Defaults to 'quintiles.top.random'.
+#' @param inject.recode.fx (optional) a function with the argument data that takes in the dataset and manually recodes values, use with caution
 #' @param ... other arguments passed to mice
 #' @returns a long data.frame for use in analyses
 #' @examples {
@@ -35,6 +36,7 @@ recode_imputed_data <- function(
     wave = 2,
     method.income = "quintiles.top.random",
     wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU",
+    inject.recode.fx = NULL,
     ...) {
   if (is.null(list.default)) {
     stop("'list.default' was not supplied. Check input for recode_imputed data.")
@@ -85,6 +87,8 @@ recode_imputed_data <- function(
   ## TO-DO: develop a generalized approach...
   ## Check 'list.default' focal predictor for more than one element
   ##    if more than one, check if names are the same -> implies alternative coding schemes
+  ## PARTIALLY COMPLETE: created the inject.recode.fx argument that is used down below. this is kept
+  ## here so that other code doesn't break...
   if(length(list.default$FOCAL_PREDICTOR) > 1){
     if(list.default$FOCAL_PREDICTOR[1] == list.default$FOCAL_PREDICTOR[2]){
       dup.var.name <- paste0("RC_", list.default$FOCAL_PREDICTOR[2])
@@ -105,7 +109,6 @@ recode_imputed_data <- function(
 
     }
   }
-
 
 
   ## Wave 1
@@ -602,6 +605,15 @@ recode_imputed_data <- function(
         ) %>%
         unnest(c(data)) %>%
         ungroup()
+    }
+  }
+  ## ============================================================================================ ##
+  ## ====== User supplied recoding function ===================================================== ##
+  if(!is.null(inject.recode.fx)){
+    if(!is.function(inject.recode.fx)){
+      message("ERROR: inject.recode.fx must be a function with the argument data: inject.recode.fx <- function(data){...};\n TRY AGAIN--user defined recoding not used.")
+    } else {
+      df.imp.long <- inject.recode.fx(df.imp.long)
     }
   }
   ## ============================================================================================ ##
