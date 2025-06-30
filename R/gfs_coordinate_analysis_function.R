@@ -424,7 +424,7 @@ gfs_run_regression_single_outcome <- function(
                     }
                     if (outcome.type == "RR") {
                       if(is.null(family)){
-                        family = stats::quassipoisson()
+                        family = stats::quasipoisson()
                       }
                       tmp.fit <- gfs_svyglm(
                         tmp.model,
