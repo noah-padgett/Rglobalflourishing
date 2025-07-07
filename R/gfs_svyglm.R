@@ -3,10 +3,9 @@
 #'
 #' @param formula a model (linear) as used in glm
 #' @param svy.design a data.frame or survey.design object
-#' @param family the usual family argument as used in glms see below for more information
 #' @param robust.huberM a logical defining whether to use the robsurvey pacakge to estimate the linear regression model instead of the usual svyglm(.) function (default: FALSE)
 #' @param robust.tune (default 1) tuning parameter for robsurvey package
-#' @param ... additional arguments as needed
+#' @param ... additional arguments as needed--an important one is family passed to glm
 #' @return a list of containing resulting fitted object (fit), residuals, a tidied version, and
 #' a vector containing the included predictor variables.
 #' @description
@@ -21,7 +20,7 @@
 #'   # TO-DO
 #' }
 #' @export
-gfs_svyglm <- function(formula, svy.design, family = gaussian(), robust.huberM = FALSE, robust.tune = 1, ...) {
+gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune = 1, model.type = "reg", ...) {
   is.survey <- ifelse(any(class(svy.design) %in% c(
     "survey.design2", "survey.design"
   )), TRUE, FALSE)
@@ -31,12 +30,14 @@ gfs_svyglm <- function(formula, svy.design, family = gaussian(), robust.huberM =
     stop("svy.design must be a survey.design or survey.design2 object from the survey package. Please check data object.")
   }
   # double check predictors for variance
+  # double check predictors for variance
   y <- paste0(formula)[2]
   x <- rownames(attr(terms(formula), "factors"))[-1]
   keep.pred <- keep_variable(x, tmp.data)
+  retained.predictors <- x[keep.pred]
   tmp.model <- reformulate(
     response = y,
-    termlabels = x[keep.pred]
+    termlabels = retained.predictors
   )
 
   # fit 1: no weights
@@ -46,6 +47,50 @@ gfs_svyglm <- function(formula, svy.design, family = gaussian(), robust.huberM =
   # fit 2: with complex survey adjustments
   tmp.fit <- survey::svyglm(tmp.model, design = svy.design, ...)
   tmp.fit.tidy <- tidy(tmp.fit) # contains, estimates & standard errors
+
+  if (robust.huberM) {
+    tmp.fit <- robsurvey::svyreg_huberM(
+      tmp.model,
+      design = svy.design,
+      k = robust.tune,
+      maxit = 10000
+    )
+    tmp.fit.tidy <- data.frame(
+      term = names(tmp.fit$estimate),
+      estimate = tmp.fit$estimate,
+      std.error = sqrt(diag(vcov(tmp.fit, mode = "compound")))
+    )
+  }
+  if (model.type == "lasso"){
+    if(class(family) == "family"){
+      family = family$family
+    }
+    ## Step 1. fit weighted lasso model to get reduced set of predictors
+    ## exclude focal predictor so that it doesn't get excluded from final model
+    tmp.dat00 <- tmp.data[,c(x[keep.pred][-1], y, names(svy.design$cluster), names(svy.design$strata),names(svy.design$allprob))]
+    tmp.fit.lasso <- svyVarSel::wlasso(
+      data = as.data.frame(tmp.dat00),
+      cluster = names(svy.design$cluster),
+      strata = names(svy.design$strata),
+      weights = names(svy.design$allprob),
+      col.y = y, col.x = x[keep.pred][-1], ...
+    )
+    retained.predictors = rownames(tmp.fit.lasso$model$min$beta)[tmp.fit.lasso$model$min$beta[,1] != 0]
+    retained.predictors = unique(c(x[keep.pred][1], x[keep.pred][ x[keep.pred] %in% retained.predictors]))
+    ## fit with the selected predictors
+    tmp.model <- reformulate(
+      response = y,
+      termlabels = retained.predictors
+    )
+    ## Step 2. Fit actual model to get estimates + standard errors
+    # fit 1: no weights
+    fit.dof <- stats::glm(tmp.model, data = tmp.data, ...)
+    vcom <- fit.dof$df.residual
+    # fit 2: with complex survey adjustments
+    tmp.fit <- survey::svyglm(tmp.model, design = svy.design, ...)
+    tmp.fit.tidy <- tidy(tmp.fit) # contains, estimates & standard errors
+  }
+  ## compute f-stat and p-value
   tmp.fit.tidy <- tmp.fit.tidy %>%
     mutate(
       f.statistic = (estimate**2) / (std.error**2),
@@ -54,34 +99,10 @@ gfs_svyglm <- function(formula, svy.design, family = gaussian(), robust.huberM =
       p.value = 1 - pf(f.statistic, df.num, df.dem),
       # see: Lumley, T. & Scott, A. Fitting Regression Models to Survey Data. Statistical Science 32, 265–278 (2017). p. 269 left column, middle paragraph
       p.value = case_when(
-        p.value == 0 ~ 1e-16,
+        p.value == 0 ~ 2.2e-16,
         .default = p.value
       )
     )
-  if (robust.huberM) {
-    tmp.fit <- robsurvey::svyreg_huberM(
-      tmp.model,
-      design = svy.design,
-      k = 1,
-      maxit = 10000
-    )
-    tmp.fit.tidy <- data.frame(
-      term = names(tmp.fit$estimate),
-      estimate = tmp.fit$estimate,
-      std.error = sqrt(diag(vcov(tmp.fit, mode = "compound")))
-    )
-    tmp.fit.tidy <- tmp.fit.tidy %>%
-      mutate(
-        f.statistic = (estimate**2) / (std.error**2),
-        df.num = 1,
-        df.dem = vcom,
-        p.value = 1 - pf(f.statistic, df.num, df.dem),
-        p.value = case_when(
-          p.value == 0 ~ 1e-16,
-          .default = p.value
-        )
-      )
-  }
   # export (1) the fitted object
   # and (2) the "tidied" version
   tmp.fit.tidy$vcom <- vcom
@@ -89,8 +110,9 @@ gfs_svyglm <- function(formula, svy.design, family = gaussian(), robust.huberM =
     fit = tmp.fit,
     residuals = residuals(tmp.fit),
     fit.tidy = tmp.fit.tidy,
-    retained.predictors = x[keep.pred],
-    design = svy.design
+    retained.predictors = retained.predictors,
+    design = svy.design,
+    fit.lasso = ifelse(model.type == "lasso", tmp.fit.lasso, NA)
   )
   out
 }

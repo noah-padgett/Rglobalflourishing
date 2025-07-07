@@ -16,6 +16,7 @@
 #' @param res.dir a character string defining directory to save results to.
 #' @param subpopulation (optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)
 #' @param appnd.txt.to.filename (optional) character string to help differentiate saved results file (default "")
+#' @param save.all (FALSE) logical of whether to save the fitted regression models from each imputed dataset (this is a double-checking feature and should generally be set to FALSE unless you plan to probe the individual regression models--see the methods paper for Wave 2 for example of it's used)
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a data.frame that contains the meta-analysis input results
 #' @examples {
@@ -66,7 +67,12 @@ gfs_run_regression_single_outcome <- function(
     list.composites = NULL,
     domain.subset = NULL,
     family = NULL,
-    appnd.txt.to.filename = "", ...) {
+    appnd.txt.to.filename = "",
+    save.all = FALSE,
+    ...) {
+
+  #your.outcome = OUTCOME.VEC[1]; your.pred = PRED.VEC[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "mintotal"; res.dir = "results-sens"; appnd.txt.to.filename = "_pc_50perc"; save.all = FALSE; domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
+
   suppressMessages({
     suppressWarnings({
       # remove focal predictor from covariate vectors
@@ -110,7 +116,7 @@ gfs_run_regression_single_outcome <- function(
         sort()
 
       ##
-      x <- country.vec[1]
+      x <- country.vec[8]
       .run_internal_func <- function(x){
       	cur.country <- x
         ###
@@ -297,7 +303,7 @@ gfs_run_regression_single_outcome <- function(
            	summarise(
            		pc.var = mean(pc.var, na.rm=TRUE),
            		prop.var = mean(prop.var, na.rm=TRUE),
-           		prop.sum = mean(prop.var, na.rm=TRUE),
+           		prop.sum = mean(prop.sum, na.rm=TRUE),
            		Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
            	)
 
@@ -367,7 +373,7 @@ gfs_run_regression_single_outcome <- function(
                 if (str_to_lower(pc.rule) == "mincomp") {
                   keep.num.pc0 <- fit.pca.summary %>%
                     dplyr::filter(prop.var >= pc.cutoff)
-                  if (nrow(keep.num.pc0) < 23) {
+                  if (nrow(keep.num.pc0) < 1) {
                     # cutoff fails because too stringent, switching to a default of 0.02
                     keep.num.pc0 <- fit.pca.summary %>%
                       dplyr::filter(prop.var >= 0.02)
@@ -391,6 +397,7 @@ gfs_run_regression_single_outcome <- function(
             svy.data.imp %>%
               dplyr::mutate(
                 svy.fit = purrr::map(svy.data, \(x) {
+                  # x = svy.data.imp$svy.data[[1]]
                   tmp.fit <- NULL
                   # first check if ANY variance on outomce
                   run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)
@@ -410,41 +417,40 @@ gfs_run_regression_single_outcome <- function(
                       )
                     }
 
-                    if (outcome.type == "linear") {
-                      if(is.null(family)){
-                        family = stats::gaussian()
-                      }
-                      tmp.fit <- gfs_svyglm(
-                        tmp.model,
-                        svy.design = x,
-                        family = family,
-                        robust.huberM = robust.huberM,
-                        robust.tune = robust.tune
-                      )
+                    if(outcome.type == "linear" & is.null(family)){
+                      family = stats::gaussian()
                     }
-                    if (outcome.type == "RR") {
-                      if(is.null(family)){
-                        family = stats::quasipoisson()
-                      }
-                      tmp.fit <- gfs_svyglm(
-                        tmp.model,
-                        svy.design = x,
-                        family = family,
-                        robust.huberM = robust.huberM,
-                        robust.tune = robust.tune
-                      )
+                    if (outcome.type == "RR" & is.null(family)){
+                      family = stats::quasipoisson()
                     }
+                    tmp.fit <- gfs_svyglm(
+                      tmp.model,
+                      svy.design = x,
+                      family = family,
+                      robust.huberM = robust.huberM,
+                      robust.tune = robust.tune
+                    )
+
                     tmp.fit
                   }
                 }),
-                fit.tidy = map(svy.fit, \(x) x$fit.tidy)
+                fit.tidy = map(svy.fit, \(x) x$fit.tidy),
+                fit.full = map(svy.fit, \(x) x$fit),
+                fit.lasso = map(svy.fit, \(x) x$fit.lasso),
+                residuals = map(svy.fit, \(x) x$residuals),
+                retained.predictors = map(svy.fit, \(x) x$retained.predictors)
               ) %>%
-              select(fit.tidy) %>%
+              select(COUNTRY, imp_num, fit.tidy, fit.full, fit.lasso, residuals, retained.predictors) %>%
               ungroup()
           }) |> bind_rows()
 
+          if(!save.all){
+            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy)
+          }
+
           # re-estimate basic model with the max number of PCs used to get the variable names
           tmp.dat <- .get_data(country.files[1])
+          #cur.country = as.character(tmp.dat$COUNTRY[1])
           keep.var <- rep(FALSE, length(covariates))
           for(i in 1:length(keep.var)){
             if(covariates[i] %in% colnames(tmp.dat$data[[1]])){
@@ -558,6 +564,12 @@ gfs_run_regression_single_outcome <- function(
 
           ## Relabel output
           varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")
+          if(pc.rule != "omit"){
+            if(any(str_detect(varlist, "PC_"))){
+              varlist[str_detect(varlist, "PC_")] <- "PC"
+              varlist <- unique(varlist)
+            }
+          }
           termlist <- as.character(unique(results.pooled$term))[-1]
 
           base_variable <- sapply(termlist, function(b) {
@@ -841,6 +853,9 @@ gfs_run_regression_single_outcome <- function(
             output <- rbind(output, env.res$output)
             metainput <- rbind(metainput, env.res$metainput)
             fit.pca.summary <- rbind(fit.pca.summary, env.res$fit.pca.summary)
+            if(save.all){
+              fitted.reg.models <- rbind(fitted.reg.models, env.res$fitted.reg.models)
+            }
           }
           ## save/overwrite existing saved results file so everything is in one object
           save(
@@ -849,13 +864,28 @@ gfs_run_regression_single_outcome <- function(
             fit.pca.summary,
             file = outfile
           )
+          if(save.all){
+            save(
+              output,
+              metainput,
+              fit.pca.summary,
+              fitted.reg.models,
+              file = outfile
+            )
+          }
         }
 
       }
       ##
       walk(country.vec, \(x){
+
         .run_internal_func(x)
       })
+
+      # for(x in country.vec){
+      #   print(x)
+      #   .run_internal_func(x)
+      # }
 
 
     })

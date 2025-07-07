@@ -308,10 +308,12 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
 	# get list of files in data.dir
 	df.files <- list.files(data.dir)
 	df.files <- df.files[str_detect(df.files, "recoded_imputed_data_obj")]
-
 	attr.dir <- here(attr.dir)
-
-	walk(df.files, \(x){
+	plan("multisession", workers = availableCores(constraints = "connections"))
+	with_progress({
+	  p <- progressor(along = df.files)
+	  furrr::future_walk(df.files, \(x){
+	  load_packages()
 		df.tmp <- readr::read_rds(here::here(data.dir, x))
 		cur.country <- str_remove(x, "recoded_imputed_data_obj_") |>
 			stringr::word(1, sep = "\\_imp")
@@ -321,5 +323,8 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
 		readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
 		rm(df.tmp)
 		gc()
+		p(sprintf("x= %s", x))
+	  },.options = furrr_options(seed = TRUE))
 	})
+	future::resetWorkers(plan())
 }

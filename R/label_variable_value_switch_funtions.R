@@ -3692,11 +3692,11 @@ nurse)",
       REL_LIFE = c(x),
       GF_MONEY = c(x),
       TIME_MEDIA = case_when(
-        x == 1 ~ "None/I don’t use social media",
-        x == 2 ~ "Less than 30 minutes",
-        x == 3 ~ "30 minutes to less than an hour",
-        x == 4 ~ "1 to 2 hours",
-        x == 5 ~ "More than 2 hours",
+        x == 1 ~ "1. None/I don’t use social media",
+        x == 2 ~ "2. Less than 30 minutes",
+        x == 3 ~ "3. 30 minutes to less than an hour",
+        x == 4 ~ "4. 1 to 2 hours",
+        x == 5 ~ "5. More than 2 hours",
         .default = "(Missing)"
       ),
       x

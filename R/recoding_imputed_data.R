@@ -60,15 +60,15 @@ recode_imputed_data <- function(
     mutate(
       .imp = ifelse(is.numeric(m), m, ifelse(!is.null(.imp), .imp, m)),
       across(where(is.factor), \(x){
-      	if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
-        	x <- sub("\\..*", "", x)
-        	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-          		as.numeric()
+        if(str_detect(cur_column(), "COUNTRY", negate=TRUE)){
+          x <- sub("\\..*", "", x)
+          x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+            as.numeric()
         }
         if(str_detect(cur_column(), "BORN_COUNTRY")){
-        	x <- sub("\\..*", "", x)
-        	x = case_when(x == "(Missing)" ~ NA, .default = x) |>
-          		as.numeric()
+          x <- sub("\\..*", "", x)
+          x = case_when(x == "(Missing)" ~ NA, .default = x) |>
+            as.numeric()
         }
         x
       })
@@ -283,52 +283,52 @@ recode_imputed_data <- function(
   ## ============================================================================================ ##
   ## ====== RACE PLURALITY INDICATOR ============================================================ ##
   {
-  df.imp.long <- df.imp.long %>%
-    mutate(
-      COV_RACE_PLURALITY = case_when(
-        COUNTRY2 == "Argentina" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "Argentina" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-        COUNTRY2 == "Australia" & str_detect(RACE, "Australian") ~ 0,
-        COUNTRY2 == "Australia" & str_detect(RACE, "Australian", negate = TRUE) ~ 1,
-        COUNTRY2 == "Brazil" & str_detect(RACE, "Branca") ~ 0,
-        COUNTRY2 == "Brazil" & str_detect(RACE, "Branca", negate = TRUE) ~ 1,
-        COUNTRY2 == "Egypt" & str_detect(RACE, "Arab") ~ 0,
-        COUNTRY2 == "Egypt" & str_detect(RACE, "Arab", negate = TRUE) ~ 1,
-        COUNTRY2 == "Germany" ~ NA,
-        COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)") ~ 0,
-        COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)", negate = TRUE) ~ 1,
-        COUNTRY2 == "India" & str_detect(RACE, "Other backward caste") ~ 0,
-        COUNTRY2 == "India" & str_detect(RACE, "Other backward caste", negate = TRUE) ~ 1,
-        COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa") ~ 0,
-        COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa", negate = TRUE) ~ 1,
-        COUNTRY2 == "Israel" & str_detect(RACE, "Jewish") ~ 0,
-        COUNTRY2 == "Israel" & str_detect(RACE, "Jewish", negate = TRUE) ~ 1,
-        COUNTRY2 == "Japan" ~ NA,
-        COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu") ~ 0,
-        COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu", negate = TRUE) ~ 1,
-        COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo") ~ 0,
-        COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo", negate = TRUE) ~ 1,
-        COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa") ~ 0,
-        COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa", negate = TRUE) ~ 1,
-        COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog") ~ 0,
-        COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog", negate = TRUE) ~ 1,
-        COUNTRY2 == "Poland" & str_detect(RACE, "Polish") ~ 0,
-        COUNTRY2 == "Poland" & str_detect(RACE, "Polish", negate = TRUE) ~ 1,
-        COUNTRY2 == "South Africa" & str_detect(RACE, "Black") ~ 0,
-        COUNTRY2 == "South Africa" & str_detect(RACE, "Black", negate = TRUE) ~ 1,
-        COUNTRY2 == "Spain" ~ NA,
-        COUNTRY2 == "Sweden" ~ NA,
-        COUNTRY2 == "Tanzania" & str_detect(RACE, "African") ~ 0,
-        COUNTRY2 == "Tanzania" & str_detect(RACE, "African", negate = TRUE) ~ 1,
-        COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish") ~ 0,
-        COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish", negate = TRUE) ~ 1,
-        COUNTRY2 == "United Kingdom" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-        COUNTRY2 == "United States" & str_detect(RACE, "White") ~ 0,
-        COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-        .default = 0
+    df.imp.long <- df.imp.long %>%
+      mutate(
+        COV_RACE_PLURALITY = case_when(
+          COUNTRY2 == "Argentina" & str_detect(RACE, "White") ~ 0,
+          COUNTRY2 == "Argentina" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY2 == "Australia" & str_detect(RACE, "Australian") ~ 0,
+          COUNTRY2 == "Australia" & str_detect(RACE, "Australian", negate = TRUE) ~ 1,
+          COUNTRY2 == "Brazil" & str_detect(RACE, "Branca") ~ 0,
+          COUNTRY2 == "Brazil" & str_detect(RACE, "Branca", negate = TRUE) ~ 1,
+          COUNTRY2 == "Egypt" & str_detect(RACE, "Arab") ~ 0,
+          COUNTRY2 == "Egypt" & str_detect(RACE, "Arab", negate = TRUE) ~ 1,
+          COUNTRY2 == "Germany" ~ NA,
+          COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)") ~ 0,
+          COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)", negate = TRUE) ~ 1,
+          COUNTRY2 == "India" & str_detect(RACE, "Other backward caste") ~ 0,
+          COUNTRY2 == "India" & str_detect(RACE, "Other backward caste", negate = TRUE) ~ 1,
+          COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa") ~ 0,
+          COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa", negate = TRUE) ~ 1,
+          COUNTRY2 == "Israel" & str_detect(RACE, "Jewish") ~ 0,
+          COUNTRY2 == "Israel" & str_detect(RACE, "Jewish", negate = TRUE) ~ 1,
+          COUNTRY2 == "Japan" ~ NA,
+          COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu") ~ 0,
+          COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu", negate = TRUE) ~ 1,
+          COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo") ~ 0,
+          COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo", negate = TRUE) ~ 1,
+          COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa") ~ 0,
+          COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa", negate = TRUE) ~ 1,
+          COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog") ~ 0,
+          COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog", negate = TRUE) ~ 1,
+          COUNTRY2 == "Poland" & str_detect(RACE, "Polish") ~ 0,
+          COUNTRY2 == "Poland" & str_detect(RACE, "Polish", negate = TRUE) ~ 1,
+          COUNTRY2 == "South Africa" & str_detect(RACE, "Black") ~ 0,
+          COUNTRY2 == "South Africa" & str_detect(RACE, "Black", negate = TRUE) ~ 1,
+          COUNTRY2 == "Spain" ~ NA,
+          COUNTRY2 == "Sweden" ~ NA,
+          COUNTRY2 == "Tanzania" & str_detect(RACE, "African") ~ 0,
+          COUNTRY2 == "Tanzania" & str_detect(RACE, "African", negate = TRUE) ~ 1,
+          COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish") ~ 0,
+          COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish", negate = TRUE) ~ 1,
+          COUNTRY2 == "United Kingdom" & str_detect(RACE, "White") ~ 0,
+          COUNTRY2 == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY2 == "United States" & str_detect(RACE, "White") ~ 0,
+          COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          .default = 0
+        )
       )
-    )
   }
   ## ============================================================================================ ##
   ## ====== RECODING RELIGION DATA ============================================================== ##
@@ -350,8 +350,8 @@ recode_imputed_data <- function(
       names(rel.prominence.tab) <- rel.prominence[, 1, drop = T]
       rel.lvl <- levels(data[[var]])
       rel.ag.prom <- rel.prominence.tab[rel.lvl == "No religion/Atheist/Agnostic"]
-        if (length(rel.ag.prom) == 0) {
-            rel.ag.prom <- 0 }
+      if (length(rel.ag.prom) == 0) {
+        rel.ag.prom <- 0 }
       if (rel.ag.prom > 0.03) {
         rel.mp <- "No religion/Atheist/Agnostic"
       } else {
@@ -515,7 +515,7 @@ recode_imputed_data <- function(
         ) %>%
         select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
 
-       df.imp.long <-  df.imp.long %>%
+      df.imp.long <-  df.imp.long %>%
         mutate(.imp2 = .imp) %>%
         group_by(.imp2, COUNTRY2) %>%
         nest() %>%
@@ -644,21 +644,21 @@ recode_imputed_data <- function(
           x <- recode_to_numeric(x, tmp.var)
         }
       } else if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
-      	  if (list.default[["FORCE_CONTINUOUS"]][tmp.var]) {
-      	  	x <- recode_to_type(x, tmp.var)
-      	  	x <- reorder_levels(x, tmp.var)
-      	  	if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
-      	    	x <- as.numeric(x)
-      	  	} else {
-      	    	x <- recode_to_numeric(x, tmp.var)
-      	  	}
-      	  } else {
-      	    # if focal variable is binary/categorical, then collasp as user-specified
-      	    x <- case_when(
-      	      x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
-      	      x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
-      	    )
-      	  }
+        if (list.default[["FORCE_CONTINUOUS"]][tmp.var]) {
+          x <- recode_to_type(x, tmp.var)
+          x <- reorder_levels(x, tmp.var)
+          if (get_outcome_scale(tmp.var) %in% c("bin", "likert")) {
+            x <- as.numeric(x)
+          } else {
+            x <- recode_to_numeric(x, tmp.var)
+          }
+        } else {
+          # if focal variable is binary/categorical, then collasp as user-specified
+          x <- case_when(
+            x %in% c(list.default[["VALUES_DEFINING_UPPER_CATEGORY"]][[tmp.var]]) ~ 1,
+            x %in% c(list.default[["VALUES_DEFINING_LOWER_CATEGORY"]][[tmp.var]]) ~ 0
+          )
+        }
       }
     } else {
       if (str_detect(tmp.var, "COMPOSITE")) {
@@ -687,7 +687,7 @@ recode_imputed_data <- function(
 
 
 #' @export
-recode_imp_by_country <- function(data.dir, nimp = 20, ...){
+recode_imp_by_country <- function(data.dir, nimp = 20, parallel = FALSE, num_cores = 1, ...){
   # get list of files in data.dir
   imp.files <- list.files(data.dir)
   imp.files <- imp.files[str_detect(imp.files, "imputed_data_obj")]
@@ -695,18 +695,43 @@ recode_imp_by_country <- function(data.dir, nimp = 20, ...){
   # run recode_imputed_data by country
   x <- imp.files[1]
   y <- 1
-  walk(imp.files, \(x){
-    load(here::here(data.dir,x), ex <- new.env())
-    # ls.str(ex)
-    walk(1:nimp, \(y){
-    		tmp.imp <- recode_imputed_data(ex$fit.imp, m = y, ...)
-    		cur.country <- as.character(tmp.imp$COUNTRY[1])
-    		c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,"_imp",y,".rds")
-    		readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
-    		rm(tmp.imp)
+
+  if(parallel){
+    plan("multisession", workers = num_cores)
+    with_progress({
+      p <- progressor(along = imp.files)
+      furrr::future_walk(imp.files, \(x){
+        load_packages()
+        options(survey.lonely.psu = "certainty")
+        load(here::here(data.dir,x), ex <- new.env())
+        # ls.str(ex)
+        walk(1:nimp, \(y){
+          tmp.imp <- recode_imputed_data(ex$fit.imp, m = y, ...)
+          cur.country <- as.character(tmp.imp$COUNTRY[1])
+          c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,"_imp",y,".rds")
+          readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
+          rm(tmp.imp)
+        })
+        rm(ex)
+        p(sprintf("x= %s", x))
+      },.options = furrr_options(seed = TRUE))
     })
-    rm(ex)
-    gc(full=TRUE)
-  })
+    future::resetWorkers(plan())
+  } else {
+
+    walk(imp.files, \(x){
+      load(here::here(data.dir,x), ex <- new.env())
+      # ls.str(ex)
+      walk(1:nimp, \(y){
+        tmp.imp <- recode_imputed_data(ex$fit.imp, m = y, ...)
+        cur.country <- as.character(tmp.imp$COUNTRY[1])
+        c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,"_imp",y,".rds")
+        readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
+        rm(tmp.imp)
+      })
+      rm(ex)
+      gc(full=TRUE)
+    })
+  }
 
 }
