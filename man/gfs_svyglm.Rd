@@ -8,9 +8,9 @@ Runs relatively simple regression analysis}
 gfs_svyglm(
   formula,
   svy.design,
-  family = gaussian(),
   robust.huberM = FALSE,
   robust.tune = 1,
+  model.type = "reg",
   ...
 )
 }
@@ -19,13 +19,11 @@ gfs_svyglm(
 
 \item{svy.design}{a data.frame or survey.design object}
 
-\item{family}{the usual family argument as used in glms see below for more information}
-
 \item{robust.huberM}{a logical defining whether to use the robsurvey pacakge to estimate the linear regression model instead of the usual svyglm(.) function (default: FALSE)}
 
 \item{robust.tune}{(default 1) tuning parameter for robsurvey package}
 
-\item{...}{additional arguments as needed}
+\item{...}{additional arguments as needed--an important one is family passed to glm}
 }
 \value{
 a list of containing resulting fitted object (fit), residuals, a tidied version, and

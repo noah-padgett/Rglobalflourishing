@@ -6,9 +6,6 @@
 \alias{check_variance}
 \alias{keep_variable}
 \alias{quickpred2}
-\alias{format_flex_table}
-\alias{theme_meta_outcome_wide}
-\alias{theme_meta_evalues}
 \alias{.round}
 \alias{.round_p}
 \alias{.geom_stripes}
@@ -37,12 +34,6 @@ quickpred2(
   method = "pearson",
   maxcor = 0.71
 )
-
-format_flex_table(xtb, pg.width = 6.5)
-
-theme_meta_outcome_wide(xtb, pg.width = 9, .ncol = 12)
-
-theme_meta_evalues(xtb, pg.width = 6.5, .ncol = 6)
 
 .round(x, digits = 2)
 

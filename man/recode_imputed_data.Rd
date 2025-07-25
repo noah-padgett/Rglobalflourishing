@@ -15,6 +15,7 @@ recode_imputed_data(
   wgt = "ANNUAL_WEIGHT_R2",
   strata = "STRATA",
   psu = "PSU",
+  inject.recode.fx = NULL,
   ...
 )
 }
@@ -33,6 +34,8 @@ FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALU
 \item{wave}{(default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)}
 
 \item{method.income}{(optional) method for how income, based on country specific labels, is recoded. Options include 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'. Defaults to 'quintiles.top.random'.}
+
+\item{inject.recode.fx}{(optional) a function with the argument data that takes in the dataset and manually recodes values, use with caution}
 
 \item{...}{other arguments passed to mice}
 }

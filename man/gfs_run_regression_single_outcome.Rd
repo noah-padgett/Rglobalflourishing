@@ -23,7 +23,9 @@ gfs_run_regression_single_outcome(
   res.dir = "results",
   list.composites = NULL,
   domain.subset = NULL,
+  family = NULL,
   appnd.txt.to.filename = "",
+  save.all = FALSE,
   ...
 )
 }
@@ -53,6 +55,8 @@ gfs_run_regression_single_outcome(
 \item{res.dir}{a character string defining directory to save results to.}
 
 \item{appnd.txt.to.filename}{(optional) character string to help differentiate saved results file (default "")}
+
+\item{save.all}{(FALSE) logical of whether to save the fitted regression models from each imputed dataset (this is a double-checking feature and should generally be set to FALSE unless you plan to probe the individual regression models--see the methods paper for Wave 2 for example of it's used)}
 
 \item{...}{other arguments passed to svyglm or glmrob functions}
 

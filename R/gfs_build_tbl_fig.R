@@ -1367,6 +1367,660 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
 
 #' @export
 #' @rdname build-functions
+build_tbl_predictorwide <- function(params, font.name = "Open Sans", font.size = 10){
+
+  set_flextable_defaults(font.family = font.name,font.size = font.size)
+
+  is.meta = params$is.meta
+  OUTCOME.VEC = params$OUTCOME.VEC
+  MYLABEL = params$MYLABEL
+  PREDICTOR.VEC = params$PREDICTOR.VEC
+  dir.a = params$dir.a
+  dir.b = params$dir.b
+  file.a = params$file.a
+  file.b = params$file.b
+  country.i = params$country.i
+  ci.bonferroni = params$ci.bonferroni
+  p.bonferroni = params$p.bonferroni
+  p.ci = params$p.ci
+  n.print = params$n.print
+  tb.cap = params$tb.cap
+  header.a = params$header.a
+  header.b = params$header.b
+  fn.txt = params$fn.txt
+  cache.file = params$cache.file
+  start.time = params$start.time
+  ignore.cache = params$ignore.cache
+  file.xlsx = params$file.xlsx
+  digits = params$digits
+
+  COUNTRY_LABELS <-
+    sort(
+      c(
+        "Australia",
+        "Hong Kong",
+        "India",
+        "Indonesia",
+        "Japan",
+        "Philippines",
+        "Egypt",
+        "Germany",
+        "Israel",
+        "Kenya",
+        "Nigeria",
+        "Poland",
+        "South Africa",
+        "Spain",
+        "Sweden",
+        "Tanzania",
+        "Turkey",
+        "United Kingdom",
+        "United States",
+        "Argentina",
+        "Brazil",
+        "Mexico",
+        "China"
+      )
+    )
+
+  if(is.meta){
+    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
+    vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue", "theta.rma.se")
+    vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue", "theta.rma.se")
+    vec.a <- c("RR", "ES","95% CI","\u03c4", "Global p-value")
+    vec.b <- c("RR\r", "ES\r","95% CI\r","\u03c4\r", "Global p-value\r")
+  } else {
+    vec.id <- c("id.Est","id.CI", "id.SE","p.value")
+    vec.rr <- c("rr.Est", "rr.CI", "logrr.SE","p.value")
+    vec.a <- c("RR", "ES", "95% CI", "SE", "p-value")
+    vec.b <- c("RR\r", "ES\r", "95% CI\r", "SE\r", "p-value\r")
+  }
+  # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+  cnames <- c(
+    "Outcome",
+    vec.a,
+    "\r",
+    vec.b
+  )
+
+  zz.scale = get_outcome_scale(OUTCOME.VEC[1])
+    cnames = case_when(
+      zz.scale == "cont" ~ cnames[str_detect(cnames, "RR", negate=TRUE)],
+      zz.scale != "cont" ~ cnames[str_detect(cnames, "ES", negate=TRUE)]
+    )
+
+  outcomewide <- as.data.frame(matrix(nrow = length(PREDICTOR.VEC), ncol = length(cnames)))
+  colnames(outcomewide) <- cnames
+  outcomewide$"\r" <- ""
+  i = ii = 1
+  for (i in 1:length(PREDICTOR.VEC)) {
+    if (stringr::str_detect(PREDICTOR.VEC[i], "blank") ) {
+      outcomewide[i, 1] <- MYLABEL[ii]
+      ii <- ii + 1
+    } else {
+      outcomewide[i, 1] = paste0("    ",get_outcome_better_name(PREDICTOR.VEC[i], include.name = FALSE, include.fid = TRUE))
+
+      if(!is.meta){
+        if ( (str_detect(PREDICTOR.VEC[i],"APPROVE_GOVT") & COUNTRY_LABELS[i] %in% c("China","Egypt") ) |
+             (str_detect(PREDICTOR.VEC[i],"BELIEVE_GOD") & COUNTRY_LABELS[i] %in% c("Egypt") ) |
+             (str_detect(PREDICTOR.VEC[i],"BELONGING") & COUNTRY_LABELS[i] %in% c("China") )   |
+             (str_detect(PREDICTOR.VEC[i],"SAY_IN_GOVT") & COUNTRY_LABELS[i] %in% c("China") )
+        ) {
+          outcomewide[i, c(2:6,8:12)] <- "-"
+          next
+        }
+      }
+
+      tmp.vec <- case_when(
+        get_outcome_scale(OUTCOME.VEC[1]) == "cont" ~ vec.id,
+        .default = vec.rr
+      )
+      ## ====== Panel A ======================================= ##
+      if(is.meta){
+        tmp.a <- load_meta_result(
+          file = here::here(dir.a, file.a),
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          what = vec.get
+        )
+        tmp.a <- tmp.a %>%
+          dplyr::mutate(
+            theta.rma.ci = paste0(
+              "(",.round(theta.rma - qnorm(1-p.ci/2)*theta.rma.se, digits), ",",
+              .round(theta.rma + qnorm(1-p.ci/2)*theta.rma.se, digits) ,")"
+            ),
+            rr.theta.ci = paste0(
+              "(",.round(exp(theta.rma - qnorm(1-p.ci/2)*theta.rma.se), digits), ",",
+              .round(exp(theta.rma + qnorm(1-p.ci/2)*theta.rma.se), digits) ,")"
+            ),
+            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
+            dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
+              case_when(
+                x < 0.01 ~ "<0.01\u2020",
+                x >= 0.01 ~ .round(x,digits)
+              )
+            }),
+            dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
+              case_when(
+                x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                x < 0.005 ~ paste0(.round_p(x),"**"),
+                x < 0.05 ~ paste0(.round(x,3),"*"),
+                x > 0.05 ~ .round(x,3)
+              )
+            })
+          )
+      } else {
+        tmp.a <- get_country_specific_regression_results(
+          res.dir = dir.a,
+          country = country.i,
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          appnd.txt = file.a
+        )
+        tmp.a <- tmp.a %>%
+          dplyr::mutate(
+            id.Est = .round(std.estimate.pooled, digits),
+            id.SE = .round(std.se.pooled, digits),
+            id.CI = paste0(
+              "(",.round(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled, digits), ",",
+              .round(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled, digits) ,")"
+            ),
+            rr.Est = .round(exp(std.estimate.pooled), digits),
+            logrr.SE = .round(std.se.pooled, digits),
+            rr.CI = paste0(
+              "(",.round(exp(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled), digits), ",",
+              .round(exp(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled), digits) ,")"
+            ),
+            dplyr::across(tidyr::any_of(c("p.value")),\(x){
+              case_when(
+                x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                x < 0.005 ~ paste0(.round_p(x),"**"),
+                x < 0.05 ~ paste0(.round(x,3),"*"),
+                x > 0.05 ~ .round(x,3)
+              )
+            })
+          )
+      }
+      ## ====== Panel B ======================================= ##
+      if(is.meta){
+        tmp.b <- load_meta_result(
+          file = here::here(dir.b, file.b),
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          what = vec.get
+        )
+        tmp.b <- tmp.b %>%
+          dplyr::mutate(
+            theta.rma.ci = paste0(
+              "(",.round(theta.rma - qnorm(1-p.ci/2)*theta.rma.se, digits), ",",
+              .round(theta.rma + qnorm(1-p.ci/2)*theta.rma.se, digits) ,")"
+            ),
+            rr.theta.ci = paste0(
+              "(",.round(exp(theta.rma - qnorm(1-p.ci/2)*theta.rma.se), digits), ",",
+              .round(exp(theta.rma + qnorm(1-p.ci/2)*theta.rma.se), digits) ,")"
+            ),
+            dplyr::across(tidyr::any_of(c("theta.rma", "rr.theta")),\(x) .round(x,digits)),
+            dplyr::across(tidyr::any_of(c("tau", "rr.tau")),\(x){
+              case_when(
+                x < 0.01 ~ "<0.01\u2020",
+                x >= 0.01 ~ .round(x,digits)
+              )
+            }),
+            dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
+              case_when(
+                x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                x < 0.005 ~ paste0(.round_p(x),"**"),
+                x < 0.05 ~ paste0(.round(x,3),"*"),
+                x > 0.05 ~ .round(x,3)
+              )
+            })
+          )
+      } else {
+        tmp.b <- get_country_specific_regression_results(
+          res.dir = dir.b,
+          country = country.i,
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          appnd.txt = file.b
+        )
+
+        tmp.b <- tmp.b %>%
+          dplyr::mutate(
+            id.Est = .round(std.estimate.pooled, digits),
+            id.SE = .round(std.se.pooled, digits),
+            id.CI = paste0(
+              "(",.round(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled, digits), ",",
+              .round(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled, digits) ,")"
+            ),
+            rr.Est = .round(exp(std.estimate.pooled), digits),
+            logrr.SE = .round(std.se.pooled, digits),
+            rr.CI = paste0(
+              "(",.round(exp(std.estimate.pooled - qnorm(1-p.ci/2)*std.se.pooled), digits), ",",
+              .round(exp(std.estimate.pooled + qnorm(1-p.ci/2)*std.se.pooled), digits) ,")"
+            ),
+            dplyr::across(tidyr::any_of(c("p.value")),\(x){
+              case_when(
+                x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                x < 0.005 ~ paste0(.round_p(x),"**"),
+                x < 0.05 ~ paste0(.round(x,3),"*"),
+                x > 0.05 ~ .round(x,3)
+              )
+            })
+          )
+      }
+      ## ====== Add Results to output object ====================================================== ##
+      zz = case_when(
+        zz.scale == "cont" ~ 1,
+        zz.scale != "cont" ~ 2
+      )
+        if(nrow(tmp.a) > 0){
+          outcomewide[i,vec.a[-zz]] <- tmp.a[tmp.vec[1:4]]
+        }
+        if(nrow(tmp.b) > 0){
+          outcomewide[i,vec.b[-zz]] <- tmp.b[tmp.vec[1:4]]
+        }
+    }
+  }
+
+  # footnote information:
+  tb.note.outcomewide <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+  print.tb <- outcomewide %>%
+    flextable() %>%
+    italic(part = "body",
+           i = c(which(stringr::str_detect(PREDICTOR.VEC, "blank"))),
+           j = 1) %>%
+    add_footer_lines(
+      values = tb.note.outcomewide, top = FALSE
+    ) %>%
+    add_header_row(
+      values = c("", header.a, "", header.b),
+      colwidths = c(1,length(vec.a)-1, 1, length(vec.b)-1)
+    ) %>%
+    add_header_lines(
+      as_paragraph(
+        as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans"))
+      )
+    ) %>%
+    theme_meta_predictor_wide()
+
+  gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
+  save(print.tb, file=cache.file)
+}
+
+#' @export
+#' @rdname build-functions
+build_tbl_predictorwide_evalues <- function(params, font.name = "Open Sans", font.size = 10){
+
+  set_flextable_defaults(font.family = font.name,font.size = font.size)
+
+  is.meta = params$is.meta
+  OUTCOME.VEC = params$OUTCOME.VEC
+  MYLABEL = params$MYLABEL
+  PREDICTOR.VEC = params$PREDICTOR.VEC
+  dir.a = params$dir.a
+  dir.b = params$dir.b
+  dir.c = params$dir.c
+  dir.d = params$dir.d
+  file.a = params$file.a
+  file.b = params$file.b
+  file.c = params$file.c
+  file.d = params$file.d
+  header.a = params$header.a
+  header.b = params$header.b
+  header.c = params$header.c
+  header.d = params$header.d
+  country.i = params$country.i
+  ci.bonferroni = params$ci.bonferroni
+  p.bonferroni = params$p.bonferroni
+  p.ci = params$p.ci
+  n.print = params$n.print
+  tb.cap = params$tb.cap
+  fn.txt = params$fn.txt
+  cache.file = params$cache.file
+  start.time = params$start.time
+  ignore.cache = params$ignore.cache
+  file.xlsx = params$file.xlsx
+  digits = params$digits
+
+  COUNTRY_LABELS <-
+    sort(
+      c(
+        "Australia",
+        "Hong Kong",
+        "India",
+        "Indonesia",
+        "Japan",
+        "Philippines",
+        "Egypt",
+        "Germany",
+        "Israel",
+        "Kenya",
+        "Nigeria",
+        "Poland",
+        "South Africa",
+        "Spain",
+        "Sweden",
+        "Tanzania",
+        "Turkey",
+        "United Kingdom",
+        "United States",
+        "Argentina",
+        "Brazil",
+        "Mexico",
+        "China"
+      )
+    )
+
+  if(is.meta){
+    vec.id <- c("theta.rma.EE", "theta.rma.ECI")
+    vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
+  } else {
+    vec.id <- c("EE", "ECI")
+  }
+
+  vec.a <- c("EE", "ECI")
+  vec.b <- c("EE\r", "ECI\r")
+  vec.c <- c("EE\r\r", "ECI\r\r")
+  vec.d <- c("EE\r\r\r", "ECI\r\r\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
+  cnames <- c(
+    "Outcome",
+    vec.a, "\r\r\r", vec.b, "\r\r",
+    vec.c, "\r", vec.d
+  )
+
+  evalues <- as.data.frame(matrix(nrow = length(PREDICTOR.VEC), ncol = length(cnames)))
+  colnames(evalues) <- cnames
+  evalues$"\r" <- ""
+  evalues$"\r\r" <- ""
+  evalues$"\r\r\r" <- ""
+  i = ii = 1
+  for (i in 1:length(PREDICTOR.VEC)) {
+    if (stringr::str_detect(PREDICTOR.VEC[i], "blank") ) {
+      evalues[i, 1] <- MYLABEL[ii]
+      ii <- ii + 1
+    } else {
+      evalues[i, 1] = paste0("    ",get_outcome_better_name(PREDICTOR.VEC[i], include.name = FALSE))
+
+      if(!is.meta){
+        if ( (str_detect(PREDICTOR.VEC[i],"APPROVE_GOVT") & COUNTRY_LABELS[i] %in% c("China","Egypt") ) |
+             (str_detect(PREDICTOR.VEC[i],"BELIEVE_GOD") & COUNTRY_LABELS[i] %in% c("Egypt") ) |
+             (str_detect(PREDICTOR.VEC[i],"BELONGING") & COUNTRY_LABELS[i] %in% c("China") )   |
+             (str_detect(PREDICTOR.VEC[i],"SAY_IN_GOVT") & COUNTRY_LABELS[i] %in% c("China") )
+        ) {
+          outcomewide[i, c(2:6,8:12)] <- "-"
+          next
+        }
+      }
+
+      if(is.meta){
+        tmp.vec <- case_when(
+          get_outcome_scale(PREDICTOR.VEC[i]) == "cont" ~ vec.id,
+          .default = vec.rr
+        )
+      } else {
+        tmp.vec <- vec.id
+      }
+      ## ====== Primary MI - random effects meta - estimates withOUT PCs ====================== ##
+      if(is.meta){
+        tmp.a <- load_meta_result(
+          file = here::here(dir.a, file.a),
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          what = tmp.vec
+        ) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      } else {
+        tmp.a <- get_country_specific_regression_results(
+          res.dir = dir.a,
+          country = country.i,
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          appnd.txt = file.a
+        ) %>%
+          dplyr::select(tidyr::any_of(tmp.vec)) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      }
+      ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
+      if(is.meta){
+        tmp.b <- load_meta_result(
+          file = here::here(dir.b, file.b),
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          what = tmp.vec
+        ) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      } else {
+        tmp.b <- get_country_specific_regression_results(
+          res.dir = dir.b,
+          country = country.i,
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          appnd.txt = file.b
+        ) %>%
+          dplyr::select(tidyr::any_of(tmp.vec)) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      }
+      ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
+      if(is.meta){
+        tmp.c <- load_meta_result(
+          file = here::here(dir.c, file.c),
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          what = tmp.vec
+        ) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      }  else {
+        tmp.c <- get_country_specific_regression_results(
+          res.dir = dir.c,
+          country = country.i,
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          appnd.txt = file.c
+        ) %>%
+          dplyr::select(tidyr::any_of(tmp.vec)) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      }
+      ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
+      if(is.meta){
+        tmp.d <- load_meta_result(
+          file = here::here(dir.d, file.d),
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          what = tmp.vec
+        ) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      } else {
+        tmp.d <- get_country_specific_regression_results(
+          res.dir = dir.d,
+          country = country.i,
+          predictor = PREDICTOR.VEC[i],
+          outcome = OUTCOME.VEC[1],
+          appnd.txt = file.d
+        ) %>%
+          dplyr::select(tidyr::any_of(tmp.vec)) %>%
+          dplyr::mutate(
+            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+          )
+      }
+      ## ====== Add Results to output object ====================================================== ##
+      if(nrow(tmp.a) > 0) evalues[i,vec.a] <- tmp.a[tmp.vec]
+      if(nrow(tmp.b) > 0) evalues[i,vec.b] <- tmp.b[tmp.vec]
+      if(nrow(tmp.c) > 0) evalues[i,vec.c] <- tmp.c[tmp.vec]
+      if(nrow(tmp.d) > 0) evalues[i,vec.d] <- tmp.d[tmp.vec]
+    }
+  }
+
+
+  # footnote information:
+  tb.note.evalues <- as_paragraph(as_chunk("Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+  print.tb <- evalues %>%
+    flextable() %>%
+    italic(part = "body",
+           i = c(which(stringr::str_detect(OUTCOME.VEC, "blank"))),
+           j = 1) %>%
+    add_footer_lines(
+      values = tb.note.evalues, top = FALSE
+    ) %>%
+    add_header_row(
+      values = c("", "Model 1: Demographics and Childhood Variables as Covariates", "", "Model 2: Demographics, Childhood, and Other Wave 1 Confounders (Via Principal Components) as Covariates", "", "Model 1: Demographics and Childhood Variables as Covariates", "", "Model 2: Demographics, Childhood, and Other Wave 1 Confounders (Via Principal Components) as Covariates"),
+      colwidths = c(1, length(vec.a), 1, length(vec.b), 1, length(vec.c), 1, length(vec.d)),
+      top = TRUE
+    ) %>%
+    add_header_row(
+      values = c("", "Multiple Imputation", "", "Complete Case w/ Attrition Weights" ),
+      colwidths = c(1, length(vec.a)+1+length(vec.b), 1, length(vec.c)+1+length(vec.d)),
+      top = TRUE
+    ) %>%
+    add_header_lines(
+      as_paragraph(
+        as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans"))
+      )
+    ) %>%
+    width(j=1,width=3.5)%>%
+    width(j=c(2,5,8,11),width=0.75)%>%
+    width(j=c(3,6,9,12),width=1.0)%>%
+    width(j=c(4,7,10),width=0.10)%>%
+    format_flex_table(pg.width = 9) %>%
+    align(i = 2:3, j = NULL, align = "center", part = "header") %>%
+    align(part = "footer", align = "left", j = 1:ncol(evalues)) %>%
+    border_remove()  %>%
+    hline_bottom(part = "body") %>%
+    hline_bottom(part = "header") %>%
+    hline(i=1, part="header") %>%
+    hline(i=2,j=c(2:6,8:12), part="header") %>%
+    hline(i=3,j=c(2:3,5:6,8:9,11:12), part="header")
+
+
+  gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
+  save(print.tb, file=cache.file)
+}
+
+#' @export
+#' @rdname build-functions
+build_tbl_predictorwide_pnt_est_wide <- function(params, font.name = "Open Sans", font.size = 9){
+
+  set_flextable_defaults(font.family = font.name,font.size = font.size)
+
+  dir = params$dir
+  res.dir = params$res.dir
+  OUTCOME.VEC = params$OUTCOME.VEC
+  mylabels = params$mylabels
+  PREDICTOR.VEC = params$PREDICTOR.VEC
+  file = params$file
+  tb.cap = params$tb.cap
+  fn.txt = params$fn.txt
+  cache.file = params$cache.file
+  start.time = params$start.time
+  ignore.cache = params$ignore.cache
+  file.xlsx = params$file.xlsx
+  countries.included = params$countries.included
+  digits = params$digits
+
+  vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
+
+  nC <- 1 + length(countries.included)
+
+  df.tmp <- get_country_specific_output(
+    res.dir = dir,
+    outcomes =  OUTCOME.VEC,
+    predictors = PREDICTOR.VEC[str_detect(PREDICTOR.VEC,"blank",negate=TRUE)],
+    appnd.txt = file
+  ) %>%
+    filter(Variable == "FOCAL_PREDICTOR") %>%
+    select(COUNTRY, FOCAL_PREDICTOR, id.Std.Est, rr.Std.Est) |>
+    arrange(COUNTRY)
+
+  if(get_outcome_scale(OUTCOME.VEC) == "cont"){
+    df.tmp <- df.tmp %>% select(-rr.Std.Est)
+  }
+  if(get_outcome_scale(OUTCOME.VEC) != "cont"){
+    df.tmp <- df.tmp %>% select(-id.Std.Est)
+  }
+  colnames(df.tmp) <- c("COUNTRY", "FOCAL_PREDICTOR", "Est")
+
+  for(i in 1:nrow(df.tmp)){
+    df.tmp$FOCAL_PREDICTOR[i] <- get_outcome_better_name(df.tmp$FOCAL_PREDICTOR[i], FALSE, FALSE, include.fid = TRUE)
+  }
+  df.tmp.wide <- df.tmp %>%
+    select(COUNTRY, FOCAL_PREDICTOR, Est) %>%
+    pivot_wider(
+      names_from = COUNTRY,
+      values_from = c(Est)
+    )
+  df.tmp.wide2 <- df.tmp.wide
+  df.tmp.wide2[is.na(df.tmp.wide2)] <- "-"
+
+  df.tmp0 <- as.data.frame(matrix(ncol=ncol(df.tmp.wide2), nrow=length(PREDICTOR.VEC)))
+  colnames(df.tmp0) <- colnames(df.tmp.wide2)
+  i <- ii <- 1
+  for(i in seq_along(PREDICTOR.VEC)){
+    if (stringr::str_detect(PREDICTOR.VEC[i], "blank") ) {
+      df.tmp0[i, 1] <- mylabels[ii]
+      ii <- ii + 1
+    } else {
+      df.tmp0[i, 1] = paste0("    ",get_outcome_better_name(PREDICTOR.VEC[i], include.name = FALSE, include.fid = TRUE))
+      tmp.dat <- subset(df.tmp.wide2, str_trim(df.tmp.wide2$FOCAL_PREDICTOR) == str_trim(df.tmp0[i, 1]))
+      df.tmp0[i, -1] = tmp.dat[,-1]
+    }
+  }
+
+  df.tmp <- df.tmp0
+  colnames(df.tmp)[1] <- c("Focal Exposure")
+
+  # create comparable files but as CSV
+  readr::write_csv(df.tmp, file=here::here(res.dir, paste0("GFS_Outcomewide_Results_Comparison_", paste0(OUTCOME.VEC, collapse="_"),".csv")))
+
+
+  tb.note <- as_paragraph(as_chunk(fn.txt, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+
+
+  ft <- df.tmp %>%
+    flextable() %>%
+    italic(part = "body",
+           i = c(which(stringr::str_detect(PREDICTOR.VEC, "blank"))),
+           j = 1) %>%
+    autofit() %>%
+    format_flex_table(pg.width = 20) %>%
+    width(j=1,width=3.5)%>%
+    width(j=2:ncol(df.tmp), width = 0.55)%>%
+    bg(
+      j = c(seq(2,ncol(df.tmp),2)), bg="grey90",part = "all"
+    ) %>%
+    add_footer_lines(
+      values = tb.note, top = FALSE
+    ) %>%
+    add_header_lines(
+      as_paragraph(
+        as_chunk(tb.cap, props = fp_text_default(font.family = "Open Sans"))
+      )
+    ) %>%
+    hline(i=1, part = "header") %>%
+    align(i=2, align = "center", part = "header")
+
+  print.tb  <- width( ft, width = dim(ft)$widths * 20/ (flextable_dim(ft)$widths) )
+
+  gfs_append_to_xlsx(file.xlsx, print.tb, tb.cap)
+  save(print.tb, file=cache.file)
+}
+
+#' @export
+#' @rdname build-functions
 build_tbl_outcomes_exta_wide <- function(params, font.name = "Open Sans", font.size = 10){
 
   set_flextable_defaults(font.family = font.name,font.size = font.size)

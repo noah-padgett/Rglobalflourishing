@@ -21,6 +21,7 @@
 #' }
 #' @export
 gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune = 1, model.type = "reg", ...) {
+
   is.survey <- ifelse(any(class(svy.design) %in% c(
     "survey.design2", "survey.design"
   )), TRUE, FALSE)
@@ -40,9 +41,28 @@ gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune =
     termlabels = retained.predictors
   )
 
-  # fit 1: no weights
+  ## initial output object incase try fails for this replications
+  out <- list(
+    fit = NULL,
+    residuals = NULL,
+    fit.tidy = NULL,
+    retained.predictors = retained.predictors,
+    design = NULL,
+    fit.lasso = ifelse(model.type == "lasso", tmp.fit.lasso, NA),
+    converge = FALSE
+  )
+  try({
+    # fit 1: no weights
   fit.dof <- stats::glm(tmp.model, data = tmp.data, ...)
   vcom <- fit.dof$df.residual
+
+  ## check design matrix
+  dm <- model.matrix(fit.dof)
+  dm.cov.det <- det(cov(dm[-1,-1]))
+  if(dm.cov.det <= 0){
+    warning("WARNING. Analysis may fail. Design matrix is non-positive definite.")
+    print("Check country=", unique(tmp.data[["COUNTRY2"]]), "; imp=",unique(tmp.data[[".imp"]])," outcome=", your.outcome, "; focal exposure=",your.pred)
+  }
 
   # fit 2: with complex survey adjustments
   tmp.fit <- survey::svyglm(tmp.model, design = svy.design, ...)
@@ -112,7 +132,9 @@ gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune =
     fit.tidy = tmp.fit.tidy,
     retained.predictors = retained.predictors,
     design = svy.design,
-    fit.lasso = ifelse(model.type == "lasso", tmp.fit.lasso, NA)
+    fit.lasso = ifelse(model.type == "lasso", tmp.fit.lasso, NA),
+    converge = TRUE
   )
+})
   out
 }

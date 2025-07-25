@@ -11,6 +11,9 @@
 \alias{build_tbl_country_point_estimates}
 \alias{build_tbl_evalues}
 \alias{build_tbl_outcomewide}
+\alias{build_tbl_predictorwide}
+\alias{build_tbl_predictorwide_evalues}
+\alias{build_tbl_predictorwide_pnt_est_wide}
 \alias{build_tbl_outcomes_exta_wide}
 \alias{build_tbl_sample_extra_wide}
 \alias{build_tbl_pca_summary}
@@ -45,6 +48,20 @@ build_tbl_country_point_estimates(
 build_tbl_evalues(params, font.name = "Open Sans", font.size = 10)
 
 build_tbl_outcomewide(params, font.name = "Open Sans", font.size = 10)
+
+build_tbl_predictorwide(params, font.name = "Open Sans", font.size = 10)
+
+build_tbl_predictorwide_evalues(
+  params,
+  font.name = "Open Sans",
+  font.size = 10
+)
+
+build_tbl_predictorwide_pnt_est_wide(
+  params,
+  font.name = "Open Sans",
+  font.size = 9
+)
 
 build_tbl_outcomes_exta_wide(params, font.name = "Open Sans", font.size = 10)
 

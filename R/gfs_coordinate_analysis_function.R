@@ -71,7 +71,9 @@ gfs_run_regression_single_outcome <- function(
     save.all = FALSE,
     ...) {
 
-  #your.outcome = OUTCOME.VEC[1]; your.pred = PRED.VEC[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "mintotal"; res.dir = "results-sens"; appnd.txt.to.filename = "_pc_50perc"; save.all = FALSE; domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
+  #your.outcome = OUTCOME.VEC[1]; your.pred = PRED.VEC[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "mintotal"; res.dir = "results-sens"; appnd.txt.to.filename = "_pc_50perc"; save.all = FALSE; domain.subset = domain.subset = SUBPOPULATION[[y]]; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
+
+  # your.outcome = x; your.pred = y; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = SUBPOPULATION[[y]]; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
 
   suppressMessages({
     suppressWarnings({
@@ -424,7 +426,7 @@ gfs_run_regression_single_outcome <- function(
                       family = stats::quasipoisson()
                     }
                     tmp.fit <- gfs_svyglm(
-                      tmp.model,
+                      formula = tmp.model,
                       svy.design = x,
                       family = family,
                       robust.huberM = robust.huberM,
