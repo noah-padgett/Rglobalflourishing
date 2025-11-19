@@ -457,7 +457,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, MARITAL_STATUS_Y2 %in% c(1:3,5:6) ~ 0)
       )
 
-    all.vars <- unique(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2"))
+    all.vars <- unique(c(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2")))
     for (tmp.var in  all.vars){
       # print(tmp.var)
       x <- df.original[, tmp.var, drop = TRUE]

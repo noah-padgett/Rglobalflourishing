@@ -50,7 +50,8 @@ load_packages <- function(...) {
     "future",
     "furrr",
     "progressr",
-    "memuse"
+    "memuse",
+    "matrixStats"
   )
   new.packages <- packages[!(packages %in% utils::installed.packages()[, "Package"])]
   if (length(new.packages)) utils::install.packages(new.packages)

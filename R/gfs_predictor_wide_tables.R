@@ -273,19 +273,6 @@ gfs_predictor_wide_online_supplement <- function(
             "China"
           )
         )
-      if (any(str_detect(predictor.vec,"ABUSED"))) {
-        COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "Israel"]
-      }
-      if (any(str_detect(predictor.vec,"BELIEVE_GOD")) |
-          any(str_detect(predictor.vec,"APPROVE_GOVT"))){
-        COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "Egypt"]
-      }
-      if( any(str_detect(predictor.vec, "COVID_DEATH"))  |
-          any(str_detect(predictor.vec,"BELONGING"))  |
-          any(str_detect(predictor.vec,"SAY_IN_GOVT")) |
-          any(str_detect(predictor.vec,"APPROVE_GOVT"))){
-        COUNTRY_LABELS <- COUNTRY_LABELS[COUNTRY_LABELS != "China"]
-      }
       start.country = 1
     } else {
 
@@ -569,7 +556,7 @@ gfs_predictor_wide_online_supplement <- function(
         wgt = as.name("WGT0"),
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
-        tb.cap = paste0("Table S",tb.num,". Weighted summary statistics for outcome variables by Wave."),
+        tb.cap = paste0("Table S",tb.num,". Weighted summary statistics for exposure and outcome variables by Wave."),
         fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s2.RData")),
         start.time = run.start.time,
@@ -679,7 +666,7 @@ gfs_predictor_wide_online_supplement <- function(
     for(f0 in 1:length(OUTCOME.VEC)){
       ## ======================================================================================== ##
       ## Model 1 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
-      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(get_outcome_better_name(OUTCOME.VEC[f0], FALSE)) ," at Wave 2 with well-being and other outcomes at Wave 1 for Model 1 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(get_outcome_better_name(OUTCOME.VEC[f0], FALSE)) ," at Wave 2 regressed on well-being and other variables at Wave 1 for Model 1 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
       fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
@@ -735,7 +722,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       gc()
       ## ======================================================================================== ##
       ## Model 2 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
-      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(get_outcome_better_name(OUTCOME.VEC[f0], FALSE)) ," at Wave 2 with well-being and other outcomes at Wave 1 for Model 2 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(get_outcome_better_name(OUTCOME.VEC[f0], FALSE)) ," at Wave 2 regressed on well-being and other variables at Wave 1 for Model 2 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
       fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
@@ -852,9 +839,9 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         MYLABEL = MYLABEL,
         PREDICTOR.VEC = predictor.vec,
         dir.a = dir.primary,
-        dir.b = dir.supp,
-        file.a = file.primary.wpc,
-        file.b = file.cca.wpc,
+        dir.b = dir.primary,
+        file.a = file.unstd.wopc,
+        file.b = file.unstd.wpc,
         country.i = "",
         ci.bonferroni = ci.bonferroni,
         p.bonferroni = p.bonferroni,
@@ -1067,10 +1054,10 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       ## ====== Table Si-b. summary statistics -- outcome variables ============================= ##
       {
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for outcome variables in ", COUNTRY_LABELS[iter])
+          tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for exposure and outcome variables in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
         } else {
-          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for outcome variables  in ", COUNTRY_LABELS[iter])
+          tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for exposure and outcome variables  in ", COUNTRY_LABELS[iter])
           tb.let <- tb.let + 1
         }
         temp.dat <- df.raw.long %>%
@@ -1179,7 +1166,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       ## ====== Table Si-d. Unweighted summary statistics -- outcome vars by retention status === ##
       {
         if(num.sequential){
-          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for Wave 1 outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
+          tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for Wave 1 exposure and outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
           tb.num <- tb.num + 1
         } else {
           tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for Wave 1 outcome variables  in ", COUNTRY_LABELS[iter], " by retention status.")
@@ -1637,7 +1624,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
     ## ========================================================================================== ##
     ## ====== Table S33. summary statistics -- predictor variables by country ====================== ##
     {
-      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
+      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of exposure and outcomes variables data across countries.")
 
       labs <- map(predictor.vec0[str_detect(predictor.vec0,"blank",negate=TRUE)],~get_outcome_better_name(.,FALSE))
       names(labs) <- predictor.vec0[str_detect(predictor.vec0,"blank",negate=TRUE)]

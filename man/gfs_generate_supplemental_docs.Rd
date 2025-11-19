@@ -36,7 +36,8 @@ gfs_generate_supplemental_docs(
   only.figs = FALSE,
   fig.num.start = 0,
   tb.start.num = NULL,
-  digits = 2
+  digits = 2,
+  replace.cntry.file.start = NULL
 )
 }
 \arguments{

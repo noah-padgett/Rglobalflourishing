@@ -5,6 +5,8 @@
 #' @param svy.design a data.frame or survey.design object
 #' @param robust.huberM a logical defining whether to use the robsurvey pacakge to estimate the linear regression model instead of the usual svyglm(.) function (default: FALSE)
 #' @param robust.tune (default 1) tuning parameter for robsurvey package
+#' @param model.type (default "reg")
+#' @param var.check (defaults TRUE) whether to double check that each predictor in formula has variance
 #' @param ... additional arguments as needed--an important one is family passed to glm
 #' @return a list of containing resulting fitted object (fit), residuals, a tidied version, and
 #' a vector containing the included predictor variables.
@@ -16,11 +18,12 @@
 #' changes to standard errors for reasons that are unclear to me. Could be due to a strange
 #' interaction of robustness weights, attrition weights, and post-stratified sampling weights.
 #'
+#' Setting 'var.check = FALSE' will through an error if one of the supplied predictors has zero variance. The exception is for setting the intercept '1' or '0' which can be useful to get group means.
 #' @examples {
 #'   # TO-DO
 #' }
 #' @export
-gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune = 1, model.type = "reg", ...) {
+gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune = 1, model.type = "reg", var.check = TRUE, ...) {
 
   is.survey <- ifelse(any(class(svy.design) %in% c(
     "survey.design2", "survey.design"
@@ -31,15 +34,19 @@ gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune =
     stop("svy.design must be a survey.design or survey.design2 object from the survey package. Please check data object.")
   }
   # double check predictors for variance
-  # double check predictors for variance
-  y <- paste0(formula)[2]
-  x <- rownames(attr(terms(formula), "factors"))[-1]
-  keep.pred <- keep_variable(x, tmp.data)
-  retained.predictors <- x[keep.pred]
-  tmp.model <- reformulate(
-    response = y,
-    termlabels = retained.predictors
-  )
+  tmp.model = formula
+  #print(tmp.model)
+
+    y <- paste0(formula)[2]
+    x <- rownames(attr(terms(formula), "factors"))[-1]
+    keep.pred <- keep_variable(x, tmp.data)
+    retained.predictors <- x[keep.pred]
+  if(var.check){
+    tmp.model <- reformulate(
+      response = y,
+      termlabels = retained.predictors
+    )
+  }
 
   ## initial output object incase try fails for this replications
   out <- list(
@@ -54,18 +61,22 @@ gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune =
   try({
     # fit 1: no weights
   fit.dof <- stats::glm(tmp.model, data = tmp.data, ...)
+  #print(fit.dof)
   vcom <- fit.dof$df.residual
 
   ## check design matrix
-  dm <- model.matrix(fit.dof)
-  dm.cov.det <- det(cov(dm[-1,-1]))
-  if(dm.cov.det <= 0){
-    warning("WARNING. Analysis may fail. Design matrix is non-positive definite.")
-    print("Check country=", unique(tmp.data[["COUNTRY2"]]), "; imp=",unique(tmp.data[[".imp"]])," outcome=", your.outcome, "; focal exposure=",your.pred)
+  if(var.check){
+    dm <- model.matrix(fit.dof)
+    dm.cov.det <- det(cov(dm[-1,-1]))
+    if(dm.cov.det <= 0){
+      warning("WARNING. Analysis may fail. Design matrix is non-positive definite.")
+      print("Check country=", unique(tmp.data[["COUNTRY2"]]), "; imp=",unique(tmp.data[[".imp"]])," outcome=", your.outcome, "; focal exposure=",your.pred)
+    }
   }
 
   # fit 2: with complex survey adjustments
   tmp.fit <- survey::svyglm(tmp.model, design = svy.design, ...)
+  #print(tmp.fit)
   tmp.fit.tidy <- tidy(tmp.fit) # contains, estimates & standard errors
 
   if (robust.huberM) {

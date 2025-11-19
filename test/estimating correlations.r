@@ -64,10 +64,10 @@ get_meta_ci <- function(fit, type = "Q", .digits=2) {
 }
 
 # method = "identity" uses the "raw" correlation and deltamethod standard error of the correlation
-gfs_cor <- function(data, x0, y0, method = "cor"){
+gfs_cor <- function(data, x0, y0, wgt = "WGT", method = "cor"){
  data %>%
   mutate(
-  	n = map_dbl(svy.data, \(x) sum(x[['variables']][['WGT']])),
+  	n = map_dbl(svy.data, \(x) sum(x[['variables']][[wgt]])),
   	fit.var = map(svy.data, \(x) svyvar(reformulate(c(x0,y0)), design = x)),
   	cor.est = map_dbl(fit.var, \(x) cov2cor(as.matrix(x))[1,2] ),
   	cor.se = map_dbl(fit.var, \(x){
@@ -123,6 +123,7 @@ gfs_cor <- function(data, x0, y0, method = "cor"){
    group_by(ESTIMATED_COR) %>% nest() %>%
   	mutate(
   		meta.rma = map(data, \(x){
+  		  ## do you assume that the sample size is good representation of uncertainty (method = "cor") or do you assume the estimated standard error from teh deltamethod and survey package is better (method = "identity")
   			if(method == "cor"){
   				x = escalc(measure = "COR", ri = x[['estimate.pooled']], ni = x[['N']])
   			}
@@ -157,7 +158,7 @@ gfs_cor <- function(data, x0, y0, method = "cor"){
 
 
 
-estimated.cor <- gfs_cor(svy.data.imp, "HAPPY", "LIFE_SAT", method = "cor")
+estimated.cor <- gfs_cor(svy.data.imp, "HAPPY", "LIFE_SAT", method = "identity")
 
 # estimated correlation & 95% CI
 estimated.cor$cor.rma

@@ -2,7 +2,7 @@ Type: Package
 Package: Rglobalflourishing
 Title: Combined Analysis Workflow for the Global Flourishing Study Core
     Team
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Noah", "Padgett", , "npadgett@hsph.harvard.edu", role = c("aut", "cre")),
     person("Chris", "Felton", , "chris_felton@baylor.edu", role = c("aut", "ctb")),
@@ -19,7 +19,7 @@ License: MIT + file LICENSE
 Depends: R (>= 4.4.0)
 Encoding: UTF-8
 LazyData: false
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports: 
     ggplot2,
     dplyr,

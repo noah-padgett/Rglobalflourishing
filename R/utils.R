@@ -115,7 +115,7 @@ keep_variable <- function(x, data, reason = "variance") {
 #' @export
 quickpred2 <- function(
     data, mincor = 0.1, minpuc = 0, include = "", exclude = "",
-    method = "pearson", maxcor = 0.71) {
+    method = "pearson", maxcor = 0.99) {
   # ` functions copied from mice package to ensure that the above quickpred works... (https://github.com/amices/mice/blob/master/R/check.R)
   check.dataform <- function(data) {
     if (!(is.matrix(data) || is.data.frame(data))) {
@@ -275,8 +275,8 @@ theme_Publication <- function(base_size=14) {
     + theme(plot.title = element_text(face = "bold",
                                       size = rel(1.2), hjust = 0.5),
             text = element_text(),
-            panel.background = element_rect(colour = NA),
-            plot.background = element_rect(colour = NA),
+            panel.background = element_rect(colour = NA, fill = "#f0f0f0"),
+            plot.background = element_rect(colour = NA, fill = 'white'),
             panel.border = element_rect(colour = NA),
             axis.title = element_text(face = "bold",size = rel(1)),
             axis.title.y = element_text(angle=90,vjust =2),
@@ -330,13 +330,17 @@ load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
 }
 
 #' @export
-get_country_specific_regression_results <- function(res.dir, country, predictor, outcome, appnd.txt="") {
+get_country_specific_regression_results <- function(res.dir, country, predictor, outcome, appnd.txt="", replace.cntry.file.start = NULL) {
   local({
   	tmp.list <- NULL
-      load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
+  	file.start <- predictor
+  	if(!is.null(replace.cntry.file.start)){
+  	  file.start = replace.cntry.file.start
+  	}
+      load(here::here(res.dir, paste0(file.start, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
       # create new columns in output to help with constructing tables
       output <- output  %>%
-        dplyr::filter(Variable == "FOCAL_PREDICTOR") %>%
+        dplyr::filter(term == predictor) %>%
         dplyr::filter(str_detect(COUNTRY, country))
       tmp.list <- output
   return(tmp.list)
@@ -362,30 +366,43 @@ construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictor
 }
 
 #' @export
-get_country_specific_output <- function(res.dir, outcomes, predictors, appnd.txt="") {
+get_country_specific_output <- function(res.dir, outcomes, predictors, appnd.txt="",replace.cntry.file.start=NULL, keep.terms = NULL) {
   local({
     tmp.list <- list()
     for (your.outcome in outcomes) {
       for (your.pred in predictors) {
-        load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
+        file.start = your.pred
+        if(!is.null(replace.cntry.file.start)){
+          file.start = replace.cntry.file.start
+        }
+        load(here::here(res.dir, paste0(file.start, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
         tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
       }
     }
     tmp.list <- tmp.list |>
       bind_rows()
+    if(!is.null(keep.terms)){
+      tmp.list <- tmp.list |>
+        filter(term %in% keep.terms)
+    }
+
     return(tmp.list)
   })
 }
 
 
 #' @export
-get_country_specific_pca_summary <- function(res.dir, outcomes, predictors, appnd.txt="") {
+get_country_specific_pca_summary <- function(res.dir, outcomes, predictors, appnd.txt="", replace.cntry.file.start=NULL) {
   local({
     tmp.list <- list()
     for (your.outcome in outcomes) {
       for (your.pred in predictors) {
         try({
-          load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
+          file.start = your.pred
+          if(!is.null(replace.cntry.file.start)){
+            file.start = replace.cntry.file.start
+          }
+          load(here::here(res.dir, paste0(file.start, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
           tmp.list[[paste0(your.outcome, "_", your.pred)]] <- fit.pca.summary
         })
       }
@@ -395,11 +412,15 @@ get_country_specific_pca_summary <- function(res.dir, outcomes, predictors, appn
 }
 
 #' @export
-get_country_pca_summary <- function(res.dir, country, outcome, predictor, appnd.txt="") {
+get_country_pca_summary <- function(res.dir, country, outcome, predictor, appnd.txt="", replace.cntry.file.start=NULL) {
   local({
     tmp.list <- NULL
     try({
-      load(here::here(res.dir, paste0(predictor, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
+      file.start = predictor
+      if(!is.null(replace.cntry.file.start)){
+        file.start = replace.cntry.file.start
+      }
+      load(here::here(res.dir, paste0(file.start, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
       tmp.list <- fit.pca.summary %>%
         ungroup() %>%
         filter(str_detect(COUNTRY, country))

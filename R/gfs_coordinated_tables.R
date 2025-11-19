@@ -706,10 +706,10 @@ gfs_generate_supplemental_docs <- function(
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA");
     res.dir = "results", included.countries=NULL,
-    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL, digits=2){
+    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL, digits=2, replace.cntry.file.start = NULL){
 
 
-  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0; digits=2;
+  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0; digits=2; replace.cntry.file.start = NULL;
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
@@ -1939,7 +1939,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           start.time = run.start.time.i,
           ignore.cache = FALSE,
           file.xlsx = here::here(res.dir, out.file.xlsx),
-          digits = digits
+          digits = digits,
+          replace.cntry.file.start = replace.cntry.file.start
         )
 
         Rglobalflourishing:::build_tbl_attr_model(params.tb)
@@ -1986,7 +1987,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           start.time = run.start.time.i,
           ignore.cache = FALSE,
           file.xlsx = here::here(res.dir, out.file.xlsx),
-          digits = digits
+          digits = digits,
+          replace.cntry.file.start = replace.cntry.file.start
         )
 
         Rglobalflourishing:::build_tbl_pca_summary(params.tb)
@@ -2056,7 +2058,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx),
-            digits = digits
+            digits = digits,
+            replace.cntry.file.start = replace.cntry.file.start
           )
           Rglobalflourishing:::build_tbl_outcomewide(params.tb)
 
@@ -2118,7 +2121,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx),
-            digits = digits
+            digits = digits,
+            replace.cntry.file.start = replace.cntry.file.start
           )
           Rglobalflourishing:::build_tbl_outcomewide(params.tb)
 
@@ -2173,7 +2177,8 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx),
-            digits = digits
+            digits = digits,
+            replace.cntry.file.start = replace.cntry.file.start
           )
 
           Rglobalflourishing:::build_tbl_evalues(params.tb)
@@ -2401,7 +2406,8 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         file.xlsx = here::here(res.dir, out.file.xlsx),
         mylabels = MYLABEL,
         countries.included = COUNTRY_LABELS,
-        digits = digits
+        digits = digits,
+        replace.cntry.file.start = replace.cntry.file.start
       )
       Rglobalflourishing:::build_tbl_country_point_estimates(params.tb)
       rmarkdown::render(
@@ -2443,7 +2449,8 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         file.xlsx = here::here(res.dir, out.file.xlsx),
         mylabels = MYLABEL,
         countries.included = COUNTRY_LABELS,
-        digits = digits
+        digits = digits,
+        replace.cntry.file.start = replace.cntry.file.start
       )
       Rglobalflourishing:::build_tbl_country_point_estimates(params.tb)
       rmarkdown::render(

@@ -32,7 +32,7 @@ quickpred2(
   include = "",
   exclude = "",
   method = "pearson",
-  maxcor = 0.71
+  maxcor = 0.99
 )
 
 .round(x, digits = 2)

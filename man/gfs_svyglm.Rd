@@ -11,6 +11,7 @@ gfs_svyglm(
   robust.huberM = FALSE,
   robust.tune = 1,
   model.type = "reg",
+  var.check = TRUE,
   ...
 )
 }
@@ -22,6 +23,10 @@ gfs_svyglm(
 \item{robust.huberM}{a logical defining whether to use the robsurvey pacakge to estimate the linear regression model instead of the usual svyglm(.) function (default: FALSE)}
 
 \item{robust.tune}{(default 1) tuning parameter for robsurvey package}
+
+\item{model.type}{(default "reg")}
+
+\item{var.check}{(defaults TRUE) whether to double check that each predictor in formula has variance}
 
 \item{...}{additional arguments as needed--an important one is family passed to glm}
 }
@@ -36,6 +41,8 @@ the complex sampling design adjustments. It's unknown whether this makes a meani
 but preliminary testing suggests small differences in point estimates but sometimes dramatic
 changes to standard errors for reasons that are unclear to me. Could be due to a strange
 interaction of robustness weights, attrition weights, and post-stratified sampling weights.
+
+Setting 'var.check = FALSE' will through an error if one of the supplied predictors has zero variance. The exception is for setting the intercept '1' or '0' which can be useful to get group means.
 }
 \examples{
 {

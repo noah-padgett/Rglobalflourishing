@@ -3,6 +3,7 @@
 #' Run regression analyses for specific focal predictor using the core GFS group analysis pathway.
 #'
 #' @param data.dir a character string defining where data are located
+#' @param fx (NULL) a formula argument that can be used instead of your.pred/your.outcome to specify the set of predictors and outcome
 #' @param your.pred a character string defining focal predictor (e.g., "PHYSICAL_HLTH_Y1")
 #' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_Y2")
 #' @param covariates a character vector defining core set of covariates (default: NULL)
@@ -14,7 +15,9 @@
 #' @param robust.huberM a  logical of whether to use a robust variant of the linear regression model (default: FALSE), see below for additional details.
 #' @param robust.tune a numeric value defining the tuning parameter for the robust.huberM option.
 #' @param res.dir a character string defining directory to save results to.
-#' @param subpopulation (optional list) of length up to three defining the subdomain to the analyzed (see examples for how argument is structured)
+#' @param direct.subset a quoted subset statement to directly subset the sample
+#' @param domain.subset a quoted subset statement to run domain estimation
+#' @param country.subset a string vector of countries included in analysis
 #' @param appnd.txt.to.filename (optional) character string to help differentiate saved results file (default "")
 #' @param save.all (FALSE) logical of whether to save the fitted regression models from each imputed dataset (this is a double-checking feature and should generally be set to FALSE unless you plan to probe the individual regression models--see the methods paper for Wave 2 for example of it's used)
 #' @param ... other arguments passed to svyglm or glmrob functions
@@ -49,6 +52,7 @@
 gfs_run_regression_single_outcome <- function(
     data.dir = NULL,
     direct.subset = NULL,
+    fx = NULL,
     your.pred = NULL,
     your.outcome = NULL,
     covariates = NULL,
@@ -66,26 +70,51 @@ gfs_run_regression_single_outcome <- function(
     res.dir = "results",
     list.composites = NULL,
     domain.subset = NULL,
+    country.subset = NULL,
     family = NULL,
     appnd.txt.to.filename = "",
     save.all = FALSE,
     ...) {
 
-  #your.outcome = OUTCOME.VEC[1]; your.pred = PRED.VEC[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "mintotal"; res.dir = "results-sens"; appnd.txt.to.filename = "_pc_50perc"; save.all = FALSE; domain.subset = domain.subset = SUBPOPULATION[[y]]; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
+  #your.outcome = OUTCOME.VEC[1]; your.pred = FOCAL_PREDICTOR[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "mintotal"; res.dir = "results-sens"; appnd.txt.to.filename = "_pc_50perc"; save.all = FALSE; domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
+  #fx = y ~ GENDER + STUFF
 
-  # your.outcome = x; your.pred = y; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = SUBPOPULATION[[y]]; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
+  # your.outcome = OUTCOME.VEC[1]; your.pred = FOCAL_PREDICTOR[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL
 
   suppressMessages({
     suppressWarnings({
-      # remove focal predictor from covariate vectors
-      covariates <- covariates[str_detect(str_remove(covariates, "COV_"), your.pred, negate = TRUE)]
-      var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate = TRUE)]
+      if(!is.null(fx)){
+        fx.char <- as.character(fx)
 
-      # additionally remove variables that are components of the focal predictor
-      #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the
-      #   items that make up that score.
-      if (str_detect(your.pred, "COMPOSITE")) {
-        var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(list.composites[[your.pred]]))]
+        your.outcome <- case_when(
+          is.null(your.outcome) ~ fx.char[2],
+          .default = your.outcome
+        )
+        covariates <- case_when(
+          is.null(covariates) ~ c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE)),
+          !is.null(covariates) ~ c(covariates, c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE))),
+          .default = covariates
+        )
+        covariates <- unique(covariates)
+      }
+
+      if(!is.null(your.pred)){
+        # remove focal predictor from covariate vectors
+        covariates <- covariates[str_detect(str_remove(covariates, "COV_"), your.pred, negate = TRUE)]
+        var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate = TRUE)]
+
+        # additionally remove variables that are components of the focal predictor
+        #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the
+        #   items that make up that score.
+        if (str_detect(your.pred, "COMPOSITE")) {
+          var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(list.composites[[your.pred]]))]
+        }
+
+        ## add the term "focal_predictor" to covariate vector"
+        covariates <- c(covariates, "FOCAL_PREDICTOR")
+      }
+      if(is.null(your.pred)){
+        your.pred <- "NA_formula_entry_"
       }
 
       #if (is.null(res.dir)) {
@@ -117,10 +146,14 @@ gfs_run_regression_single_outcome <- function(
         unique() |>
         sort()
 
+      if(!is.null(country.subset)){
+        country.vec <- country.subset
+      }
+
       ##
-      x <- country.vec[8]
+      #x <- country.vec[8]
       .run_internal_func <- function(x){
-      	cur.country <- x
+        cur.country <- x
         ###
         # country-specific files
         country.files <- df.files[str_detect(df.files, x)]
@@ -169,6 +202,12 @@ gfs_run_regression_single_outcome <- function(
               out <- FALSE & out
             }
           }
+          ## check if country is in included country vec
+          if(!is.null(country.subset)){
+            if (cur.country %in% country.subset){
+              out <- FALSE & out
+            }
+          }
           out
         }
         .get_data <- function(file){
@@ -194,11 +233,12 @@ gfs_run_regression_single_outcome <- function(
             nest() %>%
             mutate(
               data = map(data, \(x) {
-                x$PRIMARY_OUTCOME <- as.numeric(x[, your.outcome, drop = TRUE])
-                x
-              }),
-              data = map(data, \(x) {
-                x$FOCAL_PREDICTOR <- as.numeric(x[, your.pred, drop = TRUE])
+                if(your.outcome %in% colnames(x)){
+                  x$PRIMARY_OUTCOME <- as.numeric(x[, your.outcome, drop = TRUE])
+                }
+                if(your.pred %in% colnames(x)){
+                  x$FOCAL_PREDICTOR <- as.numeric(x[, your.pred, drop = TRUE])
+                }
                 x
               }),
               data = map(data, \(tmp.dat){
@@ -228,31 +268,31 @@ gfs_run_regression_single_outcome <- function(
           }
           ## append PCs if needed
           if(str_to_lower(pc.rule) != "omit"){
-          	# IF: pc.rule NOT omit
+            # IF: pc.rule NOT omit
             # Conduct PCA and add PCs to data.frames
-              svy.data.imp <- svy.data.imp %>%
-                mutate(
-                  data = map(data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x)
-                    append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                  }),
-                  svy.data = map(svy.data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-                    append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                  })
-                )
+            svy.data.imp <- svy.data.imp %>%
+              mutate(
+                data = map(data, \(x) {
+                  keep.cont.exposures <- keep_variable(var.cont.exposures, data = x)
+                  append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
+                }),
+                svy.data = map(svy.data, \(x) {
+                  keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
+                  append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
+                })
+              )
           }
           svy.data.imp
         }
 
         if(.check_if_valid_comb()){
-        	  #x <- country.files[1]
+          #x <- country.files[1]
 
 
-       	  fit.pca.summary = NULL # need to initialize object to not throw error when saving data
+          fit.pca.summary = NULL # need to initialize object to not throw error when saving data
           if( str_to_lower(pc.rule) != "omit"){
-          fit.pca.summary <- map(country.files,\(x){
-            svy.data.imp <- .get_data(x)
+            fit.pca.summary <- map(country.files,\(x){
+              svy.data.imp <- .get_data(x)
               ## get fitted PCA for summarizing results
               svy.data.imp <- svy.data.imp %>%
                 mutate(
@@ -296,20 +336,20 @@ gfs_run_regression_single_outcome <- function(
                   Cumulative_Proportion_Explained = prop.sum
                 )
 
-                fit.pca.summary
+              fit.pca.summary
 
-           }) |> bind_rows()
+            }) |> bind_rows()
 
-           fit.pca.summary <- fit.pca.summary %>% ungroup() %>%
-           	group_by(COUNTRY, PC) %>%
-           	summarise(
-           		pc.var = mean(pc.var, na.rm=TRUE),
-           		prop.var = mean(prop.var, na.rm=TRUE),
-           		prop.sum = mean(prop.sum, na.rm=TRUE),
-           		Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
-           	)
+            fit.pca.summary <- fit.pca.summary %>% ungroup() %>%
+              group_by(COUNTRY, PC) %>%
+              summarise(
+                pc.var = mean(pc.var, na.rm=TRUE),
+                prop.var = mean(prop.var, na.rm=TRUE),
+                prop.sum = mean(prop.sum, na.rm=TRUE),
+                Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
+              )
 
-           }
+          }
 
 
           fitted.reg.models <- map(country.files,\(x){
@@ -410,12 +450,12 @@ gfs_run_regression_single_outcome <- function(
                     if (str_to_lower(pc.rule) == "omit") {
                       tmp.model <- reformulate(
                         response = "PRIMARY_OUTCOME",
-                        termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])
+                        termlabels = covariates[keep.var]
                       )
                     } else {
                       tmp.model <- reformulate(
                         response = "PRIMARY_OUTCOME",
-                        termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
+                        termlabels = c(covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
                       )
                     }
 
@@ -447,7 +487,7 @@ gfs_run_regression_single_outcome <- function(
           }) |> bind_rows()
 
           if(!save.all){
-            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy)
+            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy, fit.full)
           }
 
           # re-estimate basic model with the max number of PCs used to get the variable names
@@ -462,45 +502,45 @@ gfs_run_regression_single_outcome <- function(
           if (str_to_lower(pc.rule) == "omit") {
             tmp.model <- reformulate(
               response = "PRIMARY_OUTCOME",
-              termlabels = c("FOCAL_PREDICTOR", covariates[keep.var])
+              termlabels = c(covariates[keep.var])
             )
           } else {
-          	 # check pc.cutoff to determine which PCs to use
-              if (pc.cutoff %% 1 == 0) {
-                keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary$COUNTRY)))
-                names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
-              } else {
-                # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
-                if (str_to_lower(pc.rule) == "mintotal") {
-                  keep.num.pc0 <- fit.pca.summary %>%
-                    dplyr::filter(prop.sum >= pc.cutoff) %>%
-                    dplyr::filter(PC == min(PC, na.rm = TRUE))
-                  keep.num.pc <- keep.num.pc0$PC
-                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
-                }
-                if (str_to_lower(pc.rule) == "mincomp") {
-                  keep.num.pc0 <- fit.pca.summary %>%
-                    dplyr::filter(prop.var >= pc.cutoff)
-                  if (nrow(keep.num.pc0) < 23) {
-                    # cutoff fails because too stringent, switching to a default of 0.02
-                    keep.num.pc0 <- fit.pca.summary %>%
-                      dplyr::filter(prop.var >= 0.02)
-                  }
-                  keep.num.pc0 <- keep.num.pc0 %>%
-                    dplyr::filter(PC == max(PC, na.rm = TRUE))
-                  keep.num.pc <- keep.num.pc0$PC
-                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
-                }
-                if (str_to_lower(pc.rule) == "omit") {
-                  # this is just to avoid errors and is not used
-                  keep.num.pc <- rep(0, length(unique(fit.pca.summary$COUNTRY)))
-                  names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
-                }
+            # check pc.cutoff to determine which PCs to use
+            if (pc.cutoff %% 1 == 0) {
+              keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary$COUNTRY)))
+              names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+            } else {
+              # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
+              if (str_to_lower(pc.rule) == "mintotal") {
+                keep.num.pc0 <- fit.pca.summary %>%
+                  dplyr::filter(prop.sum >= pc.cutoff) %>%
+                  dplyr::filter(PC == min(PC, na.rm = TRUE))
+                keep.num.pc <- keep.num.pc0$PC
+                names(keep.num.pc) <- keep.num.pc0$COUNTRY
               }
+              if (str_to_lower(pc.rule) == "mincomp") {
+                keep.num.pc0 <- fit.pca.summary %>%
+                  dplyr::filter(prop.var >= pc.cutoff)
+                if (nrow(keep.num.pc0) < 23) {
+                  # cutoff fails because too stringent, switching to a default of 0.02
+                  keep.num.pc0 <- fit.pca.summary %>%
+                    dplyr::filter(prop.var >= 0.02)
+                }
+                keep.num.pc0 <- keep.num.pc0 %>%
+                  dplyr::filter(PC == max(PC, na.rm = TRUE))
+                keep.num.pc <- keep.num.pc0$PC
+                names(keep.num.pc) <- keep.num.pc0$COUNTRY
+              }
+              if (str_to_lower(pc.rule) == "omit") {
+                # this is just to avoid errors and is not used
+                keep.num.pc <- rep(0, length(unique(fit.pca.summary$COUNTRY)))
+                names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+              }
+            }
             #tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
             tmp.model <- reformulate(
               response = "PRIMARY_OUTCOME",
-              termlabels = c("FOCAL_PREDICTOR", covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
+              termlabels = c(covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
             )
           }
           tmp.fit <- tmp.dat$data[[1]] %>% glm(tmp.model, data = .)
@@ -516,7 +556,9 @@ gfs_run_regression_single_outcome <- function(
             "(Intercept)"
           )
 
+          ## Pool estimtes across imputations
           results.pooled <- fitted.reg.models %>%
+            select(-fit.full) %>%
             unnest(c(fit.tidy)) %>%
             ungroup() %>%
             group_by(term, COUNTRY) %>%
@@ -539,30 +581,50 @@ gfs_run_regression_single_outcome <- function(
           # compute outcome & predictor SD Only used for continuous/forced continuous models
           # - For continuous outcomes, need to use evalue.OLS(.)
           # - require approx outcome standard deviation
-          sd.pooled <- map(country.files,\(x){
-            svy.data.imp <- .get_data(x)
+          # sd.pooled <- map(country.files,\(x){
+          #   svy.data.imp <- .get_data(x)
+          #
+          #   svy.data.imp %>%
+          #     mutate(
+          #       est = purrr::map_dbl(svy.data, \(x) {
+          #         survey::svyvar(~PRIMARY_OUTCOME, design = x, na.rm=TRUE)
+          #       }),
+          #
+          #       pred.var = purrr::map_dbl(svy.data, \(x) {
+          #         survey::svyvar(~FOCAL_PREDICTOR, design = x, na.rm=TRUE)
+          #       })
+          #     ) %>%
+          #     select(est, pred.var) %>%
+          #     ungroup()
+          # }) |> bind_rows()
+          sd.pooled <- fitted.reg.models %>%
+            mutate(
+              term.var = map(fit.full, \(x){
 
-            svy.data.imp %>%
-                mutate(
-                  est = purrr::map_dbl(svy.data, \(x) {
-                    survey::svyvar(~PRIMARY_OUTCOME, design = x, na.rm=TRUE)
-                  }),
-                  pred.var = purrr::map_dbl(svy.data, \(x) {
-                    survey::svyvar(~FOCAL_PREDICTOR, design = x, na.rm=TRUE)
-                  })
-                ) %>%
-                select(est, pred.var) %>%
-                ungroup()
-          }) |> bind_rows()
+                my.matrix <- model.matrix(x)
+                my.wgts <- x$weights
+                var.est <- as.data.frame(matrix(apply(my.matrix, 2, FUN=function(x){
+                  matrixStats::weightedVar(x, w = my.wgts)
+                }),nrow=1))
+                colnames(var.est) <- colnames(my.matrix)
+                y.var <- data.frame(outcome.sd = matrixStats::weightedVar(x$y, w = my.wgts))
 
-          sd.pooled <- sd.pooled %>%
-            select(COUNTRY, imp_num, est, pred.var) %>%
+                cbind(y.var, var.est)
+              })
+            ) |>
+            select(COUNTRY, term.var) %>%
+            unnest(c(term.var)) %>%
             group_by(COUNTRY) %>%
             summarize(
-              outcome.sd = sqrt(mean(est, na.rm=TRUE)),
-              predictor.sd = sqrt(mean(pred.var, na.rm=TRUE))
-            ) %>%
-            select(COUNTRY, outcome.sd, predictor.sd)
+              across(everything(), \(x){
+                sqrt(mean(x, na.rm=TRUE))
+              })
+            ) %>% ungroup() |>
+            pivot_longer(
+              cols=-c(COUNTRY,outcome.sd),
+              names_to = "term",
+              values_to = "predictor.sd"
+            )
 
           ## Relabel output
           varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")
@@ -607,7 +669,7 @@ gfs_run_regression_single_outcome <- function(
 
           # Compute Evalues
           tmp.output <- results.pooled %>%
-            left_join(sd.pooled, by = "COUNTRY") %>%
+            left_join(sd.pooled, by = c("COUNTRY", "term")) %>%
             ungroup()
 
           # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...
@@ -850,7 +912,7 @@ gfs_run_regression_single_outcome <- function(
           )
 
           ## load the previously "saved" result and append results for the next country
-          if(cur.country != country.vec[1]){
+          if(cur.country != country.vec[1]  & file.exists(outfile)){
             load(outfile, env.res <- new.env())
             output <- rbind(output, env.res$output)
             metainput <- rbind(metainput, env.res$metainput)

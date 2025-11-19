@@ -67,15 +67,15 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   # identify countries omitted from meta-analysis
   tmp.included.countries = ""
   if("Country" %in% colnames(tmp.dat)){
-  tmp.included.countries <- tmp.dat$Country
-  tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
-  tmp.included.countries <- str_trim(tmp.included.countries, "both")
-  tmp.excluded.countries <- ALL.COUNTRIES[!(ALL.COUNTRIES %in% tmp.included.countries)]
-  tmp.excluded.countries <- ifelse(
-    !is_empty(tmp.excluded.countries),
-    paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
-    ""
-  )
+    tmp.included.countries <- tmp.dat$Country
+    tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
+    tmp.included.countries <- str_trim(tmp.included.countries, "both")
+    tmp.excluded.countries <- ALL.COUNTRIES[!(ALL.COUNTRIES %in% tmp.included.countries)]
+    tmp.excluded.countries <- ifelse(
+      !is_empty(tmp.excluded.countries),
+      paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
+      ""
+    )
   }
 
   xLab <- case_when(

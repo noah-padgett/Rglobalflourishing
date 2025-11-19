@@ -122,6 +122,18 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
       vec.wpc
     )
 
+    df.wopc <- load_meta_result(
+      file = here::here(dir, file.wopc),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", unique(c(vec.id, vec.rr)), "theta.lb", "theta.ub")
+    )
+    df.wpc <- load_meta_result(
+      file = here::here(dir, file.wpc),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", unique(c(vec.id, vec.rr)), "theta.lb", "theta.ub")
+    )
     meta.outcomewide <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
     colnames(meta.outcomewide) <- cnames
     meta.outcomewide$"\r" <- ""
@@ -137,12 +149,9 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
           .default = vec.rr
         )
         ## ====== Random effects meta - estimates withOUT PCs ======================================= ##
-        tmp.wopc <- load_meta_result(
-          file = here::here(dir, file.wopc),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = c(tmp.vec, "theta.lb", "theta.ub")
-        )
+        tmp.wopc <- df.wopc |>
+          filter(OUTCOME0 == OUTCOME.VEC[i]) |>
+          select(all_of( c(tmp.vec, "theta.lb", "theta.ub")))
         tmp.wopc <- tmp.wopc %>%
           dplyr::mutate(
             theta.rma.ci = paste0("(",.round(theta.lb, digits),",",.round(theta.ub, digits),")"),
@@ -164,12 +173,9 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
             })
           )
         ## ====== Random effects meta - estimates WITH PCs ======================================= ##
-        tmp.wpc <- load_meta_result(
-          file = here::here(dir, file.wpc),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = c(tmp.vec, "theta.lb", "theta.ub")
-        )
+        tmp.wpc <- df.wpc |>
+          filter(OUTCOME0 == OUTCOME.VEC[i]) |>
+          select(all_of(c(tmp.vec, "theta.lb", "theta.ub")))
         tmp.wpc <- tmp.wpc %>%
           dplyr::mutate(
             theta.rma.ci = paste0("(",.round(theta.lb, digits),",",.round(theta.ub, digits),")"),
@@ -275,6 +281,19 @@ build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
     vec.wpc
   )
 
+  df.wopc <- load_meta_result(
+    file = here::here(dir, file.wopc),
+    predictor = focal.predictor,
+    outcome = OUTCOME.VEC,
+    what = c("OUTCOME0", unique(c(vec.id, vec.rr)))
+  )
+  df.wpc <- load_meta_result(
+    file = here::here(dir, file.wpc),
+    predictor = focal.predictor,
+    outcome = OUTCOME.VEC,
+    what = c("OUTCOME0", unique(c(vec.id, vec.rr)))
+  )
+
   meta.evalues <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
   colnames(meta.evalues) <- cnames
   meta.evalues$"\r" <- ""
@@ -290,23 +309,17 @@ build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
         .default = vec.rr
       )
       ## ====== Random effects meta - estimates withOUT PCs =================================== ##
-      tmp.wopc <- load_meta_result(
-        file = here::here(dir, file.wopc),
-        predictor = focal.predictor,
-        outcome = OUTCOME.VEC[i],
-        what = tmp.vec
-      )
+      tmp.wopc <- df.wopc |>
+        filter(OUTCOME0 == OUTCOME.VEC[i]) |>
+        select(all_of(tmp.vec))
       tmp.wopc <- tmp.wopc %>%
         dplyr::mutate(
           dplyr::across(where(is.numeric),\(x) .round(x,digits)),
         )
       ## ====== Random effects meta - estimates WITH PCs ====================================== ##
-      tmp.wpc <- load_meta_result(
-        file = here::here(dir, file.wpc),
-        predictor = focal.predictor,
-        outcome = OUTCOME.VEC[i],
-        what = tmp.vec
-      )
+      tmp.wpc <- df.wpc |>
+        filter(OUTCOME0 == OUTCOME.VEC[i]) |>
+        select(all_of(tmp.vec))
       tmp.wpc <- tmp.wpc %>%
         dplyr::mutate(
           dplyr::across(where(is.numeric),\(x) .round(x,digits)),
@@ -631,6 +644,7 @@ build_tbl_attr_model <- function(params, font.name = "Open Sans", font.size = 10
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
   digits = params$digits
+  replace.cntry.file.start = params$replace.cntry.file.start
 
   tmp.attr.mod <- get_fitted_attrition_model(dir, country.i)
   tmp.included.vars0 <- attr(tmp.attr.mod$terms,"term.labels")
@@ -714,6 +728,7 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
   mylabels = params$mylabels
   countries.included = params$countries.included
   digits = params$digits
+  replace.cntry.file.start = params$replace.cntry.file.start
 
   vec.get <- c("OUTCOME0", "FOCAL_PREDICTOR", "theta.rma", "rr.theta")
 
@@ -723,23 +738,28 @@ build_tbl_country_point_estimates <- function(params, font.name = "Open Sans", f
     res.dir = dir,
     outcomes =  OUTCOME.VEC[str_detect(OUTCOME.VEC,"blank",negate=TRUE)],
     predictors = focal.predictor,
-    appnd.txt = file
+    appnd.txt = file,
+    replace.cntry.file.start = replace.cntry.file.start,
+    keep.terms = "FOCAL_PREDICTOR"
   ) %>%
-    filter(Variable == "FOCAL_PREDICTOR") %>%
+    #filter(Variable == focal.predictor) %>%
     select(COUNTRY, OUTCOME, std.estimate.pooled, id.Std.Est, rr.Std.Est) |>
     arrange(COUNTRY)
 
 
   for(i in 1:nrow(df.tmp)){
-    if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
-      df.tmp$id.Std.Est[i] <- .round(df.tmp$std.estimate.pooled[i], digits)
-      df.tmp$rr.Std.Est[i] <- NA
+    if(length(df.tmp$OUTCOME[i]) > 0){
+      if(get_outcome_scale(df.tmp$OUTCOME[i]) == "cont"){
+        df.tmp$id.Std.Est[i] <- .round(df.tmp$std.estimate.pooled[i], digits)
+        df.tmp$rr.Std.Est[i] <- NA
+      }
+      if(get_outcome_scale(df.tmp$OUTCOME[i]) != "cont"){
+        df.tmp$id.Std.Est[i] <- NA
+        df.tmp$rr.Std.Est[i] <- .round(exp(df.tmp$std.estimate.pooled[i]), digits)
+      }
+
+      df.tmp$OUTCOME[i] <- get_outcome_better_name(df.tmp$OUTCOME[i], FALSE, FALSE, include.fid = TRUE)
     }
-    if(get_outcome_scale(df.tmp$OUTCOME[i]) != "cont"){
-      df.tmp$id.Std.Est[i] <- NA
-      df.tmp$rr.Std.Est[i] <- .round(exp(df.tmp$std.estimate.pooled[i]), digits)
-    }
-    df.tmp$OUTCOME[i] <- get_outcome_better_name(df.tmp$OUTCOME[i], FALSE, FALSE, include.fid = TRUE)
   }
   df.tmp.wide <- df.tmp %>%
     select(COUNTRY, OUTCOME, id.Std.Est, rr.Std.Est) %>%
@@ -850,6 +870,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
   digits = params$digits
+  replace.cntry.file.start = params$replace.cntry.file.start
 
   COUNTRY_LABELS <-
     sort(
@@ -897,6 +918,34 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
     vec.c, "\r", vec.d
   )
 
+  ## pre-load in slow objects
+  if(is.meta){
+    df.a <- load_meta_result(
+      file = here::here(dir.a, file.a),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", unique(c(vec.id, vec.rr)))
+    )
+    df.b <- load_meta_result(
+      file = here::here(dir.b, file.b),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", unique(c(vec.id, vec.rr)))
+    )
+    df.c <- load_meta_result(
+      file = here::here(dir.c, file.c),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", unique(c(vec.id, vec.rr)))
+    )
+    df.d <- load_meta_result(
+      file = here::here(dir.d, file.d),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", unique(c(vec.id, vec.rr)))
+    )
+  }
+
   evalues <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
   colnames(evalues) <- cnames
   evalues$"\r" <- ""
@@ -931,12 +980,9 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
       }
       ## ====== Primary MI - random effects meta - estimates withOUT PCs ====================== ##
       if(is.meta){
-        tmp.a <- load_meta_result(
-          file = here::here(dir.a, file.a),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = tmp.vec
-        ) %>%
+        tmp.a <- df.a %>%
+          filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
+          select(all_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
@@ -946,7 +992,8 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           country = country.i,
           predictor = focal.predictor,
           outcome =  OUTCOME.VEC[i],
-          appnd.txt = file.a
+          appnd.txt = file.a,
+          replace.cntry.file.start = replace.cntry.file.start
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
@@ -955,12 +1002,9 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
       }
       ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
       if(is.meta){
-        tmp.b <- load_meta_result(
-          file = here::here(dir.b, file.b),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = tmp.vec
-        ) %>%
+        tmp.b <- df.b %>%
+          filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
+          select(all_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
@@ -970,7 +1014,8 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           country = country.i,
           predictor = focal.predictor,
           outcome =  OUTCOME.VEC[i],
-          appnd.txt = file.b
+          appnd.txt = file.b,
+          replace.cntry.file.start = replace.cntry.file.start
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
@@ -979,12 +1024,9 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
       }
       ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
       if(is.meta){
-        tmp.c <- load_meta_result(
-          file = here::here(dir.c, file.c),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = tmp.vec
-        ) %>%
+        tmp.c <- df.c %>%
+          filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
+          select(all_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
@@ -994,7 +1036,8 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           country = country.i,
           predictor = focal.predictor,
           outcome =  OUTCOME.VEC[i],
-          appnd.txt = file.c
+          appnd.txt = file.c,
+          replace.cntry.file.start = replace.cntry.file.start
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
@@ -1003,12 +1046,9 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
       }
       ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
       if(is.meta){
-        tmp.d <- load_meta_result(
-          file = here::here(dir.d, file.d),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = tmp.vec
-        ) %>%
+        tmp.d <- df.d %>%
+          filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
+          select(all_of(tmp.vec)) %>%
           dplyr::mutate(
             dplyr::across(where(is.numeric),\(x) .round(x,digits)),
           )
@@ -1018,7 +1058,8 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
           country = country.i,
           predictor = focal.predictor,
           outcome =  OUTCOME.VEC[i],
-          appnd.txt = file.d
+          appnd.txt = file.d,
+          replace.cntry.file.start = replace.cntry.file.start
         ) %>%
           dplyr::select(tidyr::any_of(tmp.vec)) %>%
           dplyr::mutate(
@@ -1110,6 +1151,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
   digits = params$digits
+  replace.cntry.file.start = params$replace.cntry.file.start
 
   COUNTRY_LABELS <-
     sort(
@@ -1160,6 +1202,22 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
     vec.b
   )
 
+  ## pre-load in slow objects
+  if(is.meta){
+    df.a <- load_meta_result(
+      file = here::here(dir.a, file.a),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", vec.get)
+    )
+    df.b <- load_meta_result(
+      file = here::here(dir.b, file.b),
+      predictor = focal.predictor,
+      outcome = OUTCOME.VEC,
+      what = c("OUTCOME0", vec.get)
+    )
+  }
+
   outcomewide <- as.data.frame(matrix(nrow = length(OUTCOME.VEC), ncol = length(cnames)))
   colnames(outcomewide) <- cnames
   outcomewide$"\r" <- ""
@@ -1188,12 +1246,9 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
       )
       ## ====== Panel A ======================================= ##
       if(is.meta){
-        tmp.a <- load_meta_result(
-          file = here::here(dir.a, file.a),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = vec.get
-        )
+        tmp.a <- df.a %>%
+          filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
+          select(-OUTCOME0)
         tmp.a <- tmp.a %>%
           dplyr::mutate(
             theta.rma.ci = paste0(
@@ -1226,7 +1281,8 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
           country = country.i,
           predictor = focal.predictor,
           outcome =  OUTCOME.VEC[i],
-          appnd.txt = file.a
+          appnd.txt = file.a,
+          replace.cntry.file.start = replace.cntry.file.start
         )
         tmp.a <- tmp.a %>%
           dplyr::mutate(
@@ -1254,12 +1310,9 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
       }
       ## ====== Panel B ======================================= ##
       if(is.meta){
-        tmp.b <- load_meta_result(
-          file = here::here(dir.b, file.b),
-          predictor = focal.predictor,
-          outcome = OUTCOME.VEC[i],
-          what = vec.get
-        )
+        tmp.b <- df.b %>%
+          filter(OUTCOME0 == OUTCOME.VEC[i]) %>%
+          select(-OUTCOME0)
         tmp.b <- tmp.b %>%
           dplyr::mutate(
             theta.rma.ci = paste0(
@@ -1292,7 +1345,8 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
           country = country.i,
           predictor = focal.predictor,
           outcome =  OUTCOME.VEC[i],
-          appnd.txt = file.b
+          appnd.txt = file.b,
+          replace.cntry.file.start = replace.cntry.file.start
         )
 
         tmp.b <- tmp.b %>%
@@ -1437,7 +1491,7 @@ build_tbl_predictorwide <- function(params, font.name = "Open Sans", font.size =
   }
   # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
   cnames <- c(
-    "Outcome",
+    "Exposure",
     vec.a,
     "\r",
     vec.b
@@ -1724,7 +1778,7 @@ build_tbl_predictorwide_evalues <- function(params, font.name = "Open Sans", fon
   vec.c <- c("EE\r\r", "ECI\r\r")
   vec.d <- c("EE\r\r\r", "ECI\r\r\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
   cnames <- c(
-    "Outcome",
+    "Exposure",
     vec.a, "\r\r\r", vec.b, "\r\r",
     vec.c, "\r", vec.d
   )
@@ -2151,6 +2205,7 @@ build_tbl_pca_summary <- function(params, font.name = "Open Sans", font.size = 1
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
   digits = params$digits
+  replace.cntry.file.start = params$replace.cntry.file.start
 
 
   coun.fit.pca <- get_country_pca_summary(
@@ -2158,7 +2213,8 @@ build_tbl_pca_summary <- function(params, font.name = "Open Sans", font.size = 1
     country = country.i,
     outcome = OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)][1],
     predictor = focal.predictor[1],
-    "_primary_wpc"
+    appnd.txt =  "_primary_wpc",
+    replace.cntry.file.start = replace.cntry.file.start
   )
 
   vec.id <- c("prop.var", "Cumulative_Proportion_Explained")
