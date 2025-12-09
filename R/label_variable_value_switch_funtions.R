@@ -332,7 +332,7 @@ get_outcome_scale <- function(var) {
           var.tmp = stringr::str_remove(var.tmp, paste0("_R", i))
         }
         if (any(stringr::str_detect(var.tmp, paste0("_MY")))) {
-          var.tmp = stringr::str_remove(varv, paste0("_MY"))
+          var.tmp = stringr::str_remove(var.tmp, paste0("_MY"))
         }
       }
 
@@ -3697,9 +3697,9 @@ nurse)",
         .default = "(Missing)"
       ),
       FOOD_INSECURE = case_when(
-        x == 1 ~ "1, Often",
+        x == 1 ~ "1. Often",
         x == 2 ~ "2. Sometimes",
-        x == 4 ~ "3. Never",
+        x == 3 ~ "3. Never",
         .default = "(Missing)"
       ),
       NATURE = c(x),

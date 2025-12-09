@@ -1,6 +1,6 @@
 #' GFS Wrapper for generalized linear models with multiple imputation
 #'
-#' Run GLMs with the folder structure for memory ease and pooling across imputed datasets. Cannot incorporate principle compoents into the analysis; if that is desired using the gfs_run_regression_single_outcome(.) function.
+#' Run GLMs through the survey package with the folder structure for memory ease and pooling across imputed datasets. Cannot incorporate principle components into the analysis; if that is desired using the gfs_run_regression_single_outcome(.) function.
 #'
 #' @param fx (NULL) a formula argument that can be used instead of your.pred/your.outcome to specify the set of predictors and outcome
 #' @param data.dir a character string defining where data are located
@@ -57,11 +57,15 @@ gfs_svyglm_mi <- function(
     suppressWarnings({
       if(is.null(fx)){
         warning("no model formula supplied.")
+
+        reg.centered = TRUE
       } else {
         fx.char <- as.character(fx)
         your.outcome <- fx.char[2]
         covariates <- c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE))
         covariates <- unique(covariates)
+        reg.centered = ifelse(any(c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE)) == "0"), FALSE, TRUE)
+
       }
       res.dir <- here(res.dir)
       if (!dir.exists(res.dir)) {
@@ -244,6 +248,63 @@ gfs_svyglm_mi <- function(
           tmp.fit <- tmp.dat$data[[1]] %>% glm(fx, data = .)
           # which model doesn't matter for this step, we only need the variable names
 
+          ## Joint term wald tests
+          results.wald <- data.frame(
+            term = "BLANK",
+            wald.fvalue = NA_real_,
+            wald.df.num = NA_real_,
+            wald.df.dem = NA_real_,
+            wald.p.value = NA_real_
+          )
+          try({
+            results.wald.test <- fitted.reg.models %>%
+              select(-fit.tidy) %>%
+              mutate(
+                wald.tests = map(fit.full, \(x){
+                  xterms <- attributes(terms(x))$term.labels
+                  if(!reg.centered){
+                    x <- svyglm(update(x$formula, as.formula(paste(".~.-0"))), design = x$survey.design )
+                  }
+                  out <- lapply(xterms, FUN = function(y){
+                    tryCatch({
+                      survey::regTermTest(x, y, method = "Wald")
+                    }, error = function(e) {
+                      return(NA)
+                    })
+                  })
+                  names(out) <- xterms
+                  out
+                }),
+                converged = map_lgl(wald.tests, \(x){
+                  !is.na(x)
+                })
+              ) %>%
+              select(-fit.full) |>
+              filter(converged)
+            ## unnest by term then pool across wald tests
+            results.wald <- map(names(results.wald.test$wald.tests[[1]]),\(x){
+              df.wald <- data.frame(fstat=0, df1=0,df2=0)
+              i <- 1
+              for(i in 1:nrow(results.wald.test)){
+                df.wald[i,1] <- results.wald.test$wald.tests[[i]][[x]]$Ftest
+                df.wald[i,2] <- results.wald.test$wald.tests[[i]][[x]]$df
+                df.wald[i,3] <- results.wald.test$wald.tests[[i]][[x]]$ddf
+              }
+              fit.f <- colMeans(df.wald, na.rm=TRUE)
+              p <- 1 - pf(fit.f[1], fit.f[2], fit.f[3])
+              data.frame(
+                term = x,
+                wald.fvalue = fit.f[1],
+                wald.df.num = fit.f[2],
+                wald.df.dem = fit.f[3],
+                wald.p.value = case_when(p == 0 ~ 2.22e-16, .default=p)
+              )
+            })
+            names(results.wald) <- names(results.wald.test$wald.tests[[1]])
+            results.wald <- results.wald |> bind_rows()
+          }, silent = TRUE)
+
+
           ## Pool estimtes across imputations
           results.pooled <- fitted.reg.models %>%
             select(-fit.full) %>%
@@ -337,6 +398,16 @@ gfs_svyglm_mi <- function(
                 .default = NA
               )
             )
+
+          ## merge in wald tests by term
+          output <- cbind(output, data.frame(wald.fvalue=NA, wald.df.num = NA, wald.df.dem = NA, wald.p.value=NA))
+          i <- 1
+          for(i in 1:nrow(results.wald)){
+            output$wald.fvalue[str_detect(output$term, results.wald$term[i])] <- results.wald$wald.fvalue[i]
+            output$wald.df.num[str_detect(output$term, results.wald$term[i])] <- results.wald$wald.df.num[i]
+            output$wald.df.dem[str_detect(output$term, results.wald$term[i])] <- results.wald$wald.df.dem[i]
+            output$wald.p.value[str_detect(output$term, results.wald$term[i])] <- results.wald$wald.p.value[i]
+          }
 
           # ============================================================================ #
           # ============================================================================ #

@@ -66,7 +66,7 @@ changes to standard errors for reasons that are unclear to me. Could be due to a
 interaction of robustness weights, attrition weights, and post-stratified sampling weights.
 }
 \details{
-Run GLMs with the folder structure for memory ease and pooling across imputed datasets. Cannot incorporate principle compoents into the analysis; if that is desired using the gfs_run_regression_single_outcome(.) function.
+Run GLMs through the survey package with the folder structure for memory ease and pooling across imputed datasets. Cannot incorporate principle components into the analysis; if that is desired using the gfs_run_regression_single_outcome(.) function.
 }
 \examples{
 {
