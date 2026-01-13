@@ -15,8 +15,10 @@
 #' @examples
 #' # TO-DO
 #' @export
-gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE"), estimator = "PM", interval.method = "empirical", better.name = NULL,
-                              p.subtitle = NULL, ci.alpha = 0.05, ...) {
+gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE"),
+                              estimator = "PM", interval.method = "empirical",
+
+                              better.name = NULL, p.subtitle = NULL, ci.alpha = 0.05, ...) {
   # meta.input = df.tmp %>%
   # 	group_by(OUTCOME) %>%
   # nest()
@@ -67,6 +69,14 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       meta.rma.tidy = map(meta.rma, \(x) tidy(x, conf.int = TRUE)),
       theta.rma = map_dbl(meta.rma.tidy, "estimate"),
       theta.rma.se = map_dbl(meta.rma.tidy, "std.error"),
+      theta.lb = map_dbl(meta.rma, \(x){
+        tmp <- tidy(x, conf.int = TRUE)
+        tmp[1, "estimate", drop = TRUE] - qnorm(1-ci.alpha/2)*tmp[1, "std.error", drop = TRUE]
+      }),
+      theta.ub = map_dbl(meta.rma, \(x){
+        tmp <- tidy(x, conf.int = TRUE)
+        tmp[1, "estimate", drop = TRUE] + qnorm(1-ci.alpha/2)*tmp[1, "std.error", drop = TRUE]
+      }),
       theta.rma.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma", ci.alpha, ...)),
       tau2 = map_dbl(meta.rma, "tau2"),
       tau = sqrt(tau2),
@@ -79,47 +89,34 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       calibrated.yi = map(meta.rma, \(x){
         compute_calibrated(x)
       }),
-      prob.leqneq0.1 = map_dbl(
-        calibrated.yi, \(x){
+      prob.leqneq0.1 = map_dbl(calibrated.yi, \(x){
           proportion_meaningful(x, q = -0.10, above = FALSE, interval.method, theta.rma, tau)
-        }
-      ),
-      prob.geq0.1 = map_dbl(
-        calibrated.yi, \(x){
+        }),
+      prob.geq0.1 = map_dbl(calibrated.yi, \(x){
           proportion_meaningful(x, q = 0.10, above = TRUE, interval.method, theta.rma, tau)
-        }
-      ),
+        }),
       prob.lg.c = paste0("[", .round(prob.leqneq0.1), " / ",.round(prob.geq0.1) ,"]"),
       theta.rma.EE = gfs_compute_evalue(est=theta.rma, se=theta.rma.se, sd=1, what="EE"),
       theta.rma.ECI = gfs_compute_evalue(est=theta.rma, se=theta.rma.se, sd=1, what="ECI"),
+      theta.pred.int = gfs_prediction_interval(x=calibrated.yi, theta = theta.rma, tau = tau , ...),
+      ## ====== RESULTS ON RISK-RATIO SCALE ===================================================== ##
       # compute exponentiated (used only when scale is binary/Likert)
-      calibrated.yi.exp = map(calibrated.yi, \(x) exp(x)),
+      rr.calibrated.yi = map(calibrated.yi, \(x) exp(x)),
       rr.theta = exp(theta.rma),
       rr.theta.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma.rr", ci.alpha, .exp=TRUE, ...)),
       rr.tau = sqrt((exp(tau2) - 1) * exp(2 * theta.rma + tau2)),
-      prob.rr0.90 = map_dbl(
-        calibrated.yi.exp, \(x){
+      rr.prob.0.90 = map_dbl(calibrated.yi.exp, \(x){
           proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr.theta, rr.tau)
-        }
-      ),
-      prob.rr1.10 = map_dbl(
-        calibrated.yi.exp, \(x){
+        }),
+      rr.prob.1.10 = map_dbl(calibrated.yi.exp, \(x){
           proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr.theta, rr.tau)
-        }
-      ),
-      prob.rr.c = paste0("[", .round(prob.rr0.90), " / ",.round(prob.rr1.10) ,"]"),
-      theta.lb = map_dbl(meta.rma, \(x){
-        tmp <- tidy(x, conf.int = TRUE)
-        tmp[1, "estimate", drop = TRUE] - qnorm(1-ci.alpha/2)*tmp[1, "std.error", drop = TRUE]
       }),
-      theta.ub = map_dbl(meta.rma, \(x){
-        tmp <- tidy(x, conf.int = TRUE)
-        tmp[1, "estimate", drop = TRUE] + qnorm(1-ci.alpha/2)*tmp[1, "std.error", drop = TRUE]
-      }),
-      theta.rr.EE = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="EE", type="RR"),
-      theta.rr.ECI = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="ECI", type="RR"),
+      rr.prob.c = paste0("[", .round(prob.rr0.90), " / ",.round(prob.rr1.10) ,"]"),
+      rr.theta.EE = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="EE", type="RR"),
+      rr.theta.ECI = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="ECI", type="RR"),
+      rr.theta.pred.int = gfs_prediction_interval(x=rr.calibrated.yi, theta = theta.rma, tau = tau , .exp=TRUE, ...),
       ## ====== population weighted meta results ================================================ ##
-      meta.pop.wgt = map(data, \(x){
+      pop.wgt.meta = map(data, \(x){
         x <- add_pop_wgts(x)
         rma(
           yi = yi,
@@ -129,9 +126,9 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
           method = "FE"
         )
       }),
-      theta.pop.wgt = map_dbl(meta.pop.wgt, "beta"),
-      theta.pop.wgt.ci = map_chr(meta.pop.wgt, \(x) get_meta_ci(x, type = "FE", ci.alpha, ...)),
-      meta.pop.wgt.tidy = map(meta.pop.wgt, \(x) tidy(x, conf.int = TRUE)),
+      pop.wgt.theta = map_dbl(pop.wgt.meta, "beta"),
+      pop.wgt.thetaci = map_chr(pop.wgt.meta, \(x) get_meta_ci(x, type = "FE", ci.alpha, ...)),
+      pop.wgt.meta.tidy = map(pop.wgt.meta., \(x) tidy(x, conf.int = TRUE)),
       ## ====== pooled-pvalue =================================================================== ##
       global.pvalue = map_dbl(data, \(x){
         cnames <- colnames(x)

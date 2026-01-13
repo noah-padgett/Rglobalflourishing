@@ -76,10 +76,10 @@ gfs_run_regression_single_outcome <- function(
     save.all = FALSE,
     ...) {
 
-  #your.outcome = OUTCOME.VEC[1]; your.pred = FOCAL_PREDICTOR[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "mintotal"; res.dir = "results-sens"; appnd.txt.to.filename = "_pc_50perc"; save.all = FALSE; domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL
-  #fx = y ~ GENDER + STUFF
+  #your.outcome = OUTCOME.VEC[1]; your.pred = "PEACE_Y1"; data.dir = "test/ignore/data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "omit"; res.dir = "results-sens"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL; fx = NULL
 
   # your.outcome = OUTCOME.VEC[1]; your.pred = FOCAL_PREDICTOR[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL
+  # data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary"
 
   suppressMessages({
     suppressWarnings({
@@ -480,14 +480,54 @@ gfs_run_regression_single_outcome <- function(
                 fit.full = map(svy.fit, \(x) x$fit),
                 fit.lasso = map(svy.fit, \(x) x$fit.lasso),
                 residuals = map(svy.fit, \(x) x$residuals),
-                retained.predictors = map(svy.fit, \(x) x$retained.predictors)
+                retained.predictors = map(svy.fit, \(x) x$retained.predictors),
+                fit.cor = purrr::map(svy.data, \(x) {
+                  # x = svy.data.imp$svy.data[[1]]
+                  tmp.fit <- NULL
+                  # first check if ANY variance on outcome
+                  run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)
+                  if (run.analysis) {
+                    cur.country <- x[["variables"]][["COUNTRY2"]][1]
+                    # Next check each variable to make sure all have at least 2 levels, if only 1, exclude
+                    keep.var <- keep_variable("FOCAL_PREDICTOR", data = x[["variables"]], reason = "any")
+                    if(keep.var){
+                      tmp.model <- reformulate(
+                        response = "PRIMARY_OUTCOME",
+                        termlabels = "FOCAL_PREDICTOR",
+                      )
+                      
+                       # fit 1: no weights
+  fit.dof <- stats::glm(tmp.model, data = x[["variables"]])
+  #print(fit.dof)
+  vcom <- fit.dof$df.residual
+                      
+                      tmp.fit <- survey::svyglm(tmp.model, design = x, family = stats::gaussian())
+                      #print(tmp.fit)
+                      tmp.fit <- tidy(tmp.fit)[2,]
+                      tmp.fit <- tmp.fit %>%
+    mutate(
+      f.statistic = (estimate**2) / (std.error**2),
+      df.num = 1,
+      df.dem = vcom,
+      p.value = 1 - pf(f.statistic, df.num, df.dem),
+      # see: Lumley, T. & Scott, A. Fitting Regression Models to Survey Data. Statistical Science 32, 265–278 (2017). p. 269 left column, middle paragraph
+      p.value = case_when(
+        p.value == 0 ~ 2.2e-16,
+        .default = p.value
+      ),
+      vcom = vcom
+    )
+                    }
+                  }
+                  tmp.fit
+                })
               ) %>%
-              select(COUNTRY, imp_num, fit.tidy, fit.full, fit.lasso, residuals, retained.predictors) %>%
+              select(COUNTRY, imp_num, fit.tidy, fit.full, fit.lasso, residuals, retained.predictors, fit.cor) %>%
               ungroup()
           }) |> bind_rows()
 
           if(!save.all){
-            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy, fit.full)
+            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy, fit.full, fit.cor)
           }
 
           # re-estimate basic model with the max number of PCs used to get the variable names
@@ -558,8 +598,30 @@ gfs_run_regression_single_outcome <- function(
 
           ## Pool estimtes across imputations
           results.pooled <- fitted.reg.models %>%
-            select(-fit.full) %>%
+            select(COUNTRY, imp_num, fit.tidy) %>%
             unnest(c(fit.tidy)) %>%
+            ungroup() %>%
+            group_by(term, COUNTRY) %>%
+            nest() %>%
+            mutate(
+              pooled.est = map(data, \(x){
+                gfs_pool_estimates(x)
+              }),
+              estimates.by.imp = data
+            ) %>%
+            unnest(c(pooled.est)) %>%
+            select(-c(data)) %>%
+            unique() %>%
+            mutate(
+              term = factor(term)
+            ) %>%
+            arrange(COUNTRY, term) %>%
+            ungroup()
+            
+          ## Pool estimates of correlations
+          cor.pooled <- fitted.reg.models %>%
+            select(COUNTRY, imp_num, fit.cor) %>%
+            unnest(c(fit.cor)) %>%
             ungroup() %>%
             group_by(term, COUNTRY) %>%
             nest() %>%
@@ -728,7 +790,7 @@ gfs_run_regression_single_outcome <- function(
 
           # Compute standardized estimates
           # note: for binary outcomes only need to multiply by the predictor standard deviation
-          output <- output %>%
+           output <- output %>%
             mutate(
               std.estimate.pooled = case_when(
                 outcome.type == "linear" ~ estimate.pooled * (predictor.sd / outcome.sd),
@@ -749,6 +811,35 @@ gfs_run_regression_single_outcome <- function(
                 .default = NA
               )
             )
+                    
+          ## compute correlations: standardized regression coefficient
+         cor.output <- cor.pooled %>%
+            left_join(sd.pooled, by = c("COUNTRY", "term")) %>%
+            ungroup()
+
+          cor.output <- cor.output %>%
+            mutate(
+              cor.est = estimate.pooled * (predictor.sd / outcome.sd),
+              cor.se = se.pooled * (predictor.sd / outcome.sd),
+              cor.ci.low = case_when(
+                df.approx > 1 ~ cor.est - stats::qt(0.975, df.approx) * cor.se,
+                .default = NA
+              ),
+              cor.ci.up = case_when(
+                df.approx > 1 ~ cor.est + stats::qt(0.975, df.approx) * cor.se,
+                .default = NA
+              ),
+              	outcome = your.outcome,
+              	predictor = your.pred
+            ) |>
+            rename(
+            		"cov.est" = estimate.pooled,
+            		"cov.se" = se.pooled,
+            		"cov.ci.low" = ci.low,
+            		"cov.ci.up" = ci.up
+            ) |>
+            select(COUNTRY, outcome, predictor, cor.est, cor.se, cor.ci.low, cor.ci.up, cov.est, cov.se, cov.ci.low, cov.ci.up, df.approx, t.statistic, f.statistic, p.value, miss.info, outcome.sd, predictor.sd, estimates.by.imp)
+
 
 
           # Meta analysis input - is a simplified data.frame with only:
@@ -916,6 +1007,7 @@ gfs_run_regression_single_outcome <- function(
             load(outfile, env.res <- new.env())
             output <- rbind(output, env.res$output)
             metainput <- rbind(metainput, env.res$metainput)
+            cor.output <- rbind(cor.output, env.res$cor.output )
             fit.pca.summary <- rbind(fit.pca.summary, env.res$fit.pca.summary)
             if(save.all){
               fitted.reg.models <- rbind(fitted.reg.models, env.res$fitted.reg.models)
@@ -925,7 +1017,8 @@ gfs_run_regression_single_outcome <- function(
           save(
             output,
             metainput,
-            fit.pca.summary,
+            fit.pca.summary,  
+            cor.output ,
             file = outfile
           )
           if(save.all){
@@ -933,6 +1026,7 @@ gfs_run_regression_single_outcome <- function(
               output,
               metainput,
               fit.pca.summary,
+              cor.output ,
               fitted.reg.models,
               file = outfile
             )

@@ -48,11 +48,11 @@ build_tbl_1 <- function(params, font.name = "Open Sans", font.size = 10){
           all_continuous() ~ "continuous2"
         ),
         statistic = list(
-          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
           all_categorical() ~ "{n} ({p}%)"
         ),
         digits = list(
-          all_continuous() ~ c(1,1,1,1),
+          all_continuous() ~ c(1,1,1,1,1,1),
           all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
           #n = label_style_number(digits=0),
           #p = label_style_percent(suffix = "%", digits = 2)
@@ -221,7 +221,7 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
   # footnote information:
   tb.note.meta.outcomewide <- as_paragraph(paste0("Notes. N=", n.print, "; Reference for focal predictor: ", focal.predictor.reference.value,"; RR, risk-ratio, null effect is 1.00; ES, effect size measure for standardized regression coefficient, null effect is 0.00; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
 
-Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; religious affiliation at age 12; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All models controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; religious affiliation; frequency of religious service attendance; and racial/ethnic identity when available. For Model 2 with PC (principal components), the first seven principal components of the entire set of contemporaneous confounders assessed at Wave 1 were included as additional covariates of the outcomes at Wave 2.
 
 An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized. For continuous outcomes, the ES represents the change in SD on the outcome ", ifelse(get_outcome_scale(focal.predictor) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),". For binary outcomes, the RR represents the change in risk of being in the upper category compared to the lower category ", ifelse(get_outcome_scale(focal.predictor) == "cont", "for a 1 SD increase in the focal predictor", "between the lower and upper categories of the binary focal predictor"),".
 
@@ -425,11 +425,11 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
             all_continuous() ~ "continuous2"
           ),
           statistic = list(
-            all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+            all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
             all_categorical() ~ "{n} ({p}%)"
           ),
           digits = list(
-            all_continuous() ~ c(1,1,1,1),
+            all_continuous() ~ c(1,1,1,1,1,1),
             all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
           ),
           missing_text = "    (Missing)",
@@ -506,11 +506,11 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
         contains("DRINKS") ~ "continuous2"
       ),
       statistic = list(
-        all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+        all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
         all_categorical() ~ "{n} ({p}%)"
       ),
       digits = list(
-        all_continuous() ~ c(1,1,1,1),
+        all_continuous() ~ c(1,1,1,1,1,1),
         all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
       ),
       missing_text = "    (Missing)",
@@ -586,11 +586,11 @@ build_tbl_variable_by_x <- function(params, font.name = "Open Sans", font.size =
           all_continuous() ~ "continuous2"
         ),
         statistic = list(
-          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}"),
+          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
           all_categorical() ~ "{n} ({p}%)"
         ),
         digits = list(
-          all_continuous() ~ c(1,1,1,1),
+          all_continuous() ~ c(1,1,1,1,1,1),
           all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
         ),
         missing_text = "    (Missing)",
@@ -1183,7 +1183,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
     )
 
   if(is.meta){
-    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue")
+    vec.get <- c("theta.rma", "theta.rma.se", "tau","global.pvalue", "rr.theta", "rr.theta.se", "rr.tau","global.pvalue", "calibrated.yi")
     vec.id <- c("theta.rma", "theta.rma.ci","tau","global.pvalue", "theta.rma.se")
     vec.rr <- c("rr.theta", "rr.theta.ci","rr.tau","global.pvalue", "theta.rma.se")
     vec.a <- c("RR", "ES","95% CI","\u03c4", "Global p-value")
