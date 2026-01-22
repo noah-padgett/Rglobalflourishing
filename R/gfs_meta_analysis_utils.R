@@ -138,7 +138,8 @@ add_pop_wgts <- function(df) {
     259759435,
     33085830,
     156216636,
-    89518608
+    89518608,
+    1112122780
   )
   names(poplist) <-
     c(
@@ -163,12 +164,23 @@ add_pop_wgts <- function(df) {
       "United States",
       "Argentina",
       "Brazil",
-      "Mexico"
+      "Mexico",
+      "China"
     )
   df$wi <- 1
-  for (i in names(poplist)) {
-    df$wi[df$Country == i] <- poplist[i] / sum(poplist)
+  if("Country" %in% colnames(df)){
+    for (i in names(poplist)) {
+      df$wi[df$Country == i] <- poplist[i] / sum(poplist)
+    }
+  } else if("COUNTRY" %in% colnames(df)){
+    for (i in names(poplist)) {
+      df$wi[df$COUNTRY == i] <- poplist[i] / sum(poplist)
+      if(names(poplist) == "Turkiye"){
+        df$wi[df$COUNTRY == "Turkey"] <- poplist[i] / sum(poplist)
+      }
+    }
   }
+
   df
 }
 

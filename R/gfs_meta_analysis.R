@@ -105,10 +105,10 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       rr.theta = exp(theta.rma),
       rr.theta.ci = map_chr(meta.rma, \(x) get_meta_ci(x, "rma.rr", ci.alpha, .exp=TRUE, ...)),
       rr.tau = sqrt((exp(tau2) - 1) * exp(2 * theta.rma + tau2)),
-      rr.prob.0.90 = map_dbl(calibrated.yi.exp, \(x){
+      rr.prob.0.90 = map_dbl(rr.calibrated.yi, \(x){
           proportion_meaningful(x, q = 0.90, above = FALSE, interval.method, rr.theta, rr.tau)
         }),
-      rr.prob.1.10 = map_dbl(calibrated.yi.exp, \(x){
+      rr.prob.1.10 = map_dbl(rr.calibrated.yi, \(x){
           proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr.theta, rr.tau)
       }),
       rr.prob.c = paste0("[", .round(prob.rr0.90), " / ",.round(prob.rr1.10) ,"]"),

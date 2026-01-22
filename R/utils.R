@@ -275,7 +275,7 @@ theme_Publication <- function(base_size=14) {
     + theme(plot.title = element_text(face = "bold",
                                       size = rel(1.2), hjust = 0.5),
             text = element_text(),
-            panel.background = element_rect(colour = NA, fill = "#f0f0f0"),
+            panel.background = element_rect(colour = NA, fill = "white"),
             plot.background = element_rect(colour = NA, fill = 'white'),
             panel.border = element_rect(colour = NA),
             axis.title = element_text(face = "bold",size = rel(1)),
