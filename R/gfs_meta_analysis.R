@@ -111,7 +111,7 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       rr.prob.1.10 = map_dbl(rr.calibrated.yi, \(x){
           proportion_meaningful(x, q = 1.10, above = TRUE, interval.method, rr.theta, rr.tau)
       }),
-      rr.prob.c = paste0("[", .round(prob.rr0.90), " / ",.round(prob.rr1.10) ,"]"),
+      rr.prob.c = paste0("[", .round(rr.prob.0.90), " / ",.round(rr.prob.1.10) ,"]"),
       rr.theta.EE = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="EE", type="RR"),
       rr.theta.ECI = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="ECI", type="RR"),
       rr.theta.pred.int = gfs_prediction_interval(x=rr.calibrated.yi, theta = theta.rma, tau = tau , .exp=TRUE, ...),
