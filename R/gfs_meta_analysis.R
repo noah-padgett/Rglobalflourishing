@@ -128,7 +128,7 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       }),
       pop.wgt.theta = map_dbl(pop.wgt.meta, "beta"),
       pop.wgt.thetaci = map_chr(pop.wgt.meta, \(x) get_meta_ci(x, type = "FE", ci.alpha, ...)),
-      pop.wgt.meta.tidy = map(pop.wgt.meta., \(x) tidy(x, conf.int = TRUE)),
+      pop.wgt.meta.tidy = map(pop.wgt.meta, \(x) tidy(x, conf.int = TRUE)),
       ## ====== pooled-pvalue =================================================================== ##
       global.pvalue = map_dbl(data, \(x){
         cnames <- colnames(x)
