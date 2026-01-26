@@ -272,7 +272,7 @@ build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
   digits = params$digits
 
   vec.id <- c("theta.rma.EE", "theta.rma.ECI")
-  vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
+  vec.rr <- c("rr.theta.EE", "rr.theta.ECI")
   vec.wopc <- c("E-value","E-value for CI")
   vec.wpc <- c("E-value\r","E-value for CI\r") # need to add whitespace to the end of these columns so that flextable doesn't through the "duplicate column keys" error (see https://stackoverflow.com/questions/50748232/same-column-names-in-flextable-in-r) for more details on other approaches.
   cnames <- c(
@@ -903,7 +903,7 @@ build_tbl_evalues <- function(params, font.name = "Open Sans", font.size = 10){
 
   if(is.meta){
     vec.id <- c("theta.rma.EE", "theta.rma.ECI")
-    vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
+    vec.rr <- c("rr.theta.EE", "rr.theta.ECI")
   } else {
     vec.id <- c("EE", "ECI")
   }
@@ -1768,7 +1768,7 @@ build_tbl_predictorwide_evalues <- function(params, font.name = "Open Sans", fon
 
   if(is.meta){
     vec.id <- c("theta.rma.EE", "theta.rma.ECI")
-    vec.rr <- c("theta.rr.EE", "theta.rr.ECI")
+    vec.rr <- c("rr.theta.EE", "rr.theta.ECI")
   } else {
     vec.id <- c("EE", "ECI")
   }

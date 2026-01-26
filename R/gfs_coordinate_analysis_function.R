@@ -151,7 +151,7 @@ gfs_run_regression_single_outcome <- function(
       }
 
       ##
-      #x <- country.vec[8]
+      #x <- country.vec[5]
       .run_internal_func <- function(x){
         cur.country <- x
         ###
@@ -174,7 +174,7 @@ gfs_run_regression_single_outcome <- function(
             }
 
           }
-          if(str_detect(your.outcome,"BELIEVE_GOD") | str_detect(your.pred,"BELIEVE_GOD")) {
+          if(str_detect(your.outcome,"BELIEVE_GOD") | str_detect(your.pred,"BELIEVE_GOD")| str_detect(your.pred,"HIGH_DRINKS")) {
             if(cur.country %in% c("Egypt") ){
               out <- FALSE & out
             }
@@ -495,28 +495,28 @@ gfs_run_regression_single_outcome <- function(
                         response = "PRIMARY_OUTCOME",
                         termlabels = "FOCAL_PREDICTOR",
                       )
-                      
-                       # fit 1: no weights
-  fit.dof <- stats::glm(tmp.model, data = x[["variables"]])
-  #print(fit.dof)
-  vcom <- fit.dof$df.residual
-                      
+
+                      # fit 1: no weights
+                      fit.dof <- stats::glm(tmp.model, data = x[["variables"]])
+                      #print(fit.dof)
+                      vcom <- fit.dof$df.residual
+
                       tmp.fit <- survey::svyglm(tmp.model, design = x, family = stats::gaussian())
                       #print(tmp.fit)
                       tmp.fit <- tidy(tmp.fit)[2,]
                       tmp.fit <- tmp.fit %>%
-    mutate(
-      f.statistic = (estimate**2) / (std.error**2),
-      df.num = 1,
-      df.dem = vcom,
-      p.value = 1 - pf(f.statistic, df.num, df.dem),
-      # see: Lumley, T. & Scott, A. Fitting Regression Models to Survey Data. Statistical Science 32, 265–278 (2017). p. 269 left column, middle paragraph
-      p.value = case_when(
-        p.value == 0 ~ 2.2e-16,
-        .default = p.value
-      ),
-      vcom = vcom
-    )
+                        mutate(
+                          f.statistic = (estimate**2) / (std.error**2),
+                          df.num = 1,
+                          df.dem = vcom,
+                          p.value = 1 - pf(f.statistic, df.num, df.dem),
+                          # see: Lumley, T. & Scott, A. Fitting Regression Models to Survey Data. Statistical Science 32, 265–278 (2017). p. 269 left column, middle paragraph
+                          p.value = case_when(
+                            p.value == 0 ~ 2.2e-16,
+                            .default = p.value
+                          ),
+                          vcom = vcom
+                        )
                     }
                   }
                   tmp.fit
@@ -617,7 +617,7 @@ gfs_run_regression_single_outcome <- function(
             ) %>%
             arrange(COUNTRY, term) %>%
             ungroup()
-            
+
           ## Pool estimates of correlations
           cor.pooled <- fitted.reg.models %>%
             select(COUNTRY, imp_num, fit.cor) %>%
@@ -790,7 +790,7 @@ gfs_run_regression_single_outcome <- function(
 
           # Compute standardized estimates
           # note: for binary outcomes only need to multiply by the predictor standard deviation
-           output <- output %>%
+          output <- output %>%
             mutate(
               std.estimate.pooled = case_when(
                 outcome.type == "linear" ~ estimate.pooled * (predictor.sd / outcome.sd),
@@ -811,9 +811,9 @@ gfs_run_regression_single_outcome <- function(
                 .default = NA
               )
             )
-                    
+
           ## compute correlations: standardized regression coefficient
-         cor.output <- cor.pooled %>%
+          cor.output <- cor.pooled %>%
             left_join(sd.pooled, by = c("COUNTRY", "term")) %>%
             ungroup()
 
@@ -829,14 +829,14 @@ gfs_run_regression_single_outcome <- function(
                 df.approx > 1 ~ cor.est + stats::qt(0.975, df.approx) * cor.se,
                 .default = NA
               ),
-              	outcome = your.outcome,
-              	predictor = your.pred
+              outcome = your.outcome,
+              predictor = your.pred
             ) |>
             rename(
-            		"cov.est" = estimate.pooled,
-            		"cov.se" = se.pooled,
-            		"cov.ci.low" = ci.low,
-            		"cov.ci.up" = ci.up
+              "cov.est" = estimate.pooled,
+              "cov.se" = se.pooled,
+              "cov.ci.low" = ci.low,
+              "cov.ci.up" = ci.up
             ) |>
             select(COUNTRY, outcome, predictor, cor.est, cor.se, cor.ci.low, cor.ci.up, cov.est, cov.se, cov.ci.low, cov.ci.up, df.approx, t.statistic, f.statistic, p.value, miss.info, outcome.sd, predictor.sd, estimates.by.imp)
 
@@ -1017,7 +1017,7 @@ gfs_run_regression_single_outcome <- function(
           save(
             output,
             metainput,
-            fit.pca.summary,  
+            fit.pca.summary,
             cor.output ,
             file = outfile
           )
