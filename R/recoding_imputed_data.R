@@ -45,7 +45,11 @@ recode_imputed_data <- function(
     # TODO
     # add functionality to over-write default provided in list.default(.)
   }
-  drop_created_vars <- c("AGE_GRP_Y1", "AGE_GRP_Y2", "RACE", "RACE_PLURALITY_Y1", "INCOME_QUINTILE_Y1", "INCOME_QUINTILE_Y2")
+  drop_created_vars <- c(
+    paste0("AGE_GRP", c("_Y1", "_Y2", "_Y3") ),
+    "RACE", "RACE_PLURALITY_Y1", "RACE_PLURALITY",
+    paste0("INCOME_QUINTILE", c("_Y1", "_Y2", "_Y3"))
+  )
   ## ============================================================================================ ##
   ## ====== Initial Setup ======================================================================= ##
   # extract imputed data and coerce into "long format"
@@ -167,11 +171,11 @@ recode_imputed_data <- function(
         MARITAL_STATUS_EVER_MARRIED = case_when(MARITAL_STATUS %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED = case_when(MARITAL_STATUS == 4 ~ 1, .default = 0),
         CIGARETTES_BINARY = case_when(CIGARETTES > 0 ~ 1, .default = 0),
-        COUNTRY2 = recode_labels(COUNTRY2, "COUNTRY", include.value = FALSE)
+        COUNTRY = recode_labels(COUNTRY, "COUNTRY", include.value = FALSE)
       )
   }
   ## Wave 2
-  if(is.null(wave) | wave == 2 | wave == "W2" | wave == "w2" | wave == "Y2"){
+  if(wave == 2 | wave == "W2" | wave == "w2" | wave == "Y2"){
     df.imp.long <- df.imp.long %>%
       dummy_cols(
         select_columns = c(
@@ -231,8 +235,95 @@ recode_imputed_data <- function(
         MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, .default = 0),
         CIGARETTES_BINARY_Y1 = case_when(CIGARETTES_Y1 > 0 ~ 1, .default = 0),
+        CIGARETTES_BINARY_Y2 = case_when(CIGARETTES_Y2 > 0 ~ 1, .default = 0)
+        #COUNTRY = COUNTRY #recode_labels(COUNTRY, "COUNTRY_Y1", include.value = FALSE)
+      )
+  }
+  ## Wave 3
+  if(wave == 3 | wave == "W3" | wave == "w3" | wave == "Y3"){
+    df.imp.long <- df.imp.long %>%
+      dummy_cols(
+        select_columns = c(
+          "SVCS_MOTHER_Y1",
+          "SVCS_FATHER_Y1",
+          "MOTHER_RELATN_Y1",
+          "MOTHER_LOVED_Y1",
+          "FATHER_RELATN_Y1",
+          "FATHER_LOVED_Y1",
+          "MARITAL_STATUS_Y1",
+          "MARITAL_STATUS_Y2",
+          "MARITAL_STATUS_Y3"
+        ),
+        ignore_na = T
+      ) %>%
+      mutate(
+        COV_AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1"),
+        COV_AGE_GRP_Y1 = recode_to_type(COV_AGE_GRP_Y1, "AGE_GRP_Y1"),
+        COV_AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y1"),
+        COV_AGE_GRP_Y2 = recode_to_type(COV_AGE_GRP_Y2, "AGE_GRP_Y1"),
+        COV_AGE_GRP_Y3 = recode_labels(AGE_Y3, "AGE_GRP_Y1"),
+        COV_AGE_GRP_Y3 = recode_to_type(COV_AGE_GRP_Y3, "AGE_GRP_Y1"),
+
+        across(any_of(c("URBAN_RURAL_Y1", "URBAN_RURAL_Y2", "URBAN_RURAL_Y3", list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
+          x <- recode_labels(x, cur_column(), include.value = FALSE)
+          x <- case_when(x == "(Missing)" ~ NA, .default = x) # needed for Abused and other 100% missing variable sin some countries
+          #x <- str_sub(x, 4, -1) # removed the numbers
+          #x <- str_replace_all(x, "\\n", "")
+          #x <- str_trim(x)
+          x <- recode_to_type(x, cur_column())
+          x
+        }, .names = "COV_{.col}"),
+        COV_MOTHER_RELATN_Y1 = case_when(MOTHER_RELATN_Y1_1 == 1 | MOTHER_RELATN_Y1_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
+        COV_MOTHER_RELATN_Y1 = factor(COV_MOTHER_RELATN_Y1),
+        COV_FATHER_RELATN_Y1 = case_when(FATHER_RELATN_Y1_1 == 1 | FATHER_RELATN_Y1_2 == 1 ~ "Very/somewhat good", .default = "Very/somewhat bad"),
+        COV_FATHER_RELATN_Y1 = factor(COV_FATHER_RELATN_Y1),
+        COV_MOTHER_NA = case_when(SVCS_MOTHER_Y1_97 == 1 | MOTHER_RELATN_Y1_97 == 1 | MOTHER_LOVED_Y1_97 == 1 ~ 1, .default = 0),
+        COV_FATHER_NA = case_when(SVCS_FATHER_Y1_97 == 1 | FATHER_RELATN_Y1_97 == 1 | FATHER_LOVED_Y1_97 == 1 ~ 1, .default = 0),
+
+        # enforce reference group
+        COV_BORN_COUNTRY_Y1 = relevel(COV_BORN_COUNTRY_Y1, ref = "Born in this country"),
+        COV_PARENTS_12YRS_Y1 = relevel(COV_PARENTS_12YRS_Y1, ref = "Parents were married"),
+        COV_MOTHER_RELATN_Y1 = relevel(COV_MOTHER_RELATN_Y1, ref = "Very/somewhat bad"),
+        COV_FATHER_RELATN_Y1 = relevel(COV_FATHER_RELATN_Y1, ref = "Very/somewhat bad"),
+        COV_SVCS_12YRS_Y1 = relevel(COV_SVCS_12YRS_Y1, ref = "Never"),
+        COV_OUTSIDER_Y1 = relevel(COV_OUTSIDER_Y1, ref = "No"),
+        COV_ABUSED_Y1 = ifelse(COUNTRY == "Israel", COV_ABUSED_Y1, relevel(COV_ABUSED_Y1, ref = "No")),
+        COV_HEALTH_GROWUP_Y1 = relevel(COV_HEALTH_GROWUP_Y1, ref = "Good"),
+        COV_INCOME_12YRS_Y1 = relevel(COV_INCOME_12YRS_Y1, ref = "Got by"),
+
+
+
+        COV_GENDER = relevel(COV_GENDER, ref = "Male"),
+        COV_AGE_GRP_Y1 = relevel(COV_AGE_GRP_Y1, ref = levels(COV_AGE_GRP_Y1)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
+        COV_EDUCATION_3_Y1 = relevel(COV_EDUCATION_3_Y1, ref = "9-15"),
+        COV_EMPLOYMENT_Y1 = relevel(COV_EMPLOYMENT_Y1, ref = "Employed for an employer"),
+        COV_MARITAL_STATUS_Y1 = relevel(COV_MARITAL_STATUS_Y1, ref = "Single/Never been married"),
+        COV_ATTEND_SVCS_Y1 = relevel(COV_ATTEND_SVCS_Y1, ref = "Never"),
+
+        COV_AGE_GRP_Y2 = relevel(COV_AGE_GRP_Y2, ref = levels(COV_AGE_GRP_Y2)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
+        COV_EDUCATION_3_Y2 = relevel(COV_EDUCATION_3_Y2, ref = "9-15"),
+        COV_EMPLOYMENT_Y2 = relevel(COV_EMPLOYMENT_Y2, ref = "Employed for an employer"),
+        COV_MARITAL_STATUS_Y2 = relevel(COV_MARITAL_STATUS_Y2, ref = "Single/Never been married"),
+        COV_ATTEND_SVCS_Y2 = relevel(COV_ATTEND_SVCS_Y2, ref = "Never"),
+
+        COV_AGE_GRP_Y3 = relevel(COV_AGE_GRP_Y3, ref = levels(COV_AGE_GRP_Y3)[str_detect(levels(COV_AGE_GRP_Y3),"18-24")]),
+        COV_EDUCATION_3_Y3 = relevel(COV_EDUCATION_3_Y3, ref = "9-15"),
+        COV_EMPLOYMENT_Y3 = relevel(COV_EMPLOYMENT_Y3, ref = "Employed for an employer"),
+        COV_MARITAL_STATUS_Y3 = relevel(COV_MARITAL_STATUS_Y3, ref = "Single/Never been married"),
+        COV_ATTEND_SVCS_Y3 = relevel(COV_ATTEND_SVCS_Y3, ref = "Never"),
+        # Other basic setup to make things easier later...
+        MODE_RECRUIT = recode_labels( MODE_RECRUIT, "MODE_RECRUIT", include.value = FALSE),
+        MODE_RECRUIT = recode_to_type(MODE_RECRUIT, "MODE_RECRUIT"),
+        RACE = COV_SELFID1,
+        MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, .default = 0),
+        MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
+        MARITAL_STATUS_EVER_MARRIED_Y3 = case_when(MARITAL_STATUS_Y3 %in% c(2:5) ~ 1, .default = 0),
+        MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, .default = 0),
+        MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, .default = 0),
+        MARITAL_STATUS_DIVORCED_Y3 = case_when(MARITAL_STATUS_Y3 %in% c(4) ~ 1, .default = 0),
+        CIGARETTES_BINARY_Y1 = case_when(CIGARETTES_Y1 > 0 ~ 1, .default = 0),
         CIGARETTES_BINARY_Y2 = case_when(CIGARETTES_Y2 > 0 ~ 1, .default = 0),
-        COUNTRY2 = COUNTRY #recode_labels(COUNTRY2, "COUNTRY_Y1", include.value = FALSE)
+        CIGARETTES_BINARY_Y3 = case_when(CIGARETTES_Y3 > 0 ~ 1, .default = 0)
       )
   }
   ## ============================================================================================ ##
@@ -244,7 +335,7 @@ recode_imputed_data <- function(
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD0"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC0"]]
     }
-    if(is.null(wave) | wave == 2 | wave == "W2"){
+    if(!(wave == 1 | wave == "W1")){
       LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
@@ -286,46 +377,46 @@ recode_imputed_data <- function(
     df.imp.long <- df.imp.long %>%
       mutate(
         COV_RACE_PLURALITY = case_when(
-          COUNTRY2 == "Argentina" & str_detect(RACE, "White") ~ 0,
-          COUNTRY2 == "Argentina" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-          COUNTRY2 == "Australia" & str_detect(RACE, "Australian") ~ 0,
-          COUNTRY2 == "Australia" & str_detect(RACE, "Australian", negate = TRUE) ~ 1,
-          COUNTRY2 == "Brazil" & str_detect(RACE, "Branca") ~ 0,
-          COUNTRY2 == "Brazil" & str_detect(RACE, "Branca", negate = TRUE) ~ 1,
-          COUNTRY2 == "Egypt" & str_detect(RACE, "Arab") ~ 0,
-          COUNTRY2 == "Egypt" & str_detect(RACE, "Arab", negate = TRUE) ~ 1,
-          COUNTRY2 == "Germany" ~ NA,
-          COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)") ~ 0,
-          COUNTRY2 == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)", negate = TRUE) ~ 1,
-          COUNTRY2 == "India" & str_detect(RACE, "Other backward caste") ~ 0,
-          COUNTRY2 == "India" & str_detect(RACE, "Other backward caste", negate = TRUE) ~ 1,
-          COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa") ~ 0,
-          COUNTRY2 == "Indonesia" & str_detect(RACE, "Jawa", negate = TRUE) ~ 1,
-          COUNTRY2 == "Israel" & str_detect(RACE, "Jewish") ~ 0,
-          COUNTRY2 == "Israel" & str_detect(RACE, "Jewish", negate = TRUE) ~ 1,
-          COUNTRY2 == "Japan" ~ NA,
-          COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu") ~ 0,
-          COUNTRY2 == "Kenya" & str_detect(RACE, "Kikuyu", negate = TRUE) ~ 1,
-          COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo") ~ 0,
-          COUNTRY2 == "Mexico" & str_detect(RACE, "Mestizo", negate = TRUE) ~ 1,
-          COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa") ~ 0,
-          COUNTRY2 == "Nigeria" & str_detect(RACE, "Hausa", negate = TRUE) ~ 1,
-          COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog") ~ 0,
-          COUNTRY2 == "Philippines" & str_detect(RACE, "Tagalog", negate = TRUE) ~ 1,
-          COUNTRY2 == "Poland" & str_detect(RACE, "Polish") ~ 0,
-          COUNTRY2 == "Poland" & str_detect(RACE, "Polish", negate = TRUE) ~ 1,
-          COUNTRY2 == "South Africa" & str_detect(RACE, "Black") ~ 0,
-          COUNTRY2 == "South Africa" & str_detect(RACE, "Black", negate = TRUE) ~ 1,
-          COUNTRY2 == "Spain" ~ NA,
-          COUNTRY2 == "Sweden" ~ NA,
-          COUNTRY2 == "Tanzania" & str_detect(RACE, "African") ~ 0,
-          COUNTRY2 == "Tanzania" & str_detect(RACE, "African", negate = TRUE) ~ 1,
-          COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish") ~ 0,
-          COUNTRY2 == "Turkiye" & str_detect(RACE, "Turkish", negate = TRUE) ~ 1,
-          COUNTRY2 == "United Kingdom" & str_detect(RACE, "White") ~ 0,
-          COUNTRY2 == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
-          COUNTRY2 == "United States" & str_detect(RACE, "White") ~ 0,
-          COUNTRY2 == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY == "Argentina" & str_detect(RACE, "White") ~ 0,
+          COUNTRY == "Argentina" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY == "Australia" & str_detect(RACE, "Australian") ~ 0,
+          COUNTRY == "Australia" & str_detect(RACE, "Australian", negate = TRUE) ~ 1,
+          COUNTRY == "Brazil" & str_detect(RACE, "Branca") ~ 0,
+          COUNTRY == "Brazil" & str_detect(RACE, "Branca", negate = TRUE) ~ 1,
+          COUNTRY == "Egypt" & str_detect(RACE, "Arab") ~ 0,
+          COUNTRY == "Egypt" & str_detect(RACE, "Arab", negate = TRUE) ~ 1,
+          COUNTRY == "Germany" ~ NA,
+          COUNTRY == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)") ~ 0,
+          COUNTRY == "Hong Kong" & str_detect(RACE, "Chinese (Cantonese)", negate = TRUE) ~ 1,
+          COUNTRY == "India" & str_detect(RACE, "Other backward caste") ~ 0,
+          COUNTRY == "India" & str_detect(RACE, "Other backward caste", negate = TRUE) ~ 1,
+          COUNTRY == "Indonesia" & str_detect(RACE, "Jawa") ~ 0,
+          COUNTRY == "Indonesia" & str_detect(RACE, "Jawa", negate = TRUE) ~ 1,
+          COUNTRY == "Israel" & str_detect(RACE, "Jewish") ~ 0,
+          COUNTRY == "Israel" & str_detect(RACE, "Jewish", negate = TRUE) ~ 1,
+          COUNTRY == "Japan" ~ NA,
+          COUNTRY == "Kenya" & str_detect(RACE, "Kikuyu") ~ 0,
+          COUNTRY == "Kenya" & str_detect(RACE, "Kikuyu", negate = TRUE) ~ 1,
+          COUNTRY == "Mexico" & str_detect(RACE, "Mestizo") ~ 0,
+          COUNTRY == "Mexico" & str_detect(RACE, "Mestizo", negate = TRUE) ~ 1,
+          COUNTRY == "Nigeria" & str_detect(RACE, "Hausa") ~ 0,
+          COUNTRY == "Nigeria" & str_detect(RACE, "Hausa", negate = TRUE) ~ 1,
+          COUNTRY == "Philippines" & str_detect(RACE, "Tagalog") ~ 0,
+          COUNTRY == "Philippines" & str_detect(RACE, "Tagalog", negate = TRUE) ~ 1,
+          COUNTRY == "Poland" & str_detect(RACE, "Polish") ~ 0,
+          COUNTRY == "Poland" & str_detect(RACE, "Polish", negate = TRUE) ~ 1,
+          COUNTRY == "South Africa" & str_detect(RACE, "Black") ~ 0,
+          COUNTRY == "South Africa" & str_detect(RACE, "Black", negate = TRUE) ~ 1,
+          COUNTRY == "Spain" ~ NA,
+          COUNTRY == "Sweden" ~ NA,
+          COUNTRY == "Tanzania" & str_detect(RACE, "African") ~ 0,
+          COUNTRY == "Tanzania" & str_detect(RACE, "African", negate = TRUE) ~ 1,
+          COUNTRY == "Turkiye" & str_detect(RACE, "Turkish") ~ 0,
+          COUNTRY == "Turkiye" & str_detect(RACE, "Turkish", negate = TRUE) ~ 1,
+          COUNTRY == "United Kingdom" & str_detect(RACE, "White") ~ 0,
+          COUNTRY == "United Kingdom" & str_detect(RACE, "White", negate = TRUE) ~ 1,
+          COUNTRY == "United States" & str_detect(RACE, "White") ~ 0,
+          COUNTRY == "United States" & str_detect(RACE, "White", negate = TRUE) ~ 1,
           .default = 0
         )
       )
@@ -407,7 +498,7 @@ recode_imputed_data <- function(
         select(.imp, COUNTRY, quintiles_w1)
 
       df.imp.long <- df.imp.long %>%
-        group_by(.imp, COUNTRY2) %>%
+        group_by(.imp, COUNTRY) %>%
         nest() %>%
         mutate(
           data = map(data, \(x){
@@ -517,7 +608,7 @@ recode_imputed_data <- function(
 
       df.imp.long <-  df.imp.long %>%
         mutate(.imp2 = .imp) %>%
-        group_by(.imp2, COUNTRY2) %>%
+        group_by(.imp2, COUNTRY) %>%
         nest() %>%
         mutate(
           data = map(data, \(x){

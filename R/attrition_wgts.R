@@ -254,12 +254,16 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
 #' TO-DO
 #'
 #' @export
-append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.name = NULL, attr.wgt.name = NULL, wgt = NULL, strata = NULL, psu = NULL){
+append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.name = NULL, attr.wgt.name = NULL, wgt = NULL, strata = NULL, psu = NULL, wave = "W2"){
   if (is.null(composite.wgt.name)) {
     composite.wgt.name = as.name("AVG.SAMP.ATTR.WGT")
+  } else {
+    composite.wgt.name = as.name(composite.wgt.name)
   }
   if (is.null(attr.wgt.name)) {
     attr.wgt.name = as.name("ATTR.WGT")
+  } else {
+    attr.wgt.name = as.name(attr.wgt.name)
   }
   if (is.null(wgt)) {
     wgt = as.name("ANNUAL_WEIGHT_R2")

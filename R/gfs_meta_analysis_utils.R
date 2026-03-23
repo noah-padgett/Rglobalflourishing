@@ -34,7 +34,7 @@ proportion_meaningful <- function(x, q = 0, above = TRUE, method = "empirical", 
     }
   }
   if (method == "normal") {
-    # follows from Matheur and VanderWeele (2017)
+    # follows from Mathur and VanderWeele (2017)
     if (above) {
       out <- 1 - pnorm((q - theta) / tau)
     } else {
@@ -175,8 +175,8 @@ add_pop_wgts <- function(df) {
   } else if("COUNTRY" %in% colnames(df)){
     for (i in names(poplist)) {
       df$wi[df$COUNTRY == i] <- poplist[i] / sum(poplist)
-      if(names(poplist) == "Turkiye"){
-        df$wi[df$COUNTRY == "Turkey"] <- poplist[i] / sum(poplist)
+      if(i == "Turkiye"){
+        df$wi[df$COUNTRY %in% c("Turkey", i)] <- poplist[i] / sum(poplist)
       }
     }
   }
@@ -184,3 +184,18 @@ add_pop_wgts <- function(df) {
   df
 }
 
+#' @rdname compute_calibrated
+#' @export
+meta_loo_inf <- function(x, ...){
+  suppressMessages({
+    df.loo <- as.data.frame(metafor::leave1out(x))
+    colnames(df.loo) <- paste0("loo.", colnames(df.loo))
+    # for influence, you need to explicitly use the list.rma version of the as.df
+    df.inf <- metafor::influence.rma.uni(x)
+    df.inf <- metafor::as.data.frame.list.rma(df.inf[[1]])
+    df.loo <- df.loo |> mutate(group = x$data$group[as.numeric(rownames(df.inf))], .before = 1)
+    df.inf <- df.inf |> mutate(group = x$data$group[as.numeric(rownames(df.inf))], .before = 1)
+    df <- full_join(df.loo, df.inf)
+  })
+  df
+}

@@ -17,7 +17,8 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.top.random", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, reverse.code.cont = FALSE, to.numeric = FALSE,...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.num.fixed", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, reverse.code.cont = FALSE, to.numeric = FALSE,...) {
+  #file =  here::here(data.dir, dataset.name); list.composites = get_variable_codes('LIST.COMPOSITES'); add.whitespace = TRUE; reverse.code.cont = TRUE; wave = 2; method.income="quintiles.num.fixed"; wgt = "ANNUAL_WEIGHT_R2"; strata = "STRATA"; psu = "PSU"; data.is.long = FALSE
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -46,15 +47,14 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original %>%
       dplyr::mutate(
         COUNTRY = recode_labels(COUNTRY, "COUNTRY"),
-        COUNTRY = factor(COUNTRY),
-        COUNTRY2 = COUNTRY
+        COUNTRY = factor(COUNTRY)
       )
     df.original <- df.original %>%
       select(!(any_of(cols_to_drop)))
   }
   ## ============================================================================================ ##
   ## ====== Restructure to "wide" data ========================================================== ##
-  if(is.null(wave) | wave == 2 | wave == "Y2"| wave == "W2"){
+  if(!(wave == 1 | wave == "W1"| wave == "W2")){
     if(data.is.long){
       df.original <- gfs_data_to_wide(df.original,...)
     }
@@ -62,30 +62,30 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original %>%
       dplyr::mutate(
         COUNTRY = recode_labels(COUNTRY, "COUNTRY"),
-        COUNTRY = factor(COUNTRY),
-        COUNTRY2 = COUNTRY
+        COUNTRY = factor(COUNTRY)
       )
 
     ## DROP UNUSED COLUMNS
-    cols_to_drop <- c(paste0(cols_to_drop, "_Y1"), paste0(cols_to_drop, "_Y2"))
+    cols_to_drop <- c(paste0(cols_to_drop, "_Y1"), paste0(cols_to_drop, "_Y2"),
+                      paste0(cols_to_drop, "_Y3"), paste0(cols_to_drop, "_Y4"),
+                      paste0(cols_to_drop, "_Y5"))
     df.original <- df.original %>%
       select(!(any_of(cols_to_drop)))
 
     ## ========================================================================================== ##
     ## ====== MISSINGNESS INDICATOR ============================================================= ##
-    # if the respondent gives a response to at least half the items in wave 2,
-    # that respondent counts as "observed"
-    cnames <- colnames(df.original)[stringr::str_detect(colnames(df.original), "_Y2")]
-    cnames <- get_wave_flag(cnames, "Y2")
-    ncol_w2 <- length(cnames)
     df.original <- df.original %>%
       dplyr::mutate(
-        CASE_OBSERVED_Y2 = rowSums(across(any_of(cnames), \(x){
-          !(is.na(x) | x %in% c(-98, 98, 99) )
-        })),
-        CASE_OBSERVED_Y2 = CASE_OBSERVED_Y2/ncol_w2,
-        CASE_OBSERVED_Y2 = dplyr::case_when(CASE_OBSERVED_Y2 > 0.50 ~ 1, .default = 0)
+        CASE_OBSERVED_Y2 = dplyr::case_when(!is.na(FULL_PARTIAL_Y2) ~ 1, .default = 0)
       )
+    if(wave == 3 | wave == "W3"){
+      df.original <- df.original %>%
+        dplyr::mutate(
+          CASE_OBSERVED_Y3 = dplyr::case_when(!is.na(FULL_PARTIAL_Y3) ~ 1, .default = 0),
+          CASE_OBSERVED_ALL = dplyr::case_when(CASE_OBSERVED_Y3 == 1 & CASE_OBSERVED_Y2 == 1 ~ 1,
+                                               .default = 0)
+        )
+    }
   }
   ## ============================================================================================ ##
   ## ====== CREATE COMPOSITES =================================================================== ##
@@ -96,7 +96,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD0"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC0"]]
     }
-    if(is.null(wave) | wave == 2 | wave == "W2"| wave == "Y2"){
+    if(!(wave == 1 | wave == "W1"| wave == "W2")){
       LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
@@ -150,13 +150,13 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original %>%
       mutate(
         dplyr::across(
-          !(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_Y2",
-                     paste0("INCOME",c("","_Y1","_Y2")),
-                     paste0("INCOME_QUINTILE",c("","_Y1","_Y2")),
+          !(any_of(c("ID", "COUNTRY", "CASE_OBSERVED_Y2", "CASE_OBSERVED_Y3",
+                     paste0("INCOME",c("","_Y1","_Y2","_Y3")),
+                     paste0("INCOME_QUINTILE",c("","_Y1","_Y2","_Y3")),
                      paste0("SELFID1",c("")),
                      paste0("SELFID2",c("")),
-                     paste0("DOI_RECRUIT",c("","_Y1","_Y2")),
-                     paste0("DOI_ANNUAL",c("","_Y1"))
+                     paste0("DOI_RECRUIT",c("","_Y1","_Y2","_Y3")),
+                     paste0("DOI_ANNUAL",c("","_Y1","_Y2","_Y3"))
                      ))
           ), \(x){
             x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
@@ -175,21 +175,38 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         mutate(
           AGE_GRP = recode_labels(AGE, "AGE_GRP"),
           AGE_GRP = recode_to_type(AGE_GRP, "AGE_GRP"),
-          RACE = recode_labels(SELFID1, "SELFID1"),
-          RACE_PLURALITY = recode_race_to_plurality(RACE, COUNTRY2)
+          RACE = recode_labels(SELFID1, "SELFID1",...),
+          RACE2 = recode_labels(SELFID2, "SELFID2",...),
+          RACE_PLURALITY = recode_race_to_plurality(RACE, COUNTRY),
+          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY)
         )
     }
-    if(is.null(wave) | wave == 2 | wave == "W2"| wave == "Y2"){
+    if(wave == 2 | wave == "W2"| wave == "Y2"){
       df.original <- df.original %>%
         mutate(
           AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1",...),
           AGE_GRP_Y1 = recode_to_type(AGE_GRP_Y1, "AGE_GRP_Y1"),
           AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y2",...),
           AGE_GRP_Y2 = recode_to_type(AGE_GRP_Y2, "AGE_GRP_Y2"),
-          RACE1 = recode_labels(SELFID1, "SELFID1",...),
+          RACE = recode_labels(SELFID1, "SELFID1",...),
           RACE2 = recode_labels(SELFID2, "SELFID2",...),
-          RACE_PLURALITY1 = recode_race_to_plurality(RACE1, COUNTRY2),
-          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY2)
+          RACE_PLURALITY = recode_race_to_plurality(RACE, COUNTRY),
+          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY)
+        )
+    }
+    if(wave == 3 | wave == "W3"| wave == "Y3"){
+      df.original <- df.original %>%
+        mutate(
+          AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1",...),
+          AGE_GRP_Y1 = recode_to_type(AGE_GRP_Y1, "AGE_GRP_Y1"),
+          AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y2",...),
+          AGE_GRP_Y2 = recode_to_type(AGE_GRP_Y2, "AGE_GRP_Y2"),
+          AGE_GRP_Y3 = recode_labels(AGE_Y3, "AGE_GRP_Y3",...),
+          AGE_GRP_Y3 = recode_to_type(AGE_GRP_Y3, "AGE_GRP_Y3"),
+          RACE = recode_labels(SELFID1, "SELFID",...),
+          RACE2 = recode_labels(SELFID2, "SELFID2",...),
+          RACE_PLURALITY = recode_race_to_plurality(RACE, COUNTRY),
+          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY)
         )
     }
   }
@@ -224,14 +241,14 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         select(COUNTRY, quintiles_w1)
 
       df.original <- df.original %>%
-        group_by(COUNTRY2) %>%
+        group_by(COUNTRY) %>%
         nest() %>%
         mutate(
-          data = map(data, \(x){
-            cur.country = x$COUNTRY[1]
+          data = pmap(list(data,COUNTRY), \(x, grp){
+            #cur.country = x$COUNTRY[1]
 
             tmp.quintiles <- income.quintiles %>%
-              filter(COUNTRY == cur.country)
+              filter(COUNTRY == grp)
 
             tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
 
@@ -266,7 +283,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         unnest(c(data)) %>%
         ungroup()
     }
-    if(is.null(wave) | wave == 2 | wave == "W2"| wave == "Y2"){
+    if(wave == 2 | wave == "W2"| wave == "Y2"){
 
     income.quintiles <- df.original  %>%
       select(
@@ -298,14 +315,14 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       select(COUNTRY, quintiles_w1, quintiles_w2)
 
     df.original <- df.original %>%
-      group_by(COUNTRY2) %>%
+      group_by(COUNTRY) %>%
       nest() %>%
       mutate(
-        data = map(data, \(x){
-          cur.country = x$COUNTRY[1]
+        data = pmap(list(data,COUNTRY), \(x, grp){
+          #cur.country = x$COUNTRY[1]
 
           tmp.quintiles <- income.quintiles %>%
-            filter(COUNTRY == cur.country)
+            filter(COUNTRY == grp)
 
           tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
           tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
@@ -392,6 +409,149 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       unnest(c(data)) %>%
       ungroup()
     }
+    if(wave == 3 | wave == "W3"| wave == "Y3"){
+
+      income.quintiles <- df.original  %>%
+        select(
+          dplyr::all_of(c("ID", "COUNTRY", "INCOME_Y1", "INCOME_Y2", "INCOME_Y3", wgt, strata, psu))
+        ) %>%
+        mutate(
+          across(contains("INCOME"),\(x){
+            case_when(
+              x < 0 ~ NA,
+              x > 9900 ~ NA,
+              x == 9900 ~ 0,
+              .default=x
+            )
+          })
+        ) %>%
+        group_by(!!sym("COUNTRY")) %>%
+        nest() %>%
+        mutate(
+          svy.data = map(data, \(x){
+            svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
+          }),
+          quintiles_w1 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+          quintiles_w2 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+          quintiles_w3 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y3, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          })
+        ) %>%
+        select(COUNTRY, quintiles_w1, quintiles_w2, quintiles_w3)
+
+      df.original <- df.original %>%
+        group_by(COUNTRY) %>%
+        nest() %>%
+        mutate(
+          data = pmap(list(data, COUNTRY), \(x, grp){
+
+            tmp.quintiles <- income.quintiles %>%
+              filter(COUNTRY == grp)
+
+            tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
+            tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
+            tmp.quintiles.w3 <- tmp.quintiles$quintiles_w3[[1]][[1]]
+
+            x <- x %>%
+              mutate(
+                INCOME_QUINTILE_Y1 = case_when(
+                  INCOME_Y1 >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.6",1] & INCOME_Y1 < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.4",1] & INCOME_Y1 < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.2",1] & INCOME_Y1 < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME_Y1 < tmp.quintiles.w1["0.2",1] ~ 1
+                ),
+                INCOME_QUINTILE_Y2 = case_when(
+                  INCOME_Y2 >= tmp.quintiles.w2["0.8",1] ~ 5,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.6",1] & INCOME_Y2 < tmp.quintiles.w2["0.8",1] ~ 4,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.4",1] & INCOME_Y2 < tmp.quintiles.w2["0.6",1] ~ 3,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.2",1] & INCOME_Y2 < tmp.quintiles.w2["0.4",1] ~ 2,
+                  INCOME_Y2 < tmp.quintiles.w2["0.2",1] ~ 1
+                ),
+                INCOME_QUINTILE_Y3 = case_when(
+                  INCOME_Y3 >= tmp.quintiles.w3["0.8",1] ~ 5,
+                  INCOME_Y3 >= tmp.quintiles.w3["0.6",1] & INCOME_Y3 < tmp.quintiles.w3["0.8",1] ~ 4,
+                  INCOME_Y3 >= tmp.quintiles.w3["0.4",1] & INCOME_Y3 < tmp.quintiles.w3["0.6",1] ~ 3,
+                  INCOME_Y3 >= tmp.quintiles.w3["0.2",1] & INCOME_Y3 < tmp.quintiles.w3["0.4",1] ~ 2,
+                  INCOME_Y3 < tmp.quintiles.w3["0.2",1] ~ 1
+                )
+              )
+            if(method.income=="quintiles.top.fixed"){
+              x <- x %>%
+                mutate(
+                  INCOME_QUINTILE_Y1 = case_when(
+                    INCOME_QUINTILE_Y1 == 5 ~ 1,
+                    INCOME_QUINTILE_Y1 %in% 1:4 ~ 0
+                  ),
+                  INCOME_QUINTILE_Y2 = case_when(
+                    INCOME_QUINTILE_Y2 == 5 ~ 1,
+                    INCOME_QUINTILE_Y2 %in% 1:4 ~ 0
+                  ),
+                  INCOME_QUINTILE_Y3 = case_when(
+                    INCOME_QUINTILE_Y3 == 5 ~ 1,
+                    INCOME_QUINTILE_Y3 %in% 1:4 ~ 0
+                  )
+                )
+            }
+            if(method.income == "quintiles.top.random"){
+              set.seed(314150)
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    xm <- which(is.na(x))
+                    xnm <- which(!is.na(x))
+                    x0 <- na.omit(x)
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    ym <- which(is.na(y))
+                    ynm <- which(!is.na(y))
+                    y0 <- na.omit(y)
+                    y.mean = mean(y0, na.rm=TRUE)
+                    if(y.mean > 0.20){
+                      n0 <- length(y0)
+                      nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                      y0[y0==1][sample(1:(length(y0[y0==1])), nq, replace = FALSE)] <- 0
+                    }
+                    if(y.mean < 0.20){
+                      n0 <- length(y0)
+                      nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                      x0[x0==4][sample(1:(length(x0[x0==4])), nq, replace = FALSE)] <- 5
+                      y0 <- case_when(
+                        x0 == 5 ~ 1,
+                        x0 %in% 1:4 ~ 0
+                      )
+                    }
+                    y[ynm] <- y0
+                    y
+                  })
+                )
+            }
+            x
+          }),
+          data = map(data, \(x){
+            x %>%
+              mutate(
+                INCOME_Y1 = recode_labels(INCOME_Y1, "INCOME_Y1"),
+                INCOME_Y2 = recode_labels(INCOME_Y2, "INCOME_Y2"),
+                INCOME_Y3 = recode_labels(INCOME_Y2, "INCOME_Y3"),
+                INCOME_QUINTILE_Y1 = recode_labels(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y2 = recode_labels(INCOME_QUINTILE_Y2, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y3 = recode_labels(INCOME_QUINTILE_Y3, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y1 = factor(INCOME_QUINTILE_Y1),
+                INCOME_QUINTILE_Y2 = factor(INCOME_QUINTILE_Y2),
+                INCOME_QUINTILE_Y3 = factor(INCOME_QUINTILE_Y3)
+              )
+          })
+        ) %>%
+        unnest(c(data)) %>%
+        ungroup()
+    }
   }
   ## ============================================================================================ ##
   if(reverse.code.cont){
@@ -451,13 +611,33 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           CIGARETTES_Y2 == 0 ~ 0,
           CIGARETTES_Y2 %in% 1:97 ~ 1
         ),
+        CIGARETTES_BINARY_Y3 = case_when(
+          CIGARETTES_Y3 == 0 ~ 0,
+          CIGARETTES_Y3 %in% 1:97 ~ 1
+        ),
+        DRINKS_BINARY_Y1 = case_when(
+          DRINKS_Y1 == 0 ~ 0,
+          DRINKS_Y1 %in% 1:97 ~ 1
+        ),
+        DRINKS_BINARY_Y2 = case_when(
+          DRINKS_Y2 == 0 ~ 0,
+          DRINKS_Y2 %in% 1:97 ~ 1
+        ),
+        DRINKS_BINARY_Y3 = case_when(
+          DRINKS_Y3 == 0 ~ 0,
+          DRINKS_Y3 %in% 1:97 ~ 1
+        ),
         MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, MARITAL_STATUS_Y1 %in% c(1,6) ~ 0),
         MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, MARITAL_STATUS_Y2 %in% c(1,6) ~ 0),
+        MARITAL_STATUS_EVER_MARRIED_Y3 = case_when(MARITAL_STATUS_Y3 %in% c(2:5) ~ 1, MARITAL_STATUS_Y3 %in% c(1,6) ~ 0),
         MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, MARITAL_STATUS_Y1 %in% c(1:3,5:6) ~ 0),
-        MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, MARITAL_STATUS_Y2 %in% c(1:3,5:6) ~ 0)
+        MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, MARITAL_STATUS_Y2 %in% c(1:3,5:6) ~ 0),
+        MARITAL_STATUS_DIVORCED_Y3 = case_when(MARITAL_STATUS_Y3 %in% c(4) ~ 1, MARITAL_STATUS_Y3 %in% c(1:3,5:6) ~ 0)
       )
 
-    all.vars <- unique(c(get_variable_codes("VARS.Y1"), get_variable_codes("VARS.Y2")))
+    all.vars <- unique(c(get_variable_codes("VARS.Y1"),
+                         get_variable_codes("VARS.Y2"),
+                         get_variable_codes("VARS.Y3")))
     for (tmp.var in  all.vars){
       # print(tmp.var)
       x <- df.original[, tmp.var, drop = TRUE]
@@ -485,3 +665,6 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
   ## ============================================================================================ ##
   df.original
 }
+
+#' @export
+gfs_get_raw_data <- gfs_get_labelled_raw_data

@@ -113,9 +113,7 @@ keep_variable <- function(x, data, reason = "variance") {
 #' @return a predictor matrix for use in mice
 #' @rdname utils
 #' @export
-quickpred2 <- function(
-    data, mincor = 0.1, minpuc = 0, include = "", exclude = "",
-    method = "pearson", maxcor = 0.99) {
+quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "", method = "pearson", maxcor = 0.99) {
   # ` functions copied from mice package to ensure that the above quickpred works... (https://github.com/amices/mice/blob/master/R/check.R)
   check.dataform <- function(data) {
     if (!(is.matrix(data) || is.data.frame(data))) {
@@ -182,7 +180,6 @@ quickpred2 <- function(
   predictorMatrix
 }
 
-
 #' @rdname utils
 #' @export
 .round <- function(x, digits = 2) {
@@ -195,17 +192,10 @@ quickpred2 <- function(
   format.pval(x, scientific=.sci, digits=.digits, eps = .eps)
 }
 
-
 # functions needed for forest plots
 #' @rdname utils
 #' @export
-.geom_stripes <- function(mapping = NULL,
-                          data = NULL,
-                          stat = "identity",
-                          position = "identity",
-                          ...,
-                          show.legend = NA,
-                          inherit.aes = TRUE) {
+.geom_stripes <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", show.legend = NA, inherit.aes = TRUE, ...) {
   ggplot2::layer(
     data = data,
     mapping = mapping,
@@ -217,25 +207,14 @@ quickpred2 <- function(
     params = list(...)
   )
 }
+# Change 'size' below from 0 to NA.
+# When not NA then when *printing in pdf device* borders are there despite
+# requested 0th size. Seems to be some ggplot2 bug caused by grid overriding
+# an lwd parameter somewhere, unless the size is set to NA. Found solution here
+# https://stackoverflow.com/questions/43417514/getting-rid-of-border-in-pdf-output-for-geom-label-for-ggplot2-in-r
 #' @rdname utils
 #' @export
-.GeomStripes <- ggplot2::ggproto(
-  "GeomStripes", ggplot2::Geom,
-  required_aes = c("y"),
-  default_aes = ggplot2::aes(
-    xmin = -Inf, xmax = Inf,
-    odd = "#00000000", even = "#22222222",
-    # Change 'size' below from 0 to NA.
-    # When not NA then when *printing in pdf device* borders are there despite
-    # requested 0th size. Seems to be some ggplot2 bug caused by grid overriding
-    # an lwd parameter somewhere, unless the size is set to NA. Found solution here
-    # https://stackoverflow.com/questions/43417514/getting-rid-of-border-in-pdf-output-for-geom-label-for-ggplot2-in-r
-    alpha = NA, colour = "black", linetype = "solid", linewidth = NA
-  ),
-
-  # draw_key = ggplot2::draw_key_blank,
-  draw_key = ggplot2::draw_key_rect,
-  draw_panel = function(data, panel_params, coord) {
+.GeomStripes <- ggplot2::ggproto("GeomStripes", ggplot2::Geom, required_aes = c("y"),  default_aes = ggplot2::aes( xmin = -Inf, xmax = Inf, odd = "#00000000", even = "#22222222", alpha = NA, colour = "black", linetype = "solid", linewidth = NA), draw_key = ggplot2::draw_key_rect, draw_panel = function(data, panel_params, coord) {
     ggplot2::GeomRect$draw_panel(
       data %>%
         dplyr::mutate(
@@ -263,8 +242,7 @@ quickpred2 <- function(
       panel_params,
       coord
     )
-  }
-)
+  })
 
 #' @rdname utils
 #' @export
@@ -299,8 +277,6 @@ theme_Publication <- function(base_size=14) {
 
 }
 
-
-
 #' @export
 load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
   # Use local() to limit the scope of the loaded object
@@ -315,12 +291,12 @@ load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
     	  predictor = unique(data$FOCAL_PREDICTOR)
     }
     if(is.null(outcome)){
-    	  outcome = unique(data$OUTCOME0)
+    	  outcome = unique(data$OUTCOME)
     }
 
     data <- data %>%
     		ungroup() %>%
-    		dplyr::filter(OUTCOME0 %in% outcome) %>%
+    		dplyr::filter(OUTCOME %in% outcome) %>%
     		dplyr::filter(FOCAL_PREDICTOR %in% predictor) %>%
     		dplyr::select(any_of(what))
 
@@ -344,6 +320,25 @@ get_country_specific_regression_results <- function(res.dir, country, predictor,
         dplyr::filter(str_detect(COUNTRY, country))
       tmp.list <- output
   return(tmp.list)
+  })
+
+}
+
+#' @export
+get_country_specific_cor <- function(res.dir, country, predictor, outcome, appnd.txt="", replace.cntry.file.start = NULL) {
+  local({
+    tmp.list <- NULL
+    file.start <- predictor
+    if(!is.null(replace.cntry.file.start)){
+      file.start = replace.cntry.file.start
+    }
+    load(here::here(res.dir, paste0(file.start, "_regressed_on_", outcome, "_saved_results",appnd.txt,".RData")))
+    # create new columns in output to help with constructing tables
+    cor.output <- cor.output  %>%
+      dplyr::filter(term == predictor) %>%
+      dplyr::filter(str_detect(COUNTRY, country))
+    tmp.list <- cor.output
+    return(tmp.list)
   })
 
 }
@@ -429,7 +424,6 @@ get_country_pca_summary <- function(res.dir, country, outcome, predictor, appnd.
   })
 }
 
-
 #' @export
 get_fitted_attrition_models <- function(res.dir) {
   local({
@@ -454,8 +448,6 @@ get_fitted_attrition_model <- function(res.dir, country) {
     return(df.attr$fit.attr[[1]])
   })
 }
-
-
 
 #' @rdname utils
 #' @param doc officer object to be printed out
@@ -488,7 +480,6 @@ gfs_append_pdf <- function(dir, cur.doc, add){
   )
 }
 
-
 #' @rdname utils
 #' @param file full file name and path, e.g., here(path,filename)
 #' @param ft flextable object to be added to excel file
@@ -517,18 +508,8 @@ gfs_append_to_xlsx <- function(file, ft, tb){
   })
 }
 
-
-
 #' @keywords internal
-style_percent0 <- function (x,
-                           digits = 0,
-                           big.mark = ifelse(decimal.mark == ",", " ", ","),
-                           decimal.mark = getOption("OutDec"),
-                           prefix = "",
-                           suffix = "",
-                           symbol,
-                           ...)
-{
+style_percent0 <- function (x, digits = 0, big.mark = ifelse(decimal.mark == ",", " ", ","), decimal.mark = getOption("OutDec"), prefix = "", suffix = "", symbol,  ...){
   gtsummary:::set_cli_abort_call()
   if (!missing(symbol)) {
     lifecycle::deprecate_soft(
@@ -550,14 +531,11 @@ style_percent0 <- function (x,
 }
 
 #' @keywords internal
-label_style_percent0 <- function (prefix = "", suffix = "", digits = 0, big.mark = ifelse(decimal.mark ==
-                                                                    ",", " ", ","), decimal.mark = getOption("OutDec"), ...)
-{
+label_style_percent0 <- function (prefix = "", suffix = "", digits = 0, big.mark = ifelse(decimal.mark == ",", " ", ","), decimal.mark = getOption("OutDec"), ...){
   function(x) style_percent0(x, prefix = prefix, suffix = suffix,
                             digits = digits, big.mark = big.mark, decimal.mark = decimal.mark,
                             ...)
 }
-
 
 #' @keywords internal
 mixedorder <- function (x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE,  numeric.type = c("decimal", "roman"), roman.case = c("upper", "lower", "both"), scientific = TRUE){

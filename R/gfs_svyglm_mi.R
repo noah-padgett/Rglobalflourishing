@@ -13,7 +13,7 @@
 #' @param domain.subset a quoted subset statement to run domain estimation
 #' @param country.subset a string vector of countries included in analysis
 #' @param appnd.txt.to.filename (optional) character string to help differentiate saved results file (default "")
-#' @param save.all (FALSE) logical of whether to save the fitted regression models from each imputed dataset (this is a double-checking feature and should generally be set to FALSE unless you plan to probe the individual regression models--see the methods paper for Wave 2 for example of it's used)
+#' @param return.result (logical) of where to directly return the country-specific results
 #' @param ... other arguments passed to svyglm or glmrob functions
 #' @returns a data.frame that contains the meta-analysis input results
 #' @examples {
@@ -49,6 +49,7 @@ gfs_svyglm_mi <- function(
     family = NULL,
     appnd.txt.to.filename = "",
     save.all = FALSE,
+    return.result = TRUE,
     ...) {
 
   #fx = COMPOSITE_FLOURISHING_SECURE_Y2 ~ 0 + COV_GENDER;  data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary";  direct.subset = NULL;  domain.subset = NULL;  family = NULL;  appnd.txt.to.filename = ""; save.all = FALSE; country.subset = c("China", "Hong Kong", "India", "Japan", "United States");  domain.subset = quote(REL1_Y1 == 4)
@@ -239,9 +240,7 @@ gfs_svyglm_mi <- function(
               ungroup()
           }) |> bind_rows()
 
-          if(!save.all){
-            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy, fit.full)
-          }
+          fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy, fit.full)
 
           # re-estimate basic model with the max number of PCs used to get the variable names
           tmp.dat <- .get_data(country.files[1])
@@ -411,8 +410,7 @@ gfs_svyglm_mi <- function(
 
           # ============================================================================ #
           # ============================================================================ #
-          # Online Supplement Analyses - variable specific
-
+          # save/update results files
           outfile <- here::here(
             res.dir,
             paste0(your.outcome,  "_svyglm_saved_results", appnd.txt.to.filename,".RData")
@@ -423,7 +421,7 @@ gfs_svyglm_mi <- function(
             output <- rbind(output, env.res$output)
           }
           ## save/overwrite existing saved results file so everything is in one object
-          save(output, file = outfile)
+          save(output,  file = outfile)
         }
 
       }
@@ -432,13 +430,16 @@ gfs_svyglm_mi <- function(
          try({ .run_internal_func(x) })
       })
 
-      # for(x in country.vec){
-      #   print(x)
-      #   .run_internal_func(x)
-      # }
-
-
     })
   })
+
+  if(return.result){
+    outfile <- here::here(
+      res.dir,
+      paste0(your.outcome,  "_svyglm_saved_results", appnd.txt.to.filename,".RData")
+    )
+   load(outfile)
+   return(output)
+  }
 
 }

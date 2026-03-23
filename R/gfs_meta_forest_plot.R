@@ -6,13 +6,14 @@
 #' @param better.name a manually supplied name for the focal predictor
 #' @param p.title a string passed to title of the forest plot
 #' @param p.subtitle a string passed to subtitle of the forest plot.
+#' @param include.influence a TRUE/FALSE indicating where the plot should include the fit statistics
 #' @param ... additional arguments as needed
 #' @return a ggplot object
 #' @examples
 #' # TO-DO
 #'
 #' @export
-gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Forest Plot", p.title = NULL, ...) {
+gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Forest Plot", p.title = NULL, include.influence=TRUE, ...) {
   ALL.COUNTRIES <- c(
     "Australia",
     "Hong Kong",
@@ -39,6 +40,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     "China"
   )
   tmp.fit <- fit
+  tmp.fit.influence <- meta_loo_inf(tmp.fit)
   tmp.dat <- fit$data
 
   if("FOCAL_PREDICTOR" %in% colnames(tmp.dat)){
@@ -66,6 +68,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   #}
   # identify countries omitted from meta-analysis
   tmp.included.countries = ""
+  tmp.excluded.countries = ""
   if("Country" %in% colnames(tmp.dat)){
     tmp.included.countries <- tmp.dat$Country
     tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
@@ -87,7 +90,7 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
   myci <- confint(tmp.fit, type = "PL")
 
   tmp.het <- paste0(
-    "\u03c4 =", .round(sqrt(tmp.fit$tau2), 3),
+    "\u03c4 (tau) =", .round(sqrt(tmp.fit$tau2), 3),
     "; Q-profile 95% CI [", .round(myci$random[2, 2], 3), ", ", .round(myci$random[2, 3], 3), "]",
     "; Q(df=", tmp.fit$k - tmp.fit$QMdf[1], ")=",
     .round(tmp.fit$QE), ", p=", format.pval(tmp.fit$QEp, digits=3, scientific=TRUE),
@@ -99,19 +102,24 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
 
   xlims <- max(c(abs(tmp.dat$ci.lb.i), abs(tmp.dat$ci.ub.i))) + 0.05
 
+
   tmp.dat <- tmp.dat |>
     mutate(
       est_lab = paste0(.round(yi), " (", .round(ci.lb.i), ", ", .round(ci.ub.i), ")")
-      # update country label for "turkey" to have umlat? or not?
-      # Türkiye
-      #Country = case_when(
-      #  (str_detect(Country, "Turkey") |
-      #    str_detect(Country, "Turkiye") |
-      #    str_detect(Country, "rkiye") |
-      #    str_detect(Country, "rkey")) ~ "Turkey",
-      #  .default = Country
-      #)
     )
+
+  if(include.influence){
+    suppressMessages({
+    ## add in the loo/influence labels
+    tmp.dat <- left_join(tmp.dat,  tmp.fit.influence) |>
+      mutate(
+        loo_label = paste0(.round(loo.estimate), " (", .round(loo.ci.lb), ", ", .round(loo.ci.ub), ")"),
+        inf_label = paste0("R_studentized=", .round(rstudent,2),"; Cooks' D=",.round(cook.d, 2),"; COVRATIO=",.round(cov.r, 2))
+      )
+    })
+  }
+
+
 
   dat.below <- data.frame(
     label = "Overall",
@@ -171,22 +179,64 @@ gfs_meta_forest_plot <- function(fit, better.name = NULL, p.subtitle = "GFS Fore
     geom_text(aes(x = 0, label = CI), hjust = 0.45) +
     theme_void()
 
+  ## extra plot objects
+  if(include.influence){
+    p_right_loo <-
+      tmp.dat |>
+      ggplot(aes(y = reorder(Country, yi))) +
+      geom_text(aes(x = 0, label =loo_label), hjust = 0.45) +
+      .geom_stripes() +
+      theme_void()
+
+    p_right_inf <-
+      tmp.dat |>
+      ggplot(aes(y = reorder(Country, yi))) +
+      geom_text(aes(x = 0, label = inf_label), hjust = 0.45) +
+      .geom_stripes() +
+      theme_void()
+
+    p_below_right_loo <-
+      dat.below |>
+      ggplot(aes(y = label)) +
+      geom_text(aes(x = 0, label = "LOO RMA Estimate"), hjust = 0.45) +
+      theme_void()
+
+    p_below_right_inf <-
+      dat.below |>
+      ggplot(aes(y = label)) +
+      geom_text(aes(x = 0, label = "Influence Statistics"), hjust = 0.45) +
+      theme_void()
+  }
+
 
   # final plot arrangement
-  p <- (p_mid + plot_spacer() + p_right +
-    plot_spacer() + plot_spacer() + plot_spacer() +
-    p_below + plot_spacer() + p_below_right) +
-    plot_layout(
-      byrow = TRUE,
-      widths = c(2, -0.175, 1),
-      heights = c(10, -0.75, 1)
-    ) +
+  if(include.influence){
+    p <- (p_mid + plot_spacer() + p_right+ plot_spacer() +p_right_loo+ plot_spacer() + p_right_inf +
+            plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer()+
+            p_below + plot_spacer() + p_below_right + plot_spacer() + p_below_right_loo + plot_spacer() + p_below_right_inf) +
+      plot_layout(
+        byrow = TRUE,
+        widths = c(4, -0.25, 1.5, -0.25,1.5, -0.25,4),
+        heights = c(10, -0.75, 1)
+      )
+  } else {
+    p <- (p_mid + plot_spacer() + p_right +
+            plot_spacer() + plot_spacer() + plot_spacer() +
+            p_below + plot_spacer() + p_below_right) +
+      plot_layout(
+        byrow = TRUE,
+        widths = c(2, -0.175, 1),
+        heights = c(10, -0.75, 1)
+      )
+  }
+
+
+  p <- p +
     plot_annotation(
       # title=str_wrap(paste0("Figure S",k+k.shift,f.tag," Forest plot for `", tmp.var,"`-`", tmp.cat, "` effect"), 75),
       title = str_wrap(p.title, 80),
       subtitle = p.subtitle,
       caption = tmp.het
     )
-
   p
 }
