@@ -14,10 +14,10 @@
 #' @examples
 #' # TO-DO
 #' @export
-gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE"),
-                              grpi = Country, dfi = df,
+gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
+                              grpi = Country, dfi = df, pvalue = p.value,
                               estimator = "PM", interval.method = "empirical",
-                              reliability.vec = c(0.25, 0.40, 0.55, 0.70, 0.85),
+                              reliability.vec = c(0.40, 0.55, 0.70),
                               var.name = NULL, ci.alpha = 0.05, better.name = NULL, p.subtitle = NULL) {
   # meta.input = df.tmp %>%
   # 	group_by(OUTCOME) %>%
@@ -48,12 +48,6 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
 
   meta.res <- meta.input %>%
     mutate(
-      FOCAL_PREDICTOR = map(data, \(x){
-        if(is.null(var.name)){
-          return(x$FOCAL_PREDICTOR[1])
-        }
-        var.name
-      }),
       data = map(data, \(x){
         if(!is.null(dfi)){
           x <- x |> mutate(df = {{dfi}})
@@ -65,6 +59,7 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
             yi = {{yi}},
             sei = {{sei}},
             group = {{grpi}},
+            pvalue = {{pvalue}},
             ci.lb.i = yi - sei*qt(ci.alpha/2, df, lower.tail = FALSE),
             ci.ub.i = yi + sei*qt(ci.alpha/2, df, lower.tail = FALSE)
           )
@@ -100,7 +95,9 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       prob.lg.c = paste0("[", .round(prob.leqneq0.1), " / ",.round(prob.geq0.1) ,"]"),
       theta.rma.EE = gfs_compute_evalue(est=theta.rma, se=theta.rma.se, sd=1, what="EE"),
       theta.rma.ECI = gfs_compute_evalue(est=theta.rma, se=theta.rma.se, sd=1, what="ECI"),
-      theta.pred.int = gfs_prediction_interval(x=calibrated.yi, theta = theta.rma, tau = tau ),
+      theta.pred.int.ub = gfs_prediction_interval_limits(x=calibrated.yi, theta = theta.rma, tau = tau, upper = TRUE ),
+      theta.pred.int.lb = gfs_prediction_interval_limits(x=calibrated.yi, theta = theta.rma, tau = tau, upper = FALSE ),
+      theta.pred.int.c = gfs_prediction_interval(x=calibrated.yi, theta = theta.rma, tau = tau ),
       # theta.metafor.blup = map(meta.rma, \(x){
       #   y = metafor::blup(x)
       #   rownames(y) <- x$data$group
@@ -161,10 +158,6 @@ gfs_meta_analysis <- function(meta.input, yi = as.name("Est"), sei = as.name("SE
       #  gfs_meta_forest_plot(x, better.name = better.name, p.title=p.title, p.subtitle = p.subtitle, include.influence = include.influence)
       #})
     )
-  # drop the unneeded duplicate column
-  if("FOCAL_PREDICTOR" %in% colnames(meta.res)){
-    meta.res <- meta.res |> select(-FOCAL_PREDICTOR)
-  }
 
   meta.res
 }

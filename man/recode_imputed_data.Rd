@@ -5,7 +5,7 @@
 \title{Reformat Imputed Data}
 \usage{
 recode_imputed_data(
-  df.imp = NULL,
+  fit.imp = NULL,
   m = "long",
   list.default = NULL,
   list.composites = NULL,
@@ -20,12 +20,10 @@ recode_imputed_data(
 )
 }
 \arguments{
-\item{df.imp}{a nested data.frame with results from run_impute_data(.).}
-
 \item{m}{(default: "long") or a number 1:Nimp}
 
 \item{list.default}{(required) a names list with DEMOGRAPHICS.CHILDHOOD.PRED.VEC, OUTCOME.VE,
-FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS}
+(FOCAL_PREDICTOR or FOCAL_VARIABLE), USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS}
 
 \item{list.composites}{(optional) a named list with elements LIST.OUTCOME.COMPOSITES, LIST.COMPOSITE.COMBINE.METHOD and COMPOSITE.VEC.}
 
@@ -38,6 +36,8 @@ FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALU
 \item{inject.recode.fx}{(optional) a function with the argument data that takes in the dataset and manually recodes values, use with caution}
 
 \item{...}{other arguments passed to mice}
+
+\item{df.imp}{a nested data.frame with results from run_impute_data(.).}
 }
 \value{
 a long data.frame for use in analyses

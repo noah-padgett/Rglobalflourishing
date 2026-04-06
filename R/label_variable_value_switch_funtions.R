@@ -623,7 +623,7 @@ try({
     FEEL_ANXIOUS = c(-98, 98, 99),
     FORGIVE = c(-98, 98, 99),
     FREEDOM = c(-98, 98, 99),
-    GENDER = c(-98, 4, 98, 99),
+    GENDER = c(-98, 98, 99),
     GIVE_UP = c(-98, 98, 99),
     GOD_PUNISH = c(-98, 99),
     GRATEFUL = c(-98, 98, 99),
@@ -1410,16 +1410,14 @@ nurse)",
         x == 1 ~ "1. Always",
         x == 2 ~ "2. Often",
         x == 3 ~ "3. Rarely",
-        x ==
-          4 ~ "4. Never",
+        x == 4 ~ "4. Never",
         .default = "(Missing)"
       ),
       FREEDOM = x,
       GENDER = case_when(
         x == 1 ~ "1. Male",
         x == 2 ~ "2. Female",
-        x == 3 ~ "3. Other",
-        x == 4 ~ "4. Prefer not to answer",
+        x %in% c(3,4) ~ "3. Other/Prefer not to answer",
         .default = "(Missing)"
       ),
       GIVE_UP = x,

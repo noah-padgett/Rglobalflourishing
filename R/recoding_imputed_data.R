@@ -5,7 +5,7 @@
 #' @param df.imp a nested data.frame with results from run_impute_data(.).
 #' @param m (default: "long") or a number 1:Nimp
 #' @param list.default (required) a names list with DEMOGRAPHICS.CHILDHOOD.PRED.VEC, OUTCOME.VE,
-#'    FOCAL_PREDICTOR, USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS
+#'    (FOCAL_PREDICTOR or FOCAL_VARIABLE), USE_DEFAULT, FORCE_BINARY, VALUES_DEFINING_UPPER_CATEGORY, VALUES_DEFINING_LOWER_CATEGORY, FORCE_CONTINUOUS
 #' @param list.composites (optional) a named list with elements LIST.OUTCOME.COMPOSITES, LIST.COMPOSITE.COMBINE.METHOD and COMPOSITE.VEC.
 #' @param list.manual (optional) a list like list.default (to-do)
 #' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
@@ -29,7 +29,7 @@
 #' More to come...
 #'
 recode_imputed_data <- function(
-    df.imp = NULL, m = "long",
+    fit.imp = NULL, m = "long",
     list.default = NULL,
     list.composites = NULL,
     list.manual = NULL,
@@ -54,12 +54,12 @@ recode_imputed_data <- function(
   ## ====== Initial Setup ======================================================================= ##
   # extract imputed data and coerce into "long format"
 
-  #df.imp.long <- df.imp %>%
+  #df.imp.long <- fit.imp %>%
   #  mutate(imp.complete = map(imp.res, ~ complete(., action = "long"))) %>%
   #  select(COUNTRY, imp.complete) %>%
   #  unnest(imp.complete)
 
-  df.imp.long <- complete(df.imp, action = m) %>%
+  df.imp.long <- complete(fit.imp, action = m) %>%
     select(!any_of(drop_created_vars)) %>%
     mutate(
       .imp = ifelse(is.numeric(m), m, ifelse(!is.null(.imp), .imp, m)),
@@ -113,7 +113,6 @@ recode_imputed_data <- function(
 
     }
   }
-
 
   ## Wave 1
   if(wave == 1 | wave == "W1" | wave == "w1" | wave == "Y1"){
@@ -193,7 +192,9 @@ recode_imputed_data <- function(
       mutate(
         COV_AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1"),
         COV_AGE_GRP_Y1 = recode_to_type(COV_AGE_GRP_Y1, "AGE_GRP_Y1"),
-        across(any_of(c("URBAN_RURAL_Y1", list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
+        COV_AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y2"),
+        COV_AGE_GRP_Y2 = recode_to_type(COV_AGE_GRP_Y2, "AGE_GRP_Y2"),
+        across(any_of(c(list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
           x <- recode_labels(x, cur_column(), include.value = FALSE)
           x <- case_when(x == "(Missing)" ~ NA, .default = x) # needed for Abused and other 100% missing variable sin some countries
           #x <- str_sub(x, 4, -1) # removed the numbers
@@ -210,12 +211,7 @@ recode_imputed_data <- function(
         COV_FATHER_NA = case_when(SVCS_FATHER_Y1_97 == 1 | FATHER_RELATN_Y1_97 == 1 | FATHER_LOVED_Y1_97 == 1 ~ 1, .default = 0),
 
         # enforce reference group
-        COV_AGE_GRP_Y1 = relevel(COV_AGE_GRP_Y1, ref = levels(COV_AGE_GRP_Y1)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
         COV_GENDER = relevel(COV_GENDER, ref = "Male"),
-        COV_EDUCATION_3_Y1 = relevel(COV_EDUCATION_3_Y1, ref = "9-15"),
-        COV_EMPLOYMENT_Y1 = relevel(COV_EMPLOYMENT_Y1, ref = "Employed for an employer"),
-        COV_MARITAL_STATUS_Y1 = relevel(COV_MARITAL_STATUS_Y1, ref = "Single/Never been married"),
-        COV_ATTEND_SVCS_Y1 = relevel(COV_ATTEND_SVCS_Y1, ref = "Never"),
         COV_BORN_COUNTRY_Y1 = relevel(COV_BORN_COUNTRY_Y1, ref = "Born in this country"),
         COV_PARENTS_12YRS_Y1 = relevel(COV_PARENTS_12YRS_Y1, ref = "Parents were married"),
         COV_MOTHER_RELATN_Y1 = relevel(COV_MOTHER_RELATN_Y1, ref = "Very/somewhat bad"),
@@ -226,16 +222,31 @@ recode_imputed_data <- function(
         COV_HEALTH_GROWUP_Y1 = relevel(COV_HEALTH_GROWUP_Y1, ref = "Good"),
         COV_INCOME_12YRS_Y1 = relevel(COV_INCOME_12YRS_Y1, ref = "Got by"),
 
+        COV_AGE_GRP_Y1 = relevel(COV_AGE_GRP_Y1, ref = levels(COV_AGE_GRP_Y1)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
+        COV_EDUCATION_3_Y1 = relevel(COV_EDUCATION_3_Y1, ref = "9-15"),
+        COV_EMPLOYMENT_Y1 = relevel(COV_EMPLOYMENT_Y1, ref = "Employed for an employer"),
+        COV_MARITAL_STATUS_Y1 = relevel(COV_MARITAL_STATUS_Y1, ref = "Single/Never been married"),
+        COV_ATTEND_SVCS_Y1 = relevel(COV_ATTEND_SVCS_Y1, ref = "Never"),
+
+        COV_AGE_GRP_Y2 = relevel(COV_AGE_GRP_Y2, ref = levels(COV_AGE_GRP_Y2)[str_detect(levels(COV_AGE_GRP_Y2),"18-24")]),
+        COV_EDUCATION_3_Y2 = relevel(COV_EDUCATION_3_Y2, ref = "9-15"),
+        COV_EMPLOYMENT_Y2 = relevel(COV_EMPLOYMENT_Y2, ref = "Employed for an employer"),
+        COV_MARITAL_STATUS_Y2 = relevel(COV_MARITAL_STATUS_Y2, ref = "Single/Never been married"),
+        COV_ATTEND_SVCS_Y2 = relevel(COV_ATTEND_SVCS_Y2, ref = "Never"),
+
         # Other basic setup to make things easier later...
-        MODE_RECRUIT = recode_labels( MODE_RECRUIT, "MODE_RECRUIT", include.value = FALSE),
-        MODE_RECRUIT = recode_to_type(MODE_RECRUIT, "MODE_RECRUIT"),
+
+        MODE_ANNUAL = recode_labels( MODE_ANNUAL, "MODE_ANNUAL", include.value = FALSE),
+        MODE_ANNUAL = recode_to_type(MODE_ANNUAL, "MODE_ANNUAL"),
         RACE = COV_SELFID1,
         MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(4) ~ 1, .default = 0),
         MARITAL_STATUS_DIVORCED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(4) ~ 1, .default = 0),
         CIGARETTES_BINARY_Y1 = case_when(CIGARETTES_Y1 > 0 ~ 1, .default = 0),
-        CIGARETTES_BINARY_Y2 = case_when(CIGARETTES_Y2 > 0 ~ 1, .default = 0)
+        CIGARETTES_BINARY_Y2 = case_when(CIGARETTES_Y2 > 0 ~ 1, .default = 0),
+        DRINKS_BINARY_Y1 = case_when(DRINKS_Y1 > 0 ~ 1, .default = 0),
+        DRINKS_BINARY_Y2 = case_when(DRINKS_Y2 > 0 ~ 1, .default = 0)
         #COUNTRY = COUNTRY #recode_labels(COUNTRY, "COUNTRY_Y1", include.value = FALSE)
       )
   }
@@ -264,7 +275,7 @@ recode_imputed_data <- function(
         COV_AGE_GRP_Y3 = recode_labels(AGE_Y3, "AGE_GRP_Y1"),
         COV_AGE_GRP_Y3 = recode_to_type(COV_AGE_GRP_Y3, "AGE_GRP_Y1"),
 
-        across(any_of(c("URBAN_RURAL_Y1", "URBAN_RURAL_Y2", "URBAN_RURAL_Y3", list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
+        across(any_of(c(list.default[["DEMOGRAPHICS.CHILDHOOD.PRED.VEC"]])), \(x){
           x <- recode_labels(x, cur_column(), include.value = FALSE)
           x <- case_when(x == "(Missing)" ~ NA, .default = x) # needed for Abused and other 100% missing variable sin some countries
           #x <- str_sub(x, 4, -1) # removed the numbers
@@ -291,16 +302,15 @@ recode_imputed_data <- function(
         COV_HEALTH_GROWUP_Y1 = relevel(COV_HEALTH_GROWUP_Y1, ref = "Good"),
         COV_INCOME_12YRS_Y1 = relevel(COV_INCOME_12YRS_Y1, ref = "Got by"),
 
-
-
         COV_GENDER = relevel(COV_GENDER, ref = "Male"),
+
         COV_AGE_GRP_Y1 = relevel(COV_AGE_GRP_Y1, ref = levels(COV_AGE_GRP_Y1)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
         COV_EDUCATION_3_Y1 = relevel(COV_EDUCATION_3_Y1, ref = "9-15"),
         COV_EMPLOYMENT_Y1 = relevel(COV_EMPLOYMENT_Y1, ref = "Employed for an employer"),
         COV_MARITAL_STATUS_Y1 = relevel(COV_MARITAL_STATUS_Y1, ref = "Single/Never been married"),
         COV_ATTEND_SVCS_Y1 = relevel(COV_ATTEND_SVCS_Y1, ref = "Never"),
 
-        COV_AGE_GRP_Y2 = relevel(COV_AGE_GRP_Y2, ref = levels(COV_AGE_GRP_Y2)[str_detect(levels(COV_AGE_GRP_Y1),"18-24")]),
+        COV_AGE_GRP_Y2 = relevel(COV_AGE_GRP_Y2, ref = levels(COV_AGE_GRP_Y2)[str_detect(levels(COV_AGE_GRP_Y2),"18-24")]),
         COV_EDUCATION_3_Y2 = relevel(COV_EDUCATION_3_Y2, ref = "9-15"),
         COV_EMPLOYMENT_Y2 = relevel(COV_EMPLOYMENT_Y2, ref = "Employed for an employer"),
         COV_MARITAL_STATUS_Y2 = relevel(COV_MARITAL_STATUS_Y2, ref = "Single/Never been married"),
@@ -311,9 +321,12 @@ recode_imputed_data <- function(
         COV_EMPLOYMENT_Y3 = relevel(COV_EMPLOYMENT_Y3, ref = "Employed for an employer"),
         COV_MARITAL_STATUS_Y3 = relevel(COV_MARITAL_STATUS_Y3, ref = "Single/Never been married"),
         COV_ATTEND_SVCS_Y3 = relevel(COV_ATTEND_SVCS_Y3, ref = "Never"),
+
         # Other basic setup to make things easier later...
         MODE_RECRUIT = recode_labels( MODE_RECRUIT, "MODE_RECRUIT", include.value = FALSE),
         MODE_RECRUIT = recode_to_type(MODE_RECRUIT, "MODE_RECRUIT"),
+        MODE_ANNUAL = recode_labels( MODE_ANNUAL, "MODE_ANNUAL", include.value = FALSE),
+        MODE_ANNUAL = recode_to_type(MODE_ANNUAL, "MODE_ANNUAL"),
         RACE = COV_SELFID1,
         MARITAL_STATUS_EVER_MARRIED_Y1 = case_when(MARITAL_STATUS_Y1 %in% c(2:5) ~ 1, .default = 0),
         MARITAL_STATUS_EVER_MARRIED_Y2 = case_when(MARITAL_STATUS_Y2 %in% c(2:5) ~ 1, .default = 0),
@@ -323,9 +336,26 @@ recode_imputed_data <- function(
         MARITAL_STATUS_DIVORCED_Y3 = case_when(MARITAL_STATUS_Y3 %in% c(4) ~ 1, .default = 0),
         CIGARETTES_BINARY_Y1 = case_when(CIGARETTES_Y1 > 0 ~ 1, .default = 0),
         CIGARETTES_BINARY_Y2 = case_when(CIGARETTES_Y2 > 0 ~ 1, .default = 0),
-        CIGARETTES_BINARY_Y3 = case_when(CIGARETTES_Y3 > 0 ~ 1, .default = 0)
+        CIGARETTES_BINARY_Y3 = case_when(CIGARETTES_Y3 > 0 ~ 1, .default = 0),
+        DRINKS_BINARY_Y1 = case_when(DRINKS_Y1 > 0 ~ 1, .default = 0),
+        DRINKS_BINARY_Y2 = case_when(DRINKS_Y2 > 0 ~ 1, .default = 0),
+        DRINKS_BINARY_Y3 = case_when(DRINKS_Y3 > 0 ~ 1, .default = 0)
       )
   }
+
+  ## removed dummy-coded variables needed for constructing variables
+  df.imp.long <- df.imp.long |>
+    select(-any_of(c(
+      paste0("SVCS_MOTHER_Y1_", c(1:6,96:97)),
+      paste0("SVCS_FATHER_Y1_", c(1:6,96:97)),
+      paste0("MOTHER_RELATN_Y1_", c(1:6,96:97)),
+      paste0("MOTHER_LOVED_Y1_", c(1:6,96:97)),
+      paste0("FATHER_RELATN_Y1_", c(1:6,96:97)),
+      paste0("FATHER_LOVED_Y1_", c(1:6,96:97)),
+      paste0("MARITAL_STATUS_Y1_", c(1:6,96:97)),
+      paste0("MARITAL_STATUS_Y2_", c(1:6,96:97)),
+      paste0("MARITAL_STATUS_Y3_",  c(1:6,96:97))
+    )))
   ## ============================================================================================ ##
   ## ====== CREATE COMPOSITES =================================================================== ##
   # Create composites IF any have been specified in the outcome_variables file
@@ -335,40 +365,47 @@ recode_imputed_data <- function(
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD0"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC0"]]
     }
-    if(!(wave == 1 | wave == "W1")){
+    if( (wave %in% c(2:3) | wave %in% c("W2", "W3")) ){
       LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
     }
-    for (i in 1:length(LIST.OUTCOME.COMPOSITES)) {
-      # create a temporary variable then rename
-      if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "mean") {
-        df.imp.long <- df.imp.long %>%
-          mutate(
-            temp.var.i = rowMeans(
-              across(all_of(LIST.OUTCOME.COMPOSITES[[i]]), \(x){
-                x <- recode_to_type(x, cur_column())
-                x <- reorder_levels(x, cur_column())
-                x <- recode_to_numeric(x, cur_column())
-                x
-              })
+
+    n <- names(LIST.OUTCOME.COMPOSITES)[1]
+    for (n in names(LIST.OUTCOME.COMPOSITES)) {
+
+      tvars <- LIST.OUTCOME.COMPOSITES[[n]]
+      tcheck = unlist(lapply(tvars, function(x) x %in% colnames(df.imp.long)))
+      if(all(tcheck)){
+
+        if (LIST.COMPOSITE.COMBINE.METHOD[[n]] == "mean") {
+          df.imp.long <- df.imp.long %>%
+            mutate(
+              temp.var.i = rowMeans(
+                across(all_of(LIST.OUTCOME.COMPOSITES[[n]]), \(x){
+                  x <- recode_to_type(x, cur_column())
+                  x <- reorder_levels(x, cur_column())
+                  x <- recode_to_numeric(x, cur_column())
+                  x
+                })
+              )
             )
-          )
-      }
-      if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "sum") {
-        df.imp.long <- df.imp.long %>%
-          mutate(
-            temp.var.i = rowSums(
-              across(all_of(LIST.OUTCOME.COMPOSITES[[i]]), \(x){
-                x <- recode_to_type(x, cur_column())
-                x <- reorder_levels(x, cur_column())
-                x <- recode_to_numeric(x, cur_column(), TRUE)
-                x
-              })
+        }
+        if (LIST.COMPOSITE.COMBINE.METHOD[[n]] == "sum") {
+          df.imp.long <- df.imp.long %>%
+            mutate(
+              temp.var.i = rowSums(
+                across(all_of(LIST.OUTCOME.COMPOSITES[[n]]), \(x){
+                  x <- recode_to_type(x, cur_column())
+                  x <- reorder_levels(x, cur_column())
+                  x <- recode_to_numeric(x, cur_column(), TRUE)
+                  x
+                })
+              )
             )
-          )
+        }
+        colnames(df.imp.long)[length(colnames(df.imp.long))] <- COMPOSITE.VEC[n]
       }
-      colnames(df.imp.long)[length(colnames(df.imp.long))] <- COMPOSITE.VEC[i]
     }
   }
   ## ============================================================================================ ##
@@ -450,7 +487,9 @@ recode_imputed_data <- function(
       }
       data[[var]] <- fct_lump_prop(data[[var]], 0.03, other_level = "Combined")
       data[[var]] <- fct_infreq(data[[var]])
-      data[[var]] <- relevel(data[[var]], ref = rel.mp)
+      if(length(rel.mp) == 1){
+        data[[var]] <- relevel(data[[var]], ref = rel.mp)
+      }
       data
     }
 
@@ -459,17 +498,16 @@ recode_imputed_data <- function(
       nest() %>%
       mutate(
         data = map(data, \(x){
-          recode_REL(x, paste0("COV_REL1", ifelse(wave == 2, "_Y1", "")), wgt = wgt)
+          recode_REL(x, paste0("COV_REL1", ifelse(wave %in% c(2:5), "_Y1", "")), wgt = wgt)
         }),
         data = map(data, \(x){
-          recode_REL(x, paste0("COV_REL2", ifelse(wave == 2, "_Y1", "")), wgt = wgt)
+          recode_REL(x, paste0("COV_REL2", ifelse(wave %in% c(2:5), "_Y1", "")), wgt = wgt)
         })
       ) %>%
       unnest(c(data))
   }
   ## ============================================================================================ ##
   ## ====== RECODING INCOME DATA ================================================================ ##
-  {
     if(wave == 1 | wave == "W1"){
       income.quintiles <- df.imp.long  %>%
         select(
@@ -489,6 +527,7 @@ recode_imputed_data <- function(
         nest() %>%
         mutate(
           svy.data = map(data, \(x){
+            x <- x |> filter(!is.na(!!sym(wgt)))
             svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
           }),
           quintiles = map(svy.data, \(x){
@@ -498,7 +537,9 @@ recode_imputed_data <- function(
         select(.imp, COUNTRY, quintiles_w1)
 
       df.imp.long <- df.imp.long %>%
-        group_by(.imp, COUNTRY) %>%
+        mutate(.imp2 = .imp,
+               COUNTRY2 = COUNTRY) %>%
+        group_by(.imp2, COUNTRY2) %>%
         nest() %>%
         mutate(
           data = map(data, \(x){
@@ -575,7 +616,7 @@ recode_imputed_data <- function(
         unnest(c(data)) %>%
         ungroup()
     }
-    if(is.null(wave) | wave == 2 | wave == "W2"){
+    if(wave == 2 | wave == "W2"){
 
       income.quintiles <-  df.imp.long  %>%
         select(
@@ -595,6 +636,7 @@ recode_imputed_data <- function(
         nest() %>%
         mutate(
           svy.data = map(data, \(x){
+            x <- x |> filter(!is.na(!!sym(wgt)))
             svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
           }),
           quintiles_w1 = map(svy.data, \(x){
@@ -607,8 +649,9 @@ recode_imputed_data <- function(
         select(.imp, COUNTRY, quintiles_w1, quintiles_w2)
 
       df.imp.long <-  df.imp.long %>%
-        mutate(.imp2 = .imp) %>%
-        group_by(.imp2, COUNTRY) %>%
+        mutate(.imp2 = .imp,
+               COUNTRY2 = COUNTRY) %>%
+        group_by(.imp2, COUNTRY2) %>%
         nest() %>%
         mutate(
           data = map(data, \(x){
@@ -697,7 +740,155 @@ recode_imputed_data <- function(
         unnest(c(data)) %>%
         ungroup()
     }
-  }
+    if(wave == 3 | wave == "W3"){
+
+      income.quintiles <-  df.imp.long  %>%
+        select(
+          dplyr::all_of(c(".imp", "ID", "COUNTRY", "INCOME_Y1", "INCOME_Y2", "INCOME_Y3", wgt, strata, psu))
+        ) %>%
+        mutate(
+          across(contains("INCOME"),\(x){
+            case_when(
+              x < 0 ~ NA,
+              x > 9900 ~ NA,
+              x == 9900 ~ 0,
+              .default=x
+            )
+          })
+        ) %>%
+        group_by(.imp, COUNTRY) %>%
+        nest() %>%
+        mutate(
+          svy.data = map(data, \(x){
+            x <- x |> filter(!is.na(!!sym(wgt)))
+            svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
+          }),
+          quintiles_w1 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y1, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+          quintiles_w2 = map(svy.data, \(x){
+            svyquantile(~INCOME_Y2, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          }),
+          quintiles_w3 = map(svy.data, \(x){
+            out = svyquantile(~INCOME_Y3, design=x, quantiles=c(0.20,0.40,0.60,0.80), na.rm = TRUE)
+          })
+        ) %>%
+        select(.imp, COUNTRY, quintiles_w1, quintiles_w2, quintiles_w3)
+
+      df.imp.long <-  df.imp.long %>%
+        mutate(.imp2 = .imp,
+               COUNTRY2 = COUNTRY) %>%
+        group_by(.imp2, COUNTRY2) %>%
+        nest() %>%
+        mutate(
+          data = map(data, \(x){
+            cur.country = x$COUNTRY[1]
+            cur.imp = x$.imp[1]
+
+            tmp.quintiles <- income.quintiles %>%
+              filter(COUNTRY == cur.country, .imp == cur.imp)
+
+            tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
+            tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
+            tmp.quintiles.w3 <- tmp.quintiles$quintiles_w3[[1]][[1]]
+
+            x <- x %>%
+              mutate(
+                INCOME_QUINTILE_Y1 = case_when(
+                  INCOME_Y1 >= tmp.quintiles.w1["0.8",1] ~ 5,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.6",1] & INCOME_Y1 < tmp.quintiles.w1["0.8",1] ~ 4,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.4",1] & INCOME_Y1 < tmp.quintiles.w1["0.6",1] ~ 3,
+                  INCOME_Y1 >= tmp.quintiles.w1["0.2",1] & INCOME_Y1 < tmp.quintiles.w1["0.4",1] ~ 2,
+                  INCOME_Y1 < tmp.quintiles.w1["0.2",1] ~ 1
+                ),
+                INCOME_QUINTILE_Y2 = case_when(
+                  INCOME_Y2 >= tmp.quintiles.w2["0.8",1] ~ 5,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.6",1] & INCOME_Y2 < tmp.quintiles.w2["0.8",1] ~ 4,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.4",1] & INCOME_Y2 < tmp.quintiles.w2["0.6",1] ~ 3,
+                  INCOME_Y2 >= tmp.quintiles.w2["0.2",1] & INCOME_Y2 < tmp.quintiles.w2["0.4",1] ~ 2,
+                  INCOME_Y2 < tmp.quintiles.w2["0.2",1] ~ 1
+                ),
+                INCOME_QUINTILE_Y3 = case_when(
+                  INCOME_Y3 >= tmp.quintiles.w3["0.8",1] ~ 5,
+                  INCOME_Y3 >= tmp.quintiles.w3["0.6",1] & INCOME_Y3 < tmp.quintiles.w3["0.8",1] ~ 4,
+                  INCOME_Y3 >= tmp.quintiles.w3["0.4",1] & INCOME_Y3 < tmp.quintiles.w3["0.6",1] ~ 3,
+                  INCOME_Y3 >= tmp.quintiles.w3["0.2",1] & INCOME_Y3 < tmp.quintiles.w3["0.4",1] ~ 2,
+                  INCOME_Y3 < tmp.quintiles.w3["0.2",1] ~ 1
+                )
+              )
+            if(method.income=="quintiles.top.fixed"){
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    y
+                  })
+                )
+            }
+            if(method.income == "quintiles.top.random"){
+              set.seed(314150)
+              x <- x %>%
+                mutate(
+                  across(contains("INCOME_QUINTILE"), \(x){
+                    y <- case_when(
+                      x == 5 ~ 1,
+                      x %in% 1:4 ~ 0
+                    )
+                    if(anyNA(y)){
+                      y[is.na(y)] <- median(y, na.rm=TRUE)
+                    }
+                    y.mean = mean(y, na.rm=TRUE)
+                    if(y.mean > 0.20){
+                      n0 <- length(y)
+                      nq <- round(y.mean*n0,0) - round(0.2*n0,0) # number of cases to randomly fix to 0
+                      y[y==1][sample(1:(length(y[y==1])), nq, replace = FALSE)] <- 0
+                    }
+                    if(y.mean < 0.20){
+                      n0 <- length(y)
+                      nq <- round(0.2*n0,0) - round(y.mean*n0,0) # number of cases to randomly fix to 1 from those who are in the fourth quintile
+                      x[x==4][sample(1:(length(x[x==4])), nq, replace = FALSE)] <- 5
+                      y <- case_when(
+                        x == 5 ~ 1,
+                        x %in% 1:4 ~ 0
+                      )
+                    }
+                    y
+                  })
+                )
+            }
+            x
+          }),
+          data = map(data, \(x){
+            x %>%
+              mutate(
+                INCOME_Y1 = recode_labels(INCOME_Y1, "INCOME_Y1"),
+                INCOME_Y2 = recode_labels(INCOME_Y2, "INCOME_Y2"),
+                INCOME_Y3 = recode_labels(INCOME_Y3, "INCOME_Y3"),
+                INCOME_QUINTILE_Y1 = recode_labels(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y2 = recode_labels(INCOME_QUINTILE_Y2, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y3 = recode_labels(INCOME_QUINTILE_Y3, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y1 = factor(INCOME_QUINTILE_Y1),
+                INCOME_QUINTILE_Y2 = factor(INCOME_QUINTILE_Y2),
+                INCOME_QUINTILE_Y3 = factor(INCOME_QUINTILE_Y3),
+                INCOME_QUINTILE_Y1 = recode_to_numeric(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y2 = recode_to_numeric(INCOME_QUINTILE_Y2, "INCOME_QUINTILE"),
+                INCOME_QUINTILE_Y3 = recode_to_numeric(INCOME_QUINTILE_Y3, "INCOME_QUINTILE")
+              )
+          })
+        ) %>%
+        unnest(c(data)) %>%
+        ungroup()
+    }
+  ## MAKE SURE TO REMOVE AFTER RE-IMPUTING THE DATA
+  # df.imp.long <- df.imp.long |>
+  #   mutate(
+  #     INCOME_QUINTILE_Y1 = sample(1:5,n(), replace=TRUE),
+  #     INCOME_QUINTILE_Y2 = sample(1:5,n(), replace=TRUE),
+  #     INCOME_QUINTILE_Y3 = sample(1:5,n(), replace=TRUE)
+  #   )
   ## ============================================================================================ ##
   ## ====== User supplied recoding function ===================================================== ##
   if(!is.null(inject.recode.fx)){
@@ -713,11 +904,11 @@ recode_imputed_data <- function(
   # 	Must do this last as a few composites are formed from the
   # 	categorical Likert-type items
   tmp.var <- list.default[["VARIABLES.VEC"]][1]
-  all.vars <- unique(c(list.default[["VARIABLES.VEC"]], list.default[["FOCAL_PREDICTOR"]]))
+  all.vars <- unique(c(list.default[["VARIABLES.VEC"]], list.default[["FOCAL_VARIABLE"]], list.default[["FOCAL_PREDICTOR"]]))
   for (tmp.var in  all.vars){
     # print(tmp.var)
     x <- df.imp.long[, tmp.var, drop = TRUE]
-    if ((tmp.var %in% list.default[["FOCAL_PREDICTOR"]]) & !(all(list.default[["USE_DEFAULT"]]))) {
+    if ((tmp.var %in% list.default[["FOCAL_VARIABLE"]] | tmp.var %in% list.default[["FOCAL_PREDICTOR"]]) & !(all(list.default[["USE_DEFAULT"]]))) {
       # if the focal variable is continous, essential ignore and moe to next
       if (get_outcome_scale(tmp.var) == "cont") {
         if (list.default[["FORCE_BINARY"]][tmp.var]) {
@@ -779,10 +970,14 @@ recode_imputed_data <- function(
 
 #' @export
 recode_imp_by_country <- function(data.dir, nimp = 20, parallel = FALSE, num_cores = 1, ...){
+  if(!dir.exists(here::here(data.dir,"recoded"))){
+    dir.create( here::here(data.dir,"recoded"))
+  }
+
   # get list of files in data.dir
-  imp.files <- list.files(data.dir)
+  imp.files <- list.files(here(data.dir,"imp"))
   imp.files <- imp.files[str_detect(imp.files, "imputed_data_obj")]
-  imp.files <- imp.files[str_detect(imp.files, paste0("_nimp_",nimp))]
+  imp.files <- imp.files[str_detect(imp.files, paste0("_imp_"))]
   # run recode_imputed_data by country
   x <- imp.files[1]
   y <- 1
@@ -794,13 +989,13 @@ recode_imp_by_country <- function(data.dir, nimp = 20, parallel = FALSE, num_cor
       furrr::future_walk(imp.files, \(x){
         load_packages()
         options(survey.lonely.psu = "certainty")
-        load(here::here(data.dir,x), ex <- new.env())
+        load(here::here(data.dir,"imp",x), ex <- new.env())
         # ls.str(ex)
         walk(1:nimp, \(y){
           tmp.imp <- recode_imputed_data(ex$fit.imp, m = y, ...)
           cur.country <- as.character(tmp.imp$COUNTRY[1])
           c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,"_imp",y,".rds")
-          readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
+          readr::write_rds(tmp.imp, file = here::here(data.dir, "recoded", c.file.name), compress = "gz")
           rm(tmp.imp)
         })
         rm(ex)
@@ -810,14 +1005,16 @@ recode_imp_by_country <- function(data.dir, nimp = 20, parallel = FALSE, num_cor
     future::resetWorkers(plan())
   } else {
 
+    x <- imp.files[1]
     walk(imp.files, \(x){
-      load(here::here(data.dir,x), ex <- new.env())
+      print(x)
+      load(here::here(data.dir,"imp",x), ex <- new.env())
       # ls.str(ex)
       walk(1:nimp, \(y){
-        tmp.imp <- recode_imputed_data(ex$fit.imp, m = y, ...)
+        tmp.imp <- recode_imputed_data(fit.imp = ex$fit.imp, m = y, ...)
         cur.country <- as.character(tmp.imp$COUNTRY[1])
         c.file.name <- paste0("recoded_imputed_data_obj_",cur.country,"_imp",y,".rds")
-        readr::write_rds(tmp.imp, file = here::here(data.dir, c.file.name), compress = "gz")
+        readr::write_rds(tmp.imp, file = here::here(data.dir,"recoded", c.file.name), compress = "gz")
         rm(tmp.imp)
       })
       rm(ex)

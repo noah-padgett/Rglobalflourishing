@@ -28,6 +28,18 @@ gfs_wave_3_generate_main_doc <- function(
     digits=2,
     control = list(study = "exposurewide", filetype = "main")){
 
+  # df.raw = df.raw;
+  # focal.variable = FOCAL_VARIABLE;
+  # focal.better.name= FOCAL_VARIABLE_BETTER_NAME;
+  # digits=2;
+  # control = list(study = "exposurewide", filetype = "main", tbl.row.vec =predictors,
+  #                dir.meta = "test/ignore/results-primary",
+  #                file.primary = "0_meta_analyzed_results_primary.rds",
+  #                res.dir = "test/ignore/results",
+  #                wgt1 = as.name("ANNUAL_WEIGHT_C1"),
+  #                wgt2 = as.name("ANNUAL_WEIGHT_R2"),
+  #                wgt3 = as.name("ANNUAL_WEIGHT_R3"))
+
   control <- get_defaults_w3(control)
   ## now, unnest the control parameters
   study <- control[['study']]
@@ -39,7 +51,7 @@ gfs_wave_3_generate_main_doc <- function(
   tbl.row.vec <- control[['tbl.row.vec']]
   mylabels <- control[['mylabels']]
   res.dir <- control[['res.dir']]
-  wgt0 <- control[['wgt0']]
+  wgt <- control[['wgt']]
   wgt1 <- control[['wgt1']]
   wgt2 <- control[['wgt2']]
   wgt3 <- control[['wgt3']]
@@ -47,6 +59,9 @@ gfs_wave_3_generate_main_doc <- function(
   strata <- control[['strata']]
   ci.bonferroni <- control[['ci.bonferroni']]
   tb.footnote <- control[['tb.footnote']]
+  tb.title <- control[['tb.title']]
+  fig.title <- control[['fig.title']]
+  forest.plots.inc.est <- control[['forest.plots.inc.est']]
 
 
   # dir.meta = "results-primary"; file.wopc = "0_meta_analyzed_results_primary_wopc.rds"; file.wpc = "0_meta_analyzed_results_primary_wpc.rds"; focal.variable = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.variable.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; p.bonferroni = NULL; baseline.pred = NULL; tbl.row.vec = NULL; mylabels = NULL; res.dir = "results"; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; ci.bonferroni = FALSE; forest.plots.inc.est = FALSE;  digits=2; include.cor = FALSE; file.cor = "0_meta_analyzed_cor.rds"
@@ -72,19 +87,19 @@ gfs_wave_3_generate_main_doc <- function(
     ) %>% as.numeric() %>% round()
 
   ## ============================================================================================ ##
-  ## ====== INTERNAL VECTORS FOR PRINTING ======================================================= ##
+  ## ----- INTERNAL VECTORS FOR PRINTING -----
   ## Initialize internal document formatting functions
   {
     set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 
     normal_portrait <- block_section(
-      prop_section(page_size = page_size(orient = "portrait"), type = "continuous")
+      prop_section(page_size = page_size(orient = "portrait", width=8.5, height=11), type = "continuous")
     )
     extra_wide_landscape <- block_section(prop_section(
       page_size = page_size(
         orient = "landscape",
-        width = 29.7 / 2.54 * 2,
-        height = 29.7 / 2.54
+        width = 22,
+        height = 11
       ),
       type = "continuous"
     ))
@@ -109,7 +124,7 @@ gfs_wave_3_generate_main_doc <- function(
     # body_end_section_landscape(x, w = 21/2.54, h = 29.7/2.54)
     }
   ## ============================================================================================ ##
-  ## ====== Construct main text data summary table ============================================== ##
+  ## ----- Construct main text data for summarizing -----
 
   df.raw <- gfs_add_variable_labels(df.raw, tbl.row.vec)
 
@@ -208,7 +223,7 @@ gfs_wave_3_generate_main_doc <- function(
 
   ## =============================================================================== ##
   ## =============================================================================== ##
-  ## Main text table 1
+  ## -----  Main text table 1 (weighted summary statistics) -----
   tb.num <- 1
   params.tb1 <- list(
     df.raw.long = df.raw.long,
@@ -239,7 +254,7 @@ gfs_wave_3_generate_main_doc <- function(
   gc()
   ## =============================================================================== ##
   ## =============================================================================== ##
-  ## Main text meta-analytic summary table
+  ## ----- Main text meta-analytic summary table -----
   f0=1
   for(f0 in 1:length(focal.variable)){
 
@@ -247,36 +262,54 @@ gfs_wave_3_generate_main_doc <- function(
     if(is.null(tb.footnote)){
 
     if(str_detect(str_to_lower(study), "exposure") ){
-      tmp <- case_when(
-        get_outcome_scale(focal.variable[f0]) == "cont" ~ "ES, effect size measure for standardized regression coefficient, null effect is 0.00;",
-        get_outcome_scale(focal.variable[f0]) != "cont" ~ "RR, risk-ratio, null effect is 1.00"
+
+      tmp <- ifelse(
+        get_outcome_scale(focal.variable[f0]) == "cont",
+        "ES, effect size measure for standardized regression coefficient, null effect is 0.00;",
+        "RR, risk-ratio, null effect is 1.00;"
       )
       tbl.ft1 = paste0(tmp )
-      tbl.ft2 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
+      tbl.ft2 <- ifelse(
+        get_outcome_scale(focal.variable[f0]) == "cont",
+        "%-Metric (% < -0.10 | % > 0.10), percent of effect sizes below a lower bound (< -0.10) and above an upper bound (> 0.10)",
+        "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
+      tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
+
     }
     if(str_detect(str_to_lower(study), "outcome") ){
       tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
       tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
-      tbl.ft2 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized..")
+      tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
+      tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
     }
 
-    tbl.footnote <- paste0("Notes. N=", n.print, "; ", tbl.ft1 ," CI, confidence interval; Pred. Int., prediction interval for estimated effect size for a new country; Prop. Metric [<lb,>ub], proportion of effect sizes below a lower bound (<lb) and above an upper bound (>ub); \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
+    tb.footnote <- paste0("Notes. N=", n.print, "; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries.
 
 Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All analyses controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; religious affiliation; frequency of religious service attendance; racial/ethnic identity when available; and the first seven principal components of the entire set of potential confounders assessed at Wave 1.
 
-",tbl.ft2,"
+",tbl.ft3,"
 
-P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of \u03c4 (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects. Line-
-printer style abbreviations for small p-values (e.g., '2.22e-16') are used to help conserve space, given the table and font size, to aid in readability.")
+P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of \u03c4 (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects. Line-printer style abbreviations for small p-values (e.g., '2.22e-16') are used to help conserve space, given the table and font size, to aid in readability.")
+
+    }
+    if(is.null(tb.title)){
+
+      if(str_detect(str_to_lower(study), "exposure") ){
+        tb.title <- paste0("Table ", tb.num,". Exposure-wide estimates of associations between wave 2 variables and ",str_to_lower(focal.better.name), " assessed at wave 3.")
+      }
+      if(str_detect(str_to_lower(study), "outcome") ){
+        tb.title <- paste0("Table ", tb.num,". Outcome-wide estimates of associations between ",str_to_lower(focal.better.name), " assessed at wave 2 and subsequent outcomes at wave 3.")
+      }
 
     }
 
     params.tb2 <- list(
+      study = study,
       tbl.row.vec = tbl.row.vec,
-      MYLABEL = MYLABEL,
+      mylabels = mylabels,
       focal.variable = focal.variable[f0],
-      tbl.footnote = tbl.footnote,
-      tbl.title = tbl.title,
+      tbl.footnote = tb.footnote,
+      tbl.title = tb.title,
       dir = dir.meta ,
       file.primary = file.primary,
       ci.bonferroni = ci.bonferroni,
@@ -289,13 +322,13 @@ printer style abbreviations for small p-values (e.g., '2.22e-16') are used to he
     Rglobalflourishing:::gfs_wave_3_build_tbl_2(params.tb2)
 
     rmarkdown::render(
-      input = system.file("rmd", "pdf_normal_landscape.Rmd", package = "Rglobalflourishing"),
+      input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
       output_format = c("pdf_document"),
       output_file = paste0("main_text_tbl_",tb.num),
       output_dir = here::here(res.dir, "main-text"),
       params = list(cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")))
     )
-    Rglobalflourishing:::generate_docx_normal_landscape(
+    Rglobalflourishing:::generate_docx_normal_portrait(
       cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")),
       print.file = here::here(res.dir, "main-text", paste0("main_text_tbl_",tb.num,".docx"))
     )
@@ -306,27 +339,36 @@ printer style abbreviations for small p-values (e.g., '2.22e-16') are used to he
   gc()
   ## =============================================================================== ##
   ## =============================================================================== ##
-  ## Main text E-values
+  ## ----- Main text E-values -----
   f0=1
   for(f0 in 1:length(focal.variable)){
 
+    tbl.footnote <- "Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates."
+
+    if(str_detect(str_to_lower(study), "exposure") ){
+    tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between well-being and other variables at Wave 2 and ", focal.better.name, " at Wave 3.")
+    }
+    if(str_detect(str_to_lower(study), "outcome") ){
+      tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between ", focal.better.name, " and subsequent well-being and other outcomes.")
+    }
+
+
     params.tb3 <- list(
+      study = study,
       tbl.row.vec = tbl.row.vec,
-      MYLABEL = MYLABEL,
+      mylabels = mylabels,
       focal.variable = focal.variable[f0],
-      focal.better.name = focal.better.name[f0],
+      tbl.footnote = tbl.footnote,
+      tbl.title = tbl.title,
       dir = dir.meta ,
-      file.wopc = file.wopc,
-      file.wpc = file.wpc,
-      tb.num = tb.num,
-      n.print = n.print,
+      file.primary = file.primary,
       cache.file = here::here(res.dir, "main-text", paste0("cache-tb-evalues-",f0,".RData")),
       start.time = run.start.time,
       digits = digits
     )
 
     ## build the table
-    Rglobalflourishing:::build_tbl_3(params.tb3)
+    Rglobalflourishing:::gfs_wave_3_build_tbl_3(params.tb3)
 
     rmarkdown::render(
       input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
@@ -346,51 +388,62 @@ printer style abbreviations for small p-values (e.g., '2.22e-16') are used to he
   gc()
   ## =============================================================================== ##
   ## =============================================================================== ##
-  ## Main text figures
-  if("COMPOSITE_FLOURISHING_SECURE_Y2" %in% tbl.row.vec){
-    f0=1
-    for(f0 in 1:length(focal.variable)){
+  ## ----- Main text figures (ONLY FOR OUTCOMEWIDE Study) -----
+  if(str_detect(str_to_lower(study), "outcome") ){
+    if("COMPOSITE_FLOURISHING_SECURE_Y3" %in% tbl.row.vec){
+      f0=1
+      fig.num <- 1
+      for(f0 in 1:length(focal.variable)){
 
-      params.fig <- list(
-        focal.variable = focal.variable[f0],
-        focal.better.name = focal.better.name[f0],
-        dir = dir.meta ,
-        file.wopc = file.wopc,
-        file.wpc = file.wpc,
-        fig.num = f0,
-        res.dir = res.dir,
-        n.print = n.print,
-        cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-        start.time = run.start.time,
-        include.estimates = forest.plots.inc.est
-      )
+        if(is.null(fig.title)){
+          fig.title = paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name[f0] ," at Wave 2 on composite Secure Flourishing Index scores at Wave 3 across countries (N=", n.print, ").*\n The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogeneity.")
+        }
 
-      Rglobalflourishing:::build_fig_1(params.fig)
 
-      rmarkdown::render(
-        input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
-        output_format = c("pdf_document"),
-        output_file = paste0("main_text_figures_combined-",f0),
-        output_dir = here::here(res.dir, "main-text"),
-        params = list(
+
+        params.fig <- list(
+          focal.variable = focal.variable[f0],
+          dir = dir.meta ,
+          file.primary = file.primary,
+          fig.title = fig.title,
+          res.dir = res.dir,
           cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".pdf"))
+          start.time = run.start.time,
+          include.estimates = forest.plots.inc.est
         )
-      )
-      Rglobalflourishing:::generate_docx_fig(
-        cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-        fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".png")),
-        print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
-        orient = "p",
-        w = 5, h = 6
-      )
 
+        Rglobalflourishing:::gfs_wave_3_build_fig_1(params.fig)
+
+        rmarkdown::render(
+          input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
+          output_format = c("pdf_document"),
+          output_file = paste0("main_text_figures_combined-",f0),
+          output_dir = here::here(res.dir, "main-text"),
+          params = list(
+            cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+            fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".pdf"))
+          )
+        )
+        Rglobalflourishing:::generate_docx_fig(
+          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+          fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".png")),
+          print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
+          orient = "p",
+          w = 5, h = 6
+        )
+
+
+        fig.num <- fig.num + 1
+      }
+      remove(params.fig)
+
+      gc()
     }
-    remove(params.fig)
-
-    gc()
   }
 
+  ## =============================================================================== ##
+  ## =============================================================================== ##
+  ## ------ PRINT OUT TO FILES ------
   ## Word version
   out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".docx"))
   main.text.docx <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
@@ -406,22 +459,11 @@ printer style abbreviations for small p-values (e.g., '2.22e-16') are used to he
   for(i in 1:length(main.text.docx)){
     tmp_doc <- read_docx(main.text.docx[i])
     sec.prop <- tmp_doc$sect_dim
-    if(length(sec.prop$page) == 2){
-      ps <- prop_section(
-        page_size = page_size(
-          orient = ifelse(sec.prop$landscape, "landscape", "portrait"),
-          width = sec.prop$page[1]/1440,
-          height = sec.prop$page[2]/1440,
-          unit = "in"
-        )
+    ps <- prop_section(
+      page_size = page_size(
+        orient = "portrait"
       )
-    } else {
-      ps <- prop_section(
-        page_size = page_size(
-          orient = "portrait"
-        )
-      )
-    }
+    )
     main_doc <- read_docx(path = out.file) |>
       body_add_docx(main.text.docx[i]) |>
       body_end_block_section(value = block_section(ps))
@@ -493,11 +535,11 @@ gfs_wave_3_build_tbl_1 <- function(params, font.name = "Open Sans", font.size = 
           all_continuous() ~ "continuous2"
         ),
         statistic = list(
-          all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
+          all_continuous() ~ c("    {mean} ({sd})", "    {p25}, {p75}"),
           all_categorical() ~ "{n} ({p}%)"
         ),
         digits = list(
-          all_continuous() ~ c(1,1,1,1,1,1),
+          all_continuous() ~ c(2,2,2,2),
           all_categorical() ~ list(label_style_number(digits=1), label_style_percent0(digits = 1))
           #n = label_style_number(digits=0),
           #p = label_style_percent(suffix = "%", digits = 2)
@@ -508,11 +550,11 @@ gfs_wave_3_build_tbl_1 <- function(params, font.name = "Open Sans", font.size = 
       italicize_labels() %>%
       modify_header(label ~ "**Characteristic**") %>%
       add_stat_label(
-        label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min,Q1,Q3,Max")
+        label = all_continuous() ~ c("    Mean (Standard Deviation)", "    Q1, Q3")
       )
   })
 
-  tb.note.summarytab <- as_paragraph(as_chunk("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2 aggregated over the full sample and Tables S9a-32a and S9b-32b are summary tables by country.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
+  tb.note.summarytab <- as_paragraph(as_chunk("Note. N (%); this table is based on non-imputed data; cumulative percentages for variables may not add up to 100% due to rounding; S.A.R., Special Administrative Region. Expanded summary tables of all demographic characteristics and outcome variables are provided the online supplement in Tables S1-2.", props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
 
   print.tb <- sumtab %>%
@@ -523,22 +565,22 @@ gfs_wave_3_build_tbl_1 <- function(params, font.name = "Open Sans", font.size = 
       as_chunk(paste0("Table ", tb.num ,". Weighted sample demographic summary statistics by wave."),
                props = fp_text_default(font.family = "Open Sans", font.size = 11))
     )) %>%
-    add_footer_row(
-      values = tb.note.summarytab, top = FALSE,colwidths=3
+    add_footer_lines(
+      values = tb.note.summarytab, top = FALSE
     )
 
   save(print.tb, file=cache.file)
 }
 #' @export
 #' @rdname build-functions
-build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
+gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
 
   set_flextable_defaults(font.family = font.name,font.size = font.size)
 
   study = params$study
   focal.variable = params$focal.variable
   tbl.row.vec = params$tbl.row.vec
-  MYLABEL = params$MYLABEL
+  mylabels = params$mylabels
   tbl.footnote = params$tbl.footnote
   tbl.title = params$tbl.title
   dir = params$dir
@@ -553,34 +595,41 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
     stop("STUDY TYPE ERROR. CANNOT CONSTRUCT META SUMMARY TABLE.")
   }
   ## columns to keep from meta-analysis results object
-  vec.col <- c('OUTCOME', 'FOCAL_PREDICTOR', 'theta.rma', 'theta.rma.se', 'theta.lb', 'theta.ub', 'tau', 'I2', 'prob.leqneq0.1', 'prob.geq0.1', 'theta.pred.int', 'rr.tau', 'rr.prob.0.90', 'rr.prob.1.10', 'rr.theta.pred.int', 'global.pvalue')
+  vec.col <- c('outcome', 'term', 'theta.rma', 'theta.rma.se', 'theta.lb', 'theta.ub', 'tau', 'I2', 'prob.leqneq0.1', 'prob.geq0.1', 'theta.pred.int.lb', 'theta.pred.int.ub', 'rr.tau', 'rr.prob.0.90', 'rr.prob.1.10', 'rr.theta.pred.int', 'global.pvalue')
 
   df.main <- load_meta_result(
     file = here::here(dir, file.primary),
     predictor = unique(c(focal.variable, tbl.row.vec)),
     outcome = unique(c(focal.variable, tbl.row.vec)),
-    what = vec.col
+    what = vec.col,
+    filter.var.out = "outcome",
+    filter.var.pred = "term"
   )
 
   ## column names for printing
   cnames <- c("")
   ## partially depends on study
   if( str_detect(str_to_lower(study), "exposure") ){
-    meta.filter.var = as.name("FOCAL_PREDICTOR")
+    meta.filter.var = as.name("term")
     # get outcome scale -- determines which columns are printed out
     tmp.vec <- case_when(
       get_outcome_scale(focal.variable) == "cont" ~ "ES",
       get_outcome_scale(focal.variable) != "cont" ~ "RR",
       .default = ""
     )
-    cnames <- c("Exposure", tmp.vec, "95% CI", "Pred. Int.", "Prop. Metric", "\u03c4", "Global p-value")
+    cnames <- c("Exposure", tmp.vec, "95% CI", "Pred. Int.", "%-Metric", "\u03c4", "Global p-value")
     tbl.header.width = c(3, 4)
   }
   if(str_detect(str_to_lower(study), "outcome") ){
-    meta.filter.var = as.name("OUTCOME")
+    meta.filter.var = as.name("outcome")
     # get outcome scale -- determines which columns are printed out
-    cnames <- c("Outcome", "ES", "RR", "95% CI", "Pred. Int.", "Prop. Metric", "\u03c4", "Global p-value")
+    cnames <- c("Outcome", "ES", "RR", "95% CI", "Pred. Int.", "%-Metric", "\u03c4", "Global p-value")
     tbl.header.width = c(4, 4)
+  }
+
+
+  if( str_detect(str_to_lower(study), "exposure") ){
+    is.cont <- get_outcome_scale(focal.variable) == "cont"
   }
 
   meta.outcomewide <- as.data.frame(matrix(nrow = length(tbl.row.vec), ncol = length(cnames)))
@@ -588,17 +637,18 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
   i = ii = 1
   for (i in 1:length(tbl.row.vec)) {
     if (stringr::str_detect(tbl.row.vec[i], "blank") ) {
-      meta.outcomewide[i, 1] <- MYLABEL[ii]
+      meta.outcomewide[i, 1] <- mylabels[ii]
       ii <- ii + 1
     } else {
       meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(tbl.row.vec[i], include.name = FALSE, include.fid = FALSE, rm.text="Composite"))
 
-      is.cont <- get_outcome_scale(tbl.row.vec[i]) == "cont"
+      if( str_detect(str_to_lower(study), "outcome") ){
+        is.cont <- get_outcome_scale(tbl.row.vec[i]) == "cont"
+      }
 
       ## ====== Random effects meta ======================================= ##
       tmp.row <- df.main |>
-        filter({{meta.filter.var}} == tbl.row.vec[i]) |>
-        select(all_of( c(tmp.vec, "theta.lb", "theta.ub")))
+        filter({{meta.filter.var}} == tbl.row.vec[i])
       tmp.row <- tmp.row %>%
         dplyr::mutate(
           est = case_when(
@@ -606,20 +656,20 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
             !is.cont ~ exp(theta.rma)
           ),
           ci = case_when(
-            is.cont ~ paste0("(",.round(theta.lb, digits),",",.round(theta.ub, digits),")"),
-            !is.cont ~ paste0("(",.round(exp(theta.lb), digits),",",.round(exp(theta.ub), digits),")")
+            is.cont ~ paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")"),
+            !is.cont ~ paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
           ),
           prop.metric = case_when(
-            is.cont ~ paste0(.round(prob.leqneq0.1, digits), .round(prob.geq0.1, digits)),
-            !is.cont ~ paste0(.round(rr.prob.0.90, digits), .round(rr.prob.1.10, digits))
+            is.cont ~ paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%"),
+            !is.cont ~ paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")
           ),
           pred.int = case_when(
-            is.cont ~ theta.pred.int,
-            !is.cont ~ rr.theta.pred.int
+            is.cont ~ paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")"),
+            !is.cont ~ paste0("(",.round(exp(theta.pred.int.lb), digits),", ",.round(exp(theta.pred.int.ub), digits),")")
           ),
           tau = case_when(
             is.cont ~ tau,
-            !is.cont ~ rr.trau
+            !is.cont ~ rr.tau
           ),
           tau =  case_when(
             tau < 0.01 ~ "<0.01\u2020",
@@ -633,20 +683,20 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
               x > 0.05 ~ .round(x,3)
             )
           }),
-          dyplr::across(where(is.numeric), \(x) .round(x, digits))
+          dplyr::across(where(is.numeric), \(x) .round(x, digits))
         ) |>
-        select(est, ci, prop.metric, pred.int, tau, global.pvalue)
+        select(est, ci, pred.int, prop.metric, tau, global.pvalue)
       ## ====== Add Results to output object ====================================================== ##
       if(nrow(tmp.row) == 1){
         if(str_detect(str_to_lower(study), "exposure")){
-          meta.outcomewide[i, -1] <- as.numeric(tmp.row)
+          meta.outcomewide[i, -1] <- tmp.row
         }
         if(str_detect(str_to_lower(study), "outcome")){
           if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
-            meta.outcomewide[i,-c(1,3)] <- as.numeric(tmp.row)
+            meta.outcomewide[i,-c(1,3)] <- tmp.row
           }
           if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
-            meta.outcomewide[i,-c(1,2)] <- as.numeric(tmp.row)
+            meta.outcomewide[i,-c(1,2)] <- tmp.row
           }
         }
 
@@ -672,7 +722,7 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
     ) %>%
     add_header_lines(
       as_paragraph(
-        as_chunk(paste0(tb.title),
+        as_chunk(paste0(tbl.title),
                  props = fp_text_default(font.family = "Open Sans"))
       )
     ) %>%
@@ -681,4 +731,312 @@ build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 10){
   save(print.tb, file=cache.file)
 
 }
+#' @export
+#' @rdname build-functions
+gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 10){
 
+  set_flextable_defaults(font.family = font.name,font.size = font.size)
+
+  study = params$study
+  focal.variable = params$focal.variable
+  tbl.row.vec = params$tbl.row.vec
+  mylabels = params$mylabels
+  tbl.footnote = params$tbl.footnote
+  tbl.title = params$tbl.title
+  dir = params$dir
+  file.primary = params$file.primary
+  cache.file = params$cache.file
+  start.time = params$start.time
+  digits = params$digits
+
+  if( !( str_detect(str_to_lower(study), "exposure") | str_detect(str_to_lower(study), "outcome")) ){
+    stop("STUDY TYPE ERROR. CANNOT CONSTRUCT META SUMMARY TABLE.")
+  }
+  ## columns to keep from meta-analysis results object
+  vec.col <- c('outcome', 'term', "theta.rma.EE", "theta.rma.ECI", "rr.theta.EE", "rr.theta.ECI")
+  vec.wopc <- c("E-value","E-value for CI")
+
+  df.main <- load_meta_result(
+    file = here::here(dir, file.primary),
+    predictor = unique(c(focal.variable, tbl.row.vec)),
+    outcome = unique(c(focal.variable, tbl.row.vec)),
+    what = vec.col,
+    filter.var.out = "outcome",
+    filter.var.pred = "term"
+  )
+
+  ## column names for printing
+  cnames <- c("")
+  ## partially depends on study
+  if( str_detect(str_to_lower(study), "exposure") ){
+    meta.filter.var = as.name("term")
+    cnames <- c("Exposure", "E-value fo Estimate","E-value for CI")
+  }
+  if(str_detect(str_to_lower(study), "outcome") ){
+    meta.filter.var = as.name("outcome")
+    # get outcome scale -- determines which columns are printed out
+    cnames <- c("Outcome", "E-value fo Estimate","E-value for CI")
+  }
+
+  meta.outcomewide <- as.data.frame(matrix(nrow = length(tbl.row.vec), ncol = length(cnames)))
+  colnames(meta.outcomewide) <- cnames
+  i = ii = 1
+  for (i in 1:length(tbl.row.vec)) {
+    if (stringr::str_detect(tbl.row.vec[i], "blank") ) {
+      meta.outcomewide[i, 1] <- mylabels[ii]
+      ii <- ii + 1
+    } else {
+      meta.outcomewide[i, 1] = paste0("    ",get_outcome_better_name(tbl.row.vec[i], include.name = FALSE, include.fid = FALSE, rm.text="Composite"))
+
+      is.cont <- get_outcome_scale(tbl.row.vec[i]) == "cont"
+
+      ## ====== Random effects meta ======================================= ##
+      tmp.row <- df.main |>
+        filter({{meta.filter.var}} == tbl.row.vec[i])
+      tmp.row <- tmp.row %>%
+        dplyr::mutate(
+          #"theta.rma.EE", "theta.rma.ECI", "rr.theta.EE", "rr.theta.ECI"
+          EE = case_when(
+            is.cont ~ theta.rma.EE,
+            !is.cont ~ rr.theta.EE
+          ),
+          ECI = case_when(
+            is.cont ~ theta.rma.ECI,
+            !is.cont ~ rr.theta.ECI
+          ),
+          dplyr::across(where(is.numeric), \(x) .round(x, digits))
+        ) |>
+        select(EE, ECI)
+      ## ====== Add Results to output object ====================================================== ##
+      if(nrow(tmp.row) == 1){
+        meta.outcomewide[i, -1] <- tmp.row
+      }
+    }
+  }
+  #meta.outcomewide <- na.omit(meta.outcomewide)
+
+  # footnote information:
+  tb.note.meta.outcomewide <- as_paragraph(tbl.footnote)
+
+  print.tb <- meta.outcomewide %>%
+    flextable() %>%
+    italic(part = "body",
+           i = c(which(stringr::str_detect(tbl.row.vec, "blank"))),
+           j = 1) %>%
+    add_footer_row(
+      values = tb.note.meta.outcomewide, top = FALSE, colwidths = ncol(meta.outcomewide)
+    ) %>%
+    add_header_lines(
+      as_paragraph(
+        as_chunk(paste0(tbl.title),
+                 props = fp_text_default(font.family = "Open Sans"))
+      )
+    ) %>%
+    theme_apa() %>%
+    font(part = "all", fontname = "Open Sans") %>%
+    fontsize(part = "header", size = 10) %>%
+    fontsize(part = "body", size = 9) %>%
+    line_spacing(space = 0.95, part = "all") %>%
+    padding(padding = 0, part = "all") %>%
+    align(align = "right", part = "all") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    valign(valign = "bottom", part = "all")  %>%
+    width(j=1,width=2.60)%>%
+    width(j=c(2:3),width=1.25) %>%
+    align(i = 2, j = NULL, align = "center", part = "header") %>%
+    align(part = "footer", align = "left", j = 1:3) %>%
+    border_remove()  %>%
+    hline_bottom(part = "body") %>%
+    hline_bottom(part = "header") %>%
+    hline(i=1, part="header")
+
+  save(print.tb, file=cache.file)
+
+}
+
+#' @export
+#' @rdname build-functions
+gfs_wave_3_build_fig_1 <- function(params){
+
+  focal.variable = params$focal.variable
+  dir = params$dir
+  file.primary = params$file.primary
+  fig.title = params$fig.title
+  res.dir = params$res.dir
+  cache.file = params$cache.file
+  start.time = params$start.time
+  include.estimates = params$include.estimates
+
+  fig.cap = fig.title
+  ALL.COUNTRIES <- c(
+    "Australia",
+    "Hong Kong",
+    "India",
+    "Indonesia",
+    "Japan",
+    "Philippines",
+    "Egypt",
+    "Germany",
+    "Israel",
+    "Kenya",
+    "Nigeria",
+    "Poland",
+    "South Africa",
+    "Spain",
+    "Sweden",
+    "Tanzania",
+    "Turkey",
+    "United Kingdom",
+    "United States",
+    "Argentina",
+    "Brazil",
+    "Mexico",
+    "China"
+  )
+
+  meta_res <- load_meta_result(
+    file = here::here(dir, file.primary),
+    predictor = focal.variable,
+    outcome = "COMPOSITE_FLOURISHING_SECURE_Y3",
+    #what = vec.col,
+    filter.var.out = "outcome",
+    filter.var.pred = "term"
+  )
+  meta_res <-  meta_res |>
+    filter(outcome == "COMPOSITE_FLOURISHING_SECURE_Y3")
+
+  # meta fit objects
+  fit <- meta_res$meta.rma[[1]]
+  plot_df <- meta_res$data[[1]]
+
+  # boring stuff for variable names...
+
+  p.title = fig.title
+  # identify countries omitted from meta-analysis
+  tmp.included.countries = ""
+  if("Country" %in% colnames(plot_df)){
+    tmp.included.countries <- plot_df$Country
+    tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
+    tmp.included.countries <- str_trim(tmp.included.countries, "both")
+    tmp.excluded.countries <- ALL.COUNTRIES[!(ALL.COUNTRIES %in% tmp.included.countries)]
+    tmp.excluded.countries <- ifelse(
+      !is_empty(tmp.excluded.countries),
+      paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
+      ""
+    )
+  }
+  xLab <- "Effect Size"
+
+  # make sure to use the (*)i variables in data so that the correct estimates are being plotted.\
+  # Noah: I switch the ordering to be by the overly conservative estimates with PC control
+  plot_df <- plot_df |>
+    mutate(
+      COUNTRY = factor(COUNTRY, levels = COUNTRY[order(meta_res$data[[1]]$yi, decreasing = FALSE)], ordered=TRUE),
+      est_lab = paste0(.round(yi), " (", .round(ci.lb.i), ", ", .round(ci.ub.i), ")")
+    )
+  # make sure bounds also contains 0
+  xlims <- c(min(plot_df$ci.lb.i) - .05,max(plot_df$ci.ub.i) + .05)
+  xlims[1] <- ifelse(xlims[1] > -0.05, -0.05, xlims[1])
+  xlims[2] <- ifelse(xlims[2] < 0.05, 0.05, xlims[2])
+
+  # DATA FOR PLOT
+  dat.below <- data.frame(
+    COUNTRY = c("Overall"),
+    yi = c(as.numeric(fit$b)),
+    ci.lb.i = c(as.numeric(fit$ci.lb)),
+    ci.ub.i = c(as.numeric(fit$ci.ub))
+  ) |>
+    mutate(
+      ci = paste0("(", .round(ci.lb.i), ",", .round(ci.ub.i), ")"),
+      CI = paste0(.round(yi), " ", ci)
+    )
+
+  p_mid <- plot_df |>
+    ggplot(aes(y = COUNTRY)) +
+    Rglobalflourishing:::.geom_stripes() +
+    geom_vline(xintercept = 0, linetype = "dashed", alpha = .5) +
+    geom_point(aes(x = yi),
+               size = 2) +
+    geom_linerange(aes(xmin = ci.lb.i, xmax = ci.ub.i)) +
+    #scale_color_manual(values = c("#a6cee3", "#1f78b4")) +
+    #scale_shape_manual(values = c(17,16)) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.ticks = element_blank(),
+      axis.title = element_blank(),
+      axis.text.y = element_text(),
+      axis.line.y = element_blank(),
+      axis.text.x = element_blank()
+    ) +
+    xlim(xlims)
+
+  p_right <- plot_df |>
+    ggplot(aes(y = COUNTRY)) +
+    geom_text(aes(x = 0, label = est_lab), hjust = 0.45) +
+    Rglobalflourishing:::.geom_stripes() +
+    theme_void()
+
+  p_below <- dat.below %>%
+    ggplot(aes(x = yi, y = COUNTRY)) +
+    geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
+    geom_point(aes(x = yi),
+               size = 3
+    ) +
+    geom_linerange(aes(xmin = ci.lb.i, xmax = ci.ub.i)) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.ticks.y = element_blank(),
+      axis.text.y = element_text(),
+      axis.line.y = element_blank(),
+    ) +
+    xlim(xlims) +
+    labs(x = xLab, y = NULL)
+
+  p_below_right <- dat.below |>
+    ggplot(aes(y = COUNTRY)) +
+    geom_text(aes(x = 0, label = CI), hjust = 0.45) +
+    theme_void()
+
+  ## plot without estimates
+
+  if(include.estimates){
+    ## plot with estimates
+    p <- (p_mid + plot_spacer() + p_right  +
+            plot_spacer() + plot_spacer() + plot_spacer()  +
+            p_below + plot_spacer() + p_below_right ) +
+      plot_layout(
+        byrow = TRUE,
+        widths = c(2, -0.1, 1),
+        heights = c(10, -0.75, 1)
+      )
+
+    # paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")
+    ggsave(
+      filename = here::here(res.dir,paste0("figure_",fig.num,"_SFI on ",focal.better.name,".pdf")),
+
+      plot = p, height = 6, width = 10, units = "in"
+    )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name,".png")),
+      plot = p, height = 6, width = 10, units = "in", dpi = 1000
+    )
+
+  } else {
+    p <- (p_mid / p_below / p_legend) +
+      plot_layout(heights = c(10, 1, 1))
+
+    # paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")
+    ggsave(
+      filename = here::here(res.dir,paste0("figure_",fig.num,"_SFI on ",focal.better.name,".pdf")),
+      plot = p, height = 6, width = 5, units = "in"
+    )
+    ggsave(
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name,".png")),
+      plot = p, height = 6, width = 5, units = "in", dpi = 1000
+    )
+  }
+
+  save(p, fig.cap, file=cache.file)
+}

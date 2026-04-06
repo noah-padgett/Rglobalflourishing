@@ -32,7 +32,8 @@ quickpred2(
   include = "",
   exclude = "",
   method = "pearson",
-  maxcor = 0.99
+  maxcor = 0.99,
+  check.cor.bounds.after.include = FALSE
 )
 
 .round(x, digits = 2)
@@ -44,9 +45,9 @@ quickpred2(
   data = NULL,
   stat = "identity",
   position = "identity",
-  ...,
   show.legend = NA,
-  inherit.aes = TRUE
+  inherit.aes = TRUE,
+  ...
 )
 
 .GeomStripes

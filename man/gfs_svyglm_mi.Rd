@@ -21,6 +21,7 @@ gfs_svyglm_mi(
   family = NULL,
   appnd.txt.to.filename = "",
   save.all = FALSE,
+  return.result = TRUE,
   ...
 )
 }
@@ -47,7 +48,7 @@ gfs_svyglm_mi(
 
 \item{appnd.txt.to.filename}{(optional) character string to help differentiate saved results file (default "")}
 
-\item{save.all}{(FALSE) logical of whether to save the fitted regression models from each imputed dataset (this is a double-checking feature and should generally be set to FALSE unless you plan to probe the individual regression models--see the methods paper for Wave 2 for example of it's used)}
+\item{return.result}{(logical) of where to directly return the country-specific results}
 
 \item{...}{other arguments passed to svyglm or glmrob functions}
 }

@@ -45,7 +45,7 @@ proportion_meaningful <- function(x, q = 0, above = TRUE, method = "empirical", 
 }
 #' @rdname compute_calibrated
 #' @export
-gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "normal", normal.q = 0.90, .exp=FALSE) {
+gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "normal", normal.q = 0.975, .exp=FALSE) {
   k <- length(x)
   out <- "[. , .]"
   ll <- NA
@@ -64,6 +64,26 @@ gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "no
       out <- paste0("[", .round(exp(lb)) ,", ", .round(exp(ub)),"]")
     }
   }
+  out
+}
+#' @rdname compute_calibrated
+#' @export
+gfs_prediction_interval_limits <- function(x, theta = 0, tau = 1, pred.int.method = "normal", normal.q = 0.975, .exp=FALSE, upper = TRUE) {
+  k <- length(x)
+  out <- "[. , .]"
+  ll <- NA
+  ub <- NA
+  if (pred.int.method == "empirical") {
+    lb <- min(x,na.rm=TRUE)
+    ub <- max(x,na.rm=TRUE)
+  }
+  if (pred.int.method == "normal") {
+    # follows from Matheur and VanderWeele (2017)
+    lb <- qnorm(1-normal.q, theta, tau)
+    ub <- qnorm(normal.q, theta, tau)
+  }
+  out <- ifelse(upper, ub, lb)
+  out <- ifelse(.exp, exp(out), out)
   out
 }
 #' @rdname compute_calibrated

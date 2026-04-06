@@ -11,7 +11,7 @@
 #' @export
 get_demo_childhood_variables <- function(...) {
   c(
-    "GENDER_Y1",
+    "GENDER",
     "MARITAL_STATUS_Y1",
     "EMPLOYMENT_Y1",
     "ATTEND_SVCS_Y1",
@@ -58,6 +58,7 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
       "BORN_COUNTRY",
       "REL2",
       'REGION1',
+      "URBAN_RURAL",
 
       'EDUCATION',
       "INCOME"
@@ -77,6 +78,91 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
       'SVCS_FATHER',
       'SVCS_MOTHER'
     )
+
+    VARS.Y0 <- c(
+        'AFTER_DEATH',
+        'APPROVE_GOVT',
+        'ATTEND_SVCS',
+        'BELIEVE_GOD',
+        'BELONGING',
+        'BODILY_PAIN',
+        'CAPABLE',
+        'CIGARETTES_BINARY',
+        'CLOSE_TO',
+        'COMFORT_REL',
+        'CONNECTED_REL',
+        'CONTENT',
+        'CONTROL_WORRY',
+        'CRITICAL',
+        'DAYS_EXERCISE',
+        'DEPRESSED',
+        'DISCRIMINATED',
+        'DONATED',
+        'DRINKS',
+        "EDUCATION_3",
+        'EMPLOYMENT',
+        'EXPECT_GOOD',
+        'EXPENSES',
+        'FEEL_ANXIOUS',
+        'FORGIVE',
+        'FREEDOM',
+        'GIVE_UP',
+        'GOD_PUNISH',
+        'GRATEFUL',
+        'GROUP_NOT_REL',
+        'HAPPY',
+        'HEALTH_PROB',
+        'HELP_STRANGER',
+        'HOPE_FUTURE',
+        'INCOME_QUINTILE',
+        'INCOME_DIFF',
+        'INCOME_FEELINGS',
+        'INTEREST',
+        'LIFE_APPROACH',
+        'LIFE_BALANCE',
+        'LIFE_PURPOSE',
+        'LIFE_SAT',
+        'LONELY',
+        'LOVED_BY_GOD',
+        'MENTAL_HEALTH',
+        'NUM_CHILDREN',
+        'NUM_HOUSEHOLD',
+        'OBEY_LAW',
+        'OUTSIDER',
+        'OWN_RENT_HOME',
+        'PEACE',
+        'PEOPLE_HELP',
+        'PHYSICAL_HLTH',
+        'PRAY_MEDITATE',
+        'PROMOTE_GOOD',
+        'REL_EXPERIENC',
+        'REL_IMPORTANT',
+        'SACRED_TEXTS',
+        'SAT_LIVE',
+        'SAT_RELATNSHP',
+        'SAY_IN_GOVT',
+        'SHOW_LOVE',
+        'SUFFERING',
+        'TELL_BELIEFS',
+        'THREAT_LIFE',
+        'TRAITS1',
+        'TRAITS2',
+        'TRAITS3',
+        'TRAITS4',
+        'TRAITS5',
+        'TRAITS6',
+        'TRAITS7',
+        'TRAITS8',
+        'TRAITS9',
+        'TRAITS10',
+        'TRUST_PEOPLE',
+        'URBAN_RURAL',
+        'VOLUNTEERED',
+        'WB_FIVEYRS',
+        'WB_TODAY',
+        'WORRY_SAFETY',
+        'WORTHWHILE'
+      )
 
     VARS.Y1 <- paste0(
       c(
@@ -242,6 +328,80 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
       "_Y2"
     )
 
+    VARS.Y3 <- paste0(
+      c(
+        'AFTER_DEATH',
+        'APPROVE_GOVT',
+        'ATTEND_SVCS',
+        'BELIEVE_GOD',
+        'BELONGING',
+        'BODILY_PAIN',
+        'CAPABLE',
+        'CIGARETTES_BINARY',
+        'CLOSE_TO',
+        'COMFORT_REL',
+        'CONNECTED_REL',
+        'CONTENT',
+        'CONTROL_WORRY',
+        'CRITICAL',
+        'DAYS_EXERCISE',
+        'DEPRESSED',
+        'DISCRIMINATED',
+        'DONATED',
+        'DRINKS',
+        'EDUCATION_3',
+        'EMPLOYMENT',
+        'EXPECT_GOOD',
+        'EXPENSES',
+        'FEEL_ANXIOUS',
+        'FORGIVE',
+        'FREEDOM',
+        'GIVE_UP',
+        'GOD_PUNISH',
+        'GRATEFUL',
+        'GROUP_NOT_REL',
+        'HAPPY',
+        'HEALTH_PROB',
+        'HELP_STRANGER',
+        'HOPE_FUTURE',
+        'INCOME_FEELINGS',
+        'INCOME_QUINTILE',
+        'INTEREST',
+        'LIFE_APPROACH',
+        'LIFE_BALANCE',
+        'LIFE_PURPOSE',
+        'LIFE_SAT',
+        'LONELY',
+        'LOVED_BY_GOD',
+        'MARITAL_STATUS_EVER_MARRIED',
+        'MARITAL_STATUS_DIVORCED',
+        'MENTAL_HEALTH',
+        'NUM_CHILDREN',
+        'OWN_RENT_HOME',
+        'PEACE',
+        'PEOPLE_HELP',
+        'PHYSICAL_HLTH',
+        'PRAY_MEDITATE',
+        'PROMOTE_GOOD',
+        'REL_EXPERIENC',
+        'SACRED_TEXTS',
+        'SAT_LIVE',
+        'SAT_RELATNSHP',
+        'SAY_IN_GOVT',
+        'SHOW_LOVE',
+        'SUFFERING',
+        'TELL_BELIEFS',
+        'THREAT_LIFE',
+        'TRUST_PEOPLE',
+        'VOLUNTEERED',
+        'WB_FIVEYRS',
+        'WB_TODAY',
+        'WORRY_SAFETY',
+        'WORTHWHILE'
+      ),
+      "_Y3"
+    )
+
   }
 
   ## ========================================================================= ##
@@ -316,51 +476,12 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
     COMPOSITE_NEUROTICISM = "mean"
   )
   COMPOSITE.VEC0 <- names(LIST.OUTCOME.COMPOSITES0)
+  names(COMPOSITE.VEC0) <- COMPOSITE.VEC0
   }
 
-  # Compoisites for waves 1 & 2 data (wide format)
+  # Composites for waves 1 & 2 data (wide format)
   {
   LIST.OUTCOME.COMPOSITES <- list(
-    COMPOSITE_DEPRESSION_Y2 = c("DEPRESSED_Y2", "INTEREST_Y2"),
-    COMPOSITE_ANXIETY_Y2 = c("FEEL_ANXIOUS_Y2", "CONTROL_WORRY_Y2"),
-    COMPOSITE_DEP_ANX_COMBO_Y2 = c(
-      "DEPRESSED_Y2",
-      "INTEREST_Y2",
-      "FEEL_ANXIOUS_Y2",
-      "CONTROL_WORRY_Y2"
-    ),
-    COMPOSITE_FLOURISHING_Y2 = c(
-      "LIFE_SAT_Y2",
-      "HAPPY_Y2",
-      "PHYSICAL_HLTH_Y2",
-      "MENTAL_HEALTH_Y2",
-      "WORTHWHILE_Y2",
-      "LIFE_PURPOSE_Y2",
-      "PROMOTE_GOOD_Y2",
-      "GIVE_UP_Y2",
-      "CONTENT_Y2",
-      "SAT_RELATNSHP_Y2"
-    ),
-    COMPOSITE_FLOURISHING_SECURE_Y2 = c(
-      "LIFE_SAT_Y2",
-      "HAPPY_Y2",
-      "PHYSICAL_HLTH_Y2",
-      "MENTAL_HEALTH_Y2",
-      "WORTHWHILE_Y2",
-      "LIFE_PURPOSE_Y2",
-      "PROMOTE_GOOD_Y2",
-      "GIVE_UP_Y2",
-      "CONTENT_Y2",
-      "SAT_RELATNSHP_Y2",
-      "EXPENSES_Y2",
-      "WORRY_SAFETY_Y2"
-    ),
-    COMPOSITE_HAPPI_LIFE_SAT_Y2 = c("HAPPY_Y2", "LIFE_SAT_Y2"),
-    COMPOSITE_HEALTH_Y2 = c("PHYSICAL_HLTH_Y2", "MENTAL_HEALTH_Y2"),
-    COMPOSITE_MEANING_PURPOSE_Y2 = c("LIFE_PURPOSE_Y2", "WORTHWHILE_Y2"),
-    COMPOSITE_CHARACTER_Y2 = c("PROMOTE_GOOD_Y2", "GIVE_UP_Y2"),
-    COMPOSITE_SUBJECTIVE_SOC_CONN_Y2 = c("CONTENT_Y2", "SAT_RELATNSHP_Y2"),
-    COMPOSITE_FINL_MAT_WORRY_Y2 = c("EXPENSES_Y2", "WORRY_SAFETY_Y2"),
 
     COMPOSITE_DEPRESSION_Y1 = c("DEPRESSED_Y1", "INTEREST_Y1"),
     COMPOSITE_ANXIETY_Y1 = c("FEEL_ANXIOUS_Y1", "CONTROL_WORRY_Y1"),
@@ -407,9 +528,105 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
     COMPOSITE_OPENNESS_Y1 = c("TRAITS5_Y1", "TRAITS10_Y1"),
     COMPOSITE_AGREEABLENESS_Y1 = c("TRAITS2_Y1", "TRAITS7_Y1"),
     COMPOSITE_CONSCIENTIOUSNESS_Y1 = c("TRAITS3_Y1", "TRAITS8_Y1"),
-    COMPOSITE_NEUROTICISM_Y1 = c("TRAITS4_Y1", "TRAITS9_Y1")
+    COMPOSITE_NEUROTICISM_Y1 = c("TRAITS4_Y1", "TRAITS9_Y1"),
+
+
+    COMPOSITE_DEPRESSION_Y2 = c("DEPRESSED_Y2", "INTEREST_Y2"),
+    COMPOSITE_ANXIETY_Y2 = c("FEEL_ANXIOUS_Y2", "CONTROL_WORRY_Y2"),
+    COMPOSITE_DEP_ANX_COMBO_Y2 = c(
+      "DEPRESSED_Y2",
+      "INTEREST_Y2",
+      "FEEL_ANXIOUS_Y2",
+      "CONTROL_WORRY_Y2"
+    ),
+    COMPOSITE_FLOURISHING_Y2 = c(
+      "LIFE_SAT_Y2",
+      "HAPPY_Y2",
+      "PHYSICAL_HLTH_Y2",
+      "MENTAL_HEALTH_Y2",
+      "WORTHWHILE_Y2",
+      "LIFE_PURPOSE_Y2",
+      "PROMOTE_GOOD_Y2",
+      "GIVE_UP_Y2",
+      "CONTENT_Y2",
+      "SAT_RELATNSHP_Y2"
+    ),
+    COMPOSITE_FLOURISHING_SECURE_Y2 = c(
+      "LIFE_SAT_Y2",
+      "HAPPY_Y2",
+      "PHYSICAL_HLTH_Y2",
+      "MENTAL_HEALTH_Y2",
+      "WORTHWHILE_Y2",
+      "LIFE_PURPOSE_Y2",
+      "PROMOTE_GOOD_Y2",
+      "GIVE_UP_Y2",
+      "CONTENT_Y2",
+      "SAT_RELATNSHP_Y2",
+      "EXPENSES_Y2",
+      "WORRY_SAFETY_Y2"
+    ),
+    COMPOSITE_HAPPI_LIFE_SAT_Y2 = c("HAPPY_Y2", "LIFE_SAT_Y2"),
+    COMPOSITE_HEALTH_Y2 = c("PHYSICAL_HLTH_Y2", "MENTAL_HEALTH_Y2"),
+    COMPOSITE_MEANING_PURPOSE_Y2 = c("LIFE_PURPOSE_Y2", "WORTHWHILE_Y2"),
+    COMPOSITE_CHARACTER_Y2 = c("PROMOTE_GOOD_Y2", "GIVE_UP_Y2"),
+    COMPOSITE_SUBJECTIVE_SOC_CONN_Y2 = c("CONTENT_Y2", "SAT_RELATNSHP_Y2"),
+    COMPOSITE_FINL_MAT_WORRY_Y2 = c("EXPENSES_Y2", "WORRY_SAFETY_Y2"),
+
+    COMPOSITE_DEPRESSION_Y3 = c("DEPRESSED_Y3", "INTEREST_Y3"),
+    COMPOSITE_ANXIETY_Y3 = c("FEEL_ANXIOUS_Y3", "CONTROL_WORRY_Y3"),
+    COMPOSITE_DEP_ANX_COMBO_Y3 = c(
+      "DEPRESSED_Y3",
+      "INTEREST_Y3",
+      "FEEL_ANXIOUS_Y3",
+      "CONTROL_WORRY_Y3"
+    ),
+    COMPOSITE_FLOURISHING_Y3 = c(
+      "LIFE_SAT_Y3",
+      "HAPPY_Y3",
+      "PHYSICAL_HLTH_Y3",
+      "MENTAL_HEALTH_Y3",
+      "WORTHWHILE_Y3",
+      "LIFE_PURPOSE_Y3",
+      "PROMOTE_GOOD_Y3",
+      "GIVE_UP_Y3",
+      "CONTENT_Y3",
+      "SAT_RELATNSHP_Y3"
+    ),
+    COMPOSITE_FLOURISHING_SECURE_Y3 = c(
+      "LIFE_SAT_Y3",
+      "HAPPY_Y3",
+      "PHYSICAL_HLTH_Y3",
+      "MENTAL_HEALTH_Y3",
+      "WORTHWHILE_Y3",
+      "LIFE_PURPOSE_Y3",
+      "PROMOTE_GOOD_Y3",
+      "GIVE_UP_Y3",
+      "CONTENT_Y3",
+      "SAT_RELATNSHP_Y3",
+      "EXPENSES_Y3",
+      "WORRY_SAFETY_Y3"
+    ),
+    COMPOSITE_HAPPI_LIFE_SAT_Y3 = c("HAPPY_Y3", "LIFE_SAT_Y3"),
+    COMPOSITE_HEALTH_Y3 = c("PHYSICAL_HLTH_Y3", "MENTAL_HEALTH_Y3"),
+    COMPOSITE_MEANING_PURPOSE_Y3 = c("LIFE_PURPOSE_Y3", "WORTHWHILE_Y3"),
+    COMPOSITE_CHARACTER_Y3 = c("PROMOTE_GOOD_Y3", "GIVE_UP_Y3"),
+    COMPOSITE_SUBJECTIVE_SOC_CONN_Y3 = c("CONTENT_Y3", "SAT_RELATNSHP_Y3"),
+    COMPOSITE_FINL_MAT_WORRY_Y3 = c("EXPENSES_Y3", "WORRY_SAFETY_Y3")
   )
   LIST.COMPOSITE.COMBINE.METHOD <- list(
+    COMPOSITE_DEPRESSION_Y3 = "sum",
+    COMPOSITE_ANXIETY_Y3 = "sum",
+    COMPOSITE_DEP_ANX_COMBO_Y3 = "sum",
+    COMPOSITE_FLOURISHING_Y3 = "mean",
+    COMPOSITE_FLOURISHING_SECURE_Y3 = "mean",
+    COMPOSITE_HAPPI_LIFE_SAT_Y3 = "mean",
+    COMPOSITE_HEALTH_Y3 = "mean",
+    COMPOSITE_MEANING_PURPOSE_Y3 = "mean",
+    COMPOSITE_CHARACTER_Y3 = "mean",
+    COMPOSITE_SUBJECTIVE_SOC_CONN_Y3 = "mean",
+    COMPOSITE_FINL_MAT_WORRY_Y3 = "mean",
+
+
     COMPOSITE_DEPRESSION_Y2 = "sum",
     COMPOSITE_ANXIETY_Y2 = "sum",
     COMPOSITE_DEP_ANX_COMBO_Y2 = "sum",
@@ -441,6 +658,7 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
     COMPOSITE_NEUROTICISM_Y1 = "mean"
   )
   COMPOSITE.VEC <- names(LIST.OUTCOME.COMPOSITES)
+  names(COMPOSITE.VEC) <- COMPOSITE.VEC
   }
 
   LIST.COMPOSITES <- list(
@@ -457,12 +675,18 @@ get_variable_codes <- function(what = "all", appnd="", ...) {
     LIST.COMPOSITES = LIST.COMPOSITES,
     VARS.Y1 = c(VARS.Y1, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y1")]),
     VARS.Y2 = c(VARS.Y2, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y2")]),
-    VARS0 = str_remove(c(VARS.Y1), "_Y1"),
+    VARS.Y3 = c(VARS.Y3, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y3")]),
+    VARS0 = c(VARS.Y0),
     OUTCOME.VEC = str_remove(c(VARS.Y1, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y1")]), "_Y1"),
+    VARIABLES.VEC = str_remove(c(VARS.Y3, COMPOSITE.VEC[str_detect(COMPOSITE.VEC, "_Y3")]), "_Y3"),
     GENDER.RACE = paste0(DEMOGRAPHIC.VARS[c(1:2)], appnd),
     DEMOGRAPHIC.VARS = paste0(DEMOGRAPHIC.VARS[-c(1:2)], appnd),
     RETROSPECTIVE.VARS = paste0(RETROSPECTIVE.VARS, appnd)
   )
   what = ifelse(what == "all", c(names(out)), what)
-  out[[what]]
+  if(what == "all"){
+    return(out)
+  } else {
+    return(out[[what]])
+  }
 }

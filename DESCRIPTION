@@ -2,7 +2,7 @@ Type: Package
 Package: Rglobalflourishing
 Title: Combined Analysis Workflow for the Global Flourishing Study Core
     Team
-Version: 0.2.2
+Version: 0.3.0
 Authors@R: c(
     person("Noah", "Padgett", , "npadgett@hsph.harvard.edu", role = c("aut", "cre")),
     person("Chris", "Felton", , "chris_felton@baylor.edu", role = c("aut", "ctb")),

@@ -9,6 +9,7 @@ gfs_meta_forest_plot(
   better.name = NULL,
   p.subtitle = "GFS Forest Plot",
   p.title = NULL,
+  include.influence = TRUE,
   ...
 )
 }
@@ -20,6 +21,8 @@ gfs_meta_forest_plot(
 \item{p.subtitle}{a string passed to subtitle of the forest plot.}
 
 \item{p.title}{a string passed to title of the forest plot}
+
+\item{include.influence}{a TRUE/FALSE indicating where the plot should include the fit statistics}
 
 \item{...}{additional arguments as needed}
 }

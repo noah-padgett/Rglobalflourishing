@@ -57,7 +57,15 @@ append_pc_to_df <- function(data, var = NULL, std = FALSE) {
     df.pc <- df.pc %>%
       mutate(across(everything(), \(x) scale(x)))
   }
-  df <- cbind(df.x, df.pc)
+  nx <- nrow(df.x)
+  np <- nrow(df.pc)
+  if(nx == np){
+    df <- cbind(df.x, df.pc)
+  } else {
+    p
+    df <- df.pc
+  }
+
   if (is.survey) {
   	# append PCs to "variables" component of survey object
   	df.svy[['variables']] <- df
@@ -100,4 +108,18 @@ get_eigenvalues <- function(data, var, cor = FALSE) {
     fit.cov.eigen <- eigen(stats::cov2cor(fit.cov))
   }
   fit.cov.eigen$values
+}
+
+#' @export
+get_pca_summary <- function(fit, imp.strata){
+  fit %>% ungroup() %>%
+    select(imp_num, fit.pca.summary) %>%
+    unnest(c(fit.pca.summary)) %>%
+    group_by({{imp.strata}}, PC) %>%
+    summarise(
+      pc.var = mean(pc.var, na.rm=TRUE),
+      prop.var = mean(prop.var, na.rm=TRUE),
+      prop.sum = mean(prop.sum, na.rm=TRUE),
+      Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
+    )
 }

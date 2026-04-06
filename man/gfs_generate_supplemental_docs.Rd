@@ -37,7 +37,8 @@ gfs_generate_supplemental_docs(
   fig.num.start = 0,
   tb.start.num = NULL,
   digits = 2,
-  replace.cntry.file.start = NULL
+  replace.cntry.file.start = NULL,
+  file.cor = "0_meta_analyzed_cor.rds"
 )
 }
 \arguments{

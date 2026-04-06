@@ -8,11 +8,10 @@ gfs_get_labelled_raw_data(
   file,
   list.composites = NULL,
   wave = 2,
-  method.income = "quintiles.top.random",
+  method.income = "quintiles.num.fixed",
   wgt = "ANNUAL_WEIGHT_R2",
   strata = "STRATA",
   psu = "PSU",
-  data.is.long = FALSE,
   reverse.code.cont = FALSE,
   to.numeric = FALSE,
   ...
@@ -32,8 +31,6 @@ gfs_get_labelled_raw_data(
 \item{to.numeric}{(optional) FALSE}
 
 \item{...}{other arguments}
-
-\item{data.is.wide}{(FALSE) change to TRUE only if the data are in long format}
 }
 \value{
 a dataset with attrition weights appended

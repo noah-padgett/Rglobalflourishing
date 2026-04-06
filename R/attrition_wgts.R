@@ -57,17 +57,13 @@ fit_attrition_model <- function(data, obs.id.var = NULL, attr.pred = NULL, robus
     as_survey_design(
       ids = {{psu}},
       strata = {{strata}},
-      weights = {{wgt}},
-      calibrate.formula = ~1
+      weights = {{wgt}}
     )
-
-  cur.country <- data$COUNTRY2[1]
-  cur.country <- stringr::str_remove_all(str_replace(cur.country, "\n", "_"), "_")
-  cur.imp <- data$.imp2[1]
 
   keep.var <- keep_variable(attr.pred, svy.data[["variables"]], reason = "any")
 
   mod.form <- stats::reformulate(attr.pred[keep.var], response = obs.id.var)
+
 
   if (robust) {
     svy.data <- tmp.data
@@ -109,17 +105,33 @@ create_attr_wgts <- function(fit, obs.id.var = NULL, stabilized = TRUE, wgt.trim
   if (is.null(obs.id.var)) {
     obs.id.var = "CASE_OBSERVED_Y2"
   }
+  w0 = str_sub(wgt, -2,-1)
   if (is.null(composite.wgt.name)){
-    composite.wgt.name = as.name("SAMP.ATTR.WGT")
+    composite.wgt.name = as.name(paste0("SAMP_ATTR_WGT_",w0))
+  } else {
+    composite.wgt.name = as.name(composite.wgt.name)
   }
   if (is.null(attr.wgt.name)){
-    attr.wgt.name = as.name("ATTR.WGT")
+    attr.wgt.name = as.name(paste0("ATTR_WGT_",w0))
+  } else {
+    attr.wgt.name = as.name(attr.wgt.name)
   }
   # extract data
   data <- fit$data
   svy.data <- fit$survey.design
 
-  wgts <- stats::predict(fit, newdata=svy.data, type = "response")
+  wgts <- NULL
+  try({
+    wgts <- stats::predict(fit, newdata=svy.data, type = "response", se.fit = FALSE, vcov = FALSE)
+  })
+  ## NEW MORE ROBUST WAY TO GET FITTED "RESPONSE" IF THE ABOVE FAILS
+  ## this does not throw an error when a random coefficient is NA
+  if(is.null(wgts)){
+    wgts <- stats::predict(fit, newdata=svy.data, type = "terms", se.fit = FALSE, vcov = FALSE)
+    wgts <- rowSums(wgts, na.rm = TRUE)
+    wgts <- exp(wgts)/(1+exp(wgts))
+  }
+  ##
   wgts <- as.numeric(wgts)
   wgts <- case_when(
     wgts < 0.001 ~ 0.001,
@@ -180,13 +192,19 @@ create_attr_wgts <- function(fit, obs.id.var = NULL, stabilized = TRUE, wgt.trim
 #' TO-DO
 #'
 #' @export
-run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", attr.wgt.name = NULL, pooled.wgt = NULL, composite.wgt.name = NULL,...) {
+run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", attr.wgt.name = NULL, pooled.wgt = NULL, composite.wgt.name = NULL, appnd.txt ="", parallel = FALSE, num_cores = 1, dir.attr = "results-attr", save.fit = FALSE, ...) {
+  w0 = str_sub(wgt, -2,-1)
   if(is.null(pooled.wgt)){
-    pooled.wgt = as.name("AVG.SAMP.ATTR.WGT")
+    pooled.wgt = as.name(paste0("AVG_SAMP_ATTR_WGT_", w0))
+  } else {
+    pooled.wgt = as.name(pooled.wgt)
   }
   if (is.null(composite.wgt.name)){
-    composite.wgt.name = as.name("SAMP.ATTR.WGT")
+    composite.wgt.name = as.name(paste0("SAMP_ATTR_WGT_",w0))
+  } else {
+    composite.wgt.name = as.name(composite.wgt.name)
   }
+  wgt.nm <- as.name(wgt)
 
   # get list of files in data.dir
   df.files <- list.files(data.dir)
@@ -197,42 +215,129 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
     unique() |>
     sort()
 
-  if (!dir.exists(here("results-attr"))) dir.create(here::here("results-attr"))
+  if (!dir.exists(here(dir.attr))) dir.create(here::here(dir.attr))
 
-  x <- country.vec[1]
-  walk(country.vec, \(x){
-    tmp.files <- df.files[str_detect(df.files,x)]
-    y <- tmp.files[1]
-    df.attr <- map(tmp.files, \(y){
+  x <- country.vec[5]
+  if(parallel){
+    plan("multisession", workers = num_cores)
+    with_progress({
+      p <- progressor(along = country.vec, offset = 1)
+      furrr::future_walk(country.vec, \(x){
+        library(Rglobalflourishing)
+        load_packages()
+        options(survey.lonely.psu = "certainty")
 
-      df.tmp <- readr::read_rds(here::here(data.dir, y))
-      df.tmp %>%
-        dplyr::group_by(COUNTRY, .imp) %>%
-        tidyr::nest() %>%
-        dplyr::mutate(
-          fit.attr = purrr::map(data, \(tmp.dat){
-            fit_attrition_model(tmp.dat,...)
-          }),
-          data = map(fit.attr, \(x){
-            create_attr_wgts(x,...)
-          })
-        )
-    	}) |>
-    	bind_rows()
+        tmp.files <- df.files[str_detect(df.files,x)]
+        y <- tmp.files[1]
+        df.attr <- map(tmp.files, \(y){
+          #print(y)
+          df.tmp <- readr::read_rds(here::here(data.dir, y))
+          df.tmp %>%
+            dplyr::group_by(COUNTRY, .imp) %>%
+            tidyr::nest() %>%
+            dplyr::mutate(
+              data = map(data, \(x){
+                x |>
+                  mutate(
+                    "{{wgt.nm}}" := case_when(
+                      is.na({{wgt.nm}}) ~ 0, .default = {{wgt.nm}}
+                    )
+                  )
+              }),
+              fit.attr = purrr::map(data, \(tmp.dat){
+                fit_attrition_model(data = tmp.dat, wgt = wgt, ...) # obs.id.var = obs.id.var,attr.pred = attr.pred,wgt = wgt) #
+              }),
+              data = map(fit.attr, \(x){
+                create_attr_wgts(x, wgt = wgt,
+                                 composite.wgt.name = composite.wgt.name,
+                                 attr.wgt.name = attr.wgt.name, ...) #obs.id.var =obs.id.var,stabilized = TRUE,wgt = wgt)
+              })
+            )
+        }) |>
+          bind_rows()
 
-    df.wgts <- df.attr %>%
-      select(COUNTRY, .imp, data) %>%
-      tidyr::unnest(c(data)) %>%
-      group_by(COUNTRY, ID) %>%
-      mutate(
-        "{{pooled.wgt}}" := mean({{composite.wgt.name}}, na.rm=TRUE)
-      ) %>%
-      ungroup() %>%
-      select(ID, COUNTRY, .imp, PSU, STRATA, contains("WGT"))
+        df.wgts <- df.attr %>%
+          select(COUNTRY, .imp, data) %>%
+          tidyr::unnest(c(data)) %>%
+          group_by(COUNTRY, ID) %>%
+          mutate(
+            "{{pooled.wgt}}" := mean({{composite.wgt.name}}, na.rm=TRUE)
+          ) %>%
+          ungroup() %>%
+          select(ID, COUNTRY, .imp, PSU, STRATA, contains("WGT"))
 
-    myfile = paste0(x, " fitted attrition model.RData")
-    save(df.attr, df.wgts , file = here::here("results-attr", myfile))
+        myfile = paste0(x, " fitted attrition model",appnd.txt,".RData")
+
+
+        ## OPTIONAL: save the fitted logistic regression models for summarizing
+        ## Note: will be done for the flagship paper and as requested.
+        if(save.fit){
+          save(df.attr, df.wgts , file = here::here(dir.attr, myfile))
+        } else {
+          save(df.wgts , file = here::here(dir.attr, myfile))
+        }
+
+
+
+        p(sprintf("x= %s", x))
+      })
+    })
+    future::resetWorkers(plan())
+  } else{
+    with_progress({
+    p <- progressor(along = country.vec)
+    walk(country.vec, \(x){
+      tmp.files <- df.files[str_detect(df.files,x)]
+      y <- tmp.files[1]
+      df.attr <- map(tmp.files, \(y){
+        #print(y)
+        df.tmp <- readr::read_rds(here::here(data.dir, y))
+        df.tmp %>%
+          dplyr::group_by(COUNTRY, .imp) %>%
+          tidyr::nest() %>%
+          dplyr::mutate(
+            data = map(data, \(x){
+              x |>
+                mutate(
+                "{{wgt.nm}}" := case_when(
+                  is.na({{wgt.nm}}) ~ 0, .default = {{wgt.nm}}
+                )
+              )
+            }),
+            fit.attr = purrr::map(data, \(tmp.dat){
+              fit_attrition_model(data = tmp.dat, wgt = wgt, ...) # obs.id.var = obs.id.var,attr.pred = attr.pred,wgt = wgt) #
+            }),
+            data = map(fit.attr, \(x){
+              create_attr_wgts(x, wgt = wgt, ...) #obs.id.var =obs.id.var,stabilized = TRUE,wgt = wgt)
+            })
+          )
+      	}) |>
+      	bind_rows()
+      print(colnames(df.attr$data[[1]]))
+
+      df.wgts <- df.attr %>%
+        select(COUNTRY, .imp, data) %>%
+        tidyr::unnest(c(data)) %>%
+        group_by(COUNTRY, ID) %>%
+        mutate(
+          "{{pooled.wgt}}" := mean({{composite.wgt.name}}, na.rm=TRUE)
+        ) %>%
+        ungroup() %>%
+        select(ID, COUNTRY, .imp, PSU, STRATA, contains("WGT"))
+
+      myfile = paste0(x, " fitted attrition model",appnd.txt,".RData")
+      ## OPTIONAL: save the fitted logistic regression models for summarizing
+      ## Note: will be done for the flagship paper and as requested.
+      if(save.fit){
+        save(df.attr, df.wgts , file = here::here(dir.attr, myfile))
+      } else {
+        save(df.wgts , file = here::here(dir.attr, myfile))
+      }
+
+      p(sprintf("x= %s", x))
+    })
   })
+  }
 }
 
 
@@ -254,14 +359,14 @@ run_attrition_model_by_country <- function(data.dir, wgt = "ANNUAL_WEIGHT_R2", a
 #' TO-DO
 #'
 #' @export
-append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.name = NULL, attr.wgt.name = NULL, wgt = NULL, strata = NULL, psu = NULL, wave = "W2"){
+append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.name = NULL, attr.wgt.name = NULL, wgt = NULL, strata = NULL, psu = NULL, wave = "W2", appnd.txt=""){
   if (is.null(composite.wgt.name)) {
-    composite.wgt.name = as.name("AVG.SAMP.ATTR.WGT")
+    composite.wgt.name = as.name("AVG_SAMP_ATTR_WGT")
   } else {
     composite.wgt.name = as.name(composite.wgt.name)
   }
   if (is.null(attr.wgt.name)) {
-    attr.wgt.name = as.name("ATTR.WGT")
+    attr.wgt.name = as.name("ATTR_WGT")
   } else {
     attr.wgt.name = as.name(attr.wgt.name)
   }
@@ -277,6 +382,9 @@ append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.n
 
   # get country specific files
   attr.wgt.file <- list.files("results-attr")
+  if(appnd.txt != ""){
+    attr.wgt.file <- attr.wgt.file[str_detect(attr.wgt.file, appnd.txt)]
+  }
   names(attr.wgt.file) <- str_split_i(attr.wgt.file, " fitted", 1)
   # subset to only this specific country
   #attr.wgt.file <- attr.wgt.file[str_detect(attr.wgt.file, country)]
@@ -288,7 +396,8 @@ append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.n
       filter(.imp == 1) %>%
       select(ID, COUNTRY, {{psu}}, {{strata}}, {{attr.wgt.name}}, {{composite.wgt.name}})
   }) |> bind_rows()
-  data <- left_join(data, saved_attr_wgts)
+
+  data <- left_join(data, saved_attr_wgts, by = c("COUNTRY", "ID", "STRATA", "PSU"))
 
   data
 }
@@ -308,27 +417,44 @@ append_attrition_weights_to_df <- function(data, country = NULL, composite.wgt.n
 #' TO-DO
 #'
 #' @export
-append_attr_wgts_to_imp_data <- function(data.dir, attr.dir){
+append_attr_wgts_to_imp_data <- function(data.dir, attr.dir, appnd.txt="", parallel = FALSE, num_cores = 1){
 	# get list of files in data.dir
 	df.files <- list.files(data.dir)
 	df.files <- df.files[str_detect(df.files, "recoded_imputed_data_obj")]
 	attr.dir <- here(attr.dir)
-	plan("multisession", workers = availableCores(constraints = "connections"))
-	with_progress({
-	  p <- progressor(along = df.files)
-	  furrr::future_walk(df.files, \(x){
-	  load_packages()
-		df.tmp <- readr::read_rds(here::here(data.dir, x))
-		cur.country <- str_remove(x, "recoded_imputed_data_obj_") |>
-			stringr::word(1, sep = "\\_imp")
-		attr.file <- paste0(cur.country, " fitted attrition model.RData")
-		load(here::here(attr.dir, attr.file), env.attr <- new.env())
-		df.tmp <- left_join(df.tmp, env.attr$df.wgts)
-		readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
-		rm(df.tmp)
-		gc()
-		p(sprintf("x= %s", x))
-	  },.options = furrr_options(seed = TRUE))
-	})
-	future::resetWorkers(plan())
+	if(parallel){
+	  plan("multisession", workers = num_cores)
+	  with_progress({
+	    p <- progressor(along = df.files)
+	    furrr::future_walk(df.files, \(x){
+	      load_packages()
+	      df.tmp <- readr::read_rds(here::here(data.dir, x))
+	      cur.country <- str_remove(x, "recoded_imputed_data_obj_") |>
+	        stringr::word(1, sep = "\\_imp")
+	      attr.file <- paste0(cur.country, " fitted attrition model",appnd.txt,".RData")
+	      load(here::here(attr.dir, attr.file), env.attr <- new.env())
+	      df.tmp <- left_join(df.tmp, env.attr$df.wgts, by = c("COUNTRY", "ID", "STRATA", "PSU"))
+	      readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
+	      rm(df.tmp)
+	      gc()
+	      p(sprintf("x= %s", x))
+	    },.options = furrr_options(seed = TRUE))
+	  })
+	  future::resetWorkers(plan())
+	} else {
+	  with_progress({
+	    p <- progressor(along = df.files)
+	    walk(df.files, \(x){
+	      df.tmp <- readr::read_rds(here::here(data.dir, x))
+	      cur.country <- str_remove(x, "recoded_imputed_data_obj_") |>
+	        stringr::word(1, sep = "\\_imp")
+	      attr.file <- paste0(cur.country, " fitted attrition model",appnd.txt,".RData")
+	      load(here::here(attr.dir, attr.file), env.attr <- new.env())
+	      df.tmp <- left_join(df.tmp, env.attr$df.wgts, by = c("COUNTRY", "ID", "STRATA", "PSU"))
+	      readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
+	      p(sprintf("x= %s", x))
+	    })
+	  })
+	}
+
 }

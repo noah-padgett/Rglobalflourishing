@@ -184,8 +184,8 @@ theme_meta_outcome_wide <- function(xtb, pg.width = 9, .ncol = 12) {
 theme_meta_main_wave_3 <- function(xtb, pg.width = 6.5, study = "exposure") {
 
   ncol = case_when(
-    str_detect(str_to_lower(study), "exposure") ~ 8,
-    str_detect(str_to_lower(study), "outcome") ~ 9
+    str_detect(str_to_lower(study), "exposure") ~ 7,
+    str_detect(str_to_lower(study), "outcome") ~ 8
   )
 
   tb.temp <- xtb %>%
@@ -198,11 +198,17 @@ theme_meta_main_wave_3 <- function(xtb, pg.width = 6.5, study = "exposure") {
     align(align = "right", part = "all") %>%
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all")  %>%
-    width(j=1,width=2.25)%>%
+    width(j=1,width=2.33)%>%
     width(j=c(2),width=0.4)%>%
     width(j=c(3:(ncol-2)),width=0.8)%>%
     width(j=c(ncol-1),width=0.5)%>%
     width(j=c(ncol),width=0.9)
+
+  if(str_detect(str_to_lower(study), "outcome")){
+    tb.temp <- tb.temp |>
+      width(j=c(3),width=0.4)
+
+  }
 
   tb.temp <-
     width(tb.temp,
@@ -211,12 +217,12 @@ theme_meta_main_wave_3 <- function(xtb, pg.width = 6.5, study = "exposure") {
 
   tb.temp <- tb.temp %>%
     align(i = 2, j = NULL, align = "center", part = "header") %>%
-    align(part = "footer", align = "left", j = 1:.ncol) %>%
+    align(part = "footer", align = "left", j = 1:ncol) %>%
     border_remove()  %>%
     hline_bottom(part = "body") %>%
     #hline_top(part = "header") %>%
     hline_bottom(part = "header") %>%
-    hline(i=2,j=c((ncol-4):ncol), part="header") %>%
+    hline(i=2,j=c((ncol-3):ncol), part="header") %>%
     hline(i=1, part="header")
 
   tb.temp

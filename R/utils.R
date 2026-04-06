@@ -113,7 +113,7 @@ keep_variable <- function(x, data, reason = "variance") {
 #' @return a predictor matrix for use in mice
 #' @rdname utils
 #' @export
-quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "", method = "pearson", maxcor = 0.99) {
+quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "", method = "pearson", maxcor = 0.99, check.cor.bounds.after.include=FALSE) {
   # ` functions copied from mice package to ensure that the above quickpred works... (https://github.com/amices/mice/blob/master/R/check.R)
   check.dataform <- function(data) {
     if (!(is.matrix(data) || is.data.frame(data))) {
@@ -171,10 +171,15 @@ quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "
   p <- mice::md.pairs(data)
   puc <- p$mr / (p$mr + p$mm)
   predictorMatrix[puc < minpuc] <- 0
-  yz <- pmatch(exclude, names(data))
-  predictorMatrix[, yz] <- 0
   yz <- pmatch(include, names(data))
   predictorMatrix[, yz] <- 1
+  if(check.cor.bounds.after.include){
+    predictorMatrix[maxc < mincor] <- 0
+    predictorMatrix[maxc > mincor] <- 1
+    predictorMatrix[maxc > maxcor] <- 0
+  }
+  yz <- pmatch(exclude, names(data))
+  predictorMatrix[, yz] <- 0
   diag(predictorMatrix) <- 0
   predictorMatrix[colSums(!r) == 0, ] <- 0
   predictorMatrix
@@ -278,9 +283,11 @@ theme_Publication <- function(base_size=14) {
 }
 
 #' @export
-load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
+load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL, filter.var.pred = "FOCAL_PREDICTOR", filter.var.out = "OUTCOME") {
   # Use local() to limit the scope of the loaded object
   local({
+    filter.var.pred = as.name(filter.var.pred)
+    filter.var.out <- as.name(filter.var.out)
     # Load the RDS file
     data <- readRDS(file)
 
@@ -288,16 +295,16 @@ load_meta_result <- function(file, predictor=NULL, outcome=NULL, what = NULL) {
     		what <- colnames(data)
     }
     if(is.null(predictor)){
-    	  predictor = unique(data$FOCAL_PREDICTOR)
+    	  predictor = unique(data[[as.character({{filter.var.pred}})]])
     }
     if(is.null(outcome)){
-    	  outcome = unique(data$OUTCOME)
+    	  outcome = unique(data[[as.character({{filter.var.out}})]])
     }
 
     data <- data %>%
     		ungroup() %>%
-    		dplyr::filter(OUTCOME %in% outcome) %>%
-    		dplyr::filter(FOCAL_PREDICTOR %in% predictor) %>%
+    		dplyr::filter({{filter.var.out}} %in% outcome) %>%
+    		dplyr::filter({{filter.var.pred}} %in% predictor) %>%
     		dplyr::select(any_of(what))
 
     # Return the processed data
@@ -344,7 +351,7 @@ get_country_specific_cor <- function(res.dir, country, predictor, outcome, appnd
 }
 
 #' @export
-construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictors, appnd.txt="") {
+construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictors, appnd.txt="", what = metainput) {
   local({
     res.dir <- here::here(res.dir)
     tmp.list <- list()
@@ -352,13 +359,43 @@ construct_meta_input_from_saved_results <- function(res.dir, outcomes, predictor
       for (your.pred in predictors) {
         try({
           load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
-          tmp.list[[paste0(your.outcome, "_", your.pred)]] <- metainput
+          tmp.list[[paste0(your.outcome, "_", your.pred)]] <- {{what}}
         })
       }
     }
     return(tmp.list)
   })
 }
+
+
+#' @export
+get_saved_results <- function(res.dir, outcomes, predictors, appnd.txt="", what = metainput) {
+  local({
+    res.dir <- here::here(res.dir)
+    tmp.list <- list()
+    your.pred <- predictors[1]
+    your.outcome <- outcomes[1]
+    for (your.outcome in outcomes) {
+      for (your.pred in predictors) {
+        try({
+          load(here::here(res.dir, paste0(your.pred, "_regressed_on_", your.outcome, "_saved_results",appnd.txt,".RData")))
+          if(str_detect(what, "output")){
+            tmp.list[[paste0(your.outcome, "_", your.pred)]] <- output
+          } else if(str_detect(what, "metainput")){
+            tmp.list[[paste0(your.outcome, "_", your.pred)]] <- metainput
+          } else if(str_detect(what, "fitted.reg")){
+            tmp.list[[paste0(your.outcome, "_", your.pred)]] <- fitted.reg.models
+          } else if(str_detect(what, "cor.output")){
+            tmp.list[[paste0(your.outcome, "_", your.pred)]] <- cor.output
+          }
+
+        })
+      }
+    }
+    return(tmp.list)
+  })
+}
+
 
 #' @export
 get_country_specific_output <- function(res.dir, outcomes, predictors, appnd.txt="",replace.cntry.file.start=NULL, keep.terms = NULL) {
@@ -631,3 +668,144 @@ mixedsort <- function (x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE
                     roman.case = roman.case, scientific = scientific)
   x[ord]
 }
+
+#' identify if predictor/outcome/country combination is valid
+#' @keywords internal
+.check_if_valid_comb <- function(cur.country, your.outcome, your.pred, covariates, country.subset=NULL){
+  out <- TRUE
+  # combinations of outcomes/predictors known to lead to issues such as 100% within country,
+  # zero change from wave 1, or zero variation in outcome within country
+  if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
+    if(cur.country %in% c("China","Egypt") ){
+      out <- FALSE & out
+    }
+  }
+  if (str_detect(your.outcome,"ABUSED") | str_detect(your.pred,"ABUSED")) {
+
+    if(cur.country %in% c("Israel") ){
+      out <- FALSE & out
+    }
+
+  }
+  if(str_detect(your.outcome,"BELIEVE_GOD") | str_detect(your.pred,"BELIEVE_GOD")| str_detect(your.pred,"HIGH_DRINKS")) {
+    if(cur.country %in% c("Egypt") ){
+      out <- FALSE & out
+    }
+  }
+  if (str_detect(your.outcome,"BELONGING") | str_detect(your.pred,"BELONGING")) {
+    if(cur.country %in% c("China") ){
+      out <- FALSE & out
+    }
+  }
+  if (str_detect(your.outcome, "EDUCATION_3")){
+    if(cur.country %in% c("China")){
+      out <- TRUE & out
+      # update covariates to EXCLUDE education wave 1
+      # not enough time has passed from wave 1 to wave 2 for education to change
+      #covariates <- covariates[covariates != "COV_EDUCATION_3_Y1"]
+    }
+  }
+  if (str_detect(your.outcome,"SAY_IN_GOVT") | str_detect(your.pred,"SAY_IN_GOVT")) {
+    if(cur.country %in% c("China") ){
+      out <- FALSE & out
+    }
+  }
+  if (str_detect(your.outcome,"COVID_DEATH") | str_detect(your.pred,"COVID_DEATH")) {
+    if(cur.country %in% c("China") ){
+      out <- FALSE & out
+    }
+  }
+  ## check if country is in included country vec
+  if(!is.null(country.subset)){
+    if (cur.country %in% country.subset){
+      out <- FALSE & out
+    }
+  }
+  out
+}
+
+#' Function to get data from saved files
+#' @keywords internal
+.get_data <- function(file, data.dir,
+                      wgt = ANNUAL_WEIGHT_R2,
+                      psu = PSU,
+                      strata = STRATA,
+                      imp.strata = COUNTRY,
+                      direct.subset = NULL,
+                      domain.subset = NULL,
+                      pc.rule = "omit",
+                      pca.variables = NULL){
+
+  data <- readr::read_rds(here::here(data.dir, file))
+  ## code for direct subset (NOT SUBPOPULATUON)
+  if(!is.null(direct.subset)){
+    # ensure wgt sum to sample size
+    data <- subset(data, eval(direct.subset))
+    data <- data %>%
+      mutate(
+        "{{wgt}}" := n() * {{wgt}} / sum( {{wgt}} , na.rm = TRUE)
+      )
+  }
+
+  # renaming .imp outside of dplyr
+  data$imp_num <- data$.imp
+
+  # convert to nested survey object
+  svy.data.imp <- data %>%
+    group_by({{imp.strata}}, imp_num) %>%
+    nest() %>%
+    mutate(
+      # data = map(data, \(x) {
+      #   if(your.outcome %in% colnames(x)){
+      #     x$PRIMARY_OUTCOME <- as.numeric(x[, your.outcome, drop = TRUE])
+      #   }
+      #   if(your.pred %in% colnames(x)){
+      #     x$FOCAL_PREDICTOR <- as.numeric(x[, your.pred, drop = TRUE])
+      #   }
+      #   x
+      # }),
+      data = map(data, \(tmp.dat){
+        tmp.dat %>%
+          mutate(across(where(is.factor), \(x) droplevels(x)))
+      }),
+      svy.data = map(data, \(x) {
+        x %>%
+          as_survey_design(
+            ids = {{psu}},
+            strata = {{strata}},
+            weights = {{wgt}},
+            calibrate.formula = ~1
+          )
+      })
+    )
+  if(!is.null(domain.subset)){
+    svy.data.imp <- svy.data.imp %>%
+      mutate(
+        data = map(data, \(x){
+          subset(x, eval(domain.subset))
+        }),
+        svy.data = map(svy.data, \(x){
+          subset(x, eval(domain.subset))
+        })
+      )
+  }
+  ## append PCs if needed
+  if(str_to_lower(pc.rule) != "omit"){
+    # IF: pc.rule NOT omit
+    # Conduct PCA and add PCs to data.frames
+    svy.data.imp <- svy.data.imp %>%
+      mutate(
+        data = map(data, \(x) {
+          keep.pca.variables <- keep_variable(pca.variables, data = x)
+          append_pc_to_df(x, var = pca.variables[keep.pca.variables], std = TRUE)
+        }),
+        svy.data = map(svy.data, \(x) {
+          keep.pca.variables <- keep_variable(pca.variables, data = x[["variables"]])
+          append_pc_to_df(x, var = pca.variables[keep.pca.variables], std = TRUE)
+        })
+      )
+  }
+  svy.data.imp
+}
+
+

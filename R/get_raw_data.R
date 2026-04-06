@@ -6,7 +6,6 @@
 #' @param list.composites a lit of lists to construct composite variables
 #' @param wave (default is wave 2) but can be coerced to use wave 1 data (use wave = 1 to appropriately utilize recoding of wave 1 data)
 #' @param method.income method for how income, based on country specific labels, is recoded. Options include 'quintiles.num.fixed', 'quintiles.num.random', 'quintiles.top.fixed', 'quintiles.top.random', 'numeric'.
-#' @param data.is.wide (FALSE) change to TRUE only if the data are in long format
 #' @param reverse.code.cont (FALSE) reverse code numeric variables (e.g., lonely) for computing summary statistics. DO NOT apply this recoding before conducting imputation. THIS IS ONLY FOR SUMMARY STATISTICS.
 #' @param to.numeric (optional) FALSE
 #' @param ... other arguments
@@ -17,8 +16,8 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.num.fixed", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", data.is.long = FALSE, reverse.code.cont = FALSE, to.numeric = FALSE,...) {
-  #file =  here::here(data.dir, dataset.name); list.composites = get_variable_codes('LIST.COMPOSITES'); add.whitespace = TRUE; reverse.code.cont = TRUE; wave = 2; method.income="quintiles.num.fixed"; wgt = "ANNUAL_WEIGHT_R2"; strata = "STRATA"; psu = "PSU"; data.is.long = FALSE
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.num.fixed", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", reverse.code.cont = FALSE, to.numeric = FALSE,...) {
+  #file =  here::here(data.dir, dataset.name); list.composites = get_variable_codes('LIST.COMPOSITES'); wave = 3; add.whitespace = FALSE; reverse.code.cont = FALSE; wave = 3; method.income="quintiles.num.fixed"; wgt = "ANNUAL_WEIGHT_R3"; strata = "STRATA"; psu = "PSU"; to.numeric=FALSE; reverse.code.cont = FALSE
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
     df.original <- haven::read_spss(file)
@@ -53,11 +52,8 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       select(!(any_of(cols_to_drop)))
   }
   ## ============================================================================================ ##
-  ## ====== Restructure to "wide" data ========================================================== ##
-  if(!(wave == 1 | wave == "W1"| wave == "W2")){
-    if(data.is.long){
-      df.original <- gfs_data_to_wide(df.original,...)
-    }
+  ## ====== Ensure "wide" data  format ========================================================== ##
+  if(!(wave == 1 | wave == "W1")){
 
     df.original <- df.original %>%
       dplyr::mutate(
@@ -73,74 +69,88 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       select(!(any_of(cols_to_drop)))
 
     ## ========================================================================================== ##
-    ## ====== MISSINGNESS INDICATOR ============================================================= ##
+    ## ====== MISSINGNESS INDICATORS ============================================================ ##
+
     df.original <- df.original %>%
       dplyr::mutate(
-        CASE_OBSERVED_Y2 = dplyr::case_when(!is.na(FULL_PARTIAL_Y2) ~ 1, .default = 0)
+        across(contains("FULL_PARTIAL_"), \(x){
+          dplyr::case_when(!is.na(x) ~ 1, .default = 0)
+        },.names = "CASE_OBSERVED_{.col}")
       )
-    if(wave == 3 | wave == "W3"){
-      df.original <- df.original %>%
-        dplyr::mutate(
-          CASE_OBSERVED_Y3 = dplyr::case_when(!is.na(FULL_PARTIAL_Y3) ~ 1, .default = 0),
-          CASE_OBSERVED_ALL = dplyr::case_when(CASE_OBSERVED_Y3 == 1 & CASE_OBSERVED_Y2 == 1 ~ 1,
-                                               .default = 0)
+
+    tmp <- colnames(df.original)[str_detect(colnames(df.original), "CASE_OBSERVED_FULL_PARTIAL")]
+    tmp <- str_remove(tmp, "FULL_PARTIAL_")
+    colnames(df.original)[str_detect(colnames(df.original), "CASE_OBSERVED_FULL_PARTIAL")] <- tmp
+
+    df.original <- df.original %>%
+      dplyr::mutate(
+        CASE_OBSERVED_ALL = rowSums(across(contains("CASE_OBSERVED_"))),
+        CASE_OBSERVED_ALL = case_when(
+          CASE_OBSERVED_ALL == max(CASE_OBSERVED_ALL) ~ 1,
+          .default = 0
         )
-    }
+      )
   }
   ## ============================================================================================ ##
   ## ====== CREATE COMPOSITES =================================================================== ##
   # Create composites IF any have been specified in the outcome_variables file
   if (!is.null(list.composites)) {
-    if(wave == 1 | wave == "W1"| wave == "W2"){
+    if(wave == 1 | wave == "W1"){
       LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES0"]]
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD0"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC0"]]
     }
-    if(!(wave == 1 | wave == "W1"| wave == "W2")){
+    if( (wave %in% c(2:3) | wave %in% c("W2", "W3")) ){
       LIST.OUTCOME.COMPOSITES <- list.composites[["LIST.OUTCOME.COMPOSITES"]]
       LIST.COMPOSITE.COMBINE.METHOD <- list.composites[["LIST.COMPOSITE.COMBINE.METHOD"]]
       COMPOSITE.VEC <- list.composites[["COMPOSITE.VEC"]]
     }
 
-    for (i in 1:length(LIST.OUTCOME.COMPOSITES)) {
-      # create a temporary variable then rename
-      if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "mean") {
-        df.original <- df.original %>%
-          dplyr::mutate(
-            temp.var.i = rowMeans(
-              dplyr::across(all_of(LIST.OUTCOME.COMPOSITES[[i]]), \(x){
-                x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
-                x <- recode_to_type(x, cur_column())
-                x <- reorder_levels(x, cur_column())
-                x <- recode_to_numeric(x, cur_column())
-                x
-              }),
-              na.rm = FALSE
-            )
-          )
-      }
-      if (LIST.COMPOSITE.COMBINE.METHOD[[i]] == "sum") {
-        df.original <- df.original %>%
-          dplyr::mutate(
-            temp.var.i = rowSums(
-              dplyr::across(all_of(LIST.OUTCOME.COMPOSITES[[i]]), \(x){
-                x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
-                x <- recode_to_type(x, cur_column())
-                x <- reorder_levels(x, cur_column())
-                x <- recode_to_numeric(x, cur_column(), TRUE)
-                x
-              }),
-              na.rm = FALSE
-            )
-          )
-      }
+    n <- names(LIST.OUTCOME.COMPOSITES)[1]
+    for (n in names(LIST.OUTCOME.COMPOSITES)) {
 
-      df.original <- df.original %>%
-          dplyr::mutate(
-            temp.var.i = recode_to_numeric(temp.var.i, COMPOSITE.VEC[i])
-          )
+      tvars <- LIST.OUTCOME.COMPOSITES[[n]]
+      tcheck = unlist(lapply(tvars, function(x) x %in% colnames(df.original)))
+      if(all(tcheck)){
+        # create a temporary variable then rename
+        if (LIST.COMPOSITE.COMBINE.METHOD[[n]] == "mean") {
+          df.original <- df.original %>%
+            dplyr::mutate(
+              temp.var.i = rowMeans(
+                dplyr::across(all_of(LIST.OUTCOME.COMPOSITES[[n]]), \(x){
+                  x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
+                  x <- recode_to_type(x, cur_column())
+                  x <- reorder_levels(x, cur_column())
+                  x <- recode_to_numeric(x, cur_column())
+                  x
+                }),
+                na.rm = FALSE
+              )
+            )
+        }
+        if (LIST.COMPOSITE.COMBINE.METHOD[[n]] == "sum") {
+          df.original <- df.original %>%
+            dplyr::mutate(
+              temp.var.i = rowSums(
+                dplyr::across(all_of(LIST.OUTCOME.COMPOSITES[[n]]), \(x){
+                  x <- dplyr::case_when(x %in% get_missing_codes(cur_column()) ~ NA, .default = x)
+                  x <- recode_to_type(x, cur_column())
+                  x <- reorder_levels(x, cur_column())
+                  x <- recode_to_numeric(x, cur_column(), TRUE)
+                  x
+                }),
+                na.rm = FALSE
+              )
+            )
+        }
 
-      colnames(df.original)[length(colnames(df.original))] <- COMPOSITE.VEC[i]
+        df.original <- df.original %>%
+            dplyr::mutate(
+              temp.var.i = recode_to_numeric(temp.var.i, COMPOSITE.VEC[n])
+            )
+
+        colnames(df.original)[length(colnames(df.original))] <- COMPOSITE.VEC[n]
+      }
 
     }
   }
@@ -232,6 +242,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         nest() %>%
         mutate(
           svy.data = map(data, \(x){
+            x <- x |> filter(!is.na(!!sym(wgt)))
             svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
           }),
           quintiles_w1 = map(svy.data, \(x){
@@ -303,6 +314,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       nest() %>%
       mutate(
         svy.data = map(data, \(x){
+          x <- x |> filter(!is.na(!!sym(wgt)))
           svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
         }),
         quintiles_w1 = map(svy.data, \(x){
@@ -429,6 +441,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
         nest() %>%
         mutate(
           svy.data = map(data, \(x){
+            x <- x |> filter(!is.na(!!sym(wgt)))
             svydesign(data=x, ids=~(!!as.name(psu)), strata=~(!!as.name(strata)), weights=~(!!as.name(wgt)))
           }),
           quintiles_w1 = map(svy.data, \(x){
@@ -539,7 +552,7 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
               mutate(
                 INCOME_Y1 = recode_labels(INCOME_Y1, "INCOME_Y1"),
                 INCOME_Y2 = recode_labels(INCOME_Y2, "INCOME_Y2"),
-                INCOME_Y3 = recode_labels(INCOME_Y2, "INCOME_Y3"),
+                INCOME_Y3 = recode_labels(INCOME_Y3, "INCOME_Y3"),
                 INCOME_QUINTILE_Y1 = recode_labels(INCOME_QUINTILE_Y1, "INCOME_QUINTILE"),
                 INCOME_QUINTILE_Y2 = recode_labels(INCOME_QUINTILE_Y2, "INCOME_QUINTILE"),
                 INCOME_QUINTILE_Y3 = recode_labels(INCOME_QUINTILE_Y3, "INCOME_QUINTILE"),
