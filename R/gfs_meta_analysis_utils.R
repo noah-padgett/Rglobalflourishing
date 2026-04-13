@@ -18,6 +18,7 @@ compute_calibrated <- function(fit) {
   tau2 <- as.numeric(fit["tau2"])
   yi <- as.numeric(unlist(fit["yi"]))
   vi <- as.numeric(unlist(fit["vi"]))
+  if(tau2 == 0.0) tau2 = 0.01**2
   # a reviewer called these empirical bayes estimates:
   theta + (yi - theta) * sqrt(tau2 / (tau2 + vi))
 }
@@ -51,8 +52,8 @@ gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "no
   ll <- NA
   ub <- NA
   if (pred.int.method == "empirical") {
-    lb <- min(x,na.rm=TRUE)
-    ub <- max(x,na.rm=TRUE)
+    lb <- min(unlist(x),na.rm=TRUE)
+    ub <- max(unlist(x),na.rm=TRUE)
     out <- paste0("[", .round(lb) ,", ", .round(ub),"]")
   }
   if (pred.int.method == "normal") {
@@ -74,8 +75,8 @@ gfs_prediction_interval_limits <- function(x, theta = 0, tau = 1, pred.int.metho
   ll <- NA
   ub <- NA
   if (pred.int.method == "empirical") {
-    lb <- min(x,na.rm=TRUE)
-    ub <- max(x,na.rm=TRUE)
+    lb <- min(unlist(x),na.rm=TRUE)
+    ub <- max(unlist(x),na.rm=TRUE)
   }
   if (pred.int.method == "normal") {
     # follows from Matheur and VanderWeele (2017)

@@ -10,7 +10,7 @@ gfs_wave_3_generate_main_doc(
   focal.better.name = "Focal Variable",
   focal.variable.reference.value = "0",
   digits = 2,
-  control = list(study = "exposurewide", filetype = "main")
+  control = list(study = "exposurewide")
 )
 }
 \arguments{

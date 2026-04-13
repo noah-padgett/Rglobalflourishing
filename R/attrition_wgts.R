@@ -433,7 +433,7 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir, appnd.txt="", paral
 	        stringr::word(1, sep = "\\_imp")
 	      attr.file <- paste0(cur.country, " fitted attrition model",appnd.txt,".RData")
 	      load(here::here(attr.dir, attr.file), env.attr <- new.env())
-	      df.tmp <- left_join(df.tmp, env.attr$df.wgts, by = c("COUNTRY", "ID", "STRATA", "PSU"))
+	      df.tmp <- left_join(df.tmp, env.attr$df.wgts, by = c(".imp", "COUNTRY", "ID", "STRATA", "PSU"))
 	      readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
 	      rm(df.tmp)
 	      gc()
@@ -444,13 +444,14 @@ append_attr_wgts_to_imp_data <- function(data.dir, attr.dir, appnd.txt="", paral
 	} else {
 	  with_progress({
 	    p <- progressor(along = df.files)
+	    # x = df.files[1]
 	    walk(df.files, \(x){
 	      df.tmp <- readr::read_rds(here::here(data.dir, x))
 	      cur.country <- str_remove(x, "recoded_imputed_data_obj_") |>
 	        stringr::word(1, sep = "\\_imp")
 	      attr.file <- paste0(cur.country, " fitted attrition model",appnd.txt,".RData")
 	      load(here::here(attr.dir, attr.file), env.attr <- new.env())
-	      df.tmp <- left_join(df.tmp, env.attr$df.wgts, by = c("COUNTRY", "ID", "STRATA", "PSU"))
+	      df.tmp <- left_join(df.tmp, env.attr$df.wgts, by = c(".imp", "COUNTRY", "ID", "STRATA", "PSU"))
 	      readr::write_rds(df.tmp, file = here::here(data.dir, x), compress = "gz")
 	      p(sprintf("x= %s", x))
 	    })

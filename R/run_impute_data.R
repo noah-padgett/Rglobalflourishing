@@ -104,26 +104,44 @@ run_impute_data <- function(data,
     vec.c <- imp.list$Var1
     vec.i <- imp.list$Var2
 
-    plan("multisession", workers = num_cores)
+    #plan("multisession", workers = num_cores)
+    #with_progress({
+     # p <- progressor( along = c(vec.iter, nrow(imp.list)+1 )  )
+      # furrr::future_pwalk(list(vec.iter, vec.c, vec.i), \(x,y,i){
+      #
+      #   load_packages()
+      #
+      #   Rglobalflourishing:::run_imputation(
+      #     country = y, df.tmp = data, Nimp = i,
+      #                  save.method = "separate",
+      #                  Miter = Miter,
+      #                  visitSequence = visitSequence,
+      #                  pred.vars = pred.vars,
+      #                  use.log.poly = use.log.poly,
+      #     data.dir = data.dir)
+      #
+      #   p(sprintf("x= %s", x))
+      # },.options = furrr_options(seed = TRUE))
+      # })
+      #future::resetWorkers(plan())
     with_progress({
-      p <- progressor( along = c(vec.iter, nrow(imp.list)+1 )  )
-      furrr::future_pwalk(list(vec.iter, vec.c, vec.i), \(x,y,i){
-
-        load_packages()
+      p <- progressor( along = c(vec.iter)  )
+      pwalk(list(vec.iter, vec.c, vec.i), \(x,y,i){
 
         Rglobalflourishing:::run_imputation(
           country = y, df.tmp = data, Nimp = i,
-                       save.method = "separate",
-                       Miter = Miter,
-                       visitSequence = visitSequence,
-                       pred.vars = pred.vars,
-                       use.log.poly = use.log.poly,
+          save.method = "separate",
+          Miter = Miter,
+          visitSequence = visitSequence,
+          pred.vars = pred.vars,
+          use.log.poly = use.log.poly,
           data.dir = data.dir)
 
         p(sprintf("x= %s", x))
-      },.options = furrr_options(seed = TRUE))
+        gc()
+      })
     })
-    future::resetWorkers(plan())
+
 
   }
 
@@ -161,6 +179,8 @@ run_imputation <- function(country, df.tmp,
     }))
   comp.miss <- colnames(comp.miss)[comp.miss == 1.00]
 
+  # get proportion attrit
+  prop.attrit <- mean(df.tmp$CASE_OBSERVED_ALL)
   ## =================================================================== ##
   ## =================================================================== ##
   ## PRE-IMPUTE Variables:
@@ -172,6 +192,7 @@ run_imputation <- function(country, df.tmp,
   ##   2. compute time between last observed response
   ##   3. calculate age from difference since last observed
   ## 2. RECON_STATUS - gallup provided these statuses with lots' of missing...
+  ## 3. REGION1_Y* - region1 is carried forward if missing.
 
   df.tmp <- df.tmp |>
     mutate(
@@ -203,6 +224,10 @@ run_imputation <- function(country, df.tmp,
         AGE_Y2 = case_when(
           is.na(AGE_Y2) ~ round(AGE_Y1 + as.numeric(doi.w2.avg - DOI_ANNUAL_Y1)/365),
           .default = AGE_Y2
+        ),
+        REGION1_Y2 = case_when(
+          is.na(REGION1_Y2) & !is.na(REGION1_Y1) ~ REGION1_Y1,
+          .default = REGION1_Y2
         )
       )
   }
@@ -214,6 +239,11 @@ run_imputation <- function(country, df.tmp,
           is.na(AGE_Y3) & !is.na(DOI_ANNUAL_Y2) ~ round(AGE_Y2 + as.numeric(doi.w3.avg - DOI_ANNUAL_Y2)/365),
           is.na(AGE_Y3) & is.na(DOI_ANNUAL_Y2) ~ round(AGE_Y1 + as.numeric(doi.w3.avg - DOI_ANNUAL_Y1)/365),
           .default = AGE_Y3
+        ),
+        REGION1_Y3 = case_when(
+          is.na(REGION1_Y3) & !is.na(REGION1_Y2) ~ REGION1_Y2,
+          is.na(REGION1_Y3) & !is.na(REGION1_Y1) ~ REGION1_Y1,
+          .default = REGION1_Y3
         )
       )
   }
@@ -242,6 +272,7 @@ run_imputation <- function(country, df.tmp,
     "FULL_PARTIAL",
     "FULL_PARTIAL_MY",
     "ANNUAL_WEIGHT1",
+    "ANNUAL_WEIGHT_C1",
     "ANNUAL_WEIGHT_C2",
     "ANNUAL_WEIGHT_L2",
     "ANNUAL_WEIGHT_R2",
@@ -340,9 +371,13 @@ run_imputation <- function(country, df.tmp,
   ) |> unique()
   tmp.pred <- quickpred2(
     data = tmp.dat,
-    include = pred.vars[keep.var],
-    exclude = exclude.var,
-    maxcor = 0.99, mincor = 0.10,
+    include = c("ANNUAL_WEIGHT_C1", pred.vars[keep.var]),
+    exclude = exclude.var[exclude.var != "ANNUAL_WEIGHT_C1"],
+    # so that min cor is at least 0.01 + a function of the proportion attritted --> lower for less informed countries
+    # mice default is 0.10
+    # NP: modified to force countries/groups with MORE attrition to use more variables in the
+    #     predictor matrix to help align the Full MI and CCA results.
+    maxcor = 0.99, mincor = 0.025 + (0.10 * prop.attrit),
     check.cor.bounds.after.include = TRUE
   )
   # predictor matrix:
@@ -372,7 +407,7 @@ run_imputation <- function(country, df.tmp,
   ## print out file
   #tmp.pred1 <- tmp.pred
   #tmp.pred1 <- tmp.pred1[pass.imp$visitSequence, pass.imp$visitSequence]
-  #write_xlsx(tmp.pred1, file="test/ignore/data/imp/pred_matrix.xlsx", col_names=TRUE, row_names=TRUE)
+  #write_xlsx(tmp.pred1, file="test/ignore/data/imp/pred_matrix_Nigeria2.xlsx", col_names=TRUE, row_names=TRUE)
 
   # NEXT, set up lag predictors
   # tmp.vec <- c(get_variable_codes("OUTCOME.VEC"), "INCOME")
@@ -450,7 +485,7 @@ run_imputation <- function(country, df.tmp,
         predictorMatrix = tmp.pred,
         donors = 3,
         threshold = 1.0, # see https://github.com/amices/mice/issues/314 for threshold information
-        ridge = 0.01,
+        ridge = 0.1,
         n.core = future::availableCores(),
         parallelseed = 31415
       )
@@ -465,7 +500,7 @@ run_imputation <- function(country, df.tmp,
         predictorMatrix = tmp.pred,
         donors = 3,
         threshold = 1.0,
-        ridge = 0.01,
+        ridge = 0.1,
         seed = Nimp # allows for varying seed
       )
     } else {
@@ -478,7 +513,7 @@ run_imputation <- function(country, df.tmp,
         predictorMatrix = tmp.pred,
         donors = 3,
         threshold = 1.0, #0.99,
-        ridge = 0.01,
+        ridge = 0.1,
         seed = 31415
       )
     }
@@ -486,4 +521,7 @@ run_imputation <- function(country, df.tmp,
   ## save country-by-imputation-specific files
   c.file.name <- paste0("imputed_data_obj_",cur.country,"_",save.method,"_imp_",Nimp,".RData")
   save(fit.imp, file = here::here(data.dir, "imp", c.file.name))
+  # memory saver
+  remove(tmp.dat, fit.imp)
+  gc()
 }

@@ -11,6 +11,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   ## extract parameters
   x = params$x
   data = params$data
+  focal.variable0 = params$focal.variable0
   focal.predictor0 = params$focal.predictor0
   wgt = params$wgt
   psu = params$psu
@@ -21,6 +22,10 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+
+  if(!is.null(focal.predictor0)){
+    focal.variable0 = focal.predictor0
+  }
 
     ## create table
     suppressWarnings({
@@ -34,7 +39,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
         tbl_svysummary(
           by = {{x}},
           include = c(
-            any_of(focal.predictor0),
+            any_of(focal.variable0),
             AGE_GRP,
             AGE,
             GENDER,
@@ -43,7 +48,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
             ATTEND_SVCS,
             BORN_COUNTRY,
             PARENTS_12YRS, SVCS_12YRS, MOTHER_RELATN, FATHER_RELATN,
-            OUTSIDER, ABUSED, HEALTH_GROWUP, INCOME_12YRS, REL1
+            OUTSIDER, ABUSED, HEALTH_GROWUP, INCOME_12YRS, REL2
           ),
           label = list(
             AGE_GRP ~ "Year of birth",
@@ -64,25 +69,28 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
             HEALTH_GROWUP ~ "Self-rated health when growing up",
             INCOME_12YRS ~ "Subjective financial status of family growing up",
             SVCS_12YRS ~ "Religious service attendance around age 12",
-            REL1 ~ "Religious affiliation growing up"
+            REL2 ~ "Religious affiliation growing up"
           ),
           type = list(
             AGE ~ "continuous2",
             all_continuous() ~ "continuous2"
           ),
           statistic = list(
-            all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
+            all_continuous() ~ c("    {mean}", "    {sd}",
+                                 "    {min}, {max}",
+                                 "    {p25}, {p75}"
+                                 ),
             all_categorical() ~ "{n} ({p}%)"
           ),
           digits = list(
-            all_continuous() ~ c(1,1,1,1,1,1),
+            all_continuous() ~ c(2,2,2,2,2,2),
             all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
           ),
           missing_text = "    (Missing)",
           missing_stat = "{N_miss} ({p_miss}%)"
         ) %>%
         add_stat_label(
-          label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Q1, Q3, Max")
+          label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max", "    Q1, Q3")
         ) %>%
         modify_header(label ~ "**Characteristic**") %>%
         italicize_labels()
@@ -96,7 +104,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   print.tb <- sumtab %>%
     as_flex_table() %>%
     autofit() %>%
-    format_flex_table(pg.width = 21 / 2.54 - 2)  %>%
+    format_flex_table(pg.width = 6.5)  %>%
     add_footer_lines(
       values = tb.note.summarytab, top = FALSE
     ) %>%
@@ -118,6 +126,7 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
   ## extract parameters
   data = params$data
   x = params$x
+  included.variables = params$included.variables
   OUTCOME.VEC0 = params$OUTCOME.VEC0
   OUTCOME.VEC.LABELS = params$OUTCOME.VEC.LABELS
   wgt = params$wgt
@@ -130,6 +139,14 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
 
+  if(!is.null(OUTCOME.VEC0)){
+    included.variables <- OUTCOME.VEC0
+  }
+  if(!is.null(OUTCOME.VEC.LABELS)){
+    var.labels <- OUTCOME.VEC.LABELS
+  }
+
+
   ## create table
   suppressWarnings({
   sumtab <-  data %>%
@@ -141,9 +158,9 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
     tbl_svysummary(
       by = {{x}},
       include = c(
-        any_of(OUTCOME.VEC0[str_detect(OUTCOME.VEC0, "INCOME_QUINTILE", negate=TRUE)])
+        any_of(included.variables[str_detect(included.variables, "INCOME_QUINTILE", negate=TRUE)])
       ),
-      label = OUTCOME.VEC.LABELS,
+      #label = OUTCOME.VEC.LABELS,
       type = list(
         all_continuous() ~ "continuous2",
         contains("NUM_CHILDREN") ~ "continuous2",
@@ -152,20 +169,20 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
         contains("DRINKS") ~ "continuous2"
       ),
       statistic = list(
-        all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
+        all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}", "    {p25}, {p75}⁠"),
         all_categorical() ~ "{n} ({p}%)"
       ),
       digits = list(
-        all_continuous() ~ c(1,1,1,1,1,1),
+        all_continuous() ~ c(2,2,2,2,2,2),
         all_categorical() ~ list(label_style_number(digits=0), label_style_percent0(digits = 1))
       ),
       missing_text = "    (Missing)",
       missing_stat = "{N_miss} ({p_miss}%)"
     ) %>%
     add_stat_label(
-      label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Q1, Q3, Max")
+      label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max", "    Q1, Q3")
     ) %>%
-    modify_header(label ~ "**Outcome**") %>%
+    modify_header(label ~ "**Variable**") %>%
     italicize_labels()
 
   })
@@ -181,7 +198,7 @@ print.tb <- sumtab %>%
   autofit() %>%
   width(j=2,width=1.5)%>%
   width(j=3,width=1.5)%>%
-  format_flex_table(pg.width = 21 / 2.54 - 2)  %>%
+  format_flex_table(pg.width = 6.5)  %>%
   add_footer_lines(
     values = tb.note.summarytab, top = FALSE
   ) %>%
@@ -1075,6 +1092,7 @@ build_tbl_outcomewide <- function(params, font.name = "Open Sans", font.size = 1
   set_flextable_defaults(font.family = font.name,font.size = font.size)
 
   is.meta = params$is.meta
+  OUTCOME.VEC = params$OUTCOME.VEC
   OUTCOME.VEC = params$OUTCOME.VEC
   MYLABEL = params$MYLABEL
   focal.predictor = params$focal.predictor
@@ -2984,7 +3002,9 @@ gfs_supp_forest_plot <- function(params, plot.type = "combined", ...) {
 generate_docx_normal_portrait <- function(cache.file, print.file){
 
   normal_portrait <- block_section(
-    prop_section(page_size = page_size(orient = "portrait"), type = "continuous")
+    prop_section(page_size = page_size(orient = "portrait",
+                                       width = 8.5, height = 11),
+                 type = "continuous")
   )
 
   load(cache.file)

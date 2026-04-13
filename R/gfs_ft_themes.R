@@ -197,17 +197,17 @@ theme_meta_main_wave_3 <- function(xtb, pg.width = 6.5, study = "exposure") {
     padding(padding = 0, part = "all") %>%
     align(align = "right", part = "all") %>%
     align(j = 1, align = "left", part = "all") %>%
+    align(j = ncol-2, align = "center", part = "all") %>%
     valign(valign = "bottom", part = "all")  %>%
     width(j=1,width=2.33)%>%
     width(j=c(2),width=0.4)%>%
-    width(j=c(3:(ncol-2)),width=0.8)%>%
+    width(j=c((ncol-4):(ncol-2)),width=0.8)%>%
     width(j=c(ncol-1),width=0.5)%>%
     width(j=c(ncol),width=0.9)
 
   if(str_detect(str_to_lower(study), "outcome")){
     tb.temp <- tb.temp |>
       width(j=c(3),width=0.4)
-
   }
 
   tb.temp <-
@@ -224,6 +224,58 @@ theme_meta_main_wave_3 <- function(xtb, pg.width = 6.5, study = "exposure") {
     hline_bottom(part = "header") %>%
     hline(i=2,j=c((ncol-3):ncol), part="header") %>%
     hline(i=1, part="header")
+
+  tb.temp
+}
+
+
+#' @rdname gfs_ft_themes
+#' @export
+theme_meta_supp_meta_wave_3 <- function(xtb, pg.width = 25, study = "exposure") {
+  cn <- colnames(xtb$header$dataset)
+
+  if(str_detect(str_to_lower(study), "exposure")){
+    ncol <- 26
+    top.header <- c(2:13, 15:26)
+    bottom.header <- c(2:4,6:9,11:13, 15:17,19:22,24:26)
+    cs.0.1 <- c(5,10,14,18,23)
+    cs.0.4 <- c(2,3)
+  }
+  if(str_detect(str_to_lower(study), "outcome")){
+    ncol <- 28
+    top.header <- c(2:14, 16:28)
+    bottom.header <- c(2:5,7:10,12:14, 16:19,21:24,26:28)
+  }
+
+  tb.temp <- xtb %>%
+    autofit() %>%
+    theme_apa() %>%
+    font(part = "all", fontname = "Open Sans") %>%
+    fontsize(part = "header", size = 9) %>%
+    fontsize(part = "body", size = 9) %>%
+    line_spacing(space = 0.95, part = "all") %>%
+    padding(padding = 0, part = "all") %>%
+    align(align = "right", part = "all") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    valign(valign = "bottom", part = "all")  %>%
+    width(j=1,width=2.5)
+
+  tb.temp <-
+    width(tb.temp,
+          width = dim(tb.temp)$widths * pg.width / (flextable_dim(tb.temp)$widths)
+    )
+
+  tb.temp <- tb.temp %>%
+    align(i = 2:3, j = NULL, align = "center", part = "header") %>%
+    align(part = "footer", align = "left", j = 1:ncol) %>%
+    border_remove()  %>%
+    hline_bottom(part = "body") %>%
+    #hline_top(part = "header") %>%
+    hline_bottom(part = "header") %>%
+    hline(i=2,j=c(top.header), part="header") %>%
+    hline(i=3,j=c(bottom.header), part="header") %>%
+    hline(i=1, part="header")
+
 
   tb.temp
 }

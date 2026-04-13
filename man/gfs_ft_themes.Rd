@@ -6,6 +6,7 @@
 \alias{theme_meta_evalues}
 \alias{theme_meta_predictor_wide}
 \alias{theme_meta_main_wave_3}
+\alias{theme_meta_supp_meta_wave_3}
 \title{GFS Flextable Themes}
 \usage{
 format_flex_table(xtb, pg.width = 6.5)
@@ -19,6 +20,8 @@ theme_meta_predictor_wide(xtb, pg.width = 9, .ncol = 10)
 theme_meta_outcome_wide(xtb, pg.width = 9, .ncol = 12)
 
 theme_meta_main_wave_3(xtb, pg.width = 6.5, study = "exposure")
+
+theme_meta_supp_meta_wave_3(xtb, pg.width = 25, study = "exposure")
 }
 \arguments{
 \item{xtb}{a flextable object}

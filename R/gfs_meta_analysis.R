@@ -95,9 +95,9 @@ gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
       prob.lg.c = paste0("[", .round(prob.leqneq0.1), " / ",.round(prob.geq0.1) ,"]"),
       theta.rma.EE = gfs_compute_evalue(est=theta.rma, se=theta.rma.se, sd=1, what="EE"),
       theta.rma.ECI = gfs_compute_evalue(est=theta.rma, se=theta.rma.se, sd=1, what="ECI"),
-      theta.pred.int.ub = gfs_prediction_interval_limits(x=calibrated.yi, theta = theta.rma, tau = tau, upper = TRUE ),
-      theta.pred.int.lb = gfs_prediction_interval_limits(x=calibrated.yi, theta = theta.rma, tau = tau, upper = FALSE ),
-      theta.pred.int.c = gfs_prediction_interval(x=calibrated.yi, theta = theta.rma, tau = tau ),
+      theta.pred.int.ub = gfs_prediction_interval_limits(x=calibrated.yi, theta = theta.rma, tau = tau, upper = TRUE , pred.int.method=interval.method),
+      theta.pred.int.lb = gfs_prediction_interval_limits(x=calibrated.yi, theta = theta.rma, tau = tau, upper = FALSE, pred.int.method=interval.method),
+      theta.pred.int.c = gfs_prediction_interval(x=calibrated.yi, theta = theta.rma, tau = tau, pred.int.method=interval.method ),
       # theta.metafor.blup = map(meta.rma, \(x){
       #   y = metafor::blup(x)
       #   rownames(y) <- x$data$group
@@ -118,7 +118,7 @@ gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
       rr.prob.c = paste0("[", .round(rr.prob.0.90), " / ",.round(rr.prob.1.10) ,"]"),
       rr.theta.EE = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="EE", type="RR"),
       rr.theta.ECI = gfs_compute_evalue(est=theta.rma, ci.low=theta.lb, ci.up = theta.ub, what="ECI", type="RR"),
-      rr.theta.pred.int = gfs_prediction_interval(x=rr.calibrated.yi, theta = theta.rma, tau = tau , .exp=TRUE),
+      rr.theta.pred.int = gfs_prediction_interval(x=rr.calibrated.yi, theta = theta.rma, tau = tau , .exp=TRUE, pred.int.method=interval.method),
       ## ====== population weighted meta results ================================================ ##
       pop.wgt.meta = map(data, \(x){
         x <- add_pop_wgts(x)

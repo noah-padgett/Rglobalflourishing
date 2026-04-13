@@ -890,6 +890,29 @@ recode_imputed_data <- function(
   #     INCOME_QUINTILE_Y3 = sample(1:5,n(), replace=TRUE)
   #   )
   ## ============================================================================================ ##
+  ## ====== RECODING EDUCATION - ENSURE Non-descreasing function of prior education ============= ##
+  if("EDUCATION_3_Y2" %in% colnames(df.imp.long)){
+    df.imp.long <- df.imp.long |>
+      mutate(
+        EDUCATION_3_Y2 = case_when(
+          EDUCATION_3_Y2 == "1. Up to 8" & EDUCATION_3_Y1 %in% c("2. 9-15", "3. 16+") ~ EDUCATION_3_Y1,
+          EDUCATION_3_Y2 == "2. 9-15" & EDUCATION_3_Y1 %in% c("3. 16+") ~ EDUCATION_3_Y1,
+          .default = EDUCATION_3_Y2
+        )
+      )
+  }
+  if("EDUCATION_3_Y3" %in% colnames(df.imp.long)){
+    df.imp.long <- df.imp.long |>
+      mutate(
+        EDUCATION_3_Y3 = case_when(
+          EDUCATION_3_Y3 == "1. Up to 8" & EDUCATION_3_Y2 %in% c("2. 9-15", "3. 16+") ~ EDUCATION_3_Y2,
+          EDUCATION_3_Y3 == "2. 9-15" & EDUCATION_3_Y2 %in% c("3. 16+") ~ EDUCATION_3_Y2,
+          .default = EDUCATION_3_Y3
+        )
+      )
+  }
+
+  ## ============================================================================================ ##
   ## ====== User supplied recoding function ===================================================== ##
   if(!is.null(inject.recode.fx)){
     if(!is.function(inject.recode.fx)){

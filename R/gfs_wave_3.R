@@ -80,7 +80,7 @@ gfs_wave_3_coordinated_analysis <- function(
 
 
 
-  #your.outcome = "LIFE_SAT_Y3"; your.pred = "HAPPY_Y2"; data.dir = "test/ignore/data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = "COUNTRY"; covariates =  c("MODE_ANNUAL", "COV_AGE_GRP_Y1", "COV_GENDER", "COV_RACE_PLURALITY", "COV_EDUCATION_3_Y1", "COV_EMPLOYMENT_Y1", "COV_MARITAL_STATUS_Y1", "COV_ATTEND_SVCS_Y1", "COV_BORN_COUNTRY_Y1", "COV_REL2_Y1", "COV_PARENTS_12YRS_Y1", "COV_MOTHER_RELATN_Y1", "COV_FATHER_RELATN_Y1", "COV_OUTSIDER_Y1", "COV_ABUSED_Y1","COV_HEALTH_GROWUP_Y1", "COV_INCOME_12YRS_Y1","COV_SVCS_12YRS_Y1", "COV_MOTHER_NA", "COV_FATHER_NA"); pca.variables = get_variable_codes(what = "VARS0") |> paste0("_Y1"); pc.rule = "constant"; pc.cutoff = 7; res.dir = "test/ignore/results-primary"; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL; fx=NULL; list.composites=NULL; appnd.txt.to.filename=""
+  #your.outcome = "LIFE_SAT_Y3"; your.pred = "HAPPY_Y2"; data.dir = "test/ignore/data/recoded"; wgt = as.name("ANNUAL_WEIGHT_R3"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = "COUNTRY"; covariates =  c("MODE_ANNUAL", "COV_AGE_GRP_Y1", "COV_GENDER", "COV_RACE_PLURALITY", "COV_EDUCATION_3_Y1", "COV_EMPLOYMENT_Y1", "COV_MARITAL_STATUS_Y1", "COV_ATTEND_SVCS_Y1", "COV_BORN_COUNTRY_Y1", "COV_REL2_Y1", "COV_PARENTS_12YRS_Y1", "COV_MOTHER_RELATN_Y1", "COV_FATHER_RELATN_Y1", "COV_OUTSIDER_Y1", "COV_ABUSED_Y1","COV_HEALTH_GROWUP_Y1", "COV_INCOME_12YRS_Y1","COV_SVCS_12YRS_Y1", "COV_MOTHER_NA", "COV_FATHER_NA"); pca.variables = pca.variables; pc.rule = "constant"; pc.cutoff = 7; res.dir = "test/ignore/results-primary"; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL; fx=NULL; list.composites=NULL; appnd.txt.to.filename=""
 
   # your.outcome = OUTCOME.VEC[1]; your.pred = "PEACE_Y1"; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = as.name("COUNTRY"); covariates = DEMO.CHILDHOOD.PRED;pca.variables =""; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL
   # data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary"
@@ -188,6 +188,10 @@ gfs_wave_3_coordinated_analysis <- function(
                                          covariates =  covariates)
 
         if(is.valid){
+
+          ## IF country-predictor combo is China + edu3_y2, then edu3_y1 must be removed as a control variable because the values are equal.
+
+
 
           fitted.reg.models <- map(country.files,\(x){
             #x <- country.files[1]
@@ -363,6 +367,8 @@ gfs_wave_3_coordinated_analysis <- function(
               select({{imp.strata}}, imp_num, fit.full, fit.tidy, residuals, fit.cor,
                      pca.sdev, pca.rotation, fit.pca.summary) %>%
               ungroup()
+
+
           }) |> bind_rows()
 
           ## extract PCA summary

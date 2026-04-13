@@ -1,25 +1,67 @@
-get_defaults_w3 <- function(x){
+get_defaults_w3 <- function(x, filetype = "main"){
 
-  control.list = list(
-    dir.meta = "results-primary",
-    file.primary = "0_meta_analyzed_results_primary.rds",
-    p.bonferroni = NULL,
-    baseline.pred = NULL,
-    tbl.row.vec = NULL,
-    mylabels = NULL,
-    res.dir = "results",
-    wgt = as.name("WGT0"), ##
-    wgt1 = as.name("ANNUAL_WEIGHT_C1"),
-    wgt2 = as.name("ANNUAL_WEIGHT_C2"),
-    wgt3 = as.name("ANNUAL_WEIGHT_C3"),
-    psu = as.name("PSU"),
-    strata = as.name("STRATA"),
-    ci.bonferroni = FALSE,
-    tb.footnote = NULL,
-    study = "exposurewide", filetype = "main",
-    fig.title = NULL,
-    forest.plots.inc.est = TRUE
-  )
+  if(filetype == "main"){
+    control.list = list(
+      dir.meta = "results-primary",
+      file.primary = "0_meta_analyzed_results_primary.rds",
+      p.bonferroni = NULL,
+      baseline.pred = NULL,
+      tbl.row.vec = NULL,
+      mylabels = NULL,
+      res.dir = "results-files",
+      wgt = as.name("WGT0"), ##
+      wgt1 = as.name("ANNUAL_WEIGHT_C1"),
+      wgt2 = as.name("ANNUAL_WEIGHT_C2"),
+      wgt3 = as.name("ANNUAL_WEIGHT_C3"),
+      psu = as.name("PSU"),
+      strata = as.name("STRATA"),
+      ci.bonferroni = FALSE,
+      tb.footnote = NULL,
+      study = "exposurewide",
+      fig.title = NULL,
+      forest.plots.inc.est = TRUE
+    )
+  }
+  if(filetype == "supp"){
+    control.list = list(
+      dir.primary = "results-primary",
+      dir.supp = "results-cca",
+      dir.attr.models = "results-attr",
+      file.mod1.mi = "0_meta_analyzed_results_primary.rds",
+      file.mod1.cca = "0_meta_analyzed_results_supp_cca_mod1.rds",
+      file.mod1.mi.unstd = "0_meta_analyzed_results_primary_unstd.rds",
+      file.mod1.cca.unstd = "0_meta_analyzed_results_supp_cca_mod1_unstd.rds",
+      file.mod2.mi = "0_meta_analyzed_results_supp_mi_mod2.rds",
+      file.mod2.cca = "0_meta_analyzed_results_supp_cca_mod2.rds",
+      file.mod2.mi = "0_meta_analyzed_results_supp_mi_mod2.rds",
+      file.mod2.cca = "0_meta_analyzed_results_supp_cca_mod2.rds",
+      file.mod3.mi = "0_meta_analyzed_results_supp_mi_mod3_unstd.rds",
+      file.mod3.cca = "0_meta_analyzed_results_supp_mi_mod3.rds",
+      p.bonferroni = NULL,
+      baseline.pred = NULL,
+      tbl.row.vec = NULL,
+      mylabels = NULL,
+      res.dir = "results-files",
+      wgt = as.name("WGT0"), ##
+      wgt1 = as.name("ANNUAL_WEIGHT_C1"),
+      wgt2 = as.name("ANNUAL_WEIGHT_C2"),
+      wgt3 = as.name("ANNUAL_WEIGHT_C3"),
+      psu = as.name("PSU"),
+      strata = as.name("STRATA"),
+      ci.bonferroni = FALSE,
+      tb.footnote = NULL,
+      study = "exposurewide",
+      fig.title = NULL,
+      forest.plots.inc.est = TRUE,
+      num.sequential = FALSE,
+      what = "all",
+      only.figs=FALSE,
+      fig.num.start = 0,
+      tb.start.num = NULL,
+      included.countries = NULL
+    )
+  }
+
   cvnames <- names(x)
   for(cv in cvnames){
     control.list[[cv]] <- x[[cv]]
@@ -51,14 +93,14 @@ get_defaults_w3 <- function(x){
   if(is.null(control.list[['tbl.row.vec']])){
     control.list[['tbl.row.vec']] <- get_tbl_row_vec(
       study = control.list[['study']],
-      filetype = control.list[['filetype']]
+      filetype = filetype
     )[['tbl.row.vec']]
   }
   ## DEFINE VECTOR OF LABELS
     if(is.null(control.list[['mylabels']])){
       control.list[['mylabels']] <- get_tbl_row_vec(
         study = control.list[['study']],
-        filetype = control.list[['filetype']]
+        filetype = filetype
       )[['row.labels']]
     }
   ## Bonferroni correction p-value
@@ -146,6 +188,7 @@ get_tbl_row_vec <- function(study="exposurewide", filetype = "main"){
         'EXPENSES', 'WORRY_SAFETY','EDUCATION_3', 'EMPLOYMENT', 'INCOME_FEELINGS', 'OWN_RENT_HOME', 'INCOME_QUINTILE',
 
         # Religion & Spirituality
+        'blank',
         'CONNECTED_REL', 'AFTER_DEATH', 'REL_EXPERIENC', 'SACRED_TEXTS', 'PRAY_MEDITATE', 'BELIEVE_GOD', 'LIFE_APPROACH', 'COMFORT_REL', 'LOVED_BY_GOD', 'GOD_PUNISH', 'CRITICAL', 'TELL_BELIEFS'
       )
     }
