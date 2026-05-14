@@ -413,7 +413,8 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
           res.dir = res.dir,
           cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
           start.time = run.start.time,
-          include.estimates = forest.plots.inc.est
+          include.estimates = forest.plots.inc.est,
+          fig.num = fig.num
         )
 
         Rglobalflourishing:::gfs_wave_3_build_fig_1(params.fig)
@@ -864,6 +865,7 @@ gfs_wave_3_build_fig_1 <- function(params){
   cache.file = params$cache.file
   start.time = params$start.time
   include.estimates = params$include.estimates
+  fig.num = params$fig.num
 
   fig.cap = fig.title
   ALL.COUNTRIES <- c(

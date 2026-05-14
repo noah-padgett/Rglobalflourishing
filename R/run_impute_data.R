@@ -28,11 +28,8 @@ run_impute_data <- function(data,
                             data.dir,
                             Nimp = 20,
                             Miter = 5,
-<<<<<<< Updated upstream
-=======
                             save.method = "combined",
                             visitSequence = "monotone",
->>>>>>> Stashed changes
                             pred.vars = NULL,
                             use.log.poly = FALSE,
                             includes.midyr = FALSE,
@@ -275,12 +272,6 @@ run_impute_data <- function(data,
   # 1. separate files by country
   country_vec <- sort(as.character(unique(data$COUNTRY)))
 
-<<<<<<< Updated upstream
-  walk(country_vec,\(x){
-    run_imputation(country = x, df.tmp = data)
-  })
-
-=======
   #country_vec <- sort(as.character(unique(data$COUNTRY)))[-c(1:4)]
   # parallelization is over imputations within country
   if(save.method == "combined"){
@@ -785,5 +776,4 @@ run_imputation <- function(country, df.tmp,
   # memory saver
   remove(tmp.dat, fit.imp)
   gc()
->>>>>>> Stashed changes
 }

@@ -376,15 +376,12 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
 
-<<<<<<< Updated upstream
-=======
   if(!is.null(focal.predictor0)){
     focal.variable0 = focal.predictor0
   }
 
   ngrp.cols <- length(unique(data[[as.character({{x}})]]))
 
->>>>>>> Stashed changes
     ## create table
     suppressWarnings({
 
@@ -434,14 +431,10 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
             all_continuous() ~ "continuous2"
           ),
           statistic = list(
-<<<<<<< Updated upstream
-            all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
-=======
             all_continuous() ~ c("    {mean} ({sd})",
                                  "    {min}, {max}",
                                  "    {p25}, {p75}"
                                  ),
->>>>>>> Stashed changes
             all_categorical() ~ "{n} ({p}%)"
           ),
           digits = list(
@@ -452,11 +445,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
           missing_stat = "{N_miss} ({p_miss}%)"
         ) %>%
         add_stat_label(
-<<<<<<< Updated upstream
-          label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
-=======
           label = all_continuous() ~ c("    Mean (Standard Deviation)", "    Min, Max", "    Q1, Q3")
->>>>>>> Stashed changes
         ) %>%
         modify_header(label ~ "**Characteristic**") %>%
         italicize_labels()
@@ -470,12 +459,8 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   print.tb <- sumtab %>%
     as_flex_table() %>%
     autofit() %>%
-<<<<<<< Updated upstream
-    format_flex_table(pg.width = 21 / 2.54 - 2)  %>%
-=======
     width(j=2:ngrp.cols,width=1.66)%>%
     format_flex_table(pg.width = pg.width)  %>%
->>>>>>> Stashed changes
     add_footer_lines(
       values = tb.note.summarytab, top = FALSE
     ) %>%
@@ -509,8 +494,6 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
 
-<<<<<<< Updated upstream
-=======
   if(!is.null(OUTCOME.VEC0)){
     included.variables <- OUTCOME.VEC0
   }
@@ -520,8 +503,6 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
 
   ngrp.cols <- length(unique(data[[as.character({{x}})]]))
 
-
->>>>>>> Stashed changes
   ## create table
   suppressWarnings({
   sumtab <-  data %>%
@@ -544,11 +525,7 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
         contains("DRINKS") ~ "continuous2"
       ),
       statistic = list(
-<<<<<<< Updated upstream
-        all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {p25}, {p75}⁠, {max}"),
-=======
-        all_continuous() ~ c("    {mean} ({sd})", "    {min}, {max}", "    {p25}, {p75}⁠"),
->>>>>>> Stashed changes
+        all_continuous() ~ c("    {mean} ({sd})", "    {min}, {max}", "    {p25}, {p75}"),
         all_categorical() ~ "{n} ({p}%)"
       ),
       digits = list(
@@ -559,11 +536,7 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
       missing_stat = "{N_miss} ({p_miss}%)"
     ) %>%
     add_stat_label(
-<<<<<<< Updated upstream
-      label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max")
-=======
       label = all_continuous() ~ c("    Mean (Standard Deviation)", "    Min, Max", "    Q1, Q3")
->>>>>>> Stashed changes
     ) %>%
     modify_header(label ~ "**Outcome**") %>%
     italicize_labels()
@@ -579,14 +552,8 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
 print.tb <- sumtab %>%
   as_flex_table() %>%
   autofit() %>%
-<<<<<<< Updated upstream
-  width(j=2,width=1.5)%>%
-  width(j=3,width=1.5)%>%
-  format_flex_table(pg.width = 21 / 2.54 - 2)  %>%
-=======
   width(j=2:ngrp.cols,width=1.66)%>%
   format_flex_table(pg.width = pg.width)  %>%
->>>>>>> Stashed changes
   add_footer_lines(
     values = tb.note.summarytab, top = FALSE
   ) %>%

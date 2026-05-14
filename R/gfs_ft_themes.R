@@ -138,8 +138,6 @@ theme_meta_predictor_wide <- function(xtb, pg.width = 9, .ncol = 10) {
 
   tb.temp
 }
-<<<<<<< Updated upstream
-=======
 
 #' @rdname gfs_ft_themes
 #' @export
@@ -297,5 +295,3 @@ theme_meta_supp_meta_wave_3 <- function(xtb, pg.width = 20, study = "exposure", 
   tb.temp
 }
 
-
->>>>>>> Stashed changes
