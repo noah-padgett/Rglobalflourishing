@@ -390,60 +390,62 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
   }
   remove(params.tb3)
   gc()
-  ## =============================================================================== ##
-  ## =============================================================================== ##
-  ## ----- Main text figures (ONLY FOR OUTCOMEWIDE Study) -----
-  if(str_detect(str_to_lower(study), "outcome") ){
-    if("COMPOSITE_FLOURISHING_SECURE_Y3" %in% tbl.row.vec){
-      f0=1
-      fig.num <- 1
-      for(f0 in 1:length(focal.variable)){
-
-        if(is.null(fig.title)){
-          fig.title = paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name[f0] ," at Wave 2 on composite Secure Flourishing Index scores at Wave 3 across countries (N=", n.print, ").*\n The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogeneity.")
-        }
-
-
-
-        params.fig <- list(
-          focal.variable = focal.variable[f0],
-          dir = dir.meta ,
-          file.primary = file.primary,
-          fig.title = fig.title,
-          res.dir = res.dir,
-          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          start.time = run.start.time,
-          include.estimates = forest.plots.inc.est
-        )
-
-        Rglobalflourishing:::gfs_wave_3_build_fig_1(params.fig)
-
-        rmarkdown::render(
-          input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
-          output_format = c("pdf_document"),
-          output_file = paste0("main_text_figures_combined-",f0),
-          output_dir = here::here(res.dir, "main-text"),
-          params = list(
-            cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-            fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".pdf"))
-          )
-        )
-        Rglobalflourishing:::generate_docx_fig(
-          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".png")),
-          print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
-          orient = "p",
-          w = 6, h = 5
-        )
-
-
-        fig.num <- fig.num + 1
-      }
-      remove(params.fig)
-
-      gc()
-    }
-  }
+  # ## =============================================================================== ##
+  # ## =============================================================================== ##
+  # ## ----- Main text figures (ONLY FOR OUTCOMEWIDE Study) -----
+  # if(str_detect(str_to_lower(study), "outcome") ){
+  #   if("COMPOSITE_FLOURISHING_SECURE_Y3" %in% tbl.row.vec){
+  #     f0=1
+  #     fig.num <- 1
+  #     for(f0 in 1:length(focal.variable)){
+  #
+  #       if(is.null(fig.title)){
+  #         fig.title = paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name[f0] ," at Wave 2 on composite Secure Flourishing Index scores at Wave 3 across countries (N=", n.print, ").*\n The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogeneity.")
+  #       }
+  #
+  #
+  #
+  #       params.fig <- list(
+  #         focal.variable = focal.variable[f0],
+  #         focal.better.name = focal.better.name[f0],
+  #         dir = dir.meta ,
+  #         file.primary = file.primary,
+  #         fig.title = fig.title,
+  #         res.dir = res.dir,
+  #         cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+  #         start.time = run.start.time,
+  #         include.estimates = forest.plots.inc.est,
+  #         fig.num = fig.num
+  #       )
+  #
+  #       Rglobalflourishing:::gfs_wave_3_build_fig_1(params.fig)
+  #
+  #       rmarkdown::render(
+  #         input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
+  #         output_format = c("pdf_document"),
+  #         output_file = paste0("main_text_figures_combined-",f0),
+  #         output_dir = here::here(res.dir, "main-text"),
+  #         params = list(
+  #           cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+  #           fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".pdf"))
+  #         )
+  #       )
+  #       Rglobalflourishing:::generate_docx_fig(
+  #         cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+  #         fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".png")),
+  #         print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
+  #         orient = "p",
+  #         w = 6, h = 5
+  #       )
+  #
+  #
+  #       fig.num <- fig.num + 1
+  #     }
+  #     remove(params.fig)
+  #
+  #     gc()
+  #   }
+  # }
 
   ## =============================================================================== ##
   ## =============================================================================== ##
@@ -856,6 +858,7 @@ gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 
 gfs_wave_3_build_fig_1 <- function(params){
 
   focal.variable = params$focal.variable
+  focal.better.name = params$focal.better.name
   dir = params$dir
   file.primary = params$file.primary
   fig.title = params$fig.title
@@ -863,6 +866,7 @@ gfs_wave_3_build_fig_1 <- function(params){
   cache.file = params$cache.file
   start.time = params$start.time
   include.estimates = params$include.estimates
+  fig.num <- params$fig.num
 
   fig.cap = fig.title
   ALL.COUNTRIES <- c(
@@ -1213,18 +1217,18 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
                                                   control = list(study = "exposurewide",
                                                                  filetype = "main")){
 
-  df.raw = df.raw;
-  focal.variable = FOCAL_VARIABLE;
-  focal.better.name= FOCAL_VARIABLE_BETTER_NAME;
-  digits=2;
-  control = list(study = "exposurewide",
-                 res.dir = "test/ignore/results-files",
-                 dir.meta = "test/ignore/results-primary",
-                 file.primary = "0_meta_analyzed_results_primary.rds",
-                 dir.primary = "test/ignore/results-primary",
-                 dir.supp = "test/ignore/results-supp",
-                 dir.attr.models = "test/ignore/results-attr"
-  )
+  # df.raw = df.raw;
+  # focal.variable = FOCAL_VARIABLE;
+  # focal.better.name= FOCAL_VARIABLE_BETTER_NAME;
+  # digits=2;
+  # control = list(study = "exposurewide",
+  #                res.dir = "test/ignore/results-files",
+  #                dir.meta = "test/ignore/results-primary",
+  #                file.primary = "0_meta_analyzed_results_primary.rds",
+  #                dir.primary = "test/ignore/results-primary",
+  #                dir.supp = "test/ignore/results-supp",
+  #                dir.attr.models = "test/ignore/results-attr"
+  # )
 
   control <- get_defaults_w3(control, filetype = "supp")
   ## now, unnest the control parameters
