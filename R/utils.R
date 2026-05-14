@@ -86,6 +86,21 @@ keep_variable <- function(x, data, reason = "variance") {
   out
 }
 
+
+
+#' Pad string used for printing out some columns in the supplement.
+#' @keywords internal
+pad_around_divider <- function(x, divider = "|", n_left = 5, n_right = 5,
+                               pad_left = " ", pad_right = " ") {
+  xspl <- str_split(x, paste0("\\",divider),simplify = TRUE)
+  left  <- str_pad(xspl[1,1], width = n_left, side = "left",  pad = pad_left)
+  right <- str_pad(xspl[1,2], width = n_right, side = "right", pad = pad_right)
+  paste0(left, divider, right)
+}
+
+
+
+
 #' Create Predictor Matrix (modified)
 #'
 #' Function copied and modified from mice pacakge (https://github.com/amices/mice/blob/master/R/quickpred.R)
@@ -493,9 +508,10 @@ gfs_append_pdf <- function(dir, cur.doc, add){
 #' @param file full file name and path, e.g., here(path,filename)
 #' @param ft flextable object to be added to excel file
 #' @param tb table caption
+#' @param df (optional) if not null, add the data.frame
 #' @import flexlsx openxlsx2
 #' @export
-gfs_append_to_xlsx <- function(file, ft, tb){
+gfs_append_to_xlsx <- function(file, ft=NULL, tb, df = NULL){
   # 1. check is file exists
   if(!file.exists(file)){
     wb <- openxlsx2::wb_workbook()
@@ -511,7 +527,12 @@ gfs_append_to_xlsx <- function(file, ft, tb){
   } else {
     wb <- openxlsx2::wb_add_worksheet(wb, sheet = tb)
   }
-  wb <- flexlsx::wb_add_flextable(wb, sheet = tb, ft = ft)
+  if(!is.null(ft)){
+    wb <- flexlsx::wb_add_flextable(wb, sheet = tb, ft = ft)
+  }
+  if(!is.null(df)){
+    wb <- openxlsx2::wb_add_data(wb, sheet = tb, x = df)
+  }
   try({
     openxlsx2::wb_save(wb, file = file)
   })

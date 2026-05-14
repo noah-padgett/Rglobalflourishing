@@ -19,3 +19,4 @@ test/tmp_workspace
 unweighted_res.csv
 test/*ignore/*
 .DS_Store
+.positai
