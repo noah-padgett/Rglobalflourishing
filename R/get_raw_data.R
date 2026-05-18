@@ -459,12 +459,14 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       select(COUNTRY, quintiles_w1, quintiles_w2, quintiles_w3)
 
     df.original <- df.original %>%
-      mutate(COUNTRY2 = COUNTRY) %>%
-      group_by(COUNTR2) %>%
+      group_by(COUNTRY) %>%
       nest() %>%
       mutate(
-        data = map(data, \(x){
-          cur.country = x$COUNTRY[1]
+        data = pmap(list(data,COUNTRY), \(x, grp){
+          #cur.country = x$COUNTRY[1]
+
+          tmp.quintiles <- income.quintiles %>%
+            filter(COUNTRY == grp)
 
           tmp.quintiles <- income.quintiles %>%
             filter(COUNTRY == cur.country)
