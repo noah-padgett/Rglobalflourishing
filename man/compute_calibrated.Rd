@@ -3,9 +3,12 @@
 \name{compute_calibrated}
 \alias{compute_calibrated}
 \alias{proportion_meaningful}
+\alias{gfs_prediction_interval}
+\alias{gfs_prediction_interval_limits}
 \alias{get_meta_ci}
 \alias{compute_global_pvalue}
 \alias{add_pop_wgts}
+\alias{meta_loo_inf}
 \title{Meta-Analysis Utility Functions}
 \usage{
 compute_calibrated(fit)
@@ -19,11 +22,32 @@ proportion_meaningful(
   tau = 1
 )
 
+gfs_prediction_interval(
+  x,
+  theta = 0,
+  tau = 1,
+  pred.int.method = "normal",
+  normal.q = 0.975,
+  .exp = FALSE
+)
+
+gfs_prediction_interval_limits(
+  x,
+  theta = 0,
+  tau = 1,
+  pred.int.method = "normal",
+  normal.q = 0.975,
+  .exp = FALSE,
+  upper = TRUE
+)
+
 get_meta_ci(fit, type = "Q", ci.alpha = 0.05, .exp = FALSE, .digits = 2)
 
 compute_global_pvalue(x, p.min = 1e-16)
 
 add_pop_wgts(df)
+
+meta_loo_inf(x, ...)
 }
 \arguments{
 \item{fit}{the resulting object from fitting the metafor::rma(.) function.}

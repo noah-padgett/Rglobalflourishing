@@ -5,8 +5,6 @@ imp.files <- imp.files[str_detect(imp.files, "imputed_data_obj")]
 imp.files <- imp.files[str_detect(imp.files, paste0("_imp_"))]
 
 check.imp <- lapply(imp.files, FUN=function(x){
-  x <- imp.files[15]
-
   load(here::here(data.dir,"imp",x), ex <- new.env())
   df.tmp <- complete(ex$fit.imp, action = 1)
   var.w.miss <- df.tmp |>

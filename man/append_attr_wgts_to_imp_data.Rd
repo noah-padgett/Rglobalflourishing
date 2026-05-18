@@ -4,7 +4,13 @@
 \alias{append_attr_wgts_to_imp_data}
 \title{Add Attrition Weights to Imputed Data}
 \usage{
-append_attr_wgts_to_imp_data(data.dir, attr.dir)
+append_attr_wgts_to_imp_data(
+  data.dir,
+  attr.dir,
+  appnd.txt = "",
+  parallel = FALSE,
+  num_cores = 1
+)
 }
 \arguments{
 \item{data.dir}{a character defining where recoded imputed data is}

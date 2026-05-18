@@ -858,6 +858,7 @@ gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 
 gfs_wave_3_build_fig_1 <- function(params){
 
   focal.variable = params$focal.variable
+  focal.better.name = params$focal.better.name
   dir = params$dir
   file.primary = params$file.primary
   fig.title = params$fig.title

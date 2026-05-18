@@ -70,7 +70,7 @@ gfs_svyglm <- function(formula, svy.design, robust.huberM = FALSE, robust.tune =
     dm.cov.det <- det(cov(dm[-1,-1]))
     if(dm.cov.det <= 0){
       warning("WARNING. Analysis may fail. Design matrix is non-positive definite.")
-      print("Check country=", unique(tmp.data[["COUNTRY2"]]), "; imp=",unique(tmp.data[[".imp"]])," outcome=", your.outcome, "; focal exposure=",your.pred)
+      print(paste0("WARNING. Analysis may fail. Design matrix is non-positive definite. Check country=", unique(tmp.data[["COUNTRY2"]]), "; imp=",unique(tmp.data[[".imp"]])," outcome=", y, "; focal exposure=",paste0(x, collapse = ", ")))
     }
   }
 

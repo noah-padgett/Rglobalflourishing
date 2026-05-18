@@ -8,10 +8,13 @@ run_impute_data(
   data,
   data.dir,
   Nimp = 20,
-  Miter = 5,
+  Miter = 2,
+  save.method = "combined",
+  visitSequence = "monotone",
   pred.vars = NULL,
   use.log.poly = FALSE,
   includes.midyr = FALSE,
+  use.parallel = FALSE,
   ...
 )
 }
@@ -23,6 +26,8 @@ run_impute_data(
 \item{Nimp}{number of imputed datasets to generated (default of 20)}
 
 \item{Miter}{number of iteration per imputed dataset to use during imputatiuon (uses mice default of 5)}
+
+\item{visitSequence}{(see mice, default is monotone)}
 
 \item{pred.vars}{(optional) character vector of variable names to to as potential predictors in missing data model (see details for more information)}
 

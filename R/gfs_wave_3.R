@@ -1,4 +1,4 @@
-#' GFS Focal Predictor Analysis
+#' GFS Coordinated Analsyes Wave 3
 #'
 #' Run regression analyses for specific focal predictor using the core GFS group analysis pathway.
 #'
@@ -7,7 +7,7 @@
 #' @param your.pred a character string defining focal predictor (e.g., "PHYSICAL_HLTH_Y1")
 #' @param your.outcome a character string defining outcome variable (e.g., "HAPPY_Y2")
 #' @param covariates a character vector defining core set of covariates (default: NULL)
-#' @param contemporaneous.exposures a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)
+#' @param pca.variables s a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)
 #' @param pc.rule principal components analysis use rule (default: "omit")
 #' @param pc.cutoff a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)
 #' @param force.linear a logical of whether to force a linear model (default: FALSE)
@@ -50,22 +50,18 @@
 #'
 #'
 #' @export
-gfs_run_regression_single_outcome <- function(...){
-  gfs_wave2_single_outcome(...)
-}
-
-#' @export
-gfs_wave2_single_outcome <- function(
+gfs_wave_3_coordinated_analysis <- function(
     data.dir = NULL,
     direct.subset = NULL,
     fx = NULL,
     your.pred = NULL,
     your.outcome = NULL,
     covariates = NULL,
-    contemporaneous.exposures = NULL,
+    pca.variables = NULL,
     wgt = ANNUAL_WEIGHT_R2,
     psu = PSU,
     strata = STRATA,
+    imp.strata = "COUNTRY", ## new variable that replaces COUNTRY throughout that identifies the variable separating strata of imputations
     # advanced options: only change if you know what you are doing
     pc.cutoff = 7,
     pc.rule = "omit",
@@ -82,13 +78,18 @@ gfs_wave2_single_outcome <- function(
     save.all = FALSE,
     ...) {
 
-  #your.outcome = OUTCOME.VEC[1]; your.pred = "PEACE_Y1"; data.dir = "test/ignore/data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 0.50; pc.rule = "omit"; res.dir = "results-sens"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL; fx = NULL
 
-  # your.outcome = OUTCOME.VEC[1]; your.pred = FOCAL_PREDICTOR[1]; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); covariates = DEMO.CHILDHOOD.PRED; contemporaneous.exposures = CONTEMPORANEOUS.EXPOSURES.VEC; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL
+
+  #your.outcome = "LIFE_SAT_Y3"; your.pred = "HAPPY_Y2"; data.dir = "test/ignore/data/recoded"; wgt = as.name("ANNUAL_WEIGHT_R3"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = "COUNTRY"; covariates =  c("MODE_ANNUAL", "COV_AGE_GRP_Y1", "COV_GENDER", "COV_RACE_PLURALITY", "COV_EDUCATION_3_Y1", "COV_EMPLOYMENT_Y1", "COV_MARITAL_STATUS_Y1", "COV_ATTEND_SVCS_Y1", "COV_BORN_COUNTRY_Y1", "COV_REL2_Y1", "COV_PARENTS_12YRS_Y1", "COV_MOTHER_RELATN_Y1", "COV_FATHER_RELATN_Y1", "COV_OUTSIDER_Y1", "COV_ABUSED_Y1","COV_HEALTH_GROWUP_Y1", "COV_INCOME_12YRS_Y1","COV_SVCS_12YRS_Y1", "COV_MOTHER_NA", "COV_FATHER_NA"); pca.variables = pca.variables; pc.rule = "constant"; pc.cutoff = 7; res.dir = "test/ignore/results-primary"; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL; fx=NULL; list.composites=NULL; appnd.txt.to.filename=""
+
+  # your.outcome = OUTCOME.VEC[1]; your.pred = "PEACE_Y1"; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = as.name("COUNTRY"); covariates = DEMO.CHILDHOOD.PRED;pca.variables =""; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL
   # data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary"
 
   suppressMessages({
     suppressWarnings({
+      ## ensure that imp.strata is identified locally
+      imp.strata <- as.name(imp.strata)
+
       if(!is.null(fx)){
         fx.char <- as.character(fx)
 
@@ -104,31 +105,30 @@ gfs_wave2_single_outcome <- function(
         covariates <- unique(covariates)
       }
 
+      if(is.null(list.composites)){
+        list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]
+      }
+
       if(!is.null(your.pred)){
         # remove focal predictor from covariate vectors
         covariates <- covariates[str_detect(str_remove(covariates, "COV_"), your.pred, negate = TRUE)]
-        var.cont.exposures <- contemporaneous.exposures[str_detect(contemporaneous.exposures, your.pred, negate = TRUE)]
+        pca.variables <- pca.variables[str_detect(pca.variables, your.pred, negate = TRUE)]
 
         # additionally remove variables that are components of the focal predictor
         #   e.g., if your.pred == "COMPOSITE_FLOURISHING_SECURE", then we need to remove all the
         #   items that make up that score.
         if (str_detect(your.pred, "COMPOSITE")) {
-          var.cont.exposures <- var.cont.exposures[!(var.cont.exposures %in% c(list.composites[[your.pred]]))]
+          pca.variables <- pca.variables[!(pca.variables %in% c(list.composites[[your.pred]]))]
         }
 
         ## add the term "focal_predictor" to covariate vector"
-        covariates <- c(covariates, "FOCAL_PREDICTOR")
+        covariates <- c(covariates, your.pred)
       }
       if(is.null(your.pred)){
         your.pred <- "NA_formula_entry_"
       }
 
-      #if (is.null(res.dir)) {
-      #  res.dir <- here::here(getwd(),"results")
-      #}
-
       res.dir <- here(res.dir)
-
       if (!dir.exists(res.dir)) {
         dir.create(res.dir)
       }
@@ -144,6 +144,13 @@ gfs_wave2_single_outcome <- function(
         force.linear ~ "linear",
         .default = outcome.type
       )
+      if(outcome.type == "linear" & is.null(family)){
+        family = stats::gaussian()
+      }
+      if (outcome.type == "RR" & is.null(family)){
+        family = stats::quasipoisson()
+      }
+
 
       df.files <- list.files(data.dir)
       df.files <- df.files[str_detect(df.files, "recoded_imputed_data_obj")]
@@ -157,219 +164,59 @@ gfs_wave2_single_outcome <- function(
       }
 
       ##
-      #x <- country.vec[5]
-      .run_internal_func <- function(x){
+      #x <- country.vec[1]
+      #.run_internal_func <- function(x){
+      walk(country.vec, \(x){
         cur.country <- x
         ###
         # country-specific files
-        country.files <- df.files[str_detect(df.files, x)]
+        country.files <- df.files[str_detect(df.files, cur.country)]
         ###
-        .check_if_valid_comb <- function(){
-          out <- TRUE
-          # combinations of outcomes/predictors known to lead to issues such as 100% within country,
-          # zero change from wave 1, or zero variation in outcome within country
-          if (str_detect(your.outcome,"APPROVE_GOVT") | str_detect(your.pred,"APPROVE_GOVT")) {
-            if(cur.country %in% c("China","Egypt") ){
-              out <- FALSE & out
-            }
-          }
-          if (str_detect(your.outcome,"ABUSED") | str_detect(your.pred,"ABUSED")) {
 
-            if(cur.country %in% c("Israel") ){
-              out <- FALSE & out
-            }
+        ## test
+        # svy.data.imp |>
+        #   mutate(
+        #     fit =  purrr::pmap(list(svy.data, {{imp.strata}}), \(x, grp){
+        #       print(grp)
+        #     })
+        #   )
+        is.valid <- FALSE
+        is.valid <- .check_if_valid_comb(cur.country = cur.country,
+                                         your.outcome = your.outcome,
+                                         your.pred = your.pred,
+                                         country.subset = country.subset,
+                                         covariates =  covariates)
 
-          }
-          if(str_detect(your.outcome,"BELIEVE_GOD") | str_detect(your.pred,"BELIEVE_GOD")| str_detect(your.pred,"HIGH_DRINKS")) {
-            if(cur.country %in% c("Egypt") ){
-              out <- FALSE & out
-            }
-          }
-          if (str_detect(your.outcome,"BELONGING") | str_detect(your.pred,"BELONGING")) {
-            if(cur.country %in% c("China") ){
-              out <- FALSE & out
-            }
-          }
-          if (str_detect(your.outcome, "EDUCATION_3")){
-            if(cur.country %in% c("China")){
-              out <- TRUE & out
-              # update covariates to EXCLUDE education wave 1
-              # not enough time has passed from wave 1 to wave 2 for education to change
-              covariates <- covariates[covariates != "COV_EDUCATION_3_Y1"]
-            }
-          }
-          if (str_detect(your.outcome,"SAY_IN_GOVT") | str_detect(your.pred,"SAY_IN_GOVT")) {
-            if(cur.country %in% c("China") ){
-              out <- FALSE & out
-            }
-          }
-          if (str_detect(your.outcome,"COVID_DEATH") | str_detect(your.pred,"COVID_DEATH")) {
-            if(cur.country %in% c("China") ){
-              out <- FALSE & out
-            }
-          }
-          ## check if country is in included country vec
-          if(!is.null(country.subset)){
-            if (cur.country %in% country.subset){
-              out <- FALSE & out
-            }
-          }
-          out
-        }
-        .get_data <- function(file){
-          data <- readr::read_rds(here::here(data.dir, file))
-          ## code for direct subset (NOT SUBPOPULATUON)
-          if(!is.null(direct.subset)){
-            data <- subset(data, eval(direct.subset))
-            data <- data %>%
-              mutate(
-                "{{wgt}}" := n() * {{wgt}} / sum( {{wgt}} , na.rm = TRUE)
-              )
-          }
+        if(is.valid){
 
-          # renaming .imp outside of dplyr
-          data$imp_num <- data$.imp
+          ## IF country-predictor combo is China + edu3_y2, then edu3_y1 must be removed as a control variable because the values are equal.
 
-          # convert to nested survey object
-          svy.data.imp <- data %>%
-            mutate(
-              COUNTRY = COUNTRY2
-            ) %>%
-            group_by(COUNTRY, imp_num) %>%
-            nest() %>%
-            mutate(
-              data = map(data, \(x) {
-                if(your.outcome %in% colnames(x)){
-                  x$PRIMARY_OUTCOME <- as.numeric(x[, your.outcome, drop = TRUE])
-                }
-                if(your.pred %in% colnames(x)){
-                  x$FOCAL_PREDICTOR <- as.numeric(x[, your.pred, drop = TRUE])
-                }
-                x
-              }),
-              data = map(data, \(tmp.dat){
-                tmp.dat %>%
-                  mutate(across(where(is.factor), \(x) droplevels(x)))
-              }),
-              svy.data = map(data, \(x) {
-                x %>%
-                  as_survey_design(
-                    ids = {{psu}},
-                    strata = {{strata}},
-                    weights = {{wgt}},
-                    calibrate.formula = ~1
-                  )
-              })
-            )
-          if(!is.null(domain.subset)){
-            svy.data.imp <- svy.data.imp %>%
-              mutate(
-                data = map(data, \(x){
-                  subset(x, eval(domain.subset))
-                }),
-                svy.data = map(svy.data, \(x){
-                  subset(x, eval(domain.subset))
-                })
-              )
-          }
-          ## append PCs if needed
-          if(str_to_lower(pc.rule) != "omit"){
-            # IF: pc.rule NOT omit
-            # Conduct PCA and add PCs to data.frames
-            svy.data.imp <- svy.data.imp %>%
-              mutate(
-                data = map(data, \(x) {
-                  keep.cont.exposures <- keep_variable(var.cont.exposures, data = x)
-                  append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                }),
-                svy.data = map(svy.data, \(x) {
-                  keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-                  append_pc_to_df(x, var = var.cont.exposures[keep.cont.exposures], std = TRUE)
-                })
-              )
-          }
-          svy.data.imp
-        }
-
-        if(.check_if_valid_comb()){
-          #x <- country.files[1]
-
-
-          fit.pca.summary = NULL # need to initialize object to not throw error when saving data
-          if( str_to_lower(pc.rule) != "omit"){
-            fit.pca.summary <- map(country.files,\(x){
-              svy.data.imp <- .get_data(x)
-              ## get fitted PCA for summarizing results
-              svy.data.imp <- svy.data.imp %>%
-                mutate(
-                  fit.pca = map(svy.data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-                    svyprcomp(
-                      reformulate(var.cont.exposures[keep.cont.exposures]),
-                      design = x,
-                      scale. = TRUE,
-                      scores = TRUE,
-                      center = TRUE
-                    )
-                  }),
-                  fit.eigen = map(svy.data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-                    get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])
-                  })
-                )
-
-              # get summary of PCA results to save to output file
-              fit.pca.summary <- svy.data.imp %>%
-                mutate(
-                  pc.sdev = map(fit.pca, \(x) x$sdev),
-                  pc.rotation = map(fit.pca, \(x) x$rotation)
-                ) %>%
-                select(imp_num, COUNTRY, pc.sdev, fit.eigen) %>%
-                unnest(c(pc.sdev, fit.eigen)) %>%
-                mutate(
-                  PC = 1:n()
-                ) %>%
-                ungroup() %>%
-                group_by(COUNTRY, PC) %>%
-                summarise(
-                  pc.var = mean(pc.sdev**2, na.rm = TRUE)
-                ) %>%
-                ungroup() %>%
-                group_by(COUNTRY) %>%
-                mutate(
-                  prop.var = pc.var / sum(pc.var),
-                  prop.sum = cumsum(prop.var),
-                  Cumulative_Proportion_Explained = prop.sum
-                )
-
-              fit.pca.summary
-
-            }) |> bind_rows()
-
-            fit.pca.summary <- fit.pca.summary %>% ungroup() %>%
-              group_by(COUNTRY, PC) %>%
-              summarise(
-                pc.var = mean(pc.var, na.rm=TRUE),
-                prop.var = mean(prop.var, na.rm=TRUE),
-                prop.sum = mean(prop.sum, na.rm=TRUE),
-                Cumulative_Proportion_Explained = mean(Cumulative_Proportion_Explained, na.rm=TRUE)
-              )
-
-          }
 
 
           fitted.reg.models <- map(country.files,\(x){
-            svy.data.imp <- .get_data(x)
+            #x <- country.files[1]
+            svy.data.imp <- .get_data(
+              file=x,
+              data.dir = data.dir,
+              wgt = {{wgt}},
+              psu = {{psu}},
+              strata = {{strata}},
+              imp.strata = {{imp.strata}},
+              direct.subset = direct.subset,
+              domain.subset = domain.subset,
+              pc.rule = pc.rule,
+              pca.variables = pca.variables
+            )
             # IF: pc.rule NOT omit
             # Conduct PCA and add PCs to data.frames
-            fit.pca.summary = NULL # need to initialize object to not throw error when saving data
+            fit.pca.summary = NULL
             if( str_to_lower(pc.rule) != "omit"){
               svy.data.imp <- svy.data.imp %>%
                 mutate(
                   fit.pca = map(svy.data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
+                    keep.pca.variables <- keep_variable(pca.variables, data = x[["variables"]])
                     svyprcomp(
-                      reformulate(var.cont.exposures[keep.cont.exposures]),
+                      reformulate(pca.variables[keep.pca.variables]),
                       design = x,
                       scale. = TRUE,
                       scores = TRUE,
@@ -377,28 +224,26 @@ gfs_wave2_single_outcome <- function(
                     )
                   }),
                   fit.eigen = map(svy.data, \(x) {
-                    keep.cont.exposures <- keep_variable(var.cont.exposures, data = x[["variables"]])
-                    get_eigenvalues(x, var.cont.exposures[keep.cont.exposures])
-                  })
+                    keep.pca.variables <- keep_variable(pca.variables, data = x[["variables"]])
+                    get_eigenvalues(x, pca.variables[keep.pca.variables])
+                  }),
+                  pc.sdev = map(fit.pca, \(x) x$sdev),
+                  pca.rotation = map(fit.pca, \(x) x$rotation), pca.sdev = pc.sdev
                 )
               # get summary of PCA results to save to output file
               fit.pca.summary <- svy.data.imp %>%
-                mutate(
-                  pc.sdev = map(fit.pca, \(x) x$sdev),
-                  pc.rotation = map(fit.pca, \(x) x$rotation)
-                ) %>%
-                select(imp_num, COUNTRY, pc.sdev, fit.eigen) %>%
+                select(imp_num, {{imp.strata}}, pc.sdev, fit.eigen)%>%
                 unnest(c(pc.sdev, fit.eigen)) %>%
                 mutate(
                   PC = 1:n()
                 ) %>%
                 ungroup() %>%
-                group_by(COUNTRY, PC) %>%
+                group_by({{imp.strata}}, PC) %>%
                 summarise(
                   pc.var = mean(pc.sdev**2, na.rm = TRUE)
                 ) %>%
                 ungroup() %>%
-                group_by(COUNTRY) %>%
+                group_by({{imp.strata}}) %>%
                 mutate(
                   prop.var = pc.var / sum(pc.var),
                   prop.sum = cumsum(prop.var),
@@ -407,8 +252,8 @@ gfs_wave2_single_outcome <- function(
 
               # check pc.cutoff to determine which PCs to use
               if (pc.cutoff %% 1 == 0) {
-                keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary$COUNTRY)))
-                names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+                keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary[[as.character({{imp.strata}})]])))
+                names(keep.num.pc) <- unique(fit.pca.summary[[as.character({{imp.strata}})]])
               } else {
                 # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
                 if (str_to_lower(pc.rule) == "mintotal") {
@@ -416,7 +261,7 @@ gfs_wave2_single_outcome <- function(
                     dplyr::filter(prop.sum >= pc.cutoff) %>%
                     dplyr::filter(PC == min(PC, na.rm = TRUE))
                   keep.num.pc <- keep.num.pc0$PC
-                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
+                  names(keep.num.pc) <- keep.num.pc0[[as.character({{imp.strata}})]]
                 }
                 if (str_to_lower(pc.rule) == "mincomp") {
                   keep.num.pc0 <- fit.pca.summary %>%
@@ -429,12 +274,12 @@ gfs_wave2_single_outcome <- function(
                   keep.num.pc0 <- keep.num.pc0 %>%
                     dplyr::filter(PC == max(PC, na.rm = TRUE))
                   keep.num.pc <- keep.num.pc0$PC
-                  names(keep.num.pc) <- keep.num.pc0$COUNTRY
+                  names(keep.num.pc) <- keep.num.pc0[[as.character({{imp.strata}})]]
                 }
                 if (str_to_lower(pc.rule) == "omit") {
                   # this is just to avoid errors and is not used
-                  keep.num.pc <- rep(0, length(unique(fit.pca.summary$COUNTRY)))
-                  names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+                  keep.num.pc <- rep(0, length(unique(fit.pca.summary[[as.character({{imp.strata}})]])))
+                  names(keep.num.pc) <- unique(fit.pca.summary[[as.character({{imp.strata}})]])
                 }
               }
 
@@ -444,32 +289,25 @@ gfs_wave2_single_outcome <- function(
             # svy.data.imp is a nested df by country & .imp
             svy.data.imp %>%
               dplyr::mutate(
-                svy.fit = purrr::map(svy.data, \(x) {
+                svy.fit = purrr::pmap(list(svy.data, {{imp.strata}}), \(x, grp) {
                   # x = svy.data.imp$svy.data[[1]]
                   tmp.fit <- NULL
-                  # first check if ANY variance on outomce
-                  run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)
+                  # first check if ANY variance on outcome
+                  run.analysis <- ifelse(var(x[["variables"]][[your.outcome]], na.rm=TRUE) > 0, TRUE, FALSE)
                   if (run.analysis) {
-                    cur.country <- x[["variables"]][["COUNTRY2"]][1]
+                    #cur.country <- x[["variables"]][["COUNTRY2"]][1]
                     # Next check each variable to make sure all have at least 2 levels, if only 1, exclude
                     keep.var <- keep_variable(covariates, data = x[["variables"]], reason = "any")
                     if (str_to_lower(pc.rule) == "omit") {
                       tmp.model <- reformulate(
-                        response = "PRIMARY_OUTCOME",
+                        response = your.outcome,
                         termlabels = covariates[keep.var]
                       )
                     } else {
                       tmp.model <- reformulate(
-                        response = "PRIMARY_OUTCOME",
-                        termlabels = c(covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
+                        response = your.outcome,
+                        termlabels = c(covariates[keep.var], paste0("PC_", 1:(keep.num.pc[as.character(grp)])))
                       )
-                    }
-
-                    if(outcome.type == "linear" & is.null(family)){
-                      family = stats::gaussian()
-                    }
-                    if (outcome.type == "RR" & is.null(family)){
-                      family = stats::quasipoisson()
                     }
                     tmp.fit <- gfs_svyglm(
                       formula = tmp.model,
@@ -482,31 +320,28 @@ gfs_wave2_single_outcome <- function(
                     tmp.fit
                   }
                 }),
-                fit.tidy = map(svy.fit, \(x) x$fit.tidy),
-                fit.full = map(svy.fit, \(x) x$fit),
-                fit.lasso = map(svy.fit, \(x) x$fit.lasso),
-                residuals = map(svy.fit, \(x) x$residuals),
-                retained.predictors = map(svy.fit, \(x) x$retained.predictors),
+                fit.tidy = purrr::map(svy.fit, \(x) x$fit.tidy),
+                fit.full = purrr::map(svy.fit, \(x) x$fit),
+                residuals = purrr::map(svy.fit, \(x) x$residuals),
+                retained.predictors = purrr::map(svy.fit, \(x) x$retained.predictors),
                 fit.cor = purrr::map(svy.data, \(x) {
                   # x = svy.data.imp$svy.data[[1]]
                   tmp.fit <- NULL
                   # first check if ANY variance on outcome
-                  run.analysis <- ifelse(var(x[["variables"]][["PRIMARY_OUTCOME"]], na.rm=TRUE) > 0, TRUE, FALSE)
+                  run.analysis <- ifelse(var(x[["variables"]][[your.outcome]], na.rm=TRUE) > 0, TRUE, FALSE)
                   if (run.analysis) {
-                    cur.country <- x[["variables"]][["COUNTRY2"]][1]
                     # Next check each variable to make sure all have at least 2 levels, if only 1, exclude
-                    keep.var <- keep_variable("FOCAL_PREDICTOR", data = x[["variables"]], reason = "any")
+                    keep.var <- keep_variable(your.pred, data = x[["variables"]], reason = "any")
                     if(keep.var){
                       tmp.model <- reformulate(
-                        response = "PRIMARY_OUTCOME",
-                        termlabels = "FOCAL_PREDICTOR",
+                        response = your.outcome,
+                        termlabels = your.pred,
                       )
-
                       # fit 1: no weights
                       fit.dof <- stats::glm(tmp.model, data = x[["variables"]])
                       #print(fit.dof)
                       vcom <- fit.dof$df.residual
-
+                      #fit to get product moment correct/biserial correlation
                       tmp.fit <- survey::svyglm(tmp.model, design = x, family = stats::gaussian())
                       #print(tmp.fit)
                       tmp.fit <- tidy(tmp.fit)[2,]
@@ -526,18 +361,31 @@ gfs_wave2_single_outcome <- function(
                     }
                   }
                   tmp.fit
-                })
+                }),
+                fit.pca.summary = list(fit.pca.summary = fit.pca.summary)
               ) %>%
-              select(COUNTRY, imp_num, fit.tidy, fit.full, fit.lasso, residuals, retained.predictors, fit.cor) %>%
+              select({{imp.strata}}, imp_num, fit.full, fit.tidy, residuals, fit.cor,
+                     pca.sdev, pca.rotation, fit.pca.summary) %>%
               ungroup()
+
+
           }) |> bind_rows()
 
-          if(!save.all){
-            fitted.reg.models <- fitted.reg.models |> select(COUNTRY, imp_num, fit.tidy, fit.full, fit.cor)
-          }
+          ## extract PCA summary
+          fit.pca.summary <- get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
 
           # re-estimate basic model with the max number of PCs used to get the variable names
-          tmp.dat <- .get_data(country.files[1])
+          tmp.dat <- .get_data(file = country.files[1],
+                               data.dir = data.dir,
+                               wgt = {{wgt}},
+                               psu = {{psu}},
+                               strata = {{strata}},
+                               imp.strata = {{imp.strata}},
+                               direct.subset = direct.subset,
+                               domain.subset = domain.subset,
+                               pc.rule = pc.rule,
+                               pca.variables = pca.variables
+          )
           #cur.country = as.character(tmp.dat$COUNTRY[1])
           keep.var <- rep(FALSE, length(covariates))
           for(i in 1:length(keep.var)){
@@ -547,14 +395,14 @@ gfs_wave2_single_outcome <- function(
           }
           if (str_to_lower(pc.rule) == "omit") {
             tmp.model <- reformulate(
-              response = "PRIMARY_OUTCOME",
+              response = your.outcome,
               termlabels = c(covariates[keep.var])
             )
           } else {
             # check pc.cutoff to determine which PCs to use
             if (pc.cutoff %% 1 == 0) {
-              keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary$COUNTRY)))
-              names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+              keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary[[as.character({{imp.strata}})]])))
+              names(keep.num.pc) <- unique(fit.pca.summary[[as.character({{imp.strata}})]])
             } else {
               # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
               if (str_to_lower(pc.rule) == "mintotal") {
@@ -562,7 +410,7 @@ gfs_wave2_single_outcome <- function(
                   dplyr::filter(prop.sum >= pc.cutoff) %>%
                   dplyr::filter(PC == min(PC, na.rm = TRUE))
                 keep.num.pc <- keep.num.pc0$PC
-                names(keep.num.pc) <- keep.num.pc0$COUNTRY
+                names(keep.num.pc) <- keep.num.pc0[[as.character({{imp.strata}})]]
               }
               if (str_to_lower(pc.rule) == "mincomp") {
                 keep.num.pc0 <- fit.pca.summary %>%
@@ -575,17 +423,17 @@ gfs_wave2_single_outcome <- function(
                 keep.num.pc0 <- keep.num.pc0 %>%
                   dplyr::filter(PC == max(PC, na.rm = TRUE))
                 keep.num.pc <- keep.num.pc0$PC
-                names(keep.num.pc) <- keep.num.pc0$COUNTRY
+                names(keep.num.pc) <- keep.num.pc0[[as.character({{imp.strata}})]]
               }
               if (str_to_lower(pc.rule) == "omit") {
                 # this is just to avoid errors and is not used
-                keep.num.pc <- rep(0, length(unique(fit.pca.summary$COUNTRY)))
-                names(keep.num.pc) <- unique(fit.pca.summary$COUNTRY)
+                keep.num.pc <- rep(0, length(unique(fit.pca.summary[[as.character({{imp.strata}})]])))
+                names(keep.num.pc) <- unique(fit.pca.summary[[as.character({{imp.strata}})]])
               }
             }
             #tmp.country <- names(keep.num.pc)[which(keep.num.pc == max(keep.num.pc))[1]]
             tmp.model <- reformulate(
-              response = "PRIMARY_OUTCOME",
+              response = your.outcome,
               termlabels = c(covariates[keep.var], paste0("PC_", 1:(keep.num.pc[cur.country])))
             )
           }
@@ -594,20 +442,23 @@ gfs_wave2_single_outcome <- function(
 
           coef.order <- names(tmp.fit$coefficients)
           coef.order <- c(
-            coef.order[!(stringr::str_detect(coef.order, "(Intercept)") | stringr::str_detect(coef.order, "COV_REL1"))],
+            coef.order[!(stringr::str_detect(coef.order, "(Intercept)") | stringr::str_detect(coef.order, "COV_REL1") | stringr::str_detect(coef.order, "COV_REL2"))],
             "COV_GENDER_Y1Prefer not to answer",
             "COV_REL1_Y1Islam", "COV_REL1_Y1Hinduism", "COV_REL1_Y1Judaism", "COV_REL1_Y1Buddhism",
             "COV_REL1_Y1Primal,Animist, or Folk religion", "COV_REL1_Y1Chinesefolk/traditional religion",
             "COV_REL1_Y1Christianity", "COV_REL1_Y1Combined",
+            "COV_REL2_Y1Islam", "COV_REL2_Y1Hinduism", "COV_REL2_Y1Judaism", "COV_REL2_Y1Buddhism",
+            "COV_REL2_Y1Primal,Animist, or Folk religion", "COV_REL2_Y1Chinesefolk/traditional religion",
+            "COV_REL2_Y1Christianity", "COV_REL2_Y1Combined",
             "(Intercept)"
           )
 
           ## Pool estimates across imputations
           results.pooled <- fitted.reg.models %>%
-            select(COUNTRY, imp_num, fit.tidy) %>%
+            select({{imp.strata}}, imp_num, fit.tidy) %>%
             unnest(c(fit.tidy)) %>%
             ungroup() %>%
-            group_by(term, COUNTRY) %>%
+            group_by(term, {{imp.strata}}) %>%
             nest() %>%
             mutate(
               pooled.est = map(data, \(x){
@@ -621,15 +472,15 @@ gfs_wave2_single_outcome <- function(
             mutate(
               term = factor(term)
             ) %>%
-            arrange(COUNTRY, term) %>%
+            arrange({{imp.strata}}, term) %>%
             ungroup()
 
           ## Pool estimates of correlations
           cor.pooled <- fitted.reg.models %>%
-            select(COUNTRY, imp_num, fit.cor) %>%
+            select({{imp.strata}}, imp_num, fit.cor) %>%
             unnest(c(fit.cor)) %>%
             ungroup() %>%
-            group_by(term, COUNTRY) %>%
+            group_by(term, {{imp.strata}}) %>%
             nest() %>%
             mutate(
               pooled.est = map(data, \(x){
@@ -643,59 +494,48 @@ gfs_wave2_single_outcome <- function(
             mutate(
               term = factor(term)
             ) %>%
-            arrange(COUNTRY, term) %>%
+            arrange({{imp.strata}}, term) %>%
             ungroup()
 
-          # compute outcome & predictor SD Only used for continuous/forced continuous models
-          # - For continuous outcomes, need to use evalue.OLS(.)
-          # - require approx outcome standard deviation
-          # sd.pooled <- map(country.files,\(x){
-          #   svy.data.imp <- .get_data(x)
-          #
-          #   svy.data.imp %>%
-          #     mutate(
-          #       est = purrr::map_dbl(svy.data, \(x) {
-          #         survey::svyvar(~PRIMARY_OUTCOME, design = x, na.rm=TRUE)
-          #       }),
-          #
-          #       pred.var = purrr::map_dbl(svy.data, \(x) {
-          #         survey::svyvar(~FOCAL_PREDICTOR, design = x, na.rm=TRUE)
-          #       })
-          #     ) %>%
-          #     select(est, pred.var) %>%
-          #     ungroup()
-          # }) |> bind_rows()
+          ## ============================================================================ #
+          ## ----- Compute outcome & predictor SD -----
+          # - Need SD of all columns in design matrix
+          # - Used for computing E-values & standardized estimates
+          # - For continuous outcomes, need to use evalue.OLS(.) [require approx outcome standard deviation]
           sd.pooled <- fitted.reg.models %>%
+            select({{imp.strata}}, imp_num, fit.full) %>%
             mutate(
               term.var = map(fit.full, \(x){
-
+                #x <- fitted.reg.models$fit.full[[1]]
                 my.matrix <- model.matrix(x)
-                my.wgts <- x$weights
+                my.wgts <- x$survey.design$variables |>
+                  select({{wgt}}) |> unlist() |> as.numeric()
                 var.est <- as.data.frame(matrix(apply(my.matrix, 2, FUN=function(x){
-                  matrixStats::weightedVar(x, w = my.wgts)
+                  matrixStats::weightedVar(x, w = my.wgts, na.rm = TRUE)
                 }),nrow=1))
                 colnames(var.est) <- colnames(my.matrix)
-                y.var <- data.frame(outcome.sd = matrixStats::weightedVar(x$y, w = my.wgts))
+                y.var <- data.frame(outcome.sd = matrixStats::weightedVar(x$y, w = my.wgts, na.rm = TRUE))
 
                 cbind(y.var, var.est)
               })
             ) |>
-            select(COUNTRY, term.var) %>%
+            select({{imp.strata}}, term.var) %>%
             unnest(c(term.var)) %>%
-            group_by(COUNTRY) %>%
+            group_by({{imp.strata}}) %>%
             summarize(
               across(everything(), \(x){
                 sqrt(mean(x, na.rm=TRUE))
               })
             ) %>% ungroup() |>
             pivot_longer(
-              cols=-c(COUNTRY,outcome.sd),
+              cols=-c({{imp.strata}},outcome.sd),
               names_to = "term",
               values_to = "predictor.sd"
             )
 
-          ## Relabel output
-          varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")
+          ## ============================================================================ #
+          ## ----- Relabel output (helpful for generating documents) ----
+            varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")
           if(pc.rule != "omit"){
             if(any(str_detect(varlist, "PC_"))){
               varlist[str_detect(varlist, "PC_")] <- "PC"
@@ -703,7 +543,6 @@ gfs_wave2_single_outcome <- function(
             }
           }
           termlist <- as.character(unique(results.pooled$term))[-1]
-
           base_variable <- sapply(termlist, function(b) {
             match <- sapply(varlist, function(a) {
               startsWith(b, a)
@@ -719,7 +558,6 @@ gfs_wave2_single_outcome <- function(
             Variable = c(rep(base_variable, 2), "(Intercept)"),
             Category = c(rep(levels, 2), "(Intercept)")
           )
-
           termlabels <- termlabels %>%
             mutate(
               Variable = stringr::str_remove(Variable, "COV_"),
@@ -733,81 +571,48 @@ gfs_wave2_single_outcome <- function(
                 .default = Category
               )
             )
-
-
-          # Compute Evalues
+          ## ============================================================================ #
+          ## ----- Compute Evalues ----
           tmp.output <- results.pooled %>%
-            left_join(sd.pooled, by = c("COUNTRY", "term")) %>%
+            left_join(sd.pooled, by = c(as.character({{imp.strata}}), "term")) %>%
             ungroup()
-
-          # Note: I could not get the following mutate(.) to work, not sure what is wrong, but the for loop works...
-          # mutate(
-          #   EE  = gfs_compute_evalue(
-          #    est = estimate.pooled,
-          #    se = se.pooled,
-          #    sd = sd.pooled,
-          #    ci.low = ci.low,
-          #    ci.up = ci.up,
-          #    type = outcome.type,
-          #    what = "EE"
-          #  ),
-          #  ECI =  gfs_compute_evalue(
-          #    est = estimate.pooled,
-          #    se = se.pooled,
-          #    sd = sd.pooled,
-          #    ci.low = ci.low,
-          #    ci.up = ci.up,
-          #    type = outcome.type,
-          #    what = "ECI"
-          #   )
-          # )
-          # working version:
           tmp.output$EE <- 0
           tmp.output$ECI <- 0
           i <- 1
-          for (i in 1:nrow(tmp.output)) {
-            tmp.output$EE[i] <- gfs_compute_evalue(
-              est = tmp.output$estimate.pooled[i],
-              se = tmp.output$se.pooled[i],
-              sd = tmp.output$outcome.sd[i],
-              ci.low = tmp.output$ci.low[i],
-              ci.up = tmp.output$ci.up[i],
-              type = outcome.type,
-              what = "EE"
-            )
-            tmp.output$ECI[i] <- gfs_compute_evalue(
-              est = tmp.output$estimate.pooled[i],
-              se = tmp.output$se.pooled[i],
-              sd = tmp.output$outcome.sd[i],
-              ci.low = tmp.output$ci.low[i],
-              ci.up = tmp.output$ci.up[i],
-              type = outcome.type,
-              what = "ECI"
-            )
-          }
-
+          tmp.output <- tmp.output %>%
+          	rowwise() %>%
+          	mutate(
+          		EE = gfs_compute_evalue(
+          			est = estimate.pooled,
+	              	se = se.pooled,
+              		sd = outcome.sd,
+              		ci.low = ci.low,
+              		ci.up = ci.up,
+              		type = outcome.type,
+              		what = "EE"
+              	),
+              	ECI = gfs_compute_evalue(
+          			est = estimate.pooled,
+	              	se = se.pooled,
+              		sd = outcome.sd,
+              		ci.low = ci.low,
+              		ci.up = ci.up,
+              		type = outcome.type,
+              		what = "ECI"
+              	)
+          	) %>% ungroup()
 
           output <- tmp.output %>%
             left_join(termlabels,
                       by = c("term" = "original"),
                       relationship = "many-to-many"
-            ) %>%
-            arrange(Variable)
-
-          # Compute standardized estimates
-          # note: for binary outcomes only need to multiply by the predictor standard deviation
+            )
+          ## ============================================================================ #
+          ## ----- Compute standardized estimates -----
           output <- output %>%
             mutate(
-              std.estimate.pooled = case_when(
-                outcome.type == "linear" ~ estimate.pooled * (predictor.sd / outcome.sd),
-                outcome.type == "RR" ~ estimate.pooled * predictor.sd,
-                .default = estimate.pooled
-              ),
-              std.se.pooled = case_when(
-                outcome.type == "linear" ~ se.pooled * (predictor.sd / outcome.sd),
-                outcome.type == "RR" ~ se.pooled * predictor.sd ,
-                .default = se.pooled
-              ),
+              std.estimate.pooled = estimate.pooled * (predictor.sd / outcome.sd),
+              std.se.pooled = se.pooled * (predictor.sd / outcome.sd),
               std.ci.low = case_when(
                 df.approx > 1 ~ std.estimate.pooled - stats::qt(0.975, df.approx) * std.se.pooled,
                 .default = NA
@@ -817,12 +622,28 @@ gfs_wave2_single_outcome <- function(
                 .default = NA
               )
             )
-
-          ## compute correlations: standardized regression coefficient
+          ## ============================================================================ #
+          ## ----- Rename colnames -----
+          output <- output %>%
+            rename(
+              est = estimate.pooled,
+              se = se.pooled,
+              ci.lb = ci.low,
+              ci.ub = ci.up,
+              df = df.approx,
+              std.est = std.estimate.pooled,
+              std.se = std.se.pooled,
+              std.ci.lb = std.ci.low,
+              std.ci.ub = std.ci.up
+            ) |>
+            mutate(
+              outcome = your.outcome, .before = 2
+            )
+          ## ============================================================================ #
+          ## ----- Compute correlations: standardized regression coefficient ------
           cor.output <- cor.pooled %>%
-            left_join(sd.pooled, by = c("COUNTRY", "term")) %>%
+            left_join(sd.pooled, by = c(as.character({{imp.strata}}), "term")) %>%
             ungroup()
-
           cor.output <- cor.output %>%
             mutate(
               cor.est = estimate.pooled * (predictor.sd / outcome.sd),
@@ -844,50 +665,49 @@ gfs_wave2_single_outcome <- function(
               "cov.ci.low" = ci.low,
               "cov.ci.up" = ci.up
             ) |>
-            select(COUNTRY, outcome, predictor, cor.est, cor.se, cor.ci.low, cor.ci.up, cov.est, cov.se, cov.ci.low, cov.ci.up, df.approx, t.statistic, f.statistic, p.value, miss.info, outcome.sd, predictor.sd, estimates.by.imp)
+            select({{imp.strata}}, outcome, predictor, cor.est, cor.se, cor.ci.low, cor.ci.up, cov.est, cov.se, cov.ci.low, cov.ci.up, df.approx, t.statistic, f.statistic, p.value, miss.info, outcome.sd, predictor.sd, estimates.by.imp)
 
-
-
+          # ============================================================================ #
+          # ============================================================================ #
           # Meta analysis input - is a simplified data.frame with only:
           # 		country, variable, category, estimate, standard error, and global p-value
           # 		This reduced file is helpful for the meta-analysis app OR internal meta-analysis code
-          metainput <- output %>%
-            select(
-              COUNTRY,
-              Variable,
-              Category,
-              estimate.pooled,
-              se.pooled,
-              p.value,
-              ci.low,
-              ci.up,
-              df.approx,
-              outcome.sd,
-              predictor.sd,
-              std.estimate.pooled,
-              std.se.pooled,
-              std.ci.low,
-              std.ci.up
-            ) %>%
-            group_by(COUNTRY, Variable) %>%
-            dplyr::filter(!(Category == "(Ref:)")) %>%
-            dplyr::filter(Variable == "FOCAL_PREDICTOR")
-          colnames(metainput) <-
-            c("Country", "Variable", "Category",
-              "est", "se", "pvalue", "ci.lb", "ci.ub",
-              "df", "outcome.sd", "predictor.sd",
-              "std.est", "std.se", "std.ci.lb", "std.ci.ub")
-          metainput <- metainput %>%
-            mutate(
-              OUTCOME = your.outcome,
-              FOCAL_PREDICTOR = your.pred,
-              .before = Variable
-            )
+          # metainput <- output %>%
+          #   select(
+          #     {{imp.strata}},
+          #     Variable,
+          #     Category,
+          #     estimate.pooled,
+          #     se.pooled,
+          #     p.value,
+          #     ci.low,
+          #     ci.up,
+          #     df.approx,
+          #     outcome.sd,
+          #     predictor.sd,
+          #     std.estimate.pooled,
+          #     std.se.pooled,
+          #     std.ci.low,
+          #     std.ci.up
+          #   ) %>%
+          #   group_by({{imp.strata}}, Variable) %>%
+          #   dplyr::filter(!(Category == "(Ref:)")) %>%
+          #   dplyr::filter(str_detect(Variable,your.pred)) %>% ungroup()
+          # colnames(metainput) <-
+          #   c(as.character({{imp.strata}}), "Variable", "Category",
+          #     "est", "se", "pvalue", "ci.lb", "ci.ub",
+          #     "df", "outcome.sd", "predictor.sd",
+          #     "std.est", "std.se", "std.ci.lb", "std.ci.ub")
+          # metainput <- metainput %>%
+          #   mutate(
+          #     FOCAL_OUTCOME = your.outcome,
+          #     FOCAL_PREDICTOR = your.pred,
+          #     .before = Variable
+          #   )
 
           # ============================================================================ #
           # ============================================================================ #
-          # Online Supplement Analyses - variable specific
-
+          # prepare output -- just some pre- relabeling to make the online supplement easier
           output <- output %>%
             group_by(Variable) %>%
             fill(Variable) %>%
@@ -937,7 +757,7 @@ gfs_wave2_single_outcome <- function(
                 Category == "(Ref:)" &
                   Variable == "FATHER_NA" ~ "(Ref: Non-missing Father Flags)",
                 Category == "(Ref:)" &
-                  COUNTRY %in% c(
+                   {{imp.strata}} %in% c(
                     "Argentina",
                     "Australia",
                     "Brazil",
@@ -956,51 +776,29 @@ gfs_wave2_single_outcome <- function(
                   ) &
                   Variable == "REL1" ~ "(Ref: No religion/Atheist/Agnostic)",
                 Category == "(Ref:)" &
-                  COUNTRY %in% c("Egypt", "Indonesia", "Turkey") &
+                  {{imp.strata}} %in% c("Egypt", "Indonesia", "Turkey", "Turkiye") &
                   Variable == "REL1" ~ "(Ref: Islam)",
                 Category == "(Ref:)" &
-                  COUNTRY %in% c("India") &
+                  {{imp.strata}} %in% c("India") &
                   Variable == "REL1" ~ "(Ref: Hinduism)",
                 Category == "(Ref:)" &
-                  COUNTRY %in% c("Israel") &
+                  {{imp.strata}} %in% c("Israel") &
                   Variable == "REL1" ~ "(Ref: Judaism)",
                 Category == "(Ref:)" &
-                  COUNTRY %in% c("Kenya", "Nigeria", "Philippines") &
+                  {{imp.strata}} %in% c("Kenya", "Nigeria", "Philippines") &
                   Variable == "REL1" ~ "(Ref: Christianity)",
                 .default = Category
               )
             ) %>%
+            #dplyr::mutate(
+            #  FOCAL_OUTCOME = your.outcome,
+            #  FOCAL_PREDICTOR = your.pred,
+            #  .before = Variable
+            #) %>%
             dplyr::mutate(
-              OUTCOME = your.outcome,
-              FOCAL_PREDICTOR = your.pred,
-              .before = Variable
-            ) %>%
-            dplyr::mutate(
-              id.Est = .round(estimate.pooled),
-              id.SE = .round(se.pooled),
-              id.CI = paste0("(", .round(ci.low), ",", .round(ci.up), ")"),
-              id.Std.Est = .round(std.estimate.pooled),
-              id.Std.SE = .round(std.se.pooled),
-              id.Std.CI = paste0("(", .round(std.ci.low), ",", .round(std.ci.up), ")"),
-              ## make sure to apply RR approximation is outcome is actually linear
-              rr.Est = case_when(
-                outcome.type == "RR" ~ .round(exp(estimate.pooled)),
-                outcome.type == "linear" ~ .round(exp(0.91*estimate.pooled))
-              ),
-              logrr.SE = .round(se.pooled),
-              rr.CI = case_when(
-                outcome.type == "RR" ~ paste0("(", .round(exp(ci.low)), ",", .round(exp(ci.up)), ")"),
-                outcome.type == "linear" ~ paste0("(", .round(exp(0.91*ci.low)), ",", .round(exp(0.91*ci.up)), ")")
-              ),
-              rr.Std.Est = case_when(
-                outcome.type == "RR" ~ .round(exp(std.estimate.pooled)),
-                outcome.type == "linear" ~ .round(exp(0.91*std.estimate.pooled))
-              ),
-              logrr.Std.SE = .round(std.se.pooled),
-              rr.Std.CI = case_when(
-                outcome.type == "RR" ~ paste0("(", .round(exp(std.ci.low)), ",", .round(exp(std.ci.up)), ")"),
-                outcome.type == "linear" ~ paste0("(", .round(exp(0.91*std.ci.low)), ",", .round(exp(0.91*std.ci.up)), ")")
-              )
+              model.family = as.character(family[[1]]),
+              outcome.type = outcome.type,
+              outcome.scale = get_outcome_scale(your.outcome)
             )
 
           outfile <- here::here(
@@ -1008,53 +806,31 @@ gfs_wave2_single_outcome <- function(
             paste0(your.pred,  "_regressed_on_", your.outcome, "_saved_results",appnd.txt.to.filename,".RData")
           )
 
+          ## subset the fitted reg moels for outputing
+          fitted.reg.models <- fitted.reg.models |> ungroup() |>
+            select({{imp.strata}}, imp_num, fit.tidy, residuals, fit.cor, fit.pca.summary, pca.rotation)
+
           ## load the previously "saved" result and append results for the next country
           if(cur.country != country.vec[1]  & file.exists(outfile)){
             load(outfile, env.res <- new.env())
             output <- rbind(output, env.res$output)
-            metainput <- rbind(metainput, env.res$metainput)
-            cor.output <- rbind(cor.output, env.res$cor.output )
-            fit.pca.summary <- rbind(fit.pca.summary, env.res$fit.pca.summary)
             if(save.all){
+              cor.output <- rbind(cor.output, env.res$cor.output )
               fitted.reg.models <- rbind(fitted.reg.models, env.res$fitted.reg.models)
             }
           }
           ## save/overwrite existing saved results file so everything is in one object
-          save(
-            output,
-            metainput,
-            fit.pca.summary,
-            cor.output ,
-            file = outfile
-          )
           if(save.all){
-            save(
-              output,
-              metainput,
-              fit.pca.summary,
-              cor.output ,
-              fitted.reg.models,
-              file = outfile
-            )
+            save( output, cor.output , fitted.reg.models, file = outfile )
+          } else {
+            save( output, file = outfile )
           }
+
         }
 
-      }
-      ##
-      walk(country.vec, \(x){
-
-        .run_internal_func(x)
       })
-
-      # for(x in country.vec){
-      #   print(x)
-      #   .run_internal_func(x)
-      # }
-
 
     })
   })
 
 }
-
-

@@ -4,37 +4,12 @@
 \alias{gfs_run_regression_single_outcome}
 \title{GFS Focal Predictor Analysis}
 \usage{
-gfs_run_regression_single_outcome(
-  data.dir = NULL,
-  direct.subset = NULL,
-  fx = NULL,
-  your.pred = NULL,
-  your.outcome = NULL,
-  covariates = NULL,
-  contemporaneous.exposures = NULL,
-  wgt = ANNUAL_WEIGHT_R2,
-  psu = PSU,
-  strata = STRATA,
-  pc.cutoff = 7,
-  pc.rule = "omit",
-  force.linear = FALSE,
-  force.binary = FALSE,
-  robust.huberM = FALSE,
-  robust.tune = 1,
-  res.dir = "results",
-  list.composites = NULL,
-  domain.subset = NULL,
-  country.subset = NULL,
-  family = NULL,
-  appnd.txt.to.filename = "",
-  save.all = FALSE,
-  ...
-)
+gfs_run_regression_single_outcome(...)
 }
 \arguments{
-\item{data.dir}{a character string defining where data are located}
+\item{...}{other arguments passed to svyglm or glmrob functions}
 
-\item{direct.subset}{a quoted subset statement to directly subset the sample}
+\item{data.dir}{a character string defining where data are located}
 
 \item{fx}{(NULL) a formula argument that can be used instead of your.pred/your.outcome to specify the set of predictors and outcome}
 
@@ -46,9 +21,9 @@ gfs_run_regression_single_outcome(
 
 \item{contemporaneous.exposures}{a character vector defining set of contemporaneous exposures that are input into PCA (default: NULL)}
 
-\item{pc.cutoff}{a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)}
-
 \item{pc.rule}{principal components analysis use rule (default: "omit")}
+
+\item{pc.cutoff}{a numeric value, can either be a fixed whole number (e.g., keep 7 PC in all countries) OR a proportion (e.g., 0.50)}
 
 \item{force.linear}{a logical of whether to force a linear model (default: FALSE)}
 
@@ -60,6 +35,8 @@ gfs_run_regression_single_outcome(
 
 \item{res.dir}{a character string defining directory to save results to.}
 
+\item{direct.subset}{a quoted subset statement to directly subset the sample}
+
 \item{domain.subset}{a quoted subset statement to run domain estimation}
 
 \item{country.subset}{a string vector of countries included in analysis}
@@ -67,8 +44,6 @@ gfs_run_regression_single_outcome(
 \item{appnd.txt.to.filename}{(optional) character string to help differentiate saved results file (default "")}
 
 \item{save.all}{(FALSE) logical of whether to save the fitted regression models from each imputed dataset (this is a double-checking feature and should generally be set to FALSE unless you plan to probe the individual regression models--see the methods paper for Wave 2 for example of it's used)}
-
-\item{...}{other arguments passed to svyglm or glmrob functions}
 }
 \value{
 a data.frame that contains the meta-analysis input results

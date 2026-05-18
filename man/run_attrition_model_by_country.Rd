@@ -10,6 +10,11 @@ run_attrition_model_by_country(
   attr.wgt.name = NULL,
   pooled.wgt = NULL,
   composite.wgt.name = NULL,
+  appnd.txt = "",
+  parallel = FALSE,
+  num_cores = 1,
+  dir.attr = "results-attr",
+  save.fit = FALSE,
   ...
 )
 }

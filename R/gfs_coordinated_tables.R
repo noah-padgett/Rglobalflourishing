@@ -21,9 +21,9 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE, forest.plots.inc.est = FALSE, digits=2){
+gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", file.wopc = "0_meta_analyzed_results_primary_wopc.rds", file.wpc = "0_meta_analyzed_results_primary_wpc.rds", focal.better.name="Focal Predictor", focal.predictor.reference.value="estimated population mean of focal predictor", focal.predictor=NULL, p.bonferroni = NULL, baseline.pred = NULL, outcome.vec = NULL, mylabels = NULL, res.dir = "results", wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA, ci.bonferroni = FALSE, forest.plots.inc.est = FALSE, digits=2, include.cor = FALSE, file.cor = "0_meta_analyzed_cor.rds"){
 
-  # dir.meta = "results-primary"; file.wopc = "0_meta_analyzed_results_primary_wopc.rds"; file.wpc = "0_meta_analyzed_results_primary_wpc.rds"; focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; res.dir = "results"; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; ci.bonferroni = FALSE; forest.plots.inc.est = FALSE;
+  # dir.meta = "results-primary"; file.wopc = "0_meta_analyzed_results_primary_wopc.rds"; file.wpc = "0_meta_analyzed_results_primary_wpc.rds"; focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; res.dir = "results"; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; ci.bonferroni = FALSE; forest.plots.inc.est = FALSE;  digits=2; include.cor = FALSE; file.cor = "0_meta_analyzed_cor.rds"
 
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
@@ -363,7 +363,9 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
       n.print = n.print,
       cache.file = here::here(res.dir, "main-text", paste0("cache-tb-meta-",f0,".RData")),
       start.time = run.start.time,
-      digits = digits
+      digits = digits,
+      include.cor = include.cor,
+      file.cor = file.cor
     )
     ## build the table
     Rglobalflourishing:::build_tbl_2(params.tb2)
@@ -431,39 +433,39 @@ gfs_generate_main_doc <- function(df.raw=NULL, dir.meta = "results-primary", fil
     f0=1
     for(f0 in 1:length(focal.predictor)){
 
-        params.fig <- list(
-          focal.predictor = focal.predictor[f0],
-          focal.better.name = focal.better.name[f0],
-          dir = dir.meta ,
-          file.wopc = file.wopc,
-          file.wpc = file.wpc,
-          fig.num = f0,
-          res.dir = res.dir,
-          n.print = n.print,
-          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          start.time = run.start.time,
-          include.estimates = forest.plots.inc.est
-        )
+      params.fig <- list(
+        focal.predictor = focal.predictor[f0],
+        focal.better.name = focal.better.name[f0],
+        dir = dir.meta ,
+        file.wopc = file.wopc,
+        file.wpc = file.wpc,
+        fig.num = f0,
+        res.dir = res.dir,
+        n.print = n.print,
+        cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+        start.time = run.start.time,
+        include.estimates = forest.plots.inc.est
+      )
 
-        Rglobalflourishing:::build_fig_1(params.fig)
+      Rglobalflourishing:::build_fig_1(params.fig)
 
-        rmarkdown::render(
-          input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
-          output_format = c("pdf_document"),
-          output_file = paste0("main_text_figures_combined-",f0),
-          output_dir = here::here(res.dir, "main-text"),
-          params = list(
-            cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-            fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".pdf"))
-          )
-        )
-        Rglobalflourishing:::generate_docx_fig(
+      rmarkdown::render(
+        input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
+        output_format = c("pdf_document"),
+        output_file = paste0("main_text_figures_combined-",f0),
+        output_dir = here::here(res.dir, "main-text"),
+        params = list(
           cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".png")),
-          print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
-          orient = "p",
-          w = 5, h = 6
+          fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".pdf"))
         )
+      )
+      Rglobalflourishing:::generate_docx_fig(
+        cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+        fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.better.name[f0],".png")),
+        print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
+        orient = "p",
+        w = 5, h = 6
+      )
 
     }
     remove(params.fig)
@@ -706,10 +708,15 @@ gfs_generate_supplemental_docs <- function(
     wgt = WGT0, wgt1 = ANNUAL_WEIGHT_R2, wgt2 = AVG.SAMP.ATTR.WGT, psu = PSU, strata = STRATA,
     # wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA");
     res.dir = "results", included.countries=NULL,
-    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL, digits=2, replace.cntry.file.start = NULL){
+    ci.bonferroni = FALSE, num.sequential = FALSE, forest.plot.type = "combined", what = "all", only.figs=FALSE, fig.num.start = 0, tb.start.num = NULL, digits=2, replace.cntry.file.start = NULL,
+    file.cor = "0_meta_analyzed_cor.rds"){
 
 
-  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0; digits=2; replace.cntry.file.start = NULL;
+  # focal.predictor = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.predictor.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; dir.primary="results-primary"; dir.supp="results-cca"; dir.attr.models = "results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0; digits=2; replace.cntry.file.start = NULL; file.cor = "0_meta_analyzed_cor.rds"
+
+  # focal.predictor = "PEACE_Y1"; focal.better.name = "Inner peace"; focal.predictor.reference.value = "rarely or never"; dir.primary="test/ignore/results-primary"; dir.supp="test/ignore/results-cca"; dir.attr.models = "test/ignore/results-attr"; file.primary.wopc = "0_meta_analyzed_results_primary_wopc.rds";file.primary.wpc = "0_meta_analyzed_results_primary_wpc.rds";  file.unstd.wopc = "0_meta_analyzed_results_unstd_wopc.rds";  file.unstd.wpc = "0_meta_analyzed_results_unstd_wpc.rds"; file.cca.wopc = "0_meta_analyzed_results_cca_wopc.rds";  file.cca.wpc = "0_meta_analyzed_results_cca_wpc.rds";  p.bonferroni = NULL; baseline.pred = NULL; outcome.vec = NULL; mylabels = NULL; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("ANNUAL_WEIGHT_R2"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "test/ignore/results"; included.countries=NULL;  ci.bonferroni = FALSE; num.sequential = FALSE; forest.plot.type = "combined"; what = "all"; only.figs=TRUE; fig.num.start = 0; digits=2; replace.cntry.file.start = NULL; file.cor = "0_meta_analyzed_cor.rds"
+  # df.raw <- gfs_get_labelled_raw_data( here::here("test", "ignore", "data", "gfs_all_countries_wave2.sav"), list.composites = get_variable_codes('LIST.COMPOSITES'), add.whitespace = TRUE, reverse.code.cont = TRUE );
+
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
   focal.predictor0 <- str_remove(focal.predictor,"_Y1")
@@ -1203,9 +1210,9 @@ gfs_generate_supplemental_docs <- function(
   if(what == "all" | what == "S1"){
     cat("Starting part 1 - supplemental meta-analysis results\n")
     if(what == "S1"){
-    if(!is.null(tb.start.num)){
-      tb.num <- tb.start.num
-    }
+      if(!is.null(tb.start.num)){
+        tb.num <- tb.start.num
+      }
     }
     ## ========================================================================================== ##
     ## ====== Construct summary tables ========================================================== ##
@@ -1361,6 +1368,62 @@ gfs_generate_supplemental_docs <- function(
     ## -- looped around whether there are multiple focal variables
     f0 = 1
     for(f0 in 1:length(focal.predictor)){
+      ## ======================================================================================== ##
+      ## Model 0 - Meta-analyzed Correlations - MI & Attrition Weight =========================== ##
+      tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed estimates of Pearson-prodcut-moment correlations between of ", str_to_lower(focal.better.name[f0]) ," at Wave 1 with well-being and other outcomes at Wave 2 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+
+      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),"; r, random-effects meta-analytic average Pearson-product-moment correlation; CI, confidence interval; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of correlations; PI, prediction interval, the estimated range of likely value for correlation estimate the next randomly sampled country; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+
+Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. Attrition weights were computed to adjust the complete case data (those who responded at Wave 2 to at least 50% of the questions) and multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes.
+
+",ifelse(ci.bonferroni, paste0('Reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), '')," \u2020 Estimate of \u03c4 (tau, heterogeneity) is likely unstable.")
+
+      params.tb <- list(
+        is.meta = TRUE,
+        OUTCOME.VEC = OUTCOME.VEC,
+        MYLABEL = MYLABEL,
+        focal.predictor = focal.predictor[f0],
+        focal.better.name = focal.better.name[f0],
+        focal.predictor.reference.value = focal.predictor.reference.value[f0],
+        dir.a = dir.primary,
+        dir.b = dir.supp,
+        file.a = file.cor ,
+        file.b = file.cor ,
+        country.i = "",
+        ci.bonferroni = ci.bonferroni,
+        p.bonferroni = p.bonferroni,
+        p.ci = ifelse(ci.bonferroni, p.bonferroni, 0.05),
+        tb.cap = tb.cap.i,
+        header.a = "Multiple Imputation",
+        header.b = "Complete Case with Attrition Weights",
+        fn.txt = fn.txt.i,
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        digits = digits
+      )
+
+      Rglobalflourishing:::build_tbl_cor(params.tb)
+
+      rmarkdown::render(
+        input = system.file("rmd", "pdf_21_by_11.Rmd", package = "Rglobalflourishing"),
+        output_format = c("pdf_document"),
+        output_file = paste0("supplement_tbl_",tb.num),
+        output_dir = here::here(res.dir, "supplement-text"),
+        params = list(
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData"))
+        )
+      )
+      Rglobalflourishing:::generate_docx_wide_landscape(
+        cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-meta-a",f0,".RData")),
+        print.file = here::here(res.dir, "supplement-text", paste0("supplement_tbl_",tb.num,".docx"))
+      )
+
+
+      tb.num <- tb.num + 1
+      remove(params.tb)
+      gc()
       ## ======================================================================================== ##
       ## Model 1 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
       tb.cap.i <- paste0("Table S",tb.num,". Meta-analyzed associations of ", str_to_lower(focal.better.name[f0]) ," at Wave 1 with well-being and other outcomes at Wave 2 for Model 1 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
@@ -1742,7 +1805,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         rmarkdown::render(
           input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_1"),
+          output_file = paste0("tmp_tbl_a"),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData"))
@@ -1750,7 +1813,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         )
         Rglobalflourishing:::generate_docx_normal_portrait(
           cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData")),
-          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_1.docx"))
+          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_a.docx"))
         )
         remove(params.tb)
         gc()
@@ -1790,7 +1853,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         rmarkdown::render(
           input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_2"),
+          output_file = paste0("tmp_tbl_b"),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData"))
@@ -1798,7 +1861,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         )
         Rglobalflourishing:::generate_docx_normal_portrait(
           cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData")),
-          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_2.docx"))
+          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_b.docx"))
         )
 
         remove(params.tb)
@@ -1852,7 +1915,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         rmarkdown::render(
           input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_3"),
+          output_file = paste0("tmp_tbl_c"),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData"))
@@ -1860,7 +1923,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         )
         Rglobalflourishing:::generate_docx_normal_portrait(
           cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData")),
-          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_3.docx"))
+          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_c.docx"))
         )
         remove(params.tb)
         gc()
@@ -1900,7 +1963,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         rmarkdown::render(
           input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_4"),
+          output_file = paste0("tmp_tbl_c"),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData"))
@@ -1908,7 +1971,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         )
         Rglobalflourishing:::generate_docx_normal_portrait(
           cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData")),
-          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_4.docx"))
+          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_c.docx"))
         )
 
         remove(params.tb)
@@ -1948,7 +2011,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         rmarkdown::render(
           input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_5"),
+          output_file = paste0("tmp_tbl_e"),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie.RData"))
@@ -1956,7 +2019,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         )
         Rglobalflourishing:::generate_docx_normal_portrait(
           cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sie.RData")),
-          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_5.docx"))
+          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_e.docx"))
         )
 
         remove(params.tb)
@@ -1996,7 +2059,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         rmarkdown::render(
           input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_6"),
+          output_file = paste0("tmp_tbl_f"),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif.RData"))
@@ -2004,7 +2067,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
         )
         Rglobalflourishing:::generate_docx_normal_portrait(
           cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sif.RData")),
-          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_6.docx"))
+          print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_f.docx"))
         )
 
         remove(params.tb)
@@ -2013,9 +2076,66 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
 
       }
       ## ======================================================================================== ##
-      ## ====== Table Si-ghi. Country specific outcome wide results ============================= ##
+      ## ====== Table Si-ghij. Country specific outcome wide results ============================= ##
       f0 <- 1
       for(f0 in 1:length(focal.predictor)){
+        ##======================================================================================= ##
+        ## Correlations (MI + CCA)
+        {
+          if(num.sequential){
+            tb.cap.i <- paste0("Table S",tb.num,". Correlation estimates between ", str_to_lower(focal.better.name[f0]) ," and adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
+            tb.num <- tb.num + 1
+          } else {
+            tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Correlation estimates between ", str_to_lower(focal.better.name[f0]) ," and adult well-being and other outcomes at Wave 2 in ", COUNTRY_LABELS[iter])
+            tb.let <- tb.let + 1
+          }
+          # footnote information:
+          fn.txt.i <- paste0("Notes. N(multiple imputation)=", country.n1.print  ,"; N(complete-case)=", country.n2.print ,"; Reference for focal predictor: ", str_to_lower(focal.predictor.reference.value[f0]),". Pearson-product-moment correlation; CI, confidence interval; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index. Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. Attrition weights were computed to adjust the complete case data (those who responded at Wave 2 to at least 50% of the questions) and multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes.")
+
+          params.tb <- list(
+            is.meta = FALSE,
+            OUTCOME.VEC = OUTCOME.VEC,
+            MYLABEL = MYLABEL,
+            focal.predictor = focal.predictor[f0],
+            focal.better.name = focal.better.name[f0],
+            focal.predictor.reference.value = focal.predictor.reference.value[f0],
+            dir.a = dir.primary,
+            dir.b = dir.supp,
+            file.a = "_primary_wopc",
+            file.b = "_cca_wopc",
+            country.i = COUNTRY_LABELS[iter],
+            ci.bonferroni = ci.bonferroni,
+            p.bonferroni = p.bonferroni,
+            p.ci = 0.05,
+            tb.cap = tb.cap.i,
+            header.a = "Multiple Imputation",
+            header.b = "Complete Case with Attrition Weights",
+            fn.txt = fn.txt.i,
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
+            start.time = run.start.time.i,
+            ignore.cache = FALSE,
+            file.xlsx = here::here(res.dir, out.file.xlsx),
+            digits = digits,
+            replace.cntry.file.start = replace.cntry.file.start
+          )
+          Rglobalflourishing:::build_tbl_outcomewide(params.tb)
+
+          rmarkdown::render(
+            input = system.file("rmd", "pdf_21_by_11.Rmd", package = "Rglobalflourishing"),
+            output_format = c("pdf_document"),
+            output_file = paste0("tmp_tbl_g",f0),
+            output_dir = here::here(res.dir, "supplement-text"),
+            params = list(
+              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData"))
+            )
+          )
+          Rglobalflourishing:::generate_docx_wide_landscape(
+            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
+            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_g",f0,".docx"))
+          )
+          remove(params.tb)
+          gc()
+        }
         ##======================================================================================= ##
         ## Model estimated using multiple imputation
         {
@@ -2054,7 +2174,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
             fn.txt = fn.txt.i,
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx),
@@ -2066,15 +2186,15 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           rmarkdown::render(
             input = system.file("rmd", "pdf_21_by_11.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
-            output_file = paste0("tmp_tbl_7",letters[f0]),
+            output_file = paste0("tmp_tbl_h",f0),
             output_dir = here::here(res.dir, "supplement-text"),
             params = list(
-              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData"))
+              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData"))
             )
           )
           Rglobalflourishing:::generate_docx_wide_landscape(
-            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData")),
-            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_7",letters[f0],".docx"))
+            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
+            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_h",f0,".docx"))
           )
           remove(params.tb)
           gc()
@@ -2117,7 +2237,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             header.a = "Model 1: Demographic and Childhood Variables as Covariates",
             header.b = "Model 2: Demographic, Childhood, and Other Wave 1 Confounding Variables (Via Principal Components) as Covariates",
             fn.txt = fn.txt.i,
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx),
@@ -2129,15 +2249,15 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           rmarkdown::render(
             input = system.file("rmd", "pdf_21_by_11.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
-            output_file = paste0("tmp_tbl_8",letters[f0]),
+            output_file = paste0("tmp_tbl_i",f0),
             output_dir = here::here(res.dir, "supplement-text"),
             params = list(
-              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData"))
+              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData"))
             )
           )
           Rglobalflourishing:::generate_docx_wide_landscape(
-            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sih-",f0,".RData")),
-            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_8",letters[f0],".docx"))
+            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData")),
+            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_i",f0,".docx"))
           )
           remove(params.tb)
           gc()
@@ -2173,7 +2293,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
             p.bonferroni = p.bonferroni,
             p.ci = 0.05,
             tb.cap = tb.cap.i,
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData")),
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sij-",f0,".RData")),
             start.time = run.start.time.i,
             ignore.cache = FALSE,
             file.xlsx = here::here(res.dir, out.file.xlsx),
@@ -2186,15 +2306,15 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
           rmarkdown::render(
             input = system.file("rmd", "pdf_21_by_11.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
-            output_file = paste0("tmp_tbl_9",letters[f0]),
+            output_file = paste0("tmp_tbl_j",f0),
             output_dir = here::here(res.dir, "supplement-text"),
             params = list(
-              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData"))
+              cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sij-",f0,".RData"))
             )
           )
           Rglobalflourishing:::generate_docx_wide_landscape(
-            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sii-",f0,".RData")),
-            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_9",letters[f0],".docx"))
+            cache.file= here::here(res.dir, "supplement-text", paste0("cache-tb-sij-",f0,".RData")),
+            print.file = here::here(res.dir, "supplement-text", paste0("tmp_tbl_j",f0,".docx"))
           )
 
           remove(params.tb)
@@ -2284,60 +2404,60 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
   if(what == "all" | what == "S3"){
     cat("Starting part 3 - extra-wide format tables\n")
     if(what == "S3"){
-      tb.num <- ifelse(num.sequential, 216, 32) # makes sure table number starts in the right number when only generating S3
+      tb.num <- ifelse(num.sequential, 240, 33) # makes sure table number starts in the right number when only generating S3
       if(!is.null(tb.start.num)){
         tb.num <- tb.start.num
       }
     }
 
-      ## ========================================================================================== ##
-      ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
-      {
-        tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of demographic and childhood variables data across countries.")
-        params.tb <- list(
-          x = as.name("WAVE0"),
-          y = as.name("COUNTRY"),
-          data = df.raw.long %>%
-            mutate(
-              WAVE0 = case_when(
-                WAVE0 == "Wave 1" ~ "W1",
-                WAVE0 == "Wave 2" ~ "W2"
-              )
-            ),
-          wgt = as.name("WGT0"),
-          psu = as.name("PSU"),
-          strata = as.name("STRATA"),
-          countries.included = COUNTRY_LABELS,
-          tb.cap = tb.cap.i,
-          fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
-          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
-          start.time = run.start.time,
-          ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx),
-          stored.file = system.file("tbls", "saved_sample_tb.RData", package = "Rglobalflourishing")
+    ## ========================================================================================== ##
+    ## ====== Table S32. summary statistics -- demographics variables by country ================= ##
+    {
+      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of demographic and childhood variables data across countries.")
+      params.tb <- list(
+        x = as.name("WAVE0"),
+        y = as.name("COUNTRY"),
+        data = df.raw.long %>%
+          mutate(
+            WAVE0 = case_when(
+              WAVE0 == "Wave 1" ~ "W1",
+              WAVE0 == "Wave 2" ~ "W2"
+            )
+          ),
+        wgt = as.name("WGT0"),
+        psu = as.name("PSU"),
+        strata = as.name("STRATA"),
+        countries.included = COUNTRY_LABELS,
+        tb.cap = tb.cap.i,
+        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_R2; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_R2, multiplied by the created attrition weight to account for dropout, to maintain nationally representative estimates for Wave 2 characteristics.",
+        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+        start.time = run.start.time,
+        ignore.cache = FALSE,
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        stored.file = system.file("tbls", "saved_sample_tb.RData", package = "Rglobalflourishing")
+      )
+      Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
+      rmarkdown::render(
+        input = system.file("rmd", "pdf_42_by_25.Rmd", package = "Rglobalflourishing"),
+        output_format = c("pdf_document"),
+        output_file = "supplement_tbl_w1",
+        output_dir = here::here(res.dir, "supplement-text"),
+        params = list(
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData"))
         )
-        Rglobalflourishing:::build_tbl_outcomes_exta_wide(params.tb)
-        rmarkdown::render(
-          input = system.file("rmd", "pdf_42_by_25.Rmd", package = "Rglobalflourishing"),
-          output_format = c("pdf_document"),
-          output_file = "supplement_tbl_w1",
-          output_dir = here::here(res.dir, "supplement-text"),
-          params = list(
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData"))
-          )
-        )
-        # Rglobalflourishing:::generate_docx_wide_landscape(
-        #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
-        #   print.file = here::here(res.dir, "supplement-text", "supplement_tbl_w1.docx")
-        # )
-        tb.num <- tb.num + 1
-        remove(params.tb)
-        gc()
-      }
-      ## ========================================================================================== ##
-      ## ====== Table S33. summary statistics -- outcome variables by country ====================== ##
-      {
-        tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
+      )
+      # Rglobalflourishing:::generate_docx_wide_landscape(
+      #   cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-extra-1.RData")),
+      #   print.file = here::here(res.dir, "supplement-text", "supplement_tbl_w1.docx")
+      # )
+      tb.num <- tb.num + 1
+      remove(params.tb)
+      gc()
+    }
+    ## ========================================================================================== ##
+    ## ====== Table S33. summary statistics -- outcome variables by country ====================== ##
+    {
+      tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics of outcomes variables data across countries.")
       params.tb <- list(
         x = as.name("WAVE0"),
         y = as.name("COUNTRY"),
@@ -2379,7 +2499,7 @@ P-value significance thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.rou
       tb.num <- tb.num + 1
       remove(params.tb)
       gc()
-      }
+    }
     ## ========================================================================================== ##
     ## ====== Table S34-x. Reformatted outcome-wide results by country ============================= ##
     f0 = 1
@@ -2535,7 +2655,7 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
     ## ====== Supplemental Forest plots ========================================================= ##
     gc() ## clean up junk prior to forest plots, helps run faster.
 
-      if(fig.num.start %in% 0:1){
+    if(fig.num.start %in% 0:1){
       tmp.txt <- fpar(
         ftext(
           paste0("Forest Plots of Estimated Effects across Countries"),
@@ -2547,122 +2667,122 @@ An outcome-wide analytic approach was used, and a separate model was run for eac
         body_add_fpar(tmp.txt) |>
         print(target=here::here(res.dir,out.file.docx))
 
-      }
+    }
 
-      tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
-      iter = 1
-      if(fig.num.start > 0){
-        fig.num = fig.num.start
-      }
-      for(iter in  1:length(tmp.out)){
-        run.start.time.i <- Sys.time()
-        f0=1
-        for(f0 in 1:length(focal.predictor)){
+    tmp.out <- OUTCOME.VEC[str_detect(OUTCOME.VEC, "blank", negate=TRUE)]
+    iter = 1
+    if(fig.num.start > 0){
+      fig.num = fig.num.start
+    }
+    for(iter in  1:length(tmp.out)){
+      run.start.time.i <- Sys.time()
+      f0=1
+      for(f0 in 1:length(focal.predictor)){
 
-          params.fig <- list(
-            OUTCOME.VEC = OUTCOME.VEC,
-            MYLABEL = MYLABEL,
-            focal.predictor = focal.predictor[f0],
-            focal.better.name = str_to_sentence(focal.better.name[f0]),
-            outcome = tmp.out[iter],
-            dir = dir.primary ,
-            file.a = file.primary.wopc,
-            file.b = file.primary.wpc,
-            fig.num0 = fig.num,
-            res.dir = res.dir,
-            n.print = n1.print,
-            fig.cap = "Figure.",
-            cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
-            start.time = run.start.time.i,
-            ignore.cache = FALSE,
-            digits = digits
-          )
+        params.fig <- list(
+          OUTCOME.VEC = OUTCOME.VEC,
+          MYLABEL = MYLABEL,
+          focal.predictor = focal.predictor[f0],
+          focal.better.name = str_to_sentence(focal.better.name[f0]),
+          outcome = tmp.out[iter],
+          dir = dir.primary ,
+          file.a = file.primary.wopc,
+          file.b = file.primary.wpc,
+          fig.num0 = fig.num,
+          res.dir = res.dir,
+          n.print = n1.print,
+          fig.cap = "Figure.",
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
+          start.time = run.start.time.i,
+          ignore.cache = FALSE,
+          digits = digits
+        )
 
 
-#
-#           if(forest.plot.type == "panelled"){
-#             myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
-#             fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries*. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
-#             params.fig[['fig.cap']] <- fig.cap.i
-#             ## build plot
-#             #
-#             gfs_supp_forest_plot(params.fig, forest.plot.type)
-#             #
-#             ## print to pdf/word file
-#             rmarkdown::render(
-#               input = system.file("rmd", "supplement_fig_forest_plot_panelled.Rmd", package = "Rglobalflourishing"),
-#               output_format = c("pdf_document","word_document"),
-#               output_file = paste0("tmp_fig"),
-#               output_dir = here::here(res.dir, "supplement-text"),
-#               params = params.fig
-#             )
-#           }
-#
-          if(forest.plot.type == "combined"){
-            myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
-            fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries.* N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. The plot compares the estimates between Model 1 which controls for demographic and childhood variables only and Model 2 which controls for demographic variables, childhood variances, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
-            params.fig[['fig.cap']] <- fig.cap.i
-            ## build plot
-            #
-            gfs_supp_forest_plot(params.fig, forest.plot.type)
-            #
-            ## print to pdf/word file
-            rmarkdown::render(
-              input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
-              output_format = c("pdf_document"),
-              output_file = paste0("tmp_fig"),
-              output_dir = here::here(res.dir, "supplement-text"),
-              params = list(
-                cache.file =  here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
-                fig.file = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", tmp.out[iter],"_regressed_on_", focal.predictor[f0],".pdf"))
-              )
-            )
-            Rglobalflourishing:::generate_docx_fig(
+        #
+        #           if(forest.plot.type == "panelled"){
+        #             myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
+        #             fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries*. (Panel A) without controlling for PCs (left); (Panel B) controlling for PCs (right); N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. Squares represent the point estimate for each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
+        #             params.fig[['fig.cap']] <- fig.cap.i
+        #             ## build plot
+        #             #
+        #             gfs_supp_forest_plot(params.fig, forest.plot.type)
+        #             #
+        #             ## print to pdf/word file
+        #             rmarkdown::render(
+        #               input = system.file("rmd", "supplement_fig_forest_plot_panelled.Rmd", package = "Rglobalflourishing"),
+        #               output_format = c("pdf_document","word_document"),
+        #               output_file = paste0("tmp_fig"),
+        #               output_dir = here::here(res.dir, "supplement-text"),
+        #               params = params.fig
+        #             )
+        #           }
+        #
+        if(forest.plot.type == "combined"){
+          myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
+          fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", str_to_lower(focal.better.name[f0]) ," on ", myvar0.bn ," scores across countries.* N=", n1.print, "; estimated effects computed accounting for the complex sampling design separately by country. Analyses conducted for this plot: Random-effects meta-analysis of country-specific effects. The plot compares the estimates between Model 1 which controls for demographic and childhood variables only and Model 2 which controls for demographic variables, childhood variances, and the entire set of Wave 1 potential confounders. The potential confounders were included using principal components. The points represent the estimated effect size in each country. The lines represented the +/-t(df)*SE, standard error, around the estimate; the overall pooled mean is represented by the diamond. The reported p-value for Q-statistics is necessarily 1-sided because of the use of the chi-squared distribution to test whether heterogeneity is greater than zero (i.e., a two-sided test is not applicable). No adjustments were made for multiple testing.")
+          params.fig[['fig.cap']] <- fig.cap.i
+          ## build plot
+          #
+          gfs_supp_forest_plot(params.fig, forest.plot.type)
+          #
+          ## print to pdf/word file
+          rmarkdown::render(
+            input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
+            output_format = c("pdf_document"),
+            output_file = paste0("tmp_fig"),
+            output_dir = here::here(res.dir, "supplement-text"),
+            params = list(
               cache.file =  here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
-              fig.file = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", tmp.out[iter],"_regressed_on_", focal.predictor[f0],".png")),
-              print.file = here::here(res.dir, "supplement-text","tmp_fig.docx"),
-              orient = "l",
-              w = 10, h = 6
+              fig.file = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", tmp.out[iter],"_regressed_on_", focal.predictor[f0],".pdf"))
             )
-
-          }
-          fig.num = fig.num + 1
-          ## Word version
-          tmp.file <- here::here(res.dir, "supplement-text","tmp_fig.docx")
-          tmp_doc <- read_docx(tmp.file)
-          sec.prop <- tmp_doc$sect_dim
-          if(length(sec.prop$page) == 2){
-            ps <- prop_section(
-              page_size = page_size(
-                orient = "landscape",
-                width = sec.prop$page[1]/1440,
-                height = sec.prop$page[2]/1440,
-                unit = "in"
-              )
-            )
-          } else {
-            ps <- prop_section(
-              page_size = page_size(
-                orient = "landscape"
-              )
-            )
-          }
-          supp_doc <- read_docx(path = here::here(res.dir,out.file.docx)) |>
-            body_add_docx(tmp.file) |>
-            body_end_block_section(value = block_section(ps))
-          print(supp_doc, target=here::here(res.dir,out.file.docx))
-
-          ## PDF version
-          gfs_append_pdf(
-            dir = res.dir,
-            cur.doc = out.file.pdf,
-            add = here::here(res.dir, "supplement-text", "tmp_fig.pdf")
+          )
+          Rglobalflourishing:::generate_docx_fig(
+            cache.file =  here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
+            fig.file = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", tmp.out[iter],"_regressed_on_", focal.predictor[f0],".png")),
+            print.file = here::here(res.dir, "supplement-text","tmp_fig.docx"),
+            orient = "l",
+            w = 10, h = 6
           )
 
         }
-        remove(params.fig)
-        gc() ## clean up between forest plots.
+        fig.num = fig.num + 1
+        ## Word version
+        tmp.file <- here::here(res.dir, "supplement-text","tmp_fig.docx")
+        tmp_doc <- read_docx(tmp.file)
+        sec.prop <- tmp_doc$sect_dim
+        if(length(sec.prop$page) == 2){
+          ps <- prop_section(
+            page_size = page_size(
+              orient = "landscape",
+              width = sec.prop$page[1]/1440,
+              height = sec.prop$page[2]/1440,
+              unit = "in"
+            )
+          )
+        } else {
+          ps <- prop_section(
+            page_size = page_size(
+              orient = "landscape"
+            )
+          )
+        }
+        supp_doc <- read_docx(path = here::here(res.dir,out.file.docx)) |>
+          body_add_docx(tmp.file) |>
+          body_end_block_section(value = block_section(ps))
+        print(supp_doc, target=here::here(res.dir,out.file.docx))
+
+        ## PDF version
+        gfs_append_pdf(
+          dir = res.dir,
+          cur.doc = out.file.pdf,
+          add = here::here(res.dir, "supplement-text", "tmp_fig.pdf")
+        )
+
       }
+      remove(params.fig)
+      gc() ## clean up between forest plots.
+    }
 
   }
 

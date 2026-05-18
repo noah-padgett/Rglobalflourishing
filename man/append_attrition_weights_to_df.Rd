@@ -11,7 +11,9 @@ append_attrition_weights_to_df(
   attr.wgt.name = NULL,
   wgt = NULL,
   strata = NULL,
-  psu = NULL
+  psu = NULL,
+  wave = "W2",
+  appnd.txt = ""
 )
 }
 \arguments{

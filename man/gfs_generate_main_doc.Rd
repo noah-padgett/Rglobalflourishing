@@ -24,7 +24,9 @@ gfs_generate_main_doc(
   strata = STRATA,
   ci.bonferroni = FALSE,
   forest.plots.inc.est = FALSE,
-  digits = 2
+  digits = 2,
+  include.cor = FALSE,
+  file.cor = "0_meta_analyzed_cor.rds"
 )
 }
 \arguments{

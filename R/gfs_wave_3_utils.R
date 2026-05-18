@@ -25,7 +25,7 @@ get_defaults_w3 <- function(x, filetype = "main"){
   if(filetype == "supp"){
     control.list = list(
       dir.primary = "results-primary",
-      dir.supp = "results-cca",
+      dir.supp = "results-supp",
       dir.attr.models = "results-attr",
       file.mod1.mi = "0_meta_analyzed_results_primary.rds",
       file.mod1.cca = "0_meta_analyzed_results_supp_cca_mod1.rds",

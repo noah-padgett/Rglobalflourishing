@@ -18,6 +18,7 @@ compute_calibrated <- function(fit) {
   tau2 <- as.numeric(fit["tau2"])
   yi <- as.numeric(unlist(fit["yi"]))
   vi <- as.numeric(unlist(fit["vi"]))
+  if(tau2 == 0.0) tau2 = 0.01**2
   # a reviewer called these empirical bayes estimates:
   theta + (yi - theta) * sqrt(tau2 / (tau2 + vi))
 }
@@ -34,7 +35,7 @@ proportion_meaningful <- function(x, q = 0, above = TRUE, method = "empirical", 
     }
   }
   if (method == "normal") {
-    # follows from Matheur and VanderWeele (2017)
+    # follows from Mathur and VanderWeele (2017)
     if (above) {
       out <- 1 - pnorm((q - theta) / tau)
     } else {
@@ -45,14 +46,14 @@ proportion_meaningful <- function(x, q = 0, above = TRUE, method = "empirical", 
 }
 #' @rdname compute_calibrated
 #' @export
-gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "normal", normal.q = 0.90, .exp=FALSE) {
+gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "normal", normal.q = 0.975, .exp=FALSE) {
   k <- length(x)
   out <- "[. , .]"
   ll <- NA
   ub <- NA
   if (pred.int.method == "empirical") {
-    lb <- min(x,na.rm=TRUE)
-    ub <- max(x,na.rm=TRUE)
+    lb <- min(unlist(x),na.rm=TRUE)
+    ub <- max(unlist(x),na.rm=TRUE)
     out <- paste0("[", .round(lb) ,", ", .round(ub),"]")
   }
   if (pred.int.method == "normal") {
@@ -64,6 +65,26 @@ gfs_prediction_interval <- function(x, theta = 0, tau = 1, pred.int.method = "no
       out <- paste0("[", .round(exp(lb)) ,", ", .round(exp(ub)),"]")
     }
   }
+  out
+}
+#' @rdname compute_calibrated
+#' @export
+gfs_prediction_interval_limits <- function(x, theta = 0, tau = 1, pred.int.method = "normal", normal.q = 0.975, .exp=FALSE, upper = TRUE) {
+  k <- length(x)
+  out <- "[. , .]"
+  ll <- NA
+  ub <- NA
+  if (pred.int.method == "empirical") {
+    lb <- min(unlist(x),na.rm=TRUE)
+    ub <- max(unlist(x),na.rm=TRUE)
+  }
+  if (pred.int.method == "normal") {
+    # follows from Matheur and VanderWeele (2017)
+    lb <- qnorm(1-normal.q, theta, tau)
+    ub <- qnorm(normal.q, theta, tau)
+  }
+  out <- ifelse(upper, ub, lb)
+  out <- ifelse(.exp, exp(out), out)
   out
 }
 #' @rdname compute_calibrated
@@ -175,8 +196,8 @@ add_pop_wgts <- function(df) {
   } else if("COUNTRY" %in% colnames(df)){
     for (i in names(poplist)) {
       df$wi[df$COUNTRY == i] <- poplist[i] / sum(poplist)
-      if(names(poplist) == "Turkiye"){
-        df$wi[df$COUNTRY == "Turkey"] <- poplist[i] / sum(poplist)
+      if(i == "Turkiye"){
+        df$wi[df$COUNTRY %in% c("Turkey", i)] <- poplist[i] / sum(poplist)
       }
     }
   }
@@ -184,3 +205,18 @@ add_pop_wgts <- function(df) {
   df
 }
 
+#' @rdname compute_calibrated
+#' @export
+meta_loo_inf <- function(x, ...){
+  suppressMessages({
+    df.loo <- as.data.frame(metafor::leave1out(x))
+    colnames(df.loo) <- paste0("loo.", colnames(df.loo))
+    # for influence, you need to explicitly use the list.rma version of the as.df
+    df.inf <- metafor::influence.rma.uni(x)
+    df.inf <- metafor::as.data.frame.list.rma(df.inf[[1]])
+    df.loo <- df.loo |> mutate(group = x$data$group[as.numeric(rownames(df.inf))], .before = 1)
+    df.inf <- df.inf |> mutate(group = x$data$group[as.numeric(rownames(df.inf))], .before = 1)
+    df <- full_join(df.loo, df.inf)
+  })
+  df
+}
