@@ -221,21 +221,6 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY)
         )
     }
-    if(is.null(wave) | wave == 3){
-      df.original <- df.original %>%
-        mutate(
-          AGE_GRP_Y1 = recode_labels(AGE_Y1, "AGE_GRP_Y1",...),
-          AGE_GRP_Y1 = recode_to_type(AGE_GRP_Y1, "AGE_GRP_Y1"),
-          AGE_GRP_Y2 = recode_labels(AGE_Y2, "AGE_GRP_Y2",...),
-          AGE_GRP_Y2 = recode_to_type(AGE_GRP_Y2, "AGE_GRP_Y2"),
-          AGE_GRP_Y3 = recode_labels(AGE_Y3, "AGE_GRP_Y3",...),
-          AGE_GRP_Y3 = recode_to_type(AGE_GRP_Y3, "AGE_GRP_Y3"),
-          RACE1 = recode_labels(SELFID1, "SELFID1",...),
-          RACE2 = recode_labels(SELFID2, "SELFID2",...),
-          RACE_PLURALITY1 = recode_race_to_plurality(RACE1, COUNTRY2),
-          RACE_PLURALITY2 = recode_race_to_plurality(RACE2, COUNTRY2)
-        )
-    }
   }
   ## ============================================================================================ ##
   ## ====== RECODING INCOME DATA =============================================================== ##
@@ -474,7 +459,8 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
       select(COUNTRY, quintiles_w1, quintiles_w2, quintiles_w3)
 
     df.original <- df.original %>%
-      group_by(COUNTRY2) %>%
+      mutate(COUNTRY2 = COUNTRY) %>%
+      group_by(COUNTR2) %>%
       nest() %>%
       mutate(
         data = map(data, \(x){
