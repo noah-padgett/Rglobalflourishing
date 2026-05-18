@@ -5,13 +5,15 @@ output:
 header-includes:
   - \usepackage[default,oldstyle,scale=0.95]{opensans}
   - \usepackage[T1]{fontenc}
-geometry: "paperheight=11in,paperwidth=8.5in,margin=1in"
-params: 
+  - \usepackage{subcaption}
+geometry: "paperheight=8.5in,paperwidth=11in,margin=0.5in"
+params:
   cache.file: ""
+  fig.file: ""
 ---
-
 \pagestyle{empty}
 \setmainfont{opensans}
+
 
 ```{r}
 #| label: setup
@@ -22,25 +24,28 @@ set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = ""
+  tab.cap.pre = "", tab.cap.sep = "",
+  warning = FALSE, message = FALSE
 )
-
 
 load(params$cache.file)
-  
+
 ```
 
 
- 
+`r fig.cap`
+
 ```{r}
-#| label: print-table
+#| label: print-figures
+#| echo: FALSE
+#| out.width: "95%"
+#| fig.ncol: 1
+#| fig.align: 'center'
 
-knitr::opts_chunk$set(
-  echo = FALSE,
-  ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
-  tab.cap.pre = "", tab.cap.sep = ""
-)
 
-print.tb |> flextable::autofit()
+knitr::include_graphics(params$fig.file)
+
 
 ```
+
+`r fig.fn`

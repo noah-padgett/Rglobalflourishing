@@ -28,7 +28,7 @@
 run_impute_data <- function(data,
                             data.dir,
                             Nimp = 20,
-                            Miter = 2,
+                            Miter = 5,
                             save.method = "combined",
                             visitSequence = "monotone",
                             pred.vars = NULL,
@@ -314,6 +314,44 @@ run_imputation <- function(country, df.tmp,
     paste0(var.ignore0, "_Y3"),
     paste0(var.ignore0, "_MY")
   )
+
+  # # turn all core items of the SFI + LE into factors
+  if(!(cur.country %in% c("China", "Sweden", "United States"))){
+    df.tmp <- df.tmp |>
+      mutate(
+        across(c(LIFE_SAT_Y2, HAPPY_Y2, PHYSICAL_HLTH_Y2, MENTAL_HEALTH_Y2,
+                 WORTHWHILE_Y2, LIFE_PURPOSE_Y2, PROMOTE_GOOD_Y2, GIVE_UP_Y2,
+                 CONTENT_Y2, SAT_RELATNSHP_Y2, EXPENSES_Y2, WORRY_SAFETY_Y2,
+                 WB_TODAY_Y2, WB_FIVEYRS_Y2,
+                 BELONGING_Y2,EXPECT_GOOD_Y2,FREEDOM_Y2,GRATEFUL_Y2,
+                 HOPE_FUTURE_Y2,LONELY_Y2,PEOPLE_HELP_Y2,SHOW_LOVE_Y2,
+
+                 LIFE_SAT_Y3, HAPPY_Y3, PHYSICAL_HLTH_Y3, MENTAL_HEALTH_Y3,
+                 WORTHWHILE_Y3, LIFE_PURPOSE_Y3, PROMOTE_GOOD_Y3, GIVE_UP_Y3,
+                 CONTENT_Y3, SAT_RELATNSHP_Y3, EXPENSES_Y3, WORRY_SAFETY_Y3,
+                 WB_TODAY_Y3, WB_FIVEYRS_Y3,
+                 BELONGING_Y3,EXPECT_GOOD_Y3,FREEDOM_Y3,GRATEFUL_Y3,
+                 HOPE_FUTURE_Y3,LONELY_Y3,PEOPLE_HELP_Y3,SHOW_LOVE_Y3),\(x){
+                   factor(x)
+                 })
+      )
+  }
+  #
+  # df.tmp <- df.tmp |>
+  #   mutate(
+  #     across(c(LIFE_SAT_Y2, HAPPY_Y2, LIFE_SAT_Y3, HAPPY_Y3),\(x){
+  #                factor(x)
+  #              })
+  #   )
+
+
+  ## =================================================================== ##
+  ## =================================================================== ##
+  # passive imputation to get method vector
+  pass.imp <- mice::mice(df.tmp, maxit = 0,visitSequence = "monotone")
+  tmp.dat <- pass.imp$data
+  tmp.pred <- pass.imp$predictorMatrix
+  tmp.meth <- pass.imp$method
   ## =================================================================== ##
   var.class <- df.tmp %>%
     summarise(across(everything(), \(x) class(x)))
@@ -358,6 +396,17 @@ run_imputation <- function(country, df.tmp,
       )
   }
 
+  # # try thr 'ri' method for all SFI variables
+  # tmp.meth[c('LIFE_SAT_Y2', 'HAPPY_Y2', 'PHYSICAL_HLTH_Y2', 'MENTAL_HEALTH_Y2',
+  #                'WORTHWHILE_Y2', 'LIFE_PURPOSE_Y2', 'PROMOTE_GOOD_Y2', 'GIVE_UP_Y2',
+  #                'CONTENT_Y2', 'SAT_RELATNSHP_Y2', 'EXPENSES_Y2', 'WORRY_SAFETY_Y2',
+  #                'WB_TODAY_Y2', 'WB_FIVEYRS_Y2',
+  #                'LIFE_SAT_Y3', 'HAPPY_Y3', 'PHYSICAL_HLTH_Y3', 'MENTAL_HEALTH_Y3',
+  #                'WORTHWHILE_Y3', 'LIFE_PURPOSE_Y3', 'PROMOTE_GOOD_Y3', 'GIVE_UP_Y3',
+  #                'CONTENT_Y3', 'SAT_RELATNSHP_Y3', 'EXPENSES_Y3', 'WORRY_SAFETY_Y3',
+  #                'WB_TODAY_Y3', 'WB_FIVEYRS_Y3')] <- 'pmm'
+  #
+  # library(miceadds)
   ## =================================================================== ##
   # Set up base predictor matrix
   if(is.null(pred.vars)){
@@ -373,11 +422,12 @@ run_imputation <- function(country, df.tmp,
     data = tmp.dat,
     include = c("ANNUAL_WEIGHT_C1", pred.vars[keep.var]),
     exclude = exclude.var[exclude.var != "ANNUAL_WEIGHT_C1"],
-    # so that min cor is at least 0.01 + a function of the proportion attritted --> lower for less informed countries
+    # so that min cor is at least 0.025 + a function of the proportion attritted --> lower for less informed countries
     # mice default is 0.10
     # NP: modified to force countries/groups with MORE attrition to use more variables in the
     #     predictor matrix to help align the Full MI and CCA results.
-    maxcor = 0.99, mincor = 0.025 + (0.10 * prop.attrit),
+    maxcor = 0.99,
+    mincor = 0.10, #0.025 + (0.10 * prop.attrit),
     check.cor.bounds.after.include = TRUE
   )
   # predictor matrix:
@@ -404,10 +454,23 @@ run_imputation <- function(country, df.tmp,
   tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2") | str_detect(colnames(tmp.pred), "_Y3")]
   tmp.pred[tr,tc] <- 0 # all t1 (rows) cannot be predicted by t2 or t3 (cols)
 
+  # 2. Wave 3 cannot predict Wave 2
+  tr <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2")]
+  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y3")]
+  tmp.pred[tr,tc] <- 0
+
+  # 3. Wave 2 cannot predict Wave 2
+  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2")]
+  tmp.pred[tc,tc] <- 0
+
+  # 3. Wave 3 cannot predict Wave 3
+  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y3")]
+  tmp.pred[tc,tc] <- 0
+
   ## print out file
   #tmp.pred1 <- tmp.pred
   #tmp.pred1 <- tmp.pred1[pass.imp$visitSequence, pass.imp$visitSequence]
-  #write_xlsx(tmp.pred1, file="test/ignore/data/imp/pred_matrix_Nigeria2.xlsx", col_names=TRUE, row_names=TRUE)
+  #write_xlsx(tmp.pred1, file="test/ignore/data/imp/pred_matrix_Brazil.xlsx", col_names=TRUE, row_names=TRUE)
 
   # NEXT, set up lag predictors
   # tmp.vec <- c(get_variable_codes("OUTCOME.VEC"), "INCOME")
@@ -476,6 +539,7 @@ run_imputation <- function(country, df.tmp,
   try({
     # use futuremice if number of imputation is greater than 5 (should give a speed boost)
     if(Nimp > 5 & save.method == "combined" & use.parallel){
+
       fit.imp <- mice::futuremice(
         tmp.dat,
         m = Nimp,
@@ -483,22 +547,23 @@ run_imputation <- function(country, df.tmp,
         visitSequence = visitSequence,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
-        donors = 3,
+        donors = 5,
         threshold = 1.0, # see https://github.com/amices/mice/issues/314 for threshold information
         ridge = 0.1,
         n.core = future::availableCores(),
         parallelseed = 31415
       )
       future::resetWorkers(plan())
+
     } else if(save.method == "separate"){
       fit.imp <- mice::mice(
         tmp.dat,
         m = 1,
-        maxit = Miter,
+        maxit = 1,#Miter,
         visitSequence = visitSequence,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
-        donors = 3,
+        donors = 5,
         threshold = 1.0,
         ridge = 0.1,
         seed = Nimp # allows for varying seed
@@ -511,13 +576,14 @@ run_imputation <- function(country, df.tmp,
         visitSequence = visitSequence,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
-        donors = 3,
+        donors = 5,
         threshold = 1.0, #0.99,
         ridge = 0.1,
         seed = 31415
       )
     }
   })
+
   ## save country-by-imputation-specific files
   c.file.name <- paste0("imputed_data_obj_",cur.country,"_",save.method,"_imp_",Nimp,".RData")
   save(fit.imp, file = here::here(data.dir, "imp", c.file.name))

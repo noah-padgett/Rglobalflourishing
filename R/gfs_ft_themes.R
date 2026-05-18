@@ -231,20 +231,34 @@ theme_meta_main_wave_3 <- function(xtb, pg.width = 6.5, study = "exposure") {
 
 #' @rdname gfs_ft_themes
 #' @export
-theme_meta_supp_meta_wave_3 <- function(xtb, pg.width = 25, study = "exposure") {
+theme_meta_supp_meta_wave_3 <- function(xtb, pg.width = 20, study = "exposure", is.meta=TRUE) {
   cn <- colnames(xtb$header$dataset)
 
   if(str_detect(str_to_lower(study), "exposure")){
-    ncol <- 26
-    top.header <- c(2:13, 15:26)
-    bottom.header <- c(2:4,6:9,11:13, 15:17,19:22,24:26)
-    cs.0.1 <- c(5,10,14,18,23)
-    cs.0.4 <- c(2,3)
+    if(is.meta){
+      ncol <- 26
+      top.header <- c(2:13, 15:26)
+      bottom.header <- c(2:4,6:9,11:13, 15:17,19:22,24:26)
+      cs.0.1 <- c(5,10,14,18,23)
+    } else {
+      ncol <- 18
+      top.header <- c(2:9, 11:18)
+      bottom.header <- c(2:5,7:9,11:14,16:18)
+      cs.0.1 <- c(6,10,15)
+    }
   }
   if(str_detect(str_to_lower(study), "outcome")){
-    ncol <- 28
-    top.header <- c(2:14, 16:28)
-    bottom.header <- c(2:5,7:10,12:14, 16:19,21:24,26:28)
+    if(is.meta){
+      ncol <- 28
+      top.header <- c(2:14, 16:28)
+      bottom.header <- c(2:5,7:10,12:14, 16:19,21:24,26:28)
+      cs.0.1 <- c(6,11,15,20,25)
+    } else {
+      ncol <- 20
+      top.header <- c(2:10, 12:20)
+      bottom.header <- c(2:6,8:10,12:16,18:20)
+      cs.0.1 <- c(7,11,17)
+    }
   }
 
   tb.temp <- xtb %>%
@@ -258,7 +272,8 @@ theme_meta_supp_meta_wave_3 <- function(xtb, pg.width = 25, study = "exposure") 
     align(align = "right", part = "all") %>%
     align(j = 1, align = "left", part = "all") %>%
     valign(valign = "bottom", part = "all")  %>%
-    width(j=1,width=2.5)
+    width(j=1,width=2.5) %>%
+    width(j=cs.0.1, width = 0.1)
 
   tb.temp <-
     width(tb.temp,
@@ -279,5 +294,4 @@ theme_meta_supp_meta_wave_3 <- function(xtb, pg.width = 25, study = "exposure") 
 
   tb.temp
 }
-
 

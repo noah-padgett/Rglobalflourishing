@@ -52,7 +52,7 @@ gfs_svyglm_mi <- function(
     return.result = TRUE,
     ...) {
 
-  #fx = COMPOSITE_FLOURISHING_SECURE_Y2 ~ 0 + COV_GENDER;  data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary";  direct.subset = NULL;  domain.subset = NULL;  family = NULL;  appnd.txt.to.filename = ""; save.all = FALSE; country.subset = c("China", "Hong Kong", "India", "Japan", "United States");  domain.subset = quote(REL1_Y1 == 4)
+  #fx = COMPOSITE_FLOURISHING_SECURE_Y2 ~ 1;  data.dir = "test/ignore/data/recoded";  wgt = as.name("ANNUAL_WEIGHT_R3"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = TRUE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary";  direct.subset = expr(!is.na(ANNUAL_WEIGHT_R3));  domain.subset = NULL;  family = NULL;  appnd.txt.to.filename = ""; save.all = FALSE; country.subset = NULL;  domain.subset = NULL
 
   suppressMessages({
     suppressWarnings({
@@ -66,7 +66,6 @@ gfs_svyglm_mi <- function(
         covariates <- c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE))
         covariates <- unique(covariates)
         reg.centered = ifelse(any(c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE)) == "0"), FALSE, TRUE)
-
       }
       res.dir <- here(res.dir)
       if (!dir.exists(res.dir)) {

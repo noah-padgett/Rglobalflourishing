@@ -4,7 +4,7 @@
 
 #' @export
 #' @rdname build-functions
-build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 10){
+build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 10, pg.width=6.5){
 
   set_flextable_defaults(font.family = font.name,font.size = font.size)
 
@@ -26,6 +26,8 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   if(!is.null(focal.predictor0)){
     focal.variable0 = focal.predictor0
   }
+
+  ngrp.cols <- length(unique(data[[as.character({{x}})]]))
 
     ## create table
     suppressWarnings({
@@ -76,7 +78,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
             all_continuous() ~ "continuous2"
           ),
           statistic = list(
-            all_continuous() ~ c("    {mean}", "    {sd}",
+            all_continuous() ~ c("    {mean} ({sd})",
                                  "    {min}, {max}",
                                  "    {p25}, {p75}"
                                  ),
@@ -90,7 +92,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
           missing_stat = "{N_miss} ({p_miss}%)"
         ) %>%
         add_stat_label(
-          label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max", "    Q1, Q3")
+          label = all_continuous() ~ c("    Mean (Standard Deviation)", "    Min, Max", "    Q1, Q3")
         ) %>%
         modify_header(label ~ "**Characteristic**") %>%
         italicize_labels()
@@ -104,7 +106,8 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   print.tb <- sumtab %>%
     as_flex_table() %>%
     autofit() %>%
-    format_flex_table(pg.width = 6.5)  %>%
+    width(j=2:ngrp.cols,width=1.66)%>%
+    format_flex_table(pg.width = pg.width)  %>%
     add_footer_lines(
       values = tb.note.summarytab, top = FALSE
     ) %>%
@@ -119,7 +122,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
 
 #' @export
 #' @rdname build-functions
-build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 10){
+build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 10, pg.width=6.5){
 
   set_flextable_defaults(font.family = font.name,font.size = font.size)
 
@@ -146,6 +149,7 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
     var.labels <- OUTCOME.VEC.LABELS
   }
 
+  ngrp.cols <- length(unique(data[[as.character({{x}})]]))
 
   ## create table
   suppressWarnings({
@@ -169,7 +173,7 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
         contains("DRINKS") ~ "continuous2"
       ),
       statistic = list(
-        all_continuous() ~ c("    {mean}", "    {sd}", "    {min}, {max}", "    {p25}, {p75}⁠"),
+        all_continuous() ~ c("    {mean} ({sd})", "    {min}, {max}", "    {p25}, {p75}"),
         all_categorical() ~ "{n} ({p}%)"
       ),
       digits = list(
@@ -180,7 +184,7 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
       missing_stat = "{N_miss} ({p_miss}%)"
     ) %>%
     add_stat_label(
-      label = all_continuous() ~ c("    Mean", "    Standard Deviation", "    Min, Max", "    Q1, Q3")
+      label = all_continuous() ~ c("    Mean (Standard Deviation)", "    Min, Max", "    Q1, Q3")
     ) %>%
     modify_header(label ~ "**Variable**") %>%
     italicize_labels()
@@ -196,9 +200,8 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
 print.tb <- sumtab %>%
   as_flex_table() %>%
   autofit() %>%
-  width(j=2,width=1.5)%>%
-  width(j=3,width=1.5)%>%
-  format_flex_table(pg.width = 6.5)  %>%
+  width(j=2:ngrp.cols,width=1.66)%>%
+  format_flex_table(pg.width = pg.width)  %>%
   add_footer_lines(
     values = tb.note.summarytab, top = FALSE
   ) %>%

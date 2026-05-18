@@ -32,8 +32,7 @@ get_defaults_w3 <- function(x, filetype = "main"){
       file.mod1.mi.unstd = "0_meta_analyzed_results_primary_unstd.rds",
       file.mod1.cca.unstd = "0_meta_analyzed_results_supp_cca_mod1_unstd.rds",
       file.mod2.mi = "0_meta_analyzed_results_supp_mi_mod2.rds",
-      file.mod2.cca = "0_meta_analyzed_results_supp_cca_mod2.rds",
-      file.mod2.mi = "0_meta_analyzed_results_supp_mi_mod2.rds",
+      file.mod2.mi.unstd = "0_meta_analyzed_results_supp_mi_mod2_unstd.rds",
       file.mod2.cca = "0_meta_analyzed_results_supp_cca_mod2.rds",
       file.mod3.mi = "0_meta_analyzed_results_supp_mi_mod3_unstd.rds",
       file.mod3.cca = "0_meta_analyzed_results_supp_mi_mod3.rds",
@@ -58,7 +57,8 @@ get_defaults_w3 <- function(x, filetype = "main"){
       only.figs=FALSE,
       fig.num.start = 0,
       tb.start.num = NULL,
-      included.countries = NULL
+      included.countries = NULL,
+      include.mod3 = FALSE
     )
   }
 
@@ -251,7 +251,7 @@ get_variable_group_labels <- function(x){
     Religion_Spirituality = c('CONNECTED_REL', 'AFTER_DEATH', 'REL_EXPERIENC', 'SACRED_TEXTS', 'PRAY_MEDITATE', 'BELIEVE_GOD', 'LIFE_APPROACH', 'COMFORT_REL', 'LOVED_BY_GOD', 'GOD_PUNISH', 'CRITICAL', 'TELL_BELIEFS')
   )
   case_when(
-    x %in% (label.lst[['FlourishingIndexDomains']]) ~ "Human Flourishing",
+    x %in% (label.lst[['FlourishingIndexDomains']]) ~ "Human Flourishing (composites)",
     x %in% (label.lst[['Psychological_WB']]) ~ "Psychological Well-Being",
     x %in% (label.lst[['Psychological_Distress']]) ~ "Psychological Distress",
     x %in% (label.lst[['Social_WB']]) ~ "Social Well-Being",

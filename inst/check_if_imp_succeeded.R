@@ -50,3 +50,17 @@ check.imp <- lapply(imp.files, FUN=function(x){
 }) |> bind_rows()
 #names(check.imp) <- imp.files
 check.imp
+
+
+
+
+df.tmp <- complete(fit.imp, action = "long")
+var.w.miss <- df.tmp |>
+  summarise(
+    across(everything(), ~mean(is.na(.)))
+  )
+keep.cols <- names(var.w.miss)[var.w.miss > 0]
+keep.cols  <- keep.cols[!(keep.cols %in% c('WAVE_Y2', 'WAVE_Y3', 'DOI_ANNUAL_Y2', 'DOI_ANNUAL_Y3', 'POLITICAL_ID_Y1', 'POLITICAL_ID_Y2', 'POLITICAL_ID_Y3', 'REGION2_Y2', 'REGION2_Y3', 'REGION3_Y1', 'REGION3_Y2', 'REGION3_Y3', 'ANNUAL_WEIGHT_C2', 'ANNUAL_WEIGHT_L2', 'ANNUAL_WEIGHT_C3', 'ANNUAL_WEIGHT_L3', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_Y3'))]
+var.w.miss |> select(all_of( keep.cols))
+
+
