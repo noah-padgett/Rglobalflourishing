@@ -468,9 +468,6 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
           tmp.quintiles <- income.quintiles %>%
             filter(COUNTRY == grp)
 
-          tmp.quintiles <- income.quintiles %>%
-            filter(COUNTRY == cur.country)
-
           tmp.quintiles.w1 <- tmp.quintiles$quintiles_w1[[1]][[1]]
           tmp.quintiles.w2 <- tmp.quintiles$quintiles_w2[[1]][[1]]
           tmp.quintiles.w3 <- tmp.quintiles$quintiles_w3[[1]][[1]]
