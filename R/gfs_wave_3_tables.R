@@ -1622,7 +1622,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_sample_by_x(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"), # portrait_long25
+        input = system.file("rmd", "pdf_portrait_25L.Rmd", package = "Rglobalflourishing"), # portrait_long25
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_1",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1655,7 +1655,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_70L.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_2",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1687,7 +1687,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width=8.5)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_25_11.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_3",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1720,7 +1720,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width=8.5)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_70_11.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_4",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1809,7 +1809,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_18_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1891,7 +1891,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_18_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1973,7 +1973,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_18_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2004,7 +2004,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       params.tb <- list(
         is.meta = TRUE,
         study = study,
-        focal.predictor = focal.variable[f0],
+        focal.variable = focal.variable[f0],
         focal.better.name = focal.better.name[f0],
         focal.predictor.reference.value = focal.variable.reference.value[f0],
         tbl.row.vec = control$tbl.row.vec,
@@ -2117,7 +2117,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_18_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2269,10 +2269,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
   if(control$what == "all" | control$what == "S3"){
     cat("Starting part 2 -- country-specific results\n")
     if(control$what == "S3"){
-      tb.num <- 4 + 4*length(focal.predictor) + start.country
-      if(!is.null(tb.start.num)){
-        tb.num <- tb.start.num
-      }
+      tb.num <- 4
     }
     iter = 1;
     for (iter in 1:length(COUNTRY_LABELS)) {
@@ -2352,7 +2349,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_sample_by_x(params.tb)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_25L.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_a"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2393,7 +2390,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_70L.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_b"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2435,7 +2432,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width = 8.5)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_25_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_c"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2476,7 +2473,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width=8.5)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_70_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_d"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2568,7 +2565,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           gfs_wave_3_build_supp_tbl(params.tb, pg.width = 16)
 
           rmarkdown::render(
-            input = system.file("rmd", "pdf_18_by_18.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
             output_file =  paste0("tmp_tbl_e", f0),
             output_dir = here::here(res.dir, "supplement-text"),
@@ -2654,7 +2651,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           gfs_wave_3_build_supp_tbl(params.tb, pg.width = 16)
 
           rmarkdown::render(
-            input = system.file("rmd", "pdf_18_by_18.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
             output_file =  paste0("tmp_tbl_f", f0),
             output_dir = here::here(res.dir, "supplement-text"),
@@ -2691,7 +2688,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           params.tb <- list(
             is.meta = FALSE,
             study = study,
-            focal.predictor = focal.variable[f0],
+            focal.variable = focal.variable[f0],
             focal.better.name = focal.better.name[f0],
             focal.predictor.reference.value = focal.variable.reference.value[f0],
             tbl.row.vec = control$tbl.row.vec,
@@ -3368,7 +3365,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
     )
   } else {
     vars.to.get <- c('data', "term", "outcome")
-    df.a <- load_meta_result(
+     df.a <- load_meta_result(
       file = here::here(dir.a, file.a),
       predictor = unique(c(focal.variable, tbl.row.vec)),
       outcome = unique(c(focal.variable, tbl.row.vec)),
@@ -3377,6 +3374,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
       filter.var.pred = "term"
     ) |> unnest(c(data)) |>
       filter(group == country.i)
+
     df.b <- load_meta_result(
       file = here::here(dir.b, file.b),
       predictor = unique(c(focal.variable, tbl.row.vec)),
@@ -3386,6 +3384,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
       filter.var.pred = "term"
     )|> unnest(c(data)) |>
       filter(group == country.i)
+
     df.c <- load_meta_result(
       file = here::here(dir.c, file.c),
       predictor = unique(c(focal.variable, tbl.row.vec)),
@@ -3395,6 +3394,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
       filter.var.pred = "term"
     )|> unnest(c(data)) |>
       filter(group == country.i)
+
     df.d <- load_meta_result(
       file = here::here(dir.d, file.d),
       predictor = unique(c(focal.variable, tbl.row.vec)),
@@ -3404,6 +3404,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
       filter.var.pred = "term"
     )|> unnest(c(data)) |>
       filter(group == country.i)
+
   }
 
   # depending on the study, it changes which variable we use to "filter" within the loop
