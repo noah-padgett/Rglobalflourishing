@@ -2216,8 +2216,8 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           dir = control$dir.primary ,
           file = control$file.mod1.mi,
           res.dir = res.dir,
-          predictor = predictor.i,
-          outcome = outcome.i,
+          predictor.i = predictor.i,
+          outcome.i = outcome.i,
           fig.num = fig.num,
           fig.cap = fig.cap.i,
           fig.fn = fig.fn.i,
@@ -2242,13 +2242,15 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             )
           )
 
-        fig.num = fig.num + 1
         ## PDF version
         gfs_append_pdf(
           dir = res.dir,
           cur.doc = out.file.pdf,
           add = here::here(res.dir, "supplement-text", "tmp_fig.pdf")
         )
+
+
+        fig.num = fig.num + 1
 
       }
       remove(params.fig)
@@ -3533,8 +3535,8 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
   dir = params$dir
   file = params$file
   res.dir = params$res.dir
-  predictor = params$predictor
-  outcome = params$outcome
+  predictor.i = params$predictor.i
+  outcome.i = params$outcome.i
   fig.cap = params$fig.cap
   fig.fn = params$fig.fn
   cache.file = params$cache.file
@@ -3545,13 +3547,16 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
 
     ALL.COUNTRIES <- c("Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil",    "Mexico",  "China"  )
 
+    print(here::here(dir, file))
     df.main <- load_meta_result(
       file = here::here(dir, file),
-      predictor = predictor,
-      outcome = outcome ,
+      predictor = predictor.i,
+      outcome = outcome.i ,
       filter.var.out = "outcome",
       filter.var.pred = "term"
     )
+    df.main <- df.main |>
+      filter(outcome == outcome.i, term == predictor.i)
 
     # meta fit objects
     fit <- df.main$meta.rma[[1]]
@@ -3727,11 +3732,11 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
         plot_annotation(caption = tmp.het)
 p
     ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome,"_regressed_on_", predictor,".pdf")),
+      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".pdf")),
       plot = p, height = 6.5, width = 13, units = "in"
     )
     ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome,"_regressed_on_", predictor,".png")),
+      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".png")),
       plot = p, height = 6.5, width = 13, units = "in", dpi = 250
     )
 
