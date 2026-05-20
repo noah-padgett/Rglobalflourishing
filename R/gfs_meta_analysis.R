@@ -66,12 +66,27 @@ gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
       }),
       ## ====== random effects meta results ===================================================== ##
       meta.rma = map(data, \(x){
-        rma(
-          yi = yi,
-          sei = sei,
-          data = x,
-          method = estimator
-        )
+        fit <- NULL
+        try({
+          fit <- rma(
+            yi = yi,
+            sei = sei,
+            data = x,
+            method = estimator
+          )
+        })
+        if(is.null(fit)){
+          estimator2 = if(estimator != "REML") "REML" else "EB"
+          warning(paste0("[rma(., method=",estimator," )] failed. Retrying using ",estimator2," instead"))
+          # NOTE: when the selected estimation method fails, tries to fall back to REML or EB.
+          fit <- rma(
+            yi = yi,
+            sei = sei,
+            data = x,
+            method = estimator2
+          )
+        }
+        fit
       }),
       meta.rma.tidy = map(meta.rma, \(x) tidy(x, conf.int = TRUE)),
       theta.rma = map_dbl(meta.rma.tidy, "estimate"),
