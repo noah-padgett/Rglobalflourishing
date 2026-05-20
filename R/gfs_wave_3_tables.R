@@ -1649,7 +1649,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_sample_by_x(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"), # portrait_long25
+        input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"), # portrait_long25
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_1",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1682,7 +1682,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_2",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1714,7 +1714,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width=8.5)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_10_11.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_3",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1747,7 +1747,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width=8.5)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_10_11.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_4",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2379,7 +2379,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_sample_by_x(params.tb)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_a"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2420,7 +2420,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_normal_portrait.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_44L.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_b"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2462,7 +2462,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width = 8.5)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_10_11.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_c"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2503,7 +2503,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width=8.5)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_10_11.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_44_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
           output_file = paste0("tmp_tbl_d"),
           output_dir = here::here(res.dir, "supplement-text"),
@@ -2765,7 +2765,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
 
       }
       ## ======================================================================================== ##
-      ## ====== Print out tables to formatted Word document ===================================== ##
+      ## ====== Print out tables to formatted PDF document ===================================== ##
       {
 
         ## PDF version (this method works for part 1, need a difference method for after out.file.pdf is created)

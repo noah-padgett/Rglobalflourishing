@@ -68,16 +68,18 @@ gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
       meta.rma = map(data, \(x){
         fit <- NULL
         try({
+          suppressMessages({
           fit <- rma(
             yi = yi,
             sei = sei,
             data = x,
             method = estimator
           )
+          })
         })
         if(is.null(fit)){
           estimator2 = if(estimator != "REML") "REML" else "EB"
-          warning(paste0("[rma(., method=",estimator," )] failed. Retrying using ",estimator2," instead"))
+          warning(paste0("[rma(., method=",estimator," )] failed. Retrying using ",estimator2," instead for outcome=", x$outcome[1], ", term=",x$term[1],"."))
           # NOTE: when the selected estimation method fails, tries to fall back to REML or EB.
           fit <- rma(
             yi = yi,
