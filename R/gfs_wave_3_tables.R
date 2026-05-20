@@ -392,90 +392,63 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
   gc()
   ## =============================================================================== ##
   ## =============================================================================== ##
-  ## ----- Main text figures (ONLY FOR OUTCOMEWIDE Study) -----
-  if(str_detect(str_to_lower(study), "outcome") ){
-    if("COMPOSITE_FLOURISHING_SECURE_Y3" %in% tbl.row.vec){
-      f0=1
-      fig.num <- 1
-      for(f0 in 1:length(focal.variable)){
-
-        if(is.null(fig.title)){
-          fig.title = paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name[f0] ," at Wave 2 on composite Secure Flourishing Index scores at Wave 3 across countries (N=", n.print, ").*\n The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogeneity.")
-        }
-
-
-
-        params.fig <- list(
-          focal.variable = focal.variable[f0],
-          dir = dir.meta ,
-          file.primary = file.primary,
-          fig.title = fig.title,
-          res.dir = res.dir,
-          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          start.time = run.start.time,
-          include.estimates = forest.plots.inc.est,
-          fig.num = fig.num
-        )
-
-        Rglobalflourishing:::gfs_wave_3_build_fig_1(params.fig)
-
-        rmarkdown::render(
-          input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
-          output_format = c("pdf_document"),
-          output_file = paste0("main_text_figures_combined-",f0),
-          output_dir = here::here(res.dir, "main-text"),
-          params = list(
-            cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-            fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".pdf"))
-          )
-        )
-        Rglobalflourishing:::generate_docx_fig(
-          cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
-          fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".png")),
-          print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
-          orient = "p",
-          w = 6, h = 5
-        )
-
-
-        fig.num <- fig.num + 1
-      }
-      remove(params.fig)
-
-      gc()
-    }
-  }
+  # ## ----- Main text figures (ONLY FOR OUTCOMEWIDE Study) -----
+  # if(str_detect(str_to_lower(study), "outcome") ){
+  #   if("COMPOSITE_FLOURISHING_SECURE_Y3" %in% tbl.row.vec){
+  #     f0=1
+  #     fig.num <- 1
+  #     for(f0 in 1:length(focal.variable)){
+  #
+  #       if(is.null(fig.title)){
+  #         fig.title = paste0("**Figure ",fig.num,"**. *Heterogeneity in the effects of ", focal.better.name[f0] ," at Wave 2 on composite Secure Flourishing Index scores at Wave 3 across countries (N=", n.print, ").*\n The points represent the estimated effect size in each country. The lines represented the confidence interval obtained via est+/-t(df)*SE, standard error; the overall pooled mean is represented by the points and intervals in the 'overall' row near the bottom. See our online supplemental material for more information regarding the tests of heterogeneity.")
+  #       }
+  #
+  #
+  #
+  #       params.fig <- list(
+  #         focal.variable = focal.variable[f0],
+  #         dir = dir.meta ,
+  #         file.primary = file.primary,
+  #         fig.title = fig.title,
+  #         res.dir = res.dir,
+  #         cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+  #         start.time = run.start.time,
+  #         include.estimates = forest.plots.inc.est,
+  #         fig.num = fig.num
+  #       )
+  #
+  #       Rglobalflourishing:::gfs_wave_3_build_fig_1(params.fig)
+  #
+  #       rmarkdown::render(
+  #         input = system.file("rmd", "pdf_figures.Rmd", package = "Rglobalflourishing"),
+  #         output_format = c("pdf_document"),
+  #         output_file = paste0("main_text_figures_combined-",f0),
+  #         output_dir = here::here(res.dir, "main-text"),
+  #         params = list(
+  #           cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+  #           fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".pdf"))
+  #         )
+  #       )
+  #       Rglobalflourishing:::generate_docx_fig(
+  #         cache.file = here::here(res.dir, "main-text", paste0("cache-fig-combined-",f0,".RData")),
+  #         fig.file = here::here(res.dir,paste0("figure_",f0,"_SFI on ",focal.variable[f0],".png")),
+  #         print.file = here::here(res.dir, "main-text", paste0("main_text_figures_combined-",f0, ".docx")),
+  #         orient = "p",
+  #         w = 6, h = 5
+  #       )
+  #
+  #
+  #       fig.num <- fig.num + 1
+  #     }
+  #     remove(params.fig)
+  #
+  #     gc()
+  #   }
+  # }
 
   ## =============================================================================== ##
   ## =============================================================================== ##
   ## ------ PRINT OUT TO FILES ------
-  ## Word version
-  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".docx"))
-  main.text.docx <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
-  main.text.docx <- main.text.docx[str_detect( main.text.docx, ".docx")]
-  # make sure ordered correctly
-  main.text.docx <- c(
-    main.text.docx[str_detect( main.text.docx, "figures", negate=TRUE)],
-    main.text.docx[str_detect( main.text.docx, "figures")]
-  )
-  main_doc <- read_docx()
-  print(main_doc, target=out.file)
-  i = 1
-  for(i in 1:length(main.text.docx)){
-    tmp_doc <- read_docx(main.text.docx[i])
-    sec.prop <- tmp_doc$sect_dim
-    ps <- prop_section(
-      page_size = page_size(
-        orient = "portrait"
-      )
-    )
-    main_doc <- read_docx(path = out.file) |>
-      body_add_docx(main.text.docx[i]) |>
-      body_end_block_section(value = block_section(ps))
-
-    print(main_doc, target=out.file)
-  }
-
   ## PDF version
   out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".pdf"))
   main.text.pdf <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
