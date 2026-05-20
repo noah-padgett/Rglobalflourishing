@@ -3333,7 +3333,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
 
   ## pre-load in slow objects
   if(is.meta){
-    vars.to.get <- c(unique(c(vec.id, vec.rr)), "term")
+    vars.to.get <- c(unique(c(vec.id, vec.rr)), "term", "outcome")
     df.a <- load_meta_result(
       file = here::here(dir.a, file.a),
       predictor = unique(c(focal.variable, tbl.row.vec)),
@@ -3367,7 +3367,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
       filter.var.pred = "term"
     )
   } else {
-    vars.to.get <- c('data', "term")
+    vars.to.get <- c('data', "term", "outcome")
     df.a <- load_meta_result(
       file = here::here(dir.a, file.a),
       predictor = unique(c(focal.variable, tbl.row.vec)),
