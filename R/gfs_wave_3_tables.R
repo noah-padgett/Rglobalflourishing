@@ -3547,7 +3547,6 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
 
     ALL.COUNTRIES <- c("Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil",    "Mexico",  "China"  )
 
-    print(here::here(dir, file))
     df.main <- load_meta_result(
       file = here::here(dir, file),
       predictor = predictor.i,
