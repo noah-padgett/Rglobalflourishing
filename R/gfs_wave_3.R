@@ -193,7 +193,9 @@ gfs_wave_3_coordinated_analysis <- function(
 
 
 
-          fitted.reg.models <- map(country.files,\(x){
+          fitted.reg.models <- NULL
+          try({
+            fitted.reg.models <- map(country.files,\(x){
             #x <- country.files[1]
             svy.data.imp <- .get_data(
               file=x,
@@ -370,7 +372,11 @@ gfs_wave_3_coordinated_analysis <- function(
 
 
           }) |> bind_rows()
-
+          })
+          if(is.null(fitted.reg.models)){
+            warning(paste0("Model estimation failed for outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+            next
+          }
           ## extract PCA summary
           fit.pca.summary <- get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
 
