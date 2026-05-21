@@ -701,6 +701,7 @@ mixedsort <- function (x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE
       out <- FALSE & out
     }
   }
+
   if (str_detect(your.outcome,"ABUSED") | str_detect(your.pred,"ABUSED")) {
 
     if(cur.country %in% c("Israel") ){
@@ -733,6 +734,11 @@ mixedsort <- function (x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE
   }
   if (str_detect(your.outcome,"COVID_DEATH") | str_detect(your.pred,"COVID_DEATH")) {
     if(cur.country %in% c("China") ){
+      out <- FALSE & out
+    }
+  }
+  if (str_detect(your.outcome,"SACRED_TEXTS_Y3")) {
+    if(cur.country %in% c("Hong Kong") ){
       out <- FALSE & out
     }
   }
