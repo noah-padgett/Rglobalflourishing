@@ -166,7 +166,8 @@ gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
           out <- compute_global_pvalue(x$pvalue)
         }
         out
-      }) #,
+      }),
+      meta.rma.method = map(meta.rma, \(x) x$method)
       ## ====== forest plots ==================================================================== ##
       ## DO NOT RUN HERE TOO MEMORY INTENSIVE
       #forest.plot = map(meta.rma, \(x){
