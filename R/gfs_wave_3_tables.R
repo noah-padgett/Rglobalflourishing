@@ -459,6 +459,34 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
     main.text.pdf[str_detect( main.text.pdf, "figures")]
   )
   qpdf::pdf_combine(input = main.text.pdf, output=out.file)
+
+  ## Word version
+  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".docx"))
+  main.text.docx <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
+  main.text.docx <- main.text.docx[str_detect( main.text.docx, ".docx")]
+  # make sure ordered correctly
+  main.text.docx <- c(
+    main.text.docx[str_detect( main.text.docx, "figures", negate=TRUE)],
+    main.text.docx[str_detect( main.text.docx, "figures")]
+  )
+  main_doc <- read_docx()
+  print(main_doc, target=out.file)
+  i = 1
+  for(i in 1:length(main.text.docx)){
+    tmp_doc <- read_docx(main.text.docx[i])
+    sec.prop <- tmp_doc$sect_dim
+    ps <- prop_section(
+      page_size = page_size(
+        orient = "portrait"
+      )
+    )
+    main_doc <- read_docx(path = out.file) |>
+      body_add_docx(main.text.docx[i]) |>
+      body_end_block_section(value = block_section(ps))
+
+    print(main_doc, target=out.file)
+  }
+
   cat("\n **Complete.**\n")
 }
 
