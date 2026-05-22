@@ -66,19 +66,15 @@ gfs_meta_analysis <- function(meta.input, yi = std.est, sei = std.se,
       }),
       ## ====== random effects meta results ===================================================== ##
       meta.rma = map(data, \(x){
-        fit <- NULL
-        try({
-          suppressMessages({
-            suppressWarnings({
+        fit <- tryCatch({
               fit <- rma(
                 yi = yi,
                 sei = sei,
                 data = x,
                 method = estimator
               )
-            })
-          })
-        })
+            }, error = function(e) NULL
+          )
         if(is.null(fit)){
           estimator2 = if(estimator != "REML") "REML" else "EB"
           warning(paste0("[rma(., method=",estimator," )] failed. Retrying using ",estimator2,"."))
