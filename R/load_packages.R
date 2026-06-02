@@ -14,7 +14,8 @@ load_packages <- function(...) {
         # list of packages
   packages <- c(
     # Core packages
-    "survey", "srvyr",
+    "survey",
+    "srvyr",
     "gtsummary",
     "mice",
     "EValue",
@@ -54,7 +55,9 @@ load_packages <- function(...) {
     "matrixStats"
   )
   new.packages <- packages[!(packages %in% utils::installed.packages()[, "Package"])]
-  if (length(new.packages)) utils::install.packages(new.packages)
+  if (length(new.packages) > 0){
+    purrr::quietly(lapply(new.packages, function(x) utils::install.packages(x)))
+  }
   # Load packages
   purrr::quietly(lapply(packages, library, character.only = TRUE, quietly = TRUE))
 
