@@ -450,7 +450,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
   ## =============================================================================== ##
   ## ------ PRINT OUT TO FILES ------
   ## PDF version
-  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".pdf"))
+  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.variable, collapse=" "), ".pdf"))
   main.text.pdf <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
   main.text.pdf <- main.text.pdf[str_detect( main.text.pdf, ".pdf")]
   # make sure ordered correctly
@@ -461,7 +461,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
   qpdf::pdf_combine(input = main.text.pdf, output=out.file)
 
   ## Word version
-  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.better.name, collapse=" "), ".docx"))
+  out.file <- here::here(res.dir, paste0("GFS Main Text Tables_", paste0(focal.variable, collapse=" "), ".docx"))
   main.text.docx <- list.files(here::here(res.dir, "main-text"),full.names = TRUE)
   main.text.docx <- main.text.docx[str_detect( main.text.docx, ".docx")]
   # make sure ordered correctly
@@ -3606,7 +3606,7 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
     build_het_statement <- function(fit, txt=""){
       myci <- confint(fit, type = "PL")
       paste0(txt,
-             "Heterogeneity-\u03c4 (tau)=", .round(sqrt(fit$tau2), max(digits,3)),
+             "Heterogeneity (tau)=", .round(sqrt(fit$tau2), max(digits,3)),
              "; Q-profile 95% CI [", .round(myci$random[2, 2], max(digits,3)), ", ", .round(myci$random[2, 3], max(digits,3)), "]",
              "; Q(df=", fit$k - fit$QMdf[1], ")=",
              .round(fit$QE), ", p=", format.pval(fit$QEp, digits=max(digits,3), scientific=TRUE),

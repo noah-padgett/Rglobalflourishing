@@ -375,7 +375,7 @@ gfs_wave_3_coordinated_analysis <- function(
           })
           if(is.null(fitted.reg.models)){
             warning(paste0("Model estimation failed for outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
-            next
+            return(NULL)
           }
           ## extract PCA summary
           fit.pca.summary <- get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
