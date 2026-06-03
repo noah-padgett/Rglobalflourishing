@@ -1837,7 +1837,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_18_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1919,7 +1919,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_18_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2001,7 +2001,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_18_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2145,7 +2145,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_18_by_25.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2640,9 +2640,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
           }
 
-          fn.txt.i <- paste0("Notes. N(complete-case sample)=", n1.print ,"; ", tbl.ft1 ," CI, confidence interval; p-value, test of the null hypothesis that the association is null; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+          fn.txt.i <- paste0("Notes. N(complete-case sample)=", n1.print ,"; ", tbl.ft1 ," ES, effect size; SE, standard error; CI, confidence interval; p-value, test of the null hypothesis that the association is null. Flourishing domains, depression symptoms, anxiety symptoms, and religion/spirituality variables included here as supplements results in addition to those reported in the main text.
 
-Reliability corrected estimates (r, reliability) is assessed at three values for the mostly single-item assessed used: high at r=0.70, moderate r=0.55, and low r=0.40. The estimates of effect sizes are disattenuated for unreliability using Fisher's method.
+Reliability corrected estimates (r, reliability) is assessed at three values for the mostly single-item assessed used: high at r=0.70, moderate r=0.55, and low r=0.40. The estimates of effect sizes are disattenuated for unreliability using Fisher's method. Sensitivity of null effects to unreliability identified by the highest level of reliability needed to make the effect non-null.
 
 Analysis based on a 'complete-case-analysis' where we subset to only those participants whoc ompleted all 3 waves. Remaining within wave missingness accounted for using multiple imputation. Multiple imputation was performed to impute missing data on the covariates, exposure, and outcomes. All analyses controlled for sociodemographic and childhood factors assessed at Wave 1: relationship with mother growing up; relationship with father growing up; parent marital status around age 12; experienced abuse growing up (except for Israel); felt like an outsider in family growing up; self-rated health growing up; subjective financial status growing up; frequency of religious service attendance around age 12; year of birth; gender; education, employment status, marital status, immigration status; religious affiliation; frequency of religious service attendance; racial/ethnic identity when available; and the first seven principal components of the entire set of potential confounders assessed at Wave 1.
 
@@ -2695,23 +2695,25 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         ## ====================================================================================== ##
         ## Country Specific E-values output table =============================== ##
         {
+
           if(control$num.sequential){
-            tb.cap.i <- paste0("Table S",tb.num,". Sensitivity analysis of ", str_to_lower(focal.better.name[f0]) ," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
+            tb.num.i <- tb.num
             tb.num <- tb.num + 1
-          } else{
-            tb.cap.i <-  paste0("Table S",tb.num,letters[tb.let],". Sensitivity analysis of ", str_to_lower(focal.better.name[f0])," outcome-wide results to unmeasured confounding using E-values in ", COUNTRY_LABELS[iter])
+          } else {
+            tb.num.i <- paste0(tb.num, letters[tb.let])
             tb.let <- tb.let + 1
           }
 
           if(str_detect(str_to_lower(study), "exposure") ){
             tbl.ft1 = "exposure at Wave 2"
 
+            tb.cap.i <-  paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " sensitivity analysis of ", str_to_lower(focal.better.name[f0])," exposure-wide results to unmeasured confounding using E-values across models and how missingness at Wave 2 was handled.")
+
           }
           if(str_detect(str_to_lower(study), "outcome") ){
             tbl.ft1 = "outcome at Wave 3"
+            tb.cap.i <-  paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " sensitivity analysis of ", str_to_lower(focal.better.name[f0])," outcome-wide results to unmeasured confounding using E-values across models and how missingness at Wave 2 was handled.")
           }
-
-          tb.cap.i = paste0("Table S",tb.num,". ", str_to_sentence(focal.better.name[f0]), " for comparing estimated E-values across models and how missingness at Wave 2 was handled.")
 
           tb.fn.i <- paste0("Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval; Model 1, primary analysis model where all non demographic variable included through the use of principal components analyses; Model 2, supplemental model where wave 1 value of the varying ",tbl.ft1," included explicitly as a control variable and not through the principal components. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")
 
