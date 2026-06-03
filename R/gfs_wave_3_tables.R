@@ -1837,7 +1837,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1919,7 +1919,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2001,7 +2001,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2145,7 +2145,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       gfs_wave_3_build_supp_tbl(params.tb)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_20_by_22.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = paste0("supplement_tbl_",tb.num),
         output_dir = here::here(res.dir, "supplement-text"),
@@ -2595,7 +2595,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           gfs_wave_3_build_supp_tbl(params.tb, pg.width = 16)
 
           rmarkdown::render(
-            input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "pdf_19_by_19.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
             output_file =  paste0("tmp_tbl_e", f0),
             output_dir = here::here(res.dir, "supplement-text"),
@@ -2681,7 +2681,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           gfs_wave_3_build_supp_tbl(params.tb, pg.width = 16)
 
           rmarkdown::render(
-            input = system.file("rmd", "pdf_21_by_25.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "pdf_19_by_19.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
             output_file =  paste0("tmp_tbl_f", f0),
             output_dir = here::here(res.dir, "supplement-text"),
@@ -2750,7 +2750,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           gfs_wave_3_build_supp_tbl_evalues(params.tb)
 
           rmarkdown::render(
-            input = system.file("rmd", "pdf_21_by_11.Rmd", package = "Rglobalflourishing"),
+            input = system.file("rmd", "pdf_19_by_11.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
             output_file = paste0("tmp_tbl_g", f0),
             output_dir = here::here(res.dir, "supplement-text"),
