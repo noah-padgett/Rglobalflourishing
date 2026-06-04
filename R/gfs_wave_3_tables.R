@@ -2231,9 +2231,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
 
         out.scale <- get_outcome_scale(outcome.i)
         fit.fn.2 <- if(out.scale == "cont"){
-          "Effect size estimate is based on the weighted least squares model for an approximately continuous outcome: for a one unit change in the predictor, how much on average, does the outcome change (check main text for wheter reported estimates are based on a fully standardized solution)"
+          "Effect size estimate is based on the weighted least squares model for an approximately continuous outcome: for a one unit change in the predictor, how much on average, does the outcome change"
         } else {
-          "Effect size estimate is based on the weighted modified Poisson model for a binary outcome: for a one unit change in the predictor, how much on average, does the log-risk-ratio for being 1.0 on the outcome change (check main text for how predictors were standardized or coded)"
+          "Effect size estimate is based on the weighted modified Poisson model for a binary outcome: for a one unit change in the predictor, how much on average, does the log-risk-ratio for being 1.0 on the outcome change (check main text for how outcome was coded)"
         }
 
         fig.cap.i <- paste0("**Figure S",fig.num,".** *Heterogeneity in the effects of ", fig.txt.1, " scores across countries.*")
