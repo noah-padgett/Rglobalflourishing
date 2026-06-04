@@ -1390,7 +1390,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   df.w1 <- df.raw %>%
     select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
-      "{{wgt}}" := {{wgt1}}
+      "{{wgt}}" :=  n() * {{wgt1}} / sum( {{wgt2}} )
     )
   colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
   df.w1$WAVE0 <- "Wave 1"
