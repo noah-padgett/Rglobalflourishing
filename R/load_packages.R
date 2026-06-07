@@ -56,7 +56,7 @@ load_packages <- function(...) {
   )
   new.packages <- packages[!(packages %in% utils::installed.packages()[, "Package"])]
   if (length(new.packages) > 0){
-    purrr::quietly(lapply(new.packages, function(x) utils::install.packages(x)))
+    purrr::quietly(lapply(new.packages, function(x) utils::install.packages(x, dependencies = TRUE)))
   }
   # Load packages
   purrr::quietly(lapply(packages, library, character.only = TRUE, quietly = TRUE))
