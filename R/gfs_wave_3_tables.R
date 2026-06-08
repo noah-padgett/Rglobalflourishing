@@ -3764,11 +3764,11 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
 p
     ggsave(
       filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".pdf")),
-      plot = p, height = 6.5, width = 13, units = "in"
+      plot = p, height = 6.5, width = 13.5, units = "in"
     )
     ggsave(
       filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".png")),
-      plot = p, height = 6.5, width = 13, units = "in", dpi = 250
+      plot = p, height = 6.5, width = 13.5, units = "in", dpi = 250
     )
 
   save(p, fig.cap, fig.fn, file = cache.file)

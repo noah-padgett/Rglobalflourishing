@@ -205,9 +205,9 @@ quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "
 .round <- function(x, digits = 2) {
   sapply(x, function(val) {
     if (is.na(val)) return(NA_character_)
-    if (abs(val) >= 1e2 || (abs(val) > 0 && abs(val) < 1e-2)) {
+    if (abs(val) >= 1e2 || (abs(val) > 0 && abs(val) < 1e-3)) {
       # Scientific notation with digits significant digits
-      sprintf(paste0("%.", digits, "e"), val)
+      sprintf("%.1e", val)
     } else {
       # Fixed-point notation with digits decimal places
       sprintf(paste0("%.", digits, "f"), val)
