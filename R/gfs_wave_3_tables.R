@@ -2025,7 +2025,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft1 = "outcome at Wave 3"
       }
 
-      tb.cap.i = paste0("Table S",tb.num,". ", str_to_sentence(focal.better.name[f0]), " for comparing estimated E-values across models and how missingness at Wave 2 was handled.")
+      tb.cap.i = paste0("Table S",tb.num,". Comparing estimated E-values for sensitivity to unmeasured confounding across models and how missingness was handled")
 
       tb.fn.i <- paste0("Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval; Model 1, primary analysis model where all non demographic variable included through the use of principal components analyses; Model 2, supplemental model where wave 1 value of the varying ",tbl.ft1," included explicitly as a control variable and not through the principal components. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")
 
@@ -3018,12 +3018,14 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           tau >= 0.01 ~ .round(tau,digits)
         ),
         dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
-          case_when(
-            x < p.bonferroni ~ paste0(.round_p(x),"***"),
-            x < 0.005 ~ paste0(.round_p(x),"**"),
-            x < 0.05 ~ paste0(.round(x,3),"*"),
-            x > 0.05 ~ .round(x,3)
-          )
+          try({
+            case_when(
+              x < p.bonferroni ~ paste0(.round_p(x),"***"),
+              x < 0.005 ~ paste0(.round_p(x),"**"),
+              x < 0.05 ~ paste0(.round(x,3),"*"),
+              x > 0.05 ~ .round(x,3)
+            )
+          })
         }),
             sens.reliability = map(sens.reliability, \(x){
               x |>
@@ -3067,12 +3069,14 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               paste0("(",.round(exp(ci.lb.i), digits),", ",.round(exp(ci.ub.i), digits),")")
             } else {NA},
             dplyr::across(tidyr::any_of(c("pvalue")),\(x){
-              case_when(
-                x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                x < 0.005 ~ paste0(.round_p(x),"**"),
-                x < 0.05 ~ paste0(.round(x,3),"*"),
-                x > 0.05 ~ .round(x,3)
-              )
+              try({
+                case_when(
+                  x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                  x < 0.005 ~ paste0(.round_p(x),"**"),
+                  x < 0.05 ~ paste0(.round(x,3),"*"),
+                  x > 0.05 ~ .round(x,3)
+                )
+              })
             }),
             sens.reliability = map(sens.reliability, \(x){
               x |>
@@ -3135,12 +3139,14 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               tau >= 0.01 ~ .round(tau,digits)
             ),
             dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
-              case_when(
-                x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                x < 0.005 ~ paste0(.round_p(x),"**"),
-                x < 0.05 ~ paste0(.round(x,3),"*"),
-                x > 0.05 ~ .round(x,3)
-              )
+              try({
+                case_when(
+                  x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                  x < 0.005 ~ paste0(.round_p(x),"**"),
+                  x < 0.05 ~ paste0(.round(x,3),"*"),
+                  x > 0.05 ~ .round(x,3)
+                )
+              })
             }),
             sens.reliability = map(sens.reliability, \(x){
               x |>
@@ -3185,12 +3191,14 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               paste0("(",.round(exp(ci.lb.i), digits),", ",.round(exp(ci.ub.i), digits),")")
             } else {NA},
             dplyr::across(tidyr::any_of(c("pvalue")),\(x){
+              try({
               case_when(
                 x < p.bonferroni ~ paste0(.round_p(x),"***"),
                 x < 0.005 ~ paste0(.round_p(x),"**"),
                 x < 0.05 ~ paste0(.round(x,3),"*"),
                 x > 0.05 ~ .round(x,3)
               )
+              })
             }),
             sens.reliability = map(sens.reliability, \(x){
               x |>
