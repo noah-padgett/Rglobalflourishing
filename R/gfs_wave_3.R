@@ -378,7 +378,11 @@ gfs_wave_3_coordinated_analysis <- function(
             return(NULL)
           }
           ## extract PCA summary
-          fit.pca.summary <- get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
+          fit.pca.summary <- tryCatch({
+            get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
+          }, error = function(e){
+            message(paste0("[get_pca_summary] ERROR in PCA calculation 'gfs_wave_3.R' ln 382. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+          })
 
           # re-estimate basic model with the max number of PCs used to get the variable names
           tmp.dat <- .get_data(file = country.files[1],
@@ -460,7 +464,8 @@ gfs_wave_3_coordinated_analysis <- function(
           )
 
           ## Pool estimates across imputations
-          results.pooled <- fitted.reg.models %>%
+          results.pooled <- tryCatch({
+            fitted.reg.models %>%
             select({{imp.strata}}, imp_num, fit.tidy) %>%
             unnest(c(fit.tidy)) %>%
             ungroup() %>%
@@ -480,9 +485,13 @@ gfs_wave_3_coordinated_analysis <- function(
             ) %>%
             arrange({{imp.strata}}, term) %>%
             ungroup()
+          }, error = function(e){
+            message(paste0("[pool_estimates] ERROR in Pool estimates across imputations 'gfs_wave_3.R' ln 467. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+          })
 
           ## Pool estimates of correlations
-          cor.pooled <- fitted.reg.models %>%
+          cor.pooled <- tryCatch({
+            fitted.reg.models %>%
             select({{imp.strata}}, imp_num, fit.cor) %>%
             unnest(c(fit.cor)) %>%
             ungroup() %>%
@@ -502,27 +511,38 @@ gfs_wave_3_coordinated_analysis <- function(
             ) %>%
             arrange({{imp.strata}}, term) %>%
             ungroup()
+          }, error = function(e){
+            message(paste0("[pool_cors] ERROR in Pool correlation estimates across imputations 'gfs_wave_3.R' ln 367. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+          })
 
           ## ============================================================================ #
           ## ----- Compute outcome & predictor SD -----
           # - Need SD of all columns in design matrix
           # - Used for computing E-values & standardized estimates
           # - For continuous outcomes, need to use evalue.OLS(.) [require approx outcome standard deviation]
-          sd.pooled <- fitted.reg.models %>%
+          sd.pooled <- tryCatch({
+            fitted.reg.models %>%
             select({{imp.strata}}, imp_num, fit.full) %>%
             mutate(
               term.var = map(fit.full, \(x){
-                #x <- fitted.reg.models$fit.full[[1]]
-                my.matrix <- model.matrix(x)
-                my.wgts <- x$survey.design$variables |>
-                  select({{wgt}}) |> unlist() |> as.numeric()
-                var.est <- as.data.frame(matrix(apply(my.matrix, 2, FUN=function(x){
-                  matrixStats::weightedVar(x, w = my.wgts, na.rm = TRUE)
-                }),nrow=1))
-                colnames(var.est) <- colnames(my.matrix)
-                y.var <- data.frame(outcome.sd = matrixStats::weightedVar(x$y, w = my.wgts, na.rm = TRUE))
+                out <- c(NA, NA)
+                try({
+                  #x <- fitted.reg.models$fit.full[[1]]
+                  my.matrix <- model.matrix(x)
+                  my.wgts <- x$survey.design$variables |>
+                    select({{wgt}}) |> unlist() |> as.numeric()
+                  var.est <- as.data.frame(matrix(apply(my.matrix, 2, FUN=function(x){
+                    matrixStats::weightedVar(x, w = my.wgts, na.rm = TRUE)
+                  }),nrow=1))
+                  colnames(var.est) <- colnames(my.matrix)
+                  y.var <- data.frame(outcome.sd = matrixStats::weightedVar(x$y, w = my.wgts, na.rm = TRUE))
 
-                cbind(y.var, var.est)
+                  out <- cbind(y.var, var.est)
+                })
+                if(anyNA(out)){
+                  message(paste0("[sd.pooled] warning in computing pooled SDs 'gfs_wave_3.R' ln 527. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+                }
+                out
               })
             ) |>
             select({{imp.strata}}, term.var) %>%
@@ -538,6 +558,10 @@ gfs_wave_3_coordinated_analysis <- function(
               names_to = "term",
               values_to = "predictor.sd"
             )
+        }, error = function(e){
+          message(paste0("[sd.pooled] ERROR in computing pooled SDs 'gfs_wave_3.R' ln 527. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+        })
+
 
           ## ============================================================================ #
           ## ----- Relabel output (helpful for generating documents) ----

@@ -2985,7 +2985,8 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
 
 
       ## ====== Panel A ======================================= ##
-      if(is.meta){
+      try({
+        if(is.meta){
         tmp.a <- df.a %>%
           filter({{meta.filter.var}} == tbl.row.vec[i])
         tmp.a <- tmp.a %>%
@@ -3105,8 +3106,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           ) |>
           select(est, se, ci, pvalue, rcor70, rcor55, rcor40)
       }
+      })
       ## ====== Panel B ======================================= ##
-      if(is.meta){
+      try({
+        if(is.meta){
         tmp.b <- df.b %>%
           filter({{meta.filter.var}} == tbl.row.vec[i])
         tmp.b <- tmp.b  %>%
@@ -3227,8 +3230,11 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           ) |>
           select(est, se, ci, pvalue, rcor70, rcor55, rcor40)
       }
+      })
       ## ====== Add Results to output object ====================================================== ##
-      if(nrow(tmp.a) > 0){
+
+      try({
+        if(nrow(tmp.a) > 0){
         if(str_detect(str_to_lower(study), "exposure")){
           outcomewide[i, cols.a] <- tmp.a
         }
@@ -3241,7 +3247,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           }
         }
       }
-      if(nrow(tmp.b) > 0){
+        if(nrow(tmp.b) > 0){
         if(str_detect(str_to_lower(study), "exposure")){
           outcomewide[i, cols.b] <- tmp.b
         }
@@ -3254,6 +3260,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           }
         }
       }
+      })
     }
   }
 
