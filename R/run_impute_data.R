@@ -437,11 +437,13 @@ run_imputation <- function(country, df.tmp,
   # To help (slightly) speed, set the following conditions
   # variables that do not need to be imputed:
   do.not.impute <- c(
-    'COUNTRY', 'ID', 'WAVE_Y1', 'WAVE_Y2', 'WAVE_Y3', 'MODE_RECRUIT', 'MODE_ANNUAL', 'RECRUIT_TYPE', 'DOI_RECRUIT_Y1', 'DOI_ANNUAL_Y1', 'DOI_ANNUAL_Y2', 'DOI_ANNUAL_Y3',
+    'COUNTRY', 'ID', 'WAVE_Y1', 'WAVE_Y2', "WAVE_MY", 'WAVE_Y3', 'MODE_RECRUIT', 'MODE_ANNUAL', 'RECRUIT_TYPE', 'DOI_RECRUIT_Y1', 'DOI_ANNUAL_Y1', 'DOI_ANNUAL_Y2', 'DOI_ANNUAL_Y3', "MIDYEAR_TYPE_MY", "DOI_MY",
     paste0("POLITICAL_ID",c("_Y1", "_Y2", "_Y3")),
     paste0("REGION2",c("_Y1", "_Y2", "_Y3")),
     paste0("REGION3",c("_Y1", "_Y2", "_Y3")),
-    'RECON_STATUS_Y1', 'RECON_STATUS_Y2', 'RECON_STATUS_Y3', 'STRATA', 'PSU', 'ANNUAL_WEIGHT_C1', 'ANNUAL_WEIGHT_C2', 'ANNUAL_WEIGHT_L2', 'ANNUAL_WEIGHT_R2', 'ANNUAL_WEIGHT_C3', 'ANNUAL_WEIGHT_L3', 'ANNUAL_WEIGHT_R3', 'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL'
+    'RECON_STATUS_Y1', 'RECON_STATUS_Y2', 'RECON_STATUS_Y3', 'STRATA', 'PSU', 'ANNUAL_WEIGHT_C1', 'ANNUAL_WEIGHT_C2', 'ANNUAL_WEIGHT_L2', 'ANNUAL_WEIGHT_R2', 'ANNUAL_WEIGHT_C3', 'ANNUAL_WEIGHT_L3', 'ANNUAL_WEIGHT_R3',
+    "RETENTION_WEIGHT_C" , "RETENTION_WEIGHT_L",  "RETENTION_WEIGHT_L3",
+    'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_MY', 'FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL'
   )
   # just some double-checking that these variables are imputed / no predictors
   tmp.pred[do.not.impute,] <- 0
@@ -449,18 +451,18 @@ run_imputation <- function(country, df.tmp,
 
   # Longitudinal design incorporation
 
-  # 1. Wave 3 & Wave 2 cannot predict wave 1
+  # 1. Wave 3 & Wave 2 & midyear cannot predict wave 1
   tr <- c(colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y1")], "GENDER", "SELFID2", "SELFID1")
-  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2") | str_detect(colnames(tmp.pred), "_Y3")]
+  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2") | str_detect(colnames(tmp.pred), "_Y3") | str_detect(colnames(tmp.pred), "_MY")]
   tmp.pred[tr,tc] <- 0 # all t1 (rows) cannot be predicted by t2 or t3 (cols)
 
   # 2. Wave 3 cannot predict Wave 2
-  tr <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2")]
+  tr <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2") | str_detect(colnames(tmp.pred), "_MY")]
   tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y3")]
   tmp.pred[tr,tc] <- 0
 
   # 3. Wave 2 cannot predict Wave 2
-  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2")]
+  tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2") | str_detect(colnames(tmp.pred), "_MY")]
   tmp.pred[tc,tc] <- 0
 
   # 3. Wave 3 cannot predict Wave 3
