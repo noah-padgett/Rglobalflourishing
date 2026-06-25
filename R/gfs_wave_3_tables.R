@@ -40,8 +40,9 @@ gfs_wave_3_generate_main_doc <- function(
   #                wgt1 = as.name("ANNUAL_WEIGHT_C1"),
   #                wgt2 = as.name("ANNUAL_WEIGHT_R2"),
   #                wgt3 = as.name("ANNUAL_WEIGHT_R3"))
+  control0 <- control # save a local verion of the input to use in the loop later
 
-  control <- get_defaults_w3(control, filetype = "main")
+  control <- get_defaults_w3(control0, filetype = "main")
   ## now, unnest the control parameters
   study <- control[['study']]
   dir.meta <- control[['dir.meta']]
@@ -261,6 +262,18 @@ gfs_wave_3_generate_main_doc <- function(
   ## ----- Main text meta-analytic summary table -----
   f0=1
   for(f0 in 1:length(focal.variable)){
+    # update control parameters based on focal variable ending
+    if(str_detect(focal.variable[f0],, "_Y2")){
+      control0[['study']] <- "outcomewide"
+    } else if(str_detect(focal.variable[f0],, "_Y3")){
+      control0[['study']] <- "exposurewide"
+    }
+    control <- get_defaults_w3(control0, filetype = "main")
+    ## now, unnest the control parameters
+    study <- control[['study']]
+    baseline.pred <- control[['baseline.pred']]
+    tbl.row.vec <- control[['tbl.row.vec']]
+    mylabels <- control[['mylabels']]
 
 
     if(is.null(tb.footnote)){
@@ -346,6 +359,19 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
   ## ----- Main text E-values -----
   f0=1
   for(f0 in 1:length(focal.variable)){
+
+    # update control parameters based on focal variable ending
+    if(str_detect(focal.variable[f0],, "_Y2")){
+      control0[['study']] <- "outcomewide"
+    } else if(str_detect(focal.variable[f0],, "_Y3")){
+      control0[['study']] <- "exposurewide"
+    }
+    control <- get_defaults_w3(control0, filetype = "main")
+    ## now, unnest the control parameters
+    study <- control[['study']]
+    baseline.pred <- control[['baseline.pred']]
+    tbl.row.vec <- control[['tbl.row.vec']]
+    mylabels <- control[['mylabels']]
 
     tbl.footnote <- "Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates."
 
@@ -1230,6 +1256,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   #                dir.supp = "test/ignore/results-supp"
   # )
 
+  control0 <- control
   control <- get_defaults_w3(control, filetype = "supp")
   ## now, unnest the control parameters
   study <- control[['study']]
@@ -1491,114 +1518,114 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
     }
   }
   ## Reformat to long (of wave 1 variables only) of attr/retained cases to compare wave 1 variables
-      # compare UNWEIGHTED data
-      df.w1 <- df.raw %>%
-        filter(CASE_OBSERVED_ALL == 1) %>%
-        select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
-        mutate(
-          "{{wgt}}" := 1
-        )
-      colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
-      df.w1$WAVE0 <- "Retained--Observed in All Waves"
+  # compare UNWEIGHTED data
+  df.w1 <- df.raw %>%
+    filter(CASE_OBSERVED_ALL == 1) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    mutate(
+      "{{wgt}}" := 1
+    )
+  colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
+  df.w1$WAVE0 <- "Retained--Observed in All Waves"
 
-      df.w2 <- df.raw %>%
-        filter(CASE_OBSERVED_Y2 == 0) %>%
-        select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
-        mutate(
-          "{{wgt}}" := 1
-        )
-      colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
-      df.w2$WAVE0 <- "Attritors--Not Observed in Wave 2"
+  df.w2 <- df.raw %>%
+    filter(CASE_OBSERVED_Y2 == 0) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    mutate(
+      "{{wgt}}" := 1
+    )
+  colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
+  df.w2$WAVE0 <- "Attritors--Not Observed in Wave 2"
 
-      df.w3 <- df.raw %>%
-        filter(CASE_OBSERVED_Y3 == 0) %>%
-        select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
-        mutate(
-          "{{wgt}}" := 1
-        )
-      colnames(df.w3) <- str_remove(colnames(df.w3), "_Y1")
-      df.w3$WAVE0 <- "Attritors--Not Observed in Wave 3"
+  df.w3 <- df.raw %>%
+    filter(CASE_OBSERVED_Y3 == 0) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    mutate(
+      "{{wgt}}" := 1
+    )
+  colnames(df.w3) <- str_remove(colnames(df.w3), "_Y1")
+  df.w3$WAVE0 <- "Attritors--Not Observed in Wave 3"
 
-      df.w4 <- df.raw %>%
-        filter(CASE_OBSERVED_Y3 == 1 & CASE_OBSERVED_Y2 == 0) %>%
-        select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
-        mutate(
-          "{{wgt}}" := 1
-        )
-      colnames(df.w4) <- str_remove(colnames(df.w4), "_Y1")
-      df.w4$WAVE0 <- "Attritors--Observed in Wave 3 but not Wave 2"
+  df.w4 <- df.raw %>%
+    filter(CASE_OBSERVED_Y3 == 1 & CASE_OBSERVED_Y2 == 0) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    mutate(
+      "{{wgt}}" := 1
+    )
+  colnames(df.w4) <- str_remove(colnames(df.w4), "_Y1")
+  df.w4$WAVE0 <- "Attritors--Observed in Wave 3 but not Wave 2"
 
-      suppressMessages({
+  suppressMessages({
 
-        df.raw.attr.retained <-
-          full_join(df.w1, df.w2) |> full_join(df.w3) |>
-          full_join(df.w4)
-      })
+    df.raw.attr.retained <-
+      full_join(df.w1, df.w2) |> full_join(df.w3) |>
+      full_join(df.w4)
+  })
 
-      df.raw.attr.retained <- df.raw.attr.retained %>%
-        select(
-          COUNTRY,
-          {{wgt}}, {{psu}}, {{strata}},
-          WAVE0,
-          {focal.variable0},
-          AGE, RACE,
-          any_of(c(focal.variable0, tbl.row.vec0)),
-          any_of(c(baseline.pred0)),
-          INCOME, RACE
-        ) %>%
-        mutate(
-          UNITWGT = 1,
-          INCOME = forcats::fct(INCOME)
-       ) %>%
-      # TO-DO, figure out a way to remove the leading values (doesn't work for)
-      mutate(
-        across(any_of(c("COUNTRY", "RACE", focal.variable0, tbl.row.vec0, baseline.pred0)), \(x){
-          if(cur_column() == "COUNTRY"){
-            x = factor(x)
-          }
-          if(cur_column() == "RACE"){
-            x <- dplyr::case_when(x %in% get_missing_codes("SELFID1") ~ NA, .default = x)
-            x <- recode_labels(x, "SELFID1")
-            x <- recode_to_type(x, "SELFID1")
-            x = factor(x)
-          }
+  df.raw.attr.retained <- df.raw.attr.retained %>%
+    select(
+      COUNTRY,
+      {{wgt}}, {{psu}}, {{strata}},
+      WAVE0,
+      {focal.variable0},
+      AGE, RACE,
+      any_of(c(focal.variable0, tbl.row.vec0)),
+      any_of(c(baseline.pred0)),
+      INCOME, RACE
+    ) %>%
+    mutate(
+      UNITWGT = 1,
+      INCOME = forcats::fct(INCOME)
+    ) %>%
+    # TO-DO, figure out a way to remove the leading values (doesn't work for)
+    mutate(
+      across(any_of(c("COUNTRY", "RACE", focal.variable0, tbl.row.vec0, baseline.pred0)), \(x){
+        if(cur_column() == "COUNTRY"){
+          x = factor(x)
+        }
+        if(cur_column() == "RACE"){
+          x <- dplyr::case_when(x %in% get_missing_codes("SELFID1") ~ NA, .default = x)
+          x <- recode_labels(x, "SELFID1")
+          x <- recode_to_type(x, "SELFID1")
+          x = factor(x)
+        }
 
-          if(cur_column() == "INCOME"){
-            x = factor(x)
-          }
-          if ( is.factor(x) & str_detect(cur_column(), "AGE_GRP", negate = TRUE) ) {
-            lvls <- levels(x)
-            relvls <- lvls
-            for (i in 1:length(lvls)) {
-              if ( str_detect(lvls[i],"\\. ") ) {
-                relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
-              }
-              if ( str_detect(lvls[i],"Missing") ) {
-                relvls[i] = "    (Missing)"
-              }
-              if(cur_column() == "COUNTRY"){
-                relvls[i] = paste0("    ",lvls[i])
-                if(str_detect(lvls[i], "Hong Kong")){
-                  relvls[i] = paste0("    Hong Kong (S.A.R. of China)")
-                }
+        if(cur_column() == "INCOME"){
+          x = factor(x)
+        }
+        if ( is.factor(x) & str_detect(cur_column(), "AGE_GRP", negate = TRUE) ) {
+          lvls <- levels(x)
+          relvls <- lvls
+          for (i in 1:length(lvls)) {
+            if ( str_detect(lvls[i],"\\. ") ) {
+              relvls[i] = paste0("    ",stringr::str_trim(stringr::str_split_fixed(lvls[i], "\\. ", 2)[,2]))
+            }
+            if ( str_detect(lvls[i],"Missing") ) {
+              relvls[i] = "    (Missing)"
+            }
+            if(cur_column() == "COUNTRY"){
+              relvls[i] = paste0("    ",lvls[i])
+              if(str_detect(lvls[i], "Hong Kong")){
+                relvls[i] = paste0("    Hong Kong (S.A.R. of China)")
               }
             }
-            x = factor(x, levels = lvls, labels = relvls)
           }
-          x
-        })
-      )
+          x = factor(x, levels = lvls, labels = relvls)
+        }
+        x
+      })
+    )
 
-      df.raw.attr.retained <- gfs_add_variable_labels(df.raw.attr.retained, tbl.row.vec0, include.fid=TRUE)
+  df.raw.attr.retained <- gfs_add_variable_labels(df.raw.attr.retained, tbl.row.vec0, include.fid=TRUE)
 
-    ## add labels for focal variable(s)
-    for (i in 1:length(focal.variable0)) {
-      if(any(str_detect(colnames(df.raw.attr.retained), focal.variable0[i]))){
-        try({
-          attr(df.raw.attr.retained[[focal.variable0[i]]], which = "label") <- str_to_sentence(focal.better.name[i])
-        })
-      }
+  ## add labels for focal variable(s)
+  for (i in 1:length(focal.variable0)) {
+    if(any(str_detect(colnames(df.raw.attr.retained), focal.variable0[i]))){
+      try({
+        attr(df.raw.attr.retained[[focal.variable0[i]]], which = "label") <- str_to_sentence(focal.better.name[i])
+      })
     }
+  }
 
 
   remove(df.w1,df.w2, df.w3, df.w4)
@@ -1767,6 +1794,16 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
     ## looped around whether there are multiple focal variables
     f0 = 1
     for(f0 in 1:length(focal.variable)){
+
+      # update control parameters based on focal variable ending
+      if(str_detect(focal.variable[f0],, "_Y2")){
+        control0[['study']] <- "outcomewide"
+      } else if(str_detect(focal.variable[f0],, "_Y3")){
+        control0[['study']] <- "exposurewide"
+      }
+      control <- get_defaults_w3(control0, filetype = "supp")
+      study <- control[['study']]
+
       ## ======================================================================================== ##
       ## Model 1 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
       if(str_detect(str_to_lower(study), "exposure") ){
@@ -1934,34 +1971,34 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       ## ======================================================================================== ##
       ## Model 3 - Meta-analyzed Results - MI & Attrition Weight ================================ ##
       if(control$include.mod3){
-      if(str_detect(str_to_lower(study), "exposure") ){
+        if(str_detect(str_to_lower(study), "exposure") ){
 
-        tb.cap.i <- paste0("Table S",tb.num,". Supplemental analysis model: explicit control of wave 1 value of each exposure AND outcome--Meta-analyzed associations of well-being and other variables at Wave 2 with ", str_to_lower(focal.better.name[f0]) ," at Wave 3 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+          tb.cap.i <- paste0("Table S",tb.num,". Supplemental analysis model: explicit control of wave 1 value of each exposure AND outcome--Meta-analyzed associations of well-being and other variables at Wave 2 with ", str_to_lower(focal.better.name[f0]) ," at Wave 3 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
-        tmp <- ifelse(
-          get_outcome_scale(focal.variable[f0]) == "cont",
-          "ES, effect size measure for standardized regression coefficient, null effect is 0.00;",
-          "RR, risk-ratio, null effect is 1.00;"
-        )
-        tbl.ft1 = paste0(tmp )
-        tbl.ft2 <- ifelse(
-          get_outcome_scale(focal.variable[f0]) == "cont",
-          "%-Metric (% < -0.10 | % > 0.10), percent of effect sizes below a lower bound (< -0.10) and above an upper bound (> 0.10)",
-          "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
-        tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
+          tmp <- ifelse(
+            get_outcome_scale(focal.variable[f0]) == "cont",
+            "ES, effect size measure for standardized regression coefficient, null effect is 0.00;",
+            "RR, risk-ratio, null effect is 1.00;"
+          )
+          tbl.ft1 = paste0(tmp )
+          tbl.ft2 <- ifelse(
+            get_outcome_scale(focal.variable[f0]) == "cont",
+            "%-Metric (% < -0.10 | % > 0.10), percent of effect sizes below a lower bound (< -0.10) and above an upper bound (> 0.10)",
+            "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
+          tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
-      }
-      if(str_detect(str_to_lower(study), "outcome") ){
+        }
+        if(str_detect(str_to_lower(study), "outcome") ){
 
-        tb.cap.i <- paste0("Table S",tb.num,". Supplemental analysis model: explicit control of wave 1 of each outcome--Meta-analyzed associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2  with well-being and other variables at Wave 3 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+          tb.cap.i <- paste0("Table S",tb.num,". Supplemental analysis model: explicit control of wave 1 of each outcome--Meta-analyzed associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2  with well-being and other variables at Wave 3 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
-        tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
-        tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
-        tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
-        tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
-      }
+          tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
+          tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
+          tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
+          tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
+        }
 
-      fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+        fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Reliability corrected estimates (r, reliability) is assessed at three values for the mostly single-item assessed used: high at r=0.70, moderate r=0.55, and low r=0.40. The estimates of effect sizes are disattenuated for unreliability using Fisher's method.
 
@@ -1971,49 +2008,49 @@ Multiple imputation was performed to impute missing data on the covariates, expo
 
 P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(control$ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-control$p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of \u03c4 (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects. Line-printer style abbreviations for small p-values (e.g., '2.22e-16') are used to help conserve space, given the table and font size, to aid in readability.")
 
-      params.tb <- list(
-        is.meta = TRUE,
-        study = study,
-        focal.variable = focal.variable[f0],
-        tbl.row.vec = control$tbl.row.vec,
-        mylabels = control$mylabels,
-        focal.better.name = focal.better.name[f0],
-        focal.reference.value = focal.variable.reference.value[f0],
-        dir.a = control$dir.supp,
-        dir.b = control$dir.supp,
-        file.a = control$file.mod3.mi,
-        file.b = control$file.mod3.cca,
-        country.i = "",
-        ci.bonferroni = control$ci.bonferroni,
-        p.bonferroni = control$p.bonferroni,
-        p.ci = ifelse(control$ci.bonferroni, control$p.bonferroni, 0.05),
-        tb.cap = tb.cap.i,
-        header.a = "Multiple Imputation",
-        header.b = "Complete Case with Attrition Weights",
-        fn.txt = fn.txt.i,
-        cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData")),
-        start.time = run.start.time,
-        ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx),
-        digits = digits
-      )
-
-      gfs_wave_3_build_supp_tbl(params.tb)
-
-      rmarkdown::render(
-        input = system.file("rmd", "pdf_18_by_25.Rmd", package = "Rglobalflourishing"),
-        output_format = c("pdf_document"),
-        output_file = paste0("supplement_tbl_",tb.num),
-        output_dir = here::here(res.dir, "supplement-text"),
-        params = list(
-          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData"))
+        params.tb <- list(
+          is.meta = TRUE,
+          study = study,
+          focal.variable = focal.variable[f0],
+          tbl.row.vec = control$tbl.row.vec,
+          mylabels = control$mylabels,
+          focal.better.name = focal.better.name[f0],
+          focal.reference.value = focal.variable.reference.value[f0],
+          dir.a = control$dir.supp,
+          dir.b = control$dir.supp,
+          file.a = control$file.mod3.mi,
+          file.b = control$file.mod3.cca,
+          country.i = "",
+          ci.bonferroni = control$ci.bonferroni,
+          p.bonferroni = control$p.bonferroni,
+          p.ci = ifelse(control$ci.bonferroni, control$p.bonferroni, 0.05),
+          tb.cap = tb.cap.i,
+          header.a = "Multiple Imputation",
+          header.b = "Complete Case with Attrition Weights",
+          fn.txt = fn.txt.i,
+          cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData")),
+          start.time = run.start.time,
+          ignore.cache = FALSE,
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          digits = digits
         )
-      )
 
-      tb.num <- tb.num + 1
-      remove(params.tb)
-      gc()
-    }
+        gfs_wave_3_build_supp_tbl(params.tb)
+
+        rmarkdown::render(
+          input = system.file("rmd", "pdf_18_by_25.Rmd", package = "Rglobalflourishing"),
+          output_format = c("pdf_document"),
+          output_file = paste0("supplement_tbl_",tb.num),
+          output_dir = here::here(res.dir, "supplement-text"),
+          params = list(
+            cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-meta-b",f0,".RData"))
+          )
+        )
+
+        tb.num <- tb.num + 1
+        remove(params.tb)
+        gc()
+      }
       ## ======================================================================================== ##
       ## E-values for estimates ================================================================= ##
 
@@ -2207,16 +2244,28 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
 
     }
 
-    tmp.out <- control$tbl.row.vec[str_detect(control$tbl.row.vec, "blank", negate=TRUE)]
+
     iter = 1
     if(control$fig.num.start > 0){
       fig.num = control$fig.num.start
     }
-    iter <- 1
-    for(iter in  1:length(tmp.out)){
-      run.start.time.i <- Sys.time()
-      f0=1
-      for(f0 in 1:length(focal.variable)){
+    run.start.time.i <- Sys.time()
+    f0=1
+    for(f0 in 1:length(focal.variable)){
+
+      # update control parameters based on focal variable ending
+      if(str_detect(focal.variable[f0],, "_Y2")){
+        control0[['study']] <- "outcomewide"
+      } else if(str_detect(focal.variable[f0],, "_Y3")){
+        control0[['study']] <- "exposurewide"
+      }
+      control <- get_defaults_w3(control0, filetype = "supp")
+      study <- control[['study']]
+
+      tmp.out <- control$tbl.row.vec[str_detect(control$tbl.row.vec, "blank", negate=TRUE)]
+
+      iter <- 1
+      for(iter in  1:length(tmp.out)){
 
         myvar0.bn <- str_to_lower(get_outcome_better_name(tmp.out[iter], include.name = FALSE))
         cat("\nCurrent variable:\t", myvar0.bn)
@@ -2256,21 +2305,21 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           ignore.cache = FALSE,
           digits = digits
         )
-          ## build plot
-          #
-          gfs_wave_3_build_supp_forest_plot(params.fig)
-          #
-          ## print to pdf/word file
-          rmarkdown::render(
-            input = system.file("rmd", "pdf_figures_wave_3.Rmd", package = "Rglobalflourishing"),
-            output_format = c("pdf_document"),
-            output_file = paste0("tmp_fig"),
-            output_dir = here::here(res.dir, "supplement-text"),
-            params = list(
-              cache.file =  here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
-              fig.file = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".pdf"))
-            )
+        ## build plot
+        #
+        gfs_wave_3_build_supp_forest_plot(params.fig)
+        #
+        ## print to pdf/word file
+        rmarkdown::render(
+          input = system.file("rmd", "pdf_figures_wave_3.Rmd", package = "Rglobalflourishing"),
+          output_format = c("pdf_document"),
+          output_file = paste0("tmp_fig"),
+          output_dir = here::here(res.dir, "supplement-text"),
+          params = list(
+            cache.file =  here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
+            fig.file = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".pdf"))
           )
+        )
 
         ## PDF version
         gfs_append_pdf(
@@ -2282,9 +2331,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
 
         fig.num = fig.num + 1
 
+        remove(params.fig)
+        gc() ## clean up between forest plots.
       }
-      remove(params.fig)
-      gc() ## clean up between forest plots.
     }
 
   }
@@ -2522,6 +2571,16 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       ## ====== Table Si-efg. Country specific outcome wide results ============================= ##
       f0 <- 1
       for(f0 in 1:length(focal.variable)){
+
+        # update control parameters based on focal variable ending
+        if(str_detect(focal.variable[f0],, "_Y2")){
+          control0[['study']] <- "outcomewide"
+        } else if(str_detect(focal.variable[f0],, "_Y3")){
+          control0[['study']] <- "exposurewide"
+        }
+        control <- get_defaults_w3(control0, filetype = "supp")
+        study <- control[['study']]
+
         ##======================================================================================= ##
         ## Model estimated using multiple imputation
         {
@@ -2832,8 +2891,8 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
   replace.cntry.file.start = params$replace.cntry.file.start
 
   COUNTRY_LABELS <- sort(c(
-        "Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil", "Mexico", "China"
-    ) )
+    "Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil", "Mexico", "China"
+  ) )
 
   if(is.meta){
     vec.col <- c('outcome', 'term', 'theta.rma', 'theta.rma.se', 'theta.lb', 'theta.ub', 'tau', 'I2', 'prob.leqneq0.1', 'prob.geq0.1', 'theta.pred.int.lb', 'theta.pred.int.ub', 'rr.tau', 'rr.prob.0.90', 'rr.prob.1.10', 'rr.theta.pred.int', 'global.pvalue', "calibrated.yi", "sens.reliability")
@@ -2987,279 +3046,279 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
       ## ====== Panel A ======================================= ##
       try({
         if(is.meta){
-        tmp.a <- df.a %>%
-          filter({{meta.filter.var}} == tbl.row.vec[i])
-        tmp.a <- tmp.a %>%
-          mutate(
-          est = case_when(
-            is.cont ~ theta.rma,
-            !is.cont ~ exp(theta.rma)
-          ),
-          se = .round(theta.rma.se, digits),
-        ci = if(is.cont){
-          paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")")
-        } else if(!is.cont){
-          paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
-        } else {NA},
-        prop.metric = if(is.cont){
-          paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%")} else if(!is.cont){
-            paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")} else {NA},
-        prop.metric = pad_around_divider(prop.metric, "|"),
-        pred.int = if(is.cont){
-          paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
-        } else if(!is.cont){
-          paste0("(",.round(exp(theta.pred.int.lb), digits),", ",.round(exp(theta.pred.int.ub), digits),")")
-        } else {NA},
-        tau = case_when(
-          is.cont ~ tau,
-          !is.cont ~ rr.tau
-        ),
-        tau =  case_when(
-          tau < 0.01 ~ "<0.01\u2020",
-          tau >= 0.01 ~ .round(tau,digits)
-        ),
-        dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
-          try({
-            case_when(
-              x < p.bonferroni ~ paste0(.round_p(x),"***"),
-              x < 0.005 ~ paste0(.round_p(x),"**"),
-              x < 0.05 ~ paste0(.round(x,3),"*"),
-              x > 0.05 ~ .round(x,3)
-            )
-          })
-        }),
-            sens.reliability = map(sens.reliability, \(x){
-              x |>
-                mutate(
-                  out = if(is.cont){
-                    paste0( .round(corrected.theta, digits),
-                                " (", .round(corrected.theta.lb, digits),", ",
-                                .round(corrected.theta.ub, digits),")" )
-                  } else if(!is.cont){
-                    paste0( .round(exp(corrected.theta), digits),
-                                   " (", .round(exp(corrected.theta.lb), digits),", ",
-                                   .round(exp(corrected.theta.ub), digits),")" )
-                  } else {NA}
-                )
-            }),
-            rcor70 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.70) |> select(out) |> as.character()
-            }),
-            rcor55 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.55) |> select(out) |> as.character()
-            }),
-            rcor40 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.40) |> select(out) |> as.character()
-            }),
-          across(where(is.numeric), ~.round(., digits))
-          ) |>
-          select(est, se, ci, pred.int,prop.metric,tau,global.pvalue,rcor70, rcor55, rcor40)
-      } else {
-        tmp.a <- df.a %>%
-          filter({{filter.var}} == tbl.row.vec[i])
-        tmp.a <- tmp.a %>%
-          mutate(
-            est = case_when(
-              is.cont ~ yi,
-              !is.cont ~ exp(yi)
-            ),
-            se = .round(sei, digits),
-            ci = if(is.cont){
-              paste0("(",.round(ci.lb.i, digits),", ",.round(ci.ub.i, digits),")")
-            } else if(!is.cont){
-              paste0("(",.round(exp(ci.lb.i), digits),", ",.round(exp(ci.ub.i), digits),")")
-            } else {NA},
-            dplyr::across(tidyr::any_of(c("pvalue")),\(x){
-              try({
-                case_when(
-                  x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                  x < 0.005 ~ paste0(.round_p(x),"**"),
-                  x < 0.05 ~ paste0(.round(x,3),"*"),
-                  x > 0.05 ~ .round(x,3)
-                )
-              })
-            }),
-            sens.reliability = map(sens.reliability, \(x){
-              x |>
-                mutate(
-                  out = if(is.cont){
-                    paste0( .round(corrected.theta, digits),
-                            " (", .round(corrected.theta.lb, digits),", ",
-                            .round(corrected.theta.ub, digits),")" )
-                  } else if(!is.cont){
-                    paste0( .round(exp(corrected.theta), digits),
-                            " (", .round(exp(corrected.theta.lb), digits),", ",
-                            .round(exp(corrected.theta.ub), digits),")" )
-                  } else {NA}
-                )
-            }),
-            rcor70 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.70) |> select(out) |> as.character()
-            }),
-            rcor55 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.55) |> select(out) |> as.character()
-            }),
-            rcor40 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.40) |> select(out) |> as.character()
-            }),
-            across(where(is.numeric), ~.round(., digits))
-          ) |>
-          select(est, se, ci, pvalue, rcor70, rcor55, rcor40)
-      }
+          tmp.a <- df.a %>%
+            filter({{meta.filter.var}} == tbl.row.vec[i])
+          tmp.a <- tmp.a %>%
+            mutate(
+              est = case_when(
+                is.cont ~ theta.rma,
+                !is.cont ~ exp(theta.rma)
+              ),
+              se = .round(theta.rma.se, digits),
+              ci = if(is.cont){
+                paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")")
+              } else if(!is.cont){
+                paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
+              } else {NA},
+              prop.metric = if(is.cont){
+                paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%")} else if(!is.cont){
+                  paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")} else {NA},
+              prop.metric = pad_around_divider(prop.metric, "|"),
+              pred.int = if(is.cont){
+                paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
+              } else if(!is.cont){
+                paste0("(",.round(exp(theta.pred.int.lb), digits),", ",.round(exp(theta.pred.int.ub), digits),")")
+              } else {NA},
+              tau = case_when(
+                is.cont ~ tau,
+                !is.cont ~ rr.tau
+              ),
+              tau =  case_when(
+                tau < 0.01 ~ "<0.01\u2020",
+                tau >= 0.01 ~ .round(tau,digits)
+              ),
+              dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
+                try({
+                  case_when(
+                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                    x < 0.005 ~ paste0(.round_p(x),"**"),
+                    x < 0.05 ~ paste0(.round(x,3),"*"),
+                    x > 0.05 ~ .round(x,3)
+                  )
+                })
+              }),
+              sens.reliability = map(sens.reliability, \(x){
+                x |>
+                  mutate(
+                    out = if(is.cont){
+                      paste0( .round(corrected.theta, digits),
+                              " (", .round(corrected.theta.lb, digits),", ",
+                              .round(corrected.theta.ub, digits),")" )
+                    } else if(!is.cont){
+                      paste0( .round(exp(corrected.theta), digits),
+                              " (", .round(exp(corrected.theta.lb), digits),", ",
+                              .round(exp(corrected.theta.ub), digits),")" )
+                    } else {NA}
+                  )
+              }),
+              rcor70 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.70) |> select(out) |> as.character()
+              }),
+              rcor55 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.55) |> select(out) |> as.character()
+              }),
+              rcor40 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.40) |> select(out) |> as.character()
+              }),
+              across(where(is.numeric), ~.round(., digits))
+            ) |>
+            select(est, se, ci, pred.int,prop.metric,tau,global.pvalue,rcor70, rcor55, rcor40)
+        } else {
+          tmp.a <- df.a %>%
+            filter({{filter.var}} == tbl.row.vec[i])
+          tmp.a <- tmp.a %>%
+            mutate(
+              est = case_when(
+                is.cont ~ yi,
+                !is.cont ~ exp(yi)
+              ),
+              se = .round(sei, digits),
+              ci = if(is.cont){
+                paste0("(",.round(ci.lb.i, digits),", ",.round(ci.ub.i, digits),")")
+              } else if(!is.cont){
+                paste0("(",.round(exp(ci.lb.i), digits),", ",.round(exp(ci.ub.i), digits),")")
+              } else {NA},
+              dplyr::across(tidyr::any_of(c("pvalue")),\(x){
+                try({
+                  case_when(
+                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                    x < 0.005 ~ paste0(.round_p(x),"**"),
+                    x < 0.05 ~ paste0(.round(x,3),"*"),
+                    x > 0.05 ~ .round(x,3)
+                  )
+                })
+              }),
+              sens.reliability = map(sens.reliability, \(x){
+                x |>
+                  mutate(
+                    out = if(is.cont){
+                      paste0( .round(corrected.theta, digits),
+                              " (", .round(corrected.theta.lb, digits),", ",
+                              .round(corrected.theta.ub, digits),")" )
+                    } else if(!is.cont){
+                      paste0( .round(exp(corrected.theta), digits),
+                              " (", .round(exp(corrected.theta.lb), digits),", ",
+                              .round(exp(corrected.theta.ub), digits),")" )
+                    } else {NA}
+                  )
+              }),
+              rcor70 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.70) |> select(out) |> as.character()
+              }),
+              rcor55 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.55) |> select(out) |> as.character()
+              }),
+              rcor40 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.40) |> select(out) |> as.character()
+              }),
+              across(where(is.numeric), ~.round(., digits))
+            ) |>
+            select(est, se, ci, pvalue, rcor70, rcor55, rcor40)
+        }
       })
       ## ====== Panel B ======================================= ##
       try({
         if(is.meta){
-        tmp.b <- df.b %>%
-          filter({{meta.filter.var}} == tbl.row.vec[i])
-        tmp.b <- tmp.b  %>%
-          mutate(
-            est = case_when(
-              is.cont ~ theta.rma,
-              !is.cont ~ exp(theta.rma)
-            ),
-            se = .round(theta.rma.se, digits),
-            ci = if(is.cont){
-              paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")")
-            } else if(!is.cont){
-              paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
-            } else {NA},
-            prop.metric = if(is.cont){
-              paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%")} else if(!is.cont){
-                paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")} else {NA},
-            prop.metric = pad_around_divider(prop.metric, "|"),
-            pred.int = if(is.cont){
-              paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
-            } else if(!is.cont){
-              paste0("(",.round(exp(theta.pred.int.lb), digits),", ",.round(exp(theta.pred.int.ub), digits),")")
-            } else {NA},
-            tau = case_when(
-              is.cont ~ tau,
-              !is.cont ~ rr.tau
-            ),
-            tau =  case_when(
-              tau < 0.01 ~ "<0.01\u2020",
-              tau >= 0.01 ~ .round(tau,digits)
-            ),
-            dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
-              try({
-                case_when(
-                  x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                  x < 0.005 ~ paste0(.round_p(x),"**"),
-                  x < 0.05 ~ paste0(.round(x,3),"*"),
-                  x > 0.05 ~ .round(x,3)
-                )
-              })
-            }),
-            sens.reliability = map(sens.reliability, \(x){
-              x |>
-                mutate(
-                  out = if(is.cont){
-                    paste0( .round(corrected.theta, digits),
-                            " (", .round(corrected.theta.lb, digits),", ",
-                            .round(corrected.theta.ub, digits),")" )
-                  } else if(!is.cont){
-                    paste0( .round(exp(corrected.theta), digits),
-                            " (", .round(exp(corrected.theta.lb), digits),", ",
-                            .round(exp(corrected.theta.ub), digits),")" )
-                  } else {NA}
-                )
-            }),
-            rcor70 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.70) |> select(out) |> as.character()
-            }),
-            rcor55 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.55) |> select(out) |> as.character()
-            }),
-            rcor40 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.40) |> select(out) |> as.character()
-            }),
-            across(where(is.numeric), ~.round(., digits))
-          ) |>
-          select(est, se, ci, pred.int,prop.metric,tau,global.pvalue,rcor70, rcor55, rcor40)
+          tmp.b <- df.b %>%
+            filter({{meta.filter.var}} == tbl.row.vec[i])
+          tmp.b <- tmp.b  %>%
+            mutate(
+              est = case_when(
+                is.cont ~ theta.rma,
+                !is.cont ~ exp(theta.rma)
+              ),
+              se = .round(theta.rma.se, digits),
+              ci = if(is.cont){
+                paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")")
+              } else if(!is.cont){
+                paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
+              } else {NA},
+              prop.metric = if(is.cont){
+                paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%")} else if(!is.cont){
+                  paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")} else {NA},
+              prop.metric = pad_around_divider(prop.metric, "|"),
+              pred.int = if(is.cont){
+                paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
+              } else if(!is.cont){
+                paste0("(",.round(exp(theta.pred.int.lb), digits),", ",.round(exp(theta.pred.int.ub), digits),")")
+              } else {NA},
+              tau = case_when(
+                is.cont ~ tau,
+                !is.cont ~ rr.tau
+              ),
+              tau =  case_when(
+                tau < 0.01 ~ "<0.01\u2020",
+                tau >= 0.01 ~ .round(tau,digits)
+              ),
+              dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
+                try({
+                  case_when(
+                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                    x < 0.005 ~ paste0(.round_p(x),"**"),
+                    x < 0.05 ~ paste0(.round(x,3),"*"),
+                    x > 0.05 ~ .round(x,3)
+                  )
+                })
+              }),
+              sens.reliability = map(sens.reliability, \(x){
+                x |>
+                  mutate(
+                    out = if(is.cont){
+                      paste0( .round(corrected.theta, digits),
+                              " (", .round(corrected.theta.lb, digits),", ",
+                              .round(corrected.theta.ub, digits),")" )
+                    } else if(!is.cont){
+                      paste0( .round(exp(corrected.theta), digits),
+                              " (", .round(exp(corrected.theta.lb), digits),", ",
+                              .round(exp(corrected.theta.ub), digits),")" )
+                    } else {NA}
+                  )
+              }),
+              rcor70 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.70) |> select(out) |> as.character()
+              }),
+              rcor55 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.55) |> select(out) |> as.character()
+              }),
+              rcor40 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.40) |> select(out) |> as.character()
+              }),
+              across(where(is.numeric), ~.round(., digits))
+            ) |>
+            select(est, se, ci, pred.int,prop.metric,tau,global.pvalue,rcor70, rcor55, rcor40)
 
-      } else {
-        tmp.b <- df.b %>%
-          filter({{filter.var}} == tbl.row.vec[i])
-        tmp.b <- tmp.b %>%
-          mutate(
-            est = case_when(
-              is.cont ~ yi,
-              !is.cont ~ exp(yi)
-            ),
-            se = .round(sei, digits),
-            ci = if(is.cont){
-              paste0("(",.round(ci.lb.i, digits),", ",.round(ci.ub.i, digits),")")
-            } else if(!is.cont){
-              paste0("(",.round(exp(ci.lb.i), digits),", ",.round(exp(ci.ub.i), digits),")")
-            } else {NA},
-            dplyr::across(tidyr::any_of(c("pvalue")),\(x){
-              try({
-              case_when(
-                x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                x < 0.005 ~ paste0(.round_p(x),"**"),
-                x < 0.05 ~ paste0(.round(x,3),"*"),
-                x > 0.05 ~ .round(x,3)
-              )
-              })
-            }),
-            sens.reliability = map(sens.reliability, \(x){
-              x |>
-                mutate(
-                  out = if(is.cont){
-                    paste0( .round(corrected.theta, digits),
-                            " (", .round(corrected.theta.lb, digits),", ",
-                            .round(corrected.theta.ub, digits),")" )
-                  } else if(!is.cont){
-                    paste0( .round(exp(corrected.theta), digits),
-                            " (", .round(exp(corrected.theta.lb), digits),", ",
-                            .round(exp(corrected.theta.ub), digits),")" )
-                  } else {NA}
-                )
-            }),
-            rcor70 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.70) |> select(out) |> as.character()
-            }),
-            rcor55 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.55) |> select(out) |> as.character()
-            }),
-            rcor40 = map_chr(sens.reliability, \(x){
-              x |> filter(reliability == 0.40) |> select(out) |> as.character()
-            }),
-            across(where(is.numeric), ~.round(., digits))
-          ) |>
-          select(est, se, ci, pvalue, rcor70, rcor55, rcor40)
-      }
+        } else {
+          tmp.b <- df.b %>%
+            filter({{filter.var}} == tbl.row.vec[i])
+          tmp.b <- tmp.b %>%
+            mutate(
+              est = case_when(
+                is.cont ~ yi,
+                !is.cont ~ exp(yi)
+              ),
+              se = .round(sei, digits),
+              ci = if(is.cont){
+                paste0("(",.round(ci.lb.i, digits),", ",.round(ci.ub.i, digits),")")
+              } else if(!is.cont){
+                paste0("(",.round(exp(ci.lb.i), digits),", ",.round(exp(ci.ub.i), digits),")")
+              } else {NA},
+              dplyr::across(tidyr::any_of(c("pvalue")),\(x){
+                try({
+                  case_when(
+                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
+                    x < 0.005 ~ paste0(.round_p(x),"**"),
+                    x < 0.05 ~ paste0(.round(x,3),"*"),
+                    x > 0.05 ~ .round(x,3)
+                  )
+                })
+              }),
+              sens.reliability = map(sens.reliability, \(x){
+                x |>
+                  mutate(
+                    out = if(is.cont){
+                      paste0( .round(corrected.theta, digits),
+                              " (", .round(corrected.theta.lb, digits),", ",
+                              .round(corrected.theta.ub, digits),")" )
+                    } else if(!is.cont){
+                      paste0( .round(exp(corrected.theta), digits),
+                              " (", .round(exp(corrected.theta.lb), digits),", ",
+                              .round(exp(corrected.theta.ub), digits),")" )
+                    } else {NA}
+                  )
+              }),
+              rcor70 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.70) |> select(out) |> as.character()
+              }),
+              rcor55 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.55) |> select(out) |> as.character()
+              }),
+              rcor40 = map_chr(sens.reliability, \(x){
+                x |> filter(reliability == 0.40) |> select(out) |> as.character()
+              }),
+              across(where(is.numeric), ~.round(., digits))
+            ) |>
+            select(est, se, ci, pvalue, rcor70, rcor55, rcor40)
+        }
       })
       ## ====== Add Results to output object ====================================================== ##
 
       try({
         if(nrow(tmp.a) > 0){
-        if(str_detect(str_to_lower(study), "exposure")){
-          outcomewide[i, cols.a] <- tmp.a
-        }
-        if(str_detect(str_to_lower(study), "outcome")){
-          if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
-            outcomewide[i,cols.a[-1]] <- tmp.a
+          if(str_detect(str_to_lower(study), "exposure")){
+            outcomewide[i, cols.a] <- tmp.a
           }
-          if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
-            outcomewide[i,cols.a[-2]] <- tmp.a
+          if(str_detect(str_to_lower(study), "outcome")){
+            if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
+              outcomewide[i,cols.a[-1]] <- tmp.a
+            }
+            if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
+              outcomewide[i,cols.a[-2]] <- tmp.a
+            }
           }
         }
-      }
         if(nrow(tmp.b) > 0){
-        if(str_detect(str_to_lower(study), "exposure")){
-          outcomewide[i, cols.b] <- tmp.b
-        }
-        if(str_detect(str_to_lower(study), "outcome")){
-          if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
-            outcomewide[i,cols.b[-1]] <- tmp.b
+          if(str_detect(str_to_lower(study), "exposure")){
+            outcomewide[i, cols.b] <- tmp.b
           }
-          if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
-            outcomewide[i,cols.b[-2]] <- tmp.b
+          if(str_detect(str_to_lower(study), "outcome")){
+            if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
+              outcomewide[i,cols.b[-1]] <- tmp.b
+            }
+            if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
+              outcomewide[i,cols.b[-2]] <- tmp.b
+            }
           }
         }
-      }
       })
     }
   }
@@ -3267,7 +3326,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
   if(is.meta){
     ft.header.values <- c("", "Pooled Estimate", "", "Heterogeneity","", "Reliability Corrected Est. (95% CI)",
                           "", "Pooled Estimate","", "Heterogeneity","", "Reliability Corrected Est. (95% CI)")
-   if(str_detect(str_to_lower(study), "exposure") ){
+    if(str_detect(str_to_lower(study), "exposure") ){
       ft.header.lengths <- c(1, 3, 1,4,1, 3, 1, 3,1, 4,1, 3)
       cwh.a <- cwh.b <- 12
     } else if(str_detect(str_to_lower(study), "outcome") ){
@@ -3414,7 +3473,7 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
     )
   } else {
     vars.to.get <- c('data', "term", "outcome")
-     df.a <- load_meta_result(
+    df.a <- load_meta_result(
       file = here::here(dir.a, file.a),
       predictor = unique(c(focal.variable, tbl.row.vec)),
       outcome = unique(c(focal.variable, tbl.row.vec)),
@@ -3496,33 +3555,33 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
         tmp.vec <- vec.id
       }
       ## ====== Primary MI  ====================== ##
-        tmp.a <- df.a %>%
-          filter({{filter.var}} == tbl.row.vec[i]) %>%
-          select(all_of(tmp.vec)) %>%
-          dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
-          )
+      tmp.a <- df.a %>%
+        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        select(all_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+        )
       ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
-        tmp.b <- df.b %>%
-          filter({{filter.var}} == tbl.row.vec[i]) %>%
-          select(all_of(tmp.vec)) %>%
-          dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
-          )
+      tmp.b <- df.b %>%
+        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        select(all_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+        )
       ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
-        tmp.c <- df.c %>%
-          filter({{filter.var}} == tbl.row.vec[i]) %>%
-          select(all_of(tmp.vec)) %>%
-          dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
-          )
+      tmp.c <- df.c %>%
+        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        select(all_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+        )
       ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
-        tmp.d <- df.d %>%
-          filter({{filter.var}} == tbl.row.vec[i]) %>%
-          select(all_of(tmp.vec)) %>%
-          dplyr::mutate(
-            dplyr::across(where(is.numeric),\(x) .round(x,digits)),
-          )
+      tmp.d <- df.d %>%
+        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        select(all_of(tmp.vec)) %>%
+        dplyr::mutate(
+          dplyr::across(where(is.numeric),\(x) .round(x,digits)),
+        )
       ## ====== Add Results to output object ====================================================== ##
       if(nrow(tmp.a) > 0) evalues[i,vec.a] <- tmp.a[tmp.vec]
       if(nrow(tmp.b) > 0) evalues[i,vec.b] <- tmp.b[tmp.vec]
@@ -3592,199 +3651,199 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
   digits = params$digits
   fig.num = params$fig.num
 
-    ALL.COUNTRIES <- c("Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil",    "Mexico",  "China"  )
+  ALL.COUNTRIES <- c("Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil",    "Mexico",  "China"  )
 
-    df.main <- load_meta_result(
-      file = here::here(dir, file),
-      predictor = predictor.i,
-      outcome = outcome.i ,
-      filter.var.out = "outcome",
-      filter.var.pred = "term"
+  df.main <- load_meta_result(
+    file = here::here(dir, file),
+    predictor = predictor.i,
+    outcome = outcome.i ,
+    filter.var.out = "outcome",
+    filter.var.pred = "term"
+  )
+  df.main <- df.main |>
+    filter(outcome == outcome.i, term == predictor.i)
+
+  # meta fit objects
+  fit <- df.main$meta.rma[[1]]
+  fit.influence <- meta_loo_inf(fit)
+  # plot data
+  plot_df <- df.main$data[[1]]
+
+  # identify countries omitted from meta-analysis
+  tmp.included.countries <- plot_df$group
+  tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
+  tmp.included.countries <- str_trim(tmp.included.countries, "both")
+  tmp.excluded.countries <- ALL.COUNTRIES[!(ALL.COUNTRIES %in% tmp.included.countries)]
+  tmp.excluded.countries <- ifelse(
+    !is_empty(tmp.excluded.countries),
+    paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
+    ""
+  )
+
+  ## construct heterogeneity statements
+  build_het_statement <- function(fit, txt=""){
+    myci <- confint(fit, type = "PL")
+    paste0(txt,
+           "Heterogeneity (tau)=", .round(sqrt(fit$tau2), max(digits,3)),
+           "; Q-profile 95% CI [", .round(myci$random[2, 2], max(digits,3)), ", ", .round(myci$random[2, 3], max(digits,3)), "]",
+           "; Q(df=", fit$k - fit$QMdf[1], ")=",
+           .round(fit$QE), ", p=", format.pval(fit$QEp, digits=max(digits,3), scientific=TRUE),
+           "; I^2=", .round(fit$I2, digits),
+           ifelse(tmp.excluded.countries == "","", ";\n"), tmp.excluded.countries
     )
-    df.main <- df.main |>
-      filter(outcome == outcome.i, term == predictor.i)
+  }
+  tmp.het <- build_het_statement(fit)
 
-    # meta fit objects
-    fit <- df.main$meta.rma[[1]]
-    fit.influence <- meta_loo_inf(fit)
-    # plot data
-    plot_df <- df.main$data[[1]]
-
-    # identify countries omitted from meta-analysis
-    tmp.included.countries <- plot_df$group
-      tmp.included.countries <- str_replace(tmp.included.countries, "_", " ")
-      tmp.included.countries <- str_trim(tmp.included.countries, "both")
-      tmp.excluded.countries <- ALL.COUNTRIES[!(ALL.COUNTRIES %in% tmp.included.countries)]
-      tmp.excluded.countries <- ifelse(
-        !is_empty(tmp.excluded.countries),
-        paste0("Excluded countries: ", paste0(tmp.excluded.countries, collapse = ", ")),
-        ""
-      )
-
-    ## construct heterogeneity statements
-    build_het_statement <- function(fit, txt=""){
-      myci <- confint(fit, type = "PL")
-      paste0(txt,
-             "Heterogeneity (tau)=", .round(sqrt(fit$tau2), max(digits,3)),
-             "; Q-profile 95% CI [", .round(myci$random[2, 2], max(digits,3)), ", ", .round(myci$random[2, 3], max(digits,3)), "]",
-             "; Q(df=", fit$k - fit$QMdf[1], ")=",
-             .round(fit$QE), ", p=", format.pval(fit$QEp, digits=max(digits,3), scientific=TRUE),
-             "; I^2=", .round(fit$I2, digits),
-             ifelse(tmp.excluded.countries == "","", ";\n"), tmp.excluded.countries
-      )
-    }
-    tmp.het <- build_het_statement(fit)
-
-    # make sure to use the (*)i variables in data so that the correct estimates are being plotted.\
-    # Noah: I switch the ordering to be by the overly conservative estimates with PC control
-    plot_df <- plot_df |>
-      mutate(
-        est_lab = paste0(.round(yi,digits), " (", .round(ci.lb.i,digits), ", ", .round(ci.ub.i,digits), ")")
-      )
-
-    plot_df <- left_join(plot_df,  fit.influence, by = "group") |>
-      mutate(
-        loo_label = paste0(.round(loo.estimate, digits), " (", .round(loo.ci.lb,digits), ", ", .round(loo.ci.ub,digits), ")"),
-        inf_label = paste0("RESID(stud) = ", .round(rstudent,2),"; Cooks' D = ",.round(cook.d, 2),"; COVRATIO = ",.round(cov.r, 2))
-      )
-
-
-    # make sure bounds also contains 0
-    xlims <- c(min(plot_df$ci.lb.i) - .05,max(plot_df$ci.ub.i) + .05)
-    xlims[1] <- ifelse(xlims[1] > -0.05, -0.05, xlims[1])
-    xlims[2] <- ifelse(xlims[2] < 0.05, 0.05, xlims[2])
-
-    # DATA FOR PLOT
-    dat.below <- data.frame(
-      label = "Overall",
-      est = as.numeric(fit$b),
-      ci.lb = as.numeric(fit$ci.lb),
-      ci.ub = as.numeric(fit$ci.ub)
-    ) |>
-      mutate(
-        ci = paste0("(", .round(ci.lb), ",", .round(ci.ub), ")"),
-        CI = paste0(.round(est), " ", ci)
-      )
-    # below are the actual plots being constructed...
-    p_mid <- plot_df |>
-      ggplot(aes(y = reorder(group, yi))) +
-      geom_point(aes(x = yi), shape = 15, size = 3) +
-      geom_linerange(aes(xmin = ci.lb.i, xmax = ci.ub.i)) +
-      geom_vline(xintercept = 0, linetype = "dashed") +
-      geom_vline(xintercept = dat.below$est[1], linetype = "dashed", color="grey50") +
-      .geom_stripes() +
-      labs(x = NULL) +
-      lims(x = c(xlims)) +
-      theme_classic() +
-      theme(
-        axis.ticks = element_blank(),
-        axis.title = element_blank(),
-        axis.text.y = element_text(face = "bold"),
-        axis.line.y = element_blank(),
-        axis.text.x = element_blank(),
-        plot.background = element_rect(
-          colour = "grey90",
-          linewidth = 1,
-          fill = "grey90"
-        )
-      )
-
-    # right side of plot - estimates
-    p_right <- plot_df  |>
-      ggplot(aes(y = reorder(group, yi))) +
-      geom_text(aes(x = 0, label = est_lab), hjust = 0.45) +
-      .geom_stripes() +
-      theme_void() +
-      theme(
-        panel.background = element_rect(fill="white"),
-            plot.background = element_rect(
-              colour = "grey90" ,
-              linewidth = 1,
-              fill = "grey90"
-            )
-      )
-
-    p_below <- dat.below %>%
-      ggplot(aes(x = est, y = label)) +
-      geom_point(shape = 18, size = 5) +
-      geom_linerange(aes(xmin = ci.lb, xmax = ci.ub)) +
-      geom_vline(xintercept = 0, linetype = "dashed") +
-      geom_vline(xintercept = dat.below$est[1], linetype = "dashed", color="grey50") +
-      labs(x = "Effect Size Measure", y = NULL) +
-      lims(x = c(xlims)) +
-      theme_classic() +
-      theme(
-        axis.line.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(),
-          axis.text = element_text(face = "bold"),
-        plot.background = element_rect(
-          colour = "grey90" ,
-          linewidth = 1,
-          fill = "grey90"
-        )
-
-      )
-
-    p_below_right <-
-      dat.below |>
-      ggplot(aes(y = label)) +
-      geom_text(aes(x = 0, label = CI), hjust = 0.45) +
-      labs(y=NULL, x = "Estimates")+
-      theme_void() +
-      theme(
-        axis.title.x = element_text(),
-        panel.background = element_rect(fill="white"),
-        plot.background = element_rect(
-          colour = "grey90" ,
-          linewidth = 1,
-          fill = "grey90"
-        )
-      )
-
-    p_right_loo <- plot_df  |>
-        ggplot(aes(y = reorder(group, yi))) +
-        geom_text(aes(x = 0, label =loo_label), hjust = 0.45) +
-        .geom_stripes() +
-        theme_void()
-
-      p_right_inf <- plot_df  |>
-        ggplot(aes(y = reorder(group, yi))) +
-        geom_text(aes(x = 0, label = inf_label), hjust = 0.50) +
-        .geom_stripes() +
-        theme_void()
-
-      p_below_right_loo <-
-        dat.below |>
-        ggplot(aes(y = label)) +
-        geom_text(aes(x = 0, label = "LOO RMA Estimate"), hjust = 0.45) +
-        theme_void()
-
-      p_below_right_inf <-
-        dat.below |>
-        ggplot(aes(y = label)) +
-        geom_text(aes(x = 0, label = "Influence Statistics"), hjust = 0.45) +
-        theme_void()
-
-
-      p <- (p_mid + plot_spacer() + p_right+ plot_spacer() +p_right_loo+ plot_spacer() + p_right_inf +
-              plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer()+
-              p_below + plot_spacer() + p_below_right + plot_spacer() + p_below_right_loo + plot_spacer() + p_below_right_inf) +
-        plot_layout(
-          byrow = TRUE,
-          widths = c(4, -0.25, 1.75, -0.15,1.75, -0.25,4),
-          heights = c(10, -0.5, 1)
-        ) +
-        plot_annotation(caption = tmp.het)
-p
-    ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".pdf")),
-      plot = p, height = 6.5, width = 13.5, units = "in"
+  # make sure to use the (*)i variables in data so that the correct estimates are being plotted.\
+  # Noah: I switch the ordering to be by the overly conservative estimates with PC control
+  plot_df <- plot_df |>
+    mutate(
+      est_lab = paste0(.round(yi,digits), " (", .round(ci.lb.i,digits), ", ", .round(ci.ub.i,digits), ")")
     )
-    ggsave(
-      filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".png")),
-      plot = p, height = 6.5, width = 13.5, units = "in", dpi = 250
+
+  plot_df <- left_join(plot_df,  fit.influence, by = "group") |>
+    mutate(
+      loo_label = paste0(.round(loo.estimate, digits), " (", .round(loo.ci.lb,digits), ", ", .round(loo.ci.ub,digits), ")"),
+      inf_label = paste0("RESID(stud) = ", .round(rstudent,2),"; Cooks' D = ",.round(cook.d, 2),"; COVRATIO = ",.round(cov.r, 2))
     )
+
+
+  # make sure bounds also contains 0
+  xlims <- c(min(plot_df$ci.lb.i) - .05,max(plot_df$ci.ub.i) + .05)
+  xlims[1] <- ifelse(xlims[1] > -0.05, -0.05, xlims[1])
+  xlims[2] <- ifelse(xlims[2] < 0.05, 0.05, xlims[2])
+
+  # DATA FOR PLOT
+  dat.below <- data.frame(
+    label = "Overall",
+    est = as.numeric(fit$b),
+    ci.lb = as.numeric(fit$ci.lb),
+    ci.ub = as.numeric(fit$ci.ub)
+  ) |>
+    mutate(
+      ci = paste0("(", .round(ci.lb), ",", .round(ci.ub), ")"),
+      CI = paste0(.round(est), " ", ci)
+    )
+  # below are the actual plots being constructed...
+  p_mid <- plot_df |>
+    ggplot(aes(y = reorder(group, yi))) +
+    geom_point(aes(x = yi), shape = 15, size = 3) +
+    geom_linerange(aes(xmin = ci.lb.i, xmax = ci.ub.i)) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_vline(xintercept = dat.below$est[1], linetype = "dashed", color="grey50") +
+    .geom_stripes() +
+    labs(x = NULL) +
+    lims(x = c(xlims)) +
+    theme_classic() +
+    theme(
+      axis.ticks = element_blank(),
+      axis.title = element_blank(),
+      axis.text.y = element_text(face = "bold"),
+      axis.line.y = element_blank(),
+      axis.text.x = element_blank(),
+      plot.background = element_rect(
+        colour = "grey90",
+        linewidth = 1,
+        fill = "grey90"
+      )
+    )
+
+  # right side of plot - estimates
+  p_right <- plot_df  |>
+    ggplot(aes(y = reorder(group, yi))) +
+    geom_text(aes(x = 0, label = est_lab), hjust = 0.45) +
+    .geom_stripes() +
+    theme_void() +
+    theme(
+      panel.background = element_rect(fill="white"),
+      plot.background = element_rect(
+        colour = "grey90" ,
+        linewidth = 1,
+        fill = "grey90"
+      )
+    )
+
+  p_below <- dat.below %>%
+    ggplot(aes(x = est, y = label)) +
+    geom_point(shape = 18, size = 5) +
+    geom_linerange(aes(xmin = ci.lb, xmax = ci.ub)) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_vline(xintercept = dat.below$est[1], linetype = "dashed", color="grey50") +
+    labs(x = "Effect Size Measure", y = NULL) +
+    lims(x = c(xlims)) +
+    theme_classic() +
+    theme(
+      axis.line.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text = element_text(face = "bold"),
+      plot.background = element_rect(
+        colour = "grey90" ,
+        linewidth = 1,
+        fill = "grey90"
+      )
+
+    )
+
+  p_below_right <-
+    dat.below |>
+    ggplot(aes(y = label)) +
+    geom_text(aes(x = 0, label = CI), hjust = 0.45) +
+    labs(y=NULL, x = "Estimates")+
+    theme_void() +
+    theme(
+      axis.title.x = element_text(),
+      panel.background = element_rect(fill="white"),
+      plot.background = element_rect(
+        colour = "grey90" ,
+        linewidth = 1,
+        fill = "grey90"
+      )
+    )
+
+  p_right_loo <- plot_df  |>
+    ggplot(aes(y = reorder(group, yi))) +
+    geom_text(aes(x = 0, label =loo_label), hjust = 0.45) +
+    .geom_stripes() +
+    theme_void()
+
+  p_right_inf <- plot_df  |>
+    ggplot(aes(y = reorder(group, yi))) +
+    geom_text(aes(x = 0, label = inf_label), hjust = 0.50) +
+    .geom_stripes() +
+    theme_void()
+
+  p_below_right_loo <-
+    dat.below |>
+    ggplot(aes(y = label)) +
+    geom_text(aes(x = 0, label = "LOO RMA Estimate"), hjust = 0.45) +
+    theme_void()
+
+  p_below_right_inf <-
+    dat.below |>
+    ggplot(aes(y = label)) +
+    geom_text(aes(x = 0, label = "Influence Statistics"), hjust = 0.45) +
+    theme_void()
+
+
+  p <- (p_mid + plot_spacer() + p_right+ plot_spacer() +p_right_loo+ plot_spacer() + p_right_inf +
+          plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer()+
+          p_below + plot_spacer() + p_below_right + plot_spacer() + p_below_right_loo + plot_spacer() + p_below_right_inf) +
+    plot_layout(
+      byrow = TRUE,
+      widths = c(4, -0.25, 1.75, -0.15,1.75, -0.25,4),
+      heights = c(10, -0.5, 1)
+    ) +
+    plot_annotation(caption = tmp.het)
+  p
+  ggsave(
+    filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".pdf")),
+    plot = p, height = 6.5, width = 13.5, units = "in"
+  )
+  ggsave(
+    filename = here::here(res.dir, "fig",paste0("figure_S",fig.num,"_", outcome.i,"_regressed_on_", predictor.i,".png")),
+    plot = p, height = 6.5, width = 13.5, units = "in", dpi = 250
+  )
 
   save(p, fig.cap, fig.fn, file = cache.file)
 

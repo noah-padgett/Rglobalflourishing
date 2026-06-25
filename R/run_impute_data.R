@@ -307,6 +307,7 @@ run_imputation <- function(country, df.tmp,
     "CASE_OBSERVED_Y2",
     "CASE_OBSERVED_Y3",
     "CASE_OBSERVED_ALL",
+    "CASE_OBSERVED_MY",
     "RACE",
     var.ignore0,
     paste0(var.ignore0, "_Y1"),
@@ -443,7 +444,7 @@ run_imputation <- function(country, df.tmp,
     paste0("REGION3",c("_Y1", "_Y2", "_Y3")),
     'RECON_STATUS_Y1', 'RECON_STATUS_Y2', 'RECON_STATUS_Y3', 'STRATA', 'PSU', 'ANNUAL_WEIGHT_C1', 'ANNUAL_WEIGHT_C2', 'ANNUAL_WEIGHT_L2', 'ANNUAL_WEIGHT_R2', 'ANNUAL_WEIGHT_C3', 'ANNUAL_WEIGHT_L3', 'ANNUAL_WEIGHT_R3',
     "RETENTION_WEIGHT_C" , "RETENTION_WEIGHT_L",  "RETENTION_WEIGHT_L3",
-    'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_MY', 'FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL'
+    'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_MY', 'FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL', 'CASE_OBSERVED_MY'
   )
   # just some double-checking that these variables are imputed / no predictors
   tmp.pred[do.not.impute,] <- 0
@@ -472,70 +473,8 @@ run_imputation <- function(country, df.tmp,
   ## print out file
   #tmp.pred1 <- tmp.pred
   #tmp.pred1 <- tmp.pred1[pass.imp$visitSequence, pass.imp$visitSequence]
-  #write_xlsx(tmp.pred1, file="test/ignore/data/imp/pred_matrix_Brazil.xlsx", col_names=TRUE, row_names=TRUE)
+  #write_xlsx(tmp.pred1, file="data/imp/pred_matrix_ARG.xlsx", col_names=TRUE, row_names=TRUE)
 
-  # NEXT, set up lag predictors
-  # tmp.vec <- c(get_variable_codes("OUTCOME.VEC"), "INCOME")
-  # tmp.vec[tmp.vec == "CIGARETTES_BINARY"] <- "CIGARETTES"
-  # tmp.vec <- tmp.vec[str_detect(tmp.vec, "COMPOSITE_", negate=TRUE)]
-  #
-  # ## FOR WAVE 1 & WAVE 2 VARIABLES
-  # i <- 1
-  # t1 <- c()
-  # t2 <- c()
-  # for(i in 1:length(tmp.vec)){
-  #   t10 <- paste0(tmp.vec[i], "_Y1")
-  #   t20 <- paste0(tmp.vec[i], "_Y2")
-  #   if(t10 %in% colnames(tmp.pred) & t20 %in% colnames(tmp.pred)){
-  #     t1 <- c(t1,t10)
-  #     t2 <- c(t2,t20)
-  #   	#print(tmp.pred[c(t1,t2),c(t1,t2)])
-  #   }
-  #   #tmp.pred[t1,][tmp.pred[t1,] == 1]
-  #   #tmp.pred[t2,][tmp.pred[t2,] == 1]
-  # }
-  # tmp.pred[t2,t1] <- 1
-  #
-  # ## 3 WAVES VARIABLES
-  # if(any(str_detect(colnames(tmp.pred), "Y3"))){
-  #   # For W1 -> W3
-  #   i <- 1
-  #     t1 <- c()
-  #     t3 <- c()
-  #     for(i in 1:length(tmp.vec)){
-  #       t10 <- paste0(tmp.vec[i], "_Y1")
-  #       t30 <- paste0(tmp.vec[i], "_Y3")
-  #       if(t10 %in% colnames(tmp.pred) & t30 %in% colnames(tmp.pred)){
-  #         t1 <- c(t1,t10)
-  #         t3 <- c(t3,t30)
-  #       }
-  #     }
-  #     tmp.pred[t3,t1] <- 1
-  #
-  #     # For W2 -> W3
-  #     i <- 1
-  #     t2 <- c()
-  #     t3 <- c()
-  #     for(i in 1:length(tmp.vec)){
-  #       t20 <- paste0(tmp.vec[i], "_Y2")
-  #       t30 <- paste0(tmp.vec[i], "_Y3")
-  #       if(t20 %in% colnames(tmp.pred) & t30 %in% colnames(tmp.pred)){
-  #         t2 <- c(t2,t20)
-  #         t3 <- c(t3,t30)
-  #       }
-  #     }
-  #     tmp.pred[t3,t2] <- 1
-  #
-  #     # For W3 -> W2 : accounts for people for have missing at wave 2 but not wave 3.
-  #     # just "flip" the above
-  #     tmp.pred[t2,t3] <- 1
-  # }
-  # ## =================================================================== ##
-  # ## mid-year items
-  # if(includes.midyr){
-  #   tmy <- c('ACHIEVING_MY', 'BEAUTY_MY', 'DILIGENT_MY', 'ENGAGE_ARTS_MY', 'FOOD_INSECURE_MY', 'GOOD_PERSON_MY', 'GOOD_RELATION_MY', 'HAPPY_IMPORT_MY', 'HEALTHY_MY', 'MEANINGFUL_MY', 'MIND_FOCUSED_MY', 'MONEY_MY', 'NATURE_MY', 'REL_LIFE_MY', 'TIME_MEDIA_MY')
-  #   tmp.pred[tmy,t1] <- 1
-  # }
   ## =================================================================== ##
   fit.imp <- NULL
   try({
@@ -550,22 +489,31 @@ run_imputation <- function(country, df.tmp,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
         donors = 5,
-        threshold = 1.0, # see https://github.com/amices/mice/issues/314 for threshold information
-        ridge = 0.1,
+        threshold = 1.1, # see https://github.com/amices/mice/issues/314 for threshold information
+        ridge = 0.2,
         n.core = future::availableCores(),
         parallelseed = 31415
       )
       future::resetWorkers(plan())
 
     } else if(save.method == "separate"){
+      #' match.type Type of matching distance. The default choice
+      #' (\code{matchtype = 1L}) calculates the distance between
+      #' the \emph{predicted} value of \code{yobs} and
+      #' the \emph{drawn} values of \code{ymis} (called type-1 matching).
+      #' Other choices are \code{matchtype = 0L}
+      #' (distance between predicted values) and \code{matchtype = 2L}
+      #' (distance between drawn values).
+      #'
       fit.imp <- mice::mice(
         tmp.dat,
         m = 1,
-        maxit = 1,#Miter,
+        maxit = 2,#Miter,
         visitSequence = visitSequence,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
         donors = 5,
+        matchtype = 0L,
         threshold = 1.0,
         ridge = 0.1,
         seed = Nimp # allows for varying seed
@@ -578,9 +526,10 @@ run_imputation <- function(country, df.tmp,
         visitSequence = visitSequence,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
-        donors = 5,
-        threshold = 1.0, #0.99,
-        ridge = 0.1,
+        matchtype = 1L,
+        donors = 10,
+        threshold = 0.999,
+        #ridge = 0.1,
         seed = 31415
       )
     }

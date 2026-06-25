@@ -21,6 +21,9 @@ params:
 
 set_flextable_defaults(font.family = "Open Sans",font.size = 10)
 
+# need to set this option to prevent knitr from using incorrect file path
+options(knitr.graphics.rel_path = FALSE)
+
 knitr::opts_chunk$set(
   echo = FALSE,
   ft.tabcolsep=0, ft.latex.float = "none", ft.arraystretch=1,
