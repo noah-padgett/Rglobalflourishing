@@ -168,7 +168,8 @@ run_imputation <- function(country, df.tmp,
     filter(COUNTRY == country) %>%
     ungroup() %>%
     unnest(c(data)) |>
-    select(-c(AGE_GRP_Y1:RACE_PLURALITY2))
+    select(-c(AGE_GRP_Y1:RACE_PLURALITY2)) |>
+    as.data.frame()
 
   cur.country <- as.character(df.tmp$COUNTRY[1])
   print(paste0("Country: ", cur.country ))
@@ -283,6 +284,7 @@ run_imputation <- function(country, df.tmp,
     "RETENTION_WEIGHT_L",
     "RETENTION_WEIGHT_L_1M",
     "RETENTION_WEIGHT_L_1M2",
+    "RETENTION_WEIGHT_L3",
 
     "AGE_GRP",
     "CNTRY_REL_BUD",
@@ -417,7 +419,8 @@ run_imputation <- function(country, df.tmp,
   exclude.var <- c(
     paste0("AGE", c("_Y2", "_Y3")), ## only include baseline age to avoid collinearity
     var.ignore[var.ignore %in% colnames(tmp.dat)],
-    colnames(tmp.dat)[!(colnames(tmp.dat) %in% pred.vars[keep.var])]
+    colnames(tmp.dat)[!(colnames(tmp.dat) %in% pred.vars[keep.var])],
+    colnames(tmp.dat)[str_detect(colnames(tmp.dat),"_MY")] ## ensures the MY variables are not used as predictors with leads to the imputation breaking
   ) |> unique()
   tmp.pred <- quickpred2(
     data = tmp.dat,
@@ -446,9 +449,13 @@ run_imputation <- function(country, df.tmp,
     "RETENTION_WEIGHT_C" , "RETENTION_WEIGHT_L",  "RETENTION_WEIGHT_L3",
     'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_MY', 'FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL', 'CASE_OBSERVED_MY'
   )
-  # just some double-checking that these variables are imputed / no predictors
+  # just some double-checking that these variables are not imputed / no predictors
   tmp.pred[do.not.impute,] <- 0
   tmp.meth[do.not.impute] <- ""
+
+  #tmp.pred[str_detect(row.names(tmp.pred), "_MY"),] <- 0
+  #tmp.meth[str_detect(names(tmp.meth), "_MY")] <- ""
+
 
   # Longitudinal design incorporation
 
@@ -458,7 +465,7 @@ run_imputation <- function(country, df.tmp,
   tmp.pred[tr,tc] <- 0 # all t1 (rows) cannot be predicted by t2 or t3 (cols)
 
   # 2. Wave 3 cannot predict Wave 2
-  tr <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2") | str_detect(colnames(tmp.pred), "_MY")]
+  tr <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y2")]
   tc <- colnames(tmp.pred)[str_detect(colnames(tmp.pred), "_Y3")]
   tmp.pred[tr,tc] <- 0
 
@@ -519,6 +526,7 @@ run_imputation <- function(country, df.tmp,
         seed = Nimp # allows for varying seed
       )
     } else {
+
       fit.imp <- mice::mice(
         tmp.dat,
         m = Nimp,
@@ -527,13 +535,17 @@ run_imputation <- function(country, df.tmp,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
         matchtype = 1L,
-        donors = 10,
-        threshold = 0.999,
-        #ridge = 0.1,
-        seed = 31415
+        donors = 5,
+        threshold = 1.0,
+        ridge = 0.1,
+        seed = 314151
       )
     }
   })
+
+  # df.imp <- complete(fit.imp, action="long")
+  # table(df.imp$INCOME_Y2, useNA="always")
+  # table(df.imp$BEAUTY_MY, useNA="always")
 
   ## save country-by-imputation-specific files
   c.file.name <- paste0("imputed_data_obj_",cur.country,"_",save.method,"_imp_",Nimp,".RData")
