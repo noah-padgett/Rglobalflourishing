@@ -263,9 +263,9 @@ gfs_wave_3_generate_main_doc <- function(
   f0=1
   for(f0 in 1:length(focal.variable)){
     # update control parameters based on focal variable ending
-    if(str_detect(focal.variable[f0],, "_Y2")){
+    if(str_detect(focal.variable[f0], "_Y2")){
       control0[['study']] <- "outcomewide"
-    } else if(str_detect(focal.variable[f0],, "_Y3")){
+    } else if(str_detect(focal.variable[f0], "_Y3")){
       control0[['study']] <- "exposurewide"
     }
     control <- get_defaults_w3(control0, filetype = "main")
@@ -361,9 +361,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
   for(f0 in 1:length(focal.variable)){
 
     # update control parameters based on focal variable ending
-    if(str_detect(focal.variable[f0],, "_Y2")){
+    if(str_detect(focal.variable[f0],  "_Y2")){
       control0[['study']] <- "outcomewide"
-    } else if(str_detect(focal.variable[f0],, "_Y3")){
+    } else if(str_detect(focal.variable[f0],  "_Y3")){
       control0[['study']] <- "exposurewide"
     }
     control <- get_defaults_w3(control0, filetype = "main")
@@ -1796,9 +1796,9 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
     for(f0 in 1:length(focal.variable)){
 
       # update control parameters based on focal variable ending
-      if(str_detect(focal.variable[f0],, "_Y2")){
+      if(str_detect(focal.variable[f0],  "_Y2")){
         control0[['study']] <- "outcomewide"
-      } else if(str_detect(focal.variable[f0],, "_Y3")){
+      } else if(str_detect(focal.variable[f0],  "_Y3")){
         control0[['study']] <- "exposurewide"
       }
       control <- get_defaults_w3(control0, filetype = "supp")
@@ -2254,9 +2254,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
     for(f0 in 1:length(focal.variable)){
 
       # update control parameters based on focal variable ending
-      if(str_detect(focal.variable[f0],, "_Y2")){
+      if(str_detect(focal.variable[f0],  "_Y2")){
         control0[['study']] <- "outcomewide"
-      } else if(str_detect(focal.variable[f0],, "_Y3")){
+      } else if(str_detect(focal.variable[f0],  "_Y3")){
         control0[['study']] <- "exposurewide"
       }
       control <- get_defaults_w3(control0, filetype = "supp")
@@ -2573,9 +2573,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       for(f0 in 1:length(focal.variable)){
 
         # update control parameters based on focal variable ending
-        if(str_detect(focal.variable[f0],, "_Y2")){
+        if(str_detect(focal.variable[f0],  "_Y2")){
           control0[['study']] <- "outcomewide"
-        } else if(str_detect(focal.variable[f0],, "_Y3")){
+        } else if(str_detect(focal.variable[f0],  "_Y3")){
           control0[['study']] <- "exposurewide"
         }
         control <- get_defaults_w3(control0, filetype = "supp")
