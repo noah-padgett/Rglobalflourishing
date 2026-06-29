@@ -202,10 +202,12 @@ quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "
 
 #' @rdname utils
 #' @export
-.round <- function(x, digits = 2, allow.sci = TRUE) {
+.round <- function(x, digits = 2, allow.sci = TRUE, val.minus = 0) {
+  # minimum value before change to scientific notation to prevent rounding to 0.00 based on number of selected digits
+  sci.threshold = (10^(-(digits+1)) + 0.4*10^(-(digits)))
   sapply(x, function(val) {
     if (is.na(val)) return(NA_character_)
-    if (allow.sci & (abs(val) > 1e2 || (abs(val) > 0 && abs(val) < 1e-3))) {
+    if ( allow.sci & (abs(val - val.minus) > 10^2 || (abs(val - val.minus) > 0 && abs(val - val.minus) < sci.threshold ) ) ) {
       # Scientific notation with digits significant digits
       sprintf(paste0("%.", digits, "e"), val)
     } else {
