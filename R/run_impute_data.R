@@ -93,7 +93,8 @@ run_impute_data <- function(data,
                      pred.vars = pred.vars,
                      use.log.poly = use.log.poly,
                      data.dir = data.dir,
-                     use.parallel = use.parallel
+                     use.parallel = use.parallel,
+                     includes.midyr = includes.midyr
                      )
     })
   }
@@ -128,14 +129,15 @@ run_impute_data <- function(data,
       p <- progressor( along = c(vec.iter)  )
       pwalk(list(vec.iter, vec.c, vec.i), \(x,y,i){
 
-        Rglobalflourishing:::run_imputation(
+        run_imputation(
           country = y, df.tmp = data, Nimp = i,
           save.method = "separate",
           Miter = Miter,
           visitSequence = visitSequence,
           pred.vars = pred.vars,
           use.log.poly = use.log.poly,
-          data.dir = data.dir)
+          data.dir = data.dir,
+          includes.midyr = includes.midyr)
 
         p(sprintf("x= %s", x))
         gc()
@@ -160,7 +162,8 @@ run_imputation <- function(country, df.tmp,
                            pred.vars = pred.vars,
                            use.log.poly = use.log.poly,
                            data.dir = "data",
-                           use.parallel = FALSE){
+                           use.parallel = FALSE,
+                           includes.midyr = FALSE){
   # country = country_vec[1]
   # df.tmp = data
   # filter, unnest and extract data
@@ -258,12 +261,23 @@ run_imputation <- function(country, df.tmp,
   tmp.meth <- pass.imp$method
   ## =================================================================== ##
   ## =================================================================== ##
+  if(includes.midyr){
+    midyr.vars <- c(
+      'WAVE_MY',
+      'MIDYEAR_TYPE_MY',
+      "FULL_PARTIAL_MY",
+      "RETENTION_WEIGHT_C",
+      "RETENTION_WEIGHT_L",
+      "RETENTION_WEIGHT_L_1M",
+      "RETENTION_WEIGHT_L_1M2",
+      "RETENTION_WEIGHT_L3",
+      "CASE_OBSERVED_MY"
+    )
+  }
   var.ignore0 <- c(
     "ID",
     "COUNTRY",
     "WAVE",
-    'WAVE_MY',
-    'MIDYEAR_TYPE_MY',
     "RECRUIT_TYPE",
     "DOI_RECRUIT",
     "DOI_ANNUAL",
@@ -271,7 +285,6 @@ run_imputation <- function(country, df.tmp,
     "STRATA",
     "PSU",
     "FULL_PARTIAL",
-    "FULL_PARTIAL_MY",
     "ANNUAL_WEIGHT1",
     "ANNUAL_WEIGHT_C1",
     "ANNUAL_WEIGHT_C2",
@@ -280,11 +293,6 @@ run_imputation <- function(country, df.tmp,
     "ANNUAL_WEIGHT_C3",
     "ANNUAL_WEIGHT_L3",
     "ANNUAL_WEIGHT_R3",
-    "RETENTION_WEIGHT_C",
-    "RETENTION_WEIGHT_L",
-    "RETENTION_WEIGHT_L_1M",
-    "RETENTION_WEIGHT_L_1M2",
-    "RETENTION_WEIGHT_L3",
 
     "AGE_GRP",
     "CNTRY_REL_BUD",
@@ -309,14 +317,15 @@ run_imputation <- function(country, df.tmp,
     "CASE_OBSERVED_Y2",
     "CASE_OBSERVED_Y3",
     "CASE_OBSERVED_ALL",
-    "CASE_OBSERVED_MY",
     "RACE",
     var.ignore0,
     paste0(var.ignore0, "_Y1"),
     paste0(var.ignore0, "_Y2"),
-    paste0(var.ignore0, "_Y3"),
-    paste0(var.ignore0, "_MY")
+    paste0(var.ignore0, "_Y3")
   )
+  if(includes.midyr){
+    var.ignore = c(var.ignore, midyr.vars, paste0(var.ignore0, "_MY"))
+  }
 
   # # turn all core items of the SFI + LE into factors
   if(!(cur.country %in% c("China", "Sweden", "United States"))){
@@ -419,9 +428,12 @@ run_imputation <- function(country, df.tmp,
   exclude.var <- c(
     paste0("AGE", c("_Y2", "_Y3")), ## only include baseline age to avoid collinearity
     var.ignore[var.ignore %in% colnames(tmp.dat)],
-    colnames(tmp.dat)[!(colnames(tmp.dat) %in% pred.vars[keep.var])],
-    colnames(tmp.dat)[str_detect(colnames(tmp.dat),"_MY")] ## ensures the MY variables are not used as predictors with leads to the imputation breaking
+    colnames(tmp.dat)[!(colnames(tmp.dat) %in% pred.vars[keep.var])]
   ) |> unique()
+  if(includes.midyr){
+    exlcude.var <- c(exclude.var,
+                     colnames(tmp.dat)[str_detect(colnames(tmp.dat),"_MY")]) |> unique()
+  }
   tmp.pred <- quickpred2(
     data = tmp.dat,
     include = c("ANNUAL_WEIGHT_C1", pred.vars[keep.var]),
@@ -441,14 +453,17 @@ run_imputation <- function(country, df.tmp,
   # To help (slightly) speed, set the following conditions
   # variables that do not need to be imputed:
   do.not.impute <- c(
-    'COUNTRY', 'ID', 'WAVE_Y1', 'WAVE_Y2', "WAVE_MY", 'WAVE_Y3', 'MODE_RECRUIT', 'MODE_ANNUAL', 'RECRUIT_TYPE', 'DOI_RECRUIT_Y1', 'DOI_ANNUAL_Y1', 'DOI_ANNUAL_Y2', 'DOI_ANNUAL_Y3', "MIDYEAR_TYPE_MY", "DOI_MY",
+    'COUNTRY', 'ID', 'WAVE_Y1', 'WAVE_Y2', 'WAVE_Y3', 'MODE_RECRUIT', 'MODE_ANNUAL', 'RECRUIT_TYPE', 'DOI_RECRUIT_Y1', 'DOI_ANNUAL_Y1', 'DOI_ANNUAL_Y2', 'DOI_ANNUAL_Y3',
     paste0("POLITICAL_ID",c("_Y1", "_Y2", "_Y3")),
     paste0("REGION2",c("_Y1", "_Y2", "_Y3")),
     paste0("REGION3",c("_Y1", "_Y2", "_Y3")),
     'RECON_STATUS_Y1', 'RECON_STATUS_Y2', 'RECON_STATUS_Y3', 'STRATA', 'PSU', 'ANNUAL_WEIGHT_C1', 'ANNUAL_WEIGHT_C2', 'ANNUAL_WEIGHT_L2', 'ANNUAL_WEIGHT_R2', 'ANNUAL_WEIGHT_C3', 'ANNUAL_WEIGHT_L3', 'ANNUAL_WEIGHT_R3',
-    "RETENTION_WEIGHT_C" , "RETENTION_WEIGHT_L",  "RETENTION_WEIGHT_L3",
-    'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2', 'FULL_PARTIAL_MY', 'FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL', 'CASE_OBSERVED_MY'
+    'FULL_PARTIAL_Y1', 'FULL_PARTIAL_Y2','FULL_PARTIAL_Y3', 'CASE_OBSERVED_Y1', 'CASE_OBSERVED_Y2', 'CASE_OBSERVED_Y3', 'CASE_OBSERVED_ALL'
   )
+  if(includes.midyr){
+    do.not.impute <- c(do.not.impute, "MIDYEAR_TYPE_MY", "DOI_MY","WAVE_MY",  'FULL_PARTIAL_MY',
+                       "RETENTION_WEIGHT_C" , "RETENTION_WEIGHT_L",  "RETENTION_WEIGHT_L3", 'CASE_OBSERVED_MY')
+  }
   # just some double-checking that these variables are not imputed / no predictors
   tmp.pred[do.not.impute,] <- 0
   tmp.meth[do.not.impute] <- ""
@@ -504,18 +519,10 @@ run_imputation <- function(country, df.tmp,
       future::resetWorkers(plan())
 
     } else if(save.method == "separate"){
-      #' match.type Type of matching distance. The default choice
-      #' (\code{matchtype = 1L}) calculates the distance between
-      #' the \emph{predicted} value of \code{yobs} and
-      #' the \emph{drawn} values of \code{ymis} (called type-1 matching).
-      #' Other choices are \code{matchtype = 0L}
-      #' (distance between predicted values) and \code{matchtype = 2L}
-      #' (distance between drawn values).
-      #'
       fit.imp <- mice::mice(
         tmp.dat,
         m = 1,
-        maxit = 2,#Miter,
+        maxit = Miter,
         visitSequence = visitSequence,
         method = tmp.meth,
         predictorMatrix = tmp.pred,
@@ -542,10 +549,6 @@ run_imputation <- function(country, df.tmp,
       )
     }
   })
-
-  # df.imp <- complete(fit.imp, action="long")
-  # table(df.imp$INCOME_Y2, useNA="always")
-  # table(df.imp$BEAUTY_MY, useNA="always")
 
   ## save country-by-imputation-specific files
   c.file.name <- paste0("imputed_data_obj_",cur.country,"_",save.method,"_imp_",Nimp,".RData")
