@@ -202,12 +202,12 @@ quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "
 
 #' @rdname utils
 #' @export
-.round <- function(x, digits = 2) {
+.round <- function(x, digits = 2, allow.sci = TRUE) {
   sapply(x, function(val) {
     if (is.na(val)) return(NA_character_)
-    if (abs(val) >= 1e2 || (abs(val) > 0 && abs(val) < 1e-3)) {
+    if (allow.sci & (abs(val) > 1e2 || (abs(val) > 0 && abs(val) < 1e-3))) {
       # Scientific notation with digits significant digits
-      sprintf("%.1e", val)
+      sprintf(paste0("%.", digits, "e"), val)
     } else {
       # Fixed-point notation with digits decimal places
       sprintf(paste0("%.", digits, "f"), val)

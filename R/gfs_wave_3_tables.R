@@ -276,7 +276,7 @@ gfs_wave_3_generate_main_doc <- function(
     mylabels <- control[['mylabels']]
 
 
-    if(is.null(tb.footnote)){
+    if(is.null(control$tb.footnote)){
 
       if(str_detect(str_to_lower(study), "exposure") ){
 
@@ -309,13 +309,13 @@ Multiple imputation was performed to impute missing data on the covariates, expo
 P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferroni,5),"***, correction for multiple testing to significant threshold",ifelse(ci.bonferroni, paste0('; reported confidence intervals for meta-analytic estimates are based on the Bonferroni adjusted significance level to construct ', .round((1-p.bonferroni/2)*100,1),'% CIs;'), ';')," \u2020 Estimate of \u03c4 (tau, heterogeneity) is likely unstable. See our online supplement forest plots for more detail on heterogeneity of effects. Line-printer style abbreviations for small p-values (e.g., '2.22e-16') are used to help conserve space, given the table and font size, to aid in readability.")
 
     }
-    if(is.null(tb.title)){
+    if(is.null(control$tb.title)){
 
       if(str_detect(str_to_lower(study), "exposure") ){
-        tb.title <- paste0("Table ", tb.num,". Exposure-wide estimates of associations between wave 2 variables and ",str_to_lower(focal.better.name), " assessed at wave 3.")
+        tb.title <- paste0("Table ", tb.num,". Exposure-wide estimates of associations between wave 2 variables and ",str_to_lower(focal.better.name[f0]), " assessed at wave 3.")
       }
       if(str_detect(str_to_lower(study), "outcome") ){
-        tb.title <- paste0("Table ", tb.num,". Outcome-wide estimates of associations between ",str_to_lower(focal.better.name), " assessed at wave 2 and subsequent outcomes at wave 3.")
+        tb.title <- paste0("Table ", tb.num,". Outcome-wide estimates of associations between ",str_to_lower(focal.better.name[f0]), " assessed at wave 2 and subsequent outcomes at wave 3.")
       }
 
     }
@@ -376,10 +376,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
     tbl.footnote <- "Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates."
 
     if(str_detect(str_to_lower(study), "exposure") ){
-      tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between well-being and other variables at Wave 2 and ", focal.better.name, " at Wave 3.")
+      tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between well-being and other variables at Wave 2 and ", focal.better.name[f0], " at Wave 3.")
     }
     if(str_detect(str_to_lower(study), "outcome") ){
-      tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between ", focal.better.name, " and subsequent well-being and other outcomes.")
+      tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between ", focal.better.name[f0], " and subsequent well-being and other outcomes.")
     }
 
 
@@ -639,6 +639,7 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
   ## partially depends on study
   if( str_detect(str_to_lower(study), "exposure") ){
     meta.filter.var = as.name("term")
+    meta.focal.var = as.name("outcome")
     # get outcome scale -- determines which columns are printed out
     tmp.vec <- case_when(
       get_outcome_scale(focal.variable) == "cont" ~ "ES",
@@ -650,6 +651,7 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
   }
   if(str_detect(str_to_lower(study), "outcome") ){
     meta.filter.var = as.name("outcome")
+    meta.focal.var = as.name("term")
     # get outcome scale -- determines which columns are printed out
     cnames <- c("Outcome", "ES", "RR", "95% CI", "Pred. Int.", "%-Metric", "\u03c4", "Global p-value")
     tbl.header.width = c(4, 4)
@@ -676,7 +678,8 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
 
       ## ====== Random effects meta ======================================= ##
       tmp.row <- df.main |>
-        filter({{meta.filter.var}} == tbl.row.vec[i])
+        filter({{meta.filter.var}} == tbl.row.vec[i], {{meta.focal.var}} == focal.variable) |>
+        distinct()
       tmp.row <- tmp.row %>%
         dplyr::mutate(
           est = case_when(
@@ -688,10 +691,10 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
             !is.cont ~ paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
           ),
           prop.metric = case_when(
-            is.cont ~ paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%"),
-            !is.cont ~ paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")
+            is.cont ~ paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%"),
+            !is.cont ~ paste0(.round(rr.prob.0.90*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(rr.prob.1.10*100, min(0,digits-2), allow.sci = FALSE),"%")
           ),
-          prop.metric = pad_around_divider(prop.metric, "|"),
+          prop.metric = Rglobalflourishing:::pad_around_divider(prop.metric, "|"),
           pred.int = case_when(
             is.cont ~ paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")"),
             !is.cont ~ paste0("(",.round(exp(theta.pred.int.lb), digits),", ",.round(exp(theta.pred.int.ub), digits),")")
@@ -798,10 +801,12 @@ gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 
   ## partially depends on study
   if( str_detect(str_to_lower(study), "exposure") ){
     meta.filter.var = as.name("term")
+    meta.focal.var = as.name("outcome")
     cnames <- c("Exposure", "E-value for Estimate","E-value for CI")
   }
   if(str_detect(str_to_lower(study), "outcome") ){
     meta.filter.var = as.name("outcome")
+    meta.focal.var = as.name("term")
     # get outcome scale -- determines which columns are printed out
     cnames <- c("Outcome", "E-value for Estimate","E-value for CI")
   }
@@ -820,7 +825,8 @@ gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 
 
       ## ====== Random effects meta ======================================= ##
       tmp.row <- df.main |>
-        filter({{meta.filter.var}} == tbl.row.vec[i])
+        filter({{meta.filter.var}} == tbl.row.vec[i], {{meta.focal.var}} == focal.variable) |>
+        distinct()
       tmp.row <- tmp.row %>%
         dplyr::mutate(
           #"theta.rma.EE", "theta.rma.ECI", "rr.theta.EE", "rr.theta.ECI"
@@ -871,7 +877,8 @@ gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 
     valign(valign = "bottom", part = "all")  %>%
     width(j=1,width=2.60)%>%
     width(j=c(2:3),width=1.25) %>%
-    align(i = 2, j = NULL, align = "center", part = "header") %>%
+    align(i = 2, j = 1, align = "left", part = "header") %>%
+    align(i = 2, j = 2:3, align = "right", part = "header") %>%
     align(part = "footer", align = "left", j = 1:3) %>%
     border_remove()  %>%
     hline_bottom(part = "body") %>%
@@ -1042,12 +1049,12 @@ gfs_wave_3_build_fig_1 <- function(params){
 
     # paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")
     ggsave(
-      filename = here::here(res.dir,paste0("figure_",fig.num,"_SFI on ",focal.better.name,".pdf")),
+      filename = here::here(res.dir,paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0],".pdf")),
 
       plot = p, height = 6, width = 10, units = "in"
     )
     ggsave(
-      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name,".png")),
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0],".png")),
       plot = p, height = 6, width = 10, units = "in", dpi = 1000
     )
 
@@ -1055,13 +1062,13 @@ gfs_wave_3_build_fig_1 <- function(params){
     p <- (p_mid / p_below / p_legend) +
       plot_layout(heights = c(10, 1, 1))
 
-    # paste0("figure_",fig.num,"A_SFI on ",focal.better.name," without PCs.png")
+    # paste0("figure_",fig.num,"A_SFI on ",focal.better.name[f0]," without PCs.png")
     ggsave(
-      filename = here::here(res.dir,paste0("figure_",fig.num,"_SFI on ",focal.better.name,".pdf")),
+      filename = here::here(res.dir,paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0],".pdf")),
       plot = p, height = 6, width = 5, units = "in"
     )
     ggsave(
-      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name,".png")),
+      filename = here::here(res.dir, paste0("figure_",fig.num,"_SFI on ",focal.better.name[f0],".png")),
       plot = p, height = 6, width = 5, units = "in", dpi = 1000
     )
   }
@@ -2917,6 +2924,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
 
     if( str_detect(str_to_lower(study), "exposure") ){
       meta.filter.var = as.name("term")
+      meta.focal.var = as.name("outcome")
       # get outcome scale -- determines which columns are printed out
       tmp.vec <- case_when(
         get_outcome_scale(focal.variable) == "cont" ~ "ES",
@@ -2932,6 +2940,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
     }
     if(str_detect(str_to_lower(study), "outcome") ){
       meta.filter.var = as.name("outcome")
+      meta.focal.var = as.name("term")
       # get outcome scale -- determines which columns are printed out
       cnames <- c("ES", "RR", "SE", "95% CI", "\r", "Pred. Int.", "%-Metric", "\u03c4", "Global p-value", "\r\r\r", "High (r=0.70)", "Moderate (r=0.55)", "Low (r=0.40)")
       cnames <- c("Outcome", cnames, "\r\r\r\r\r", paste0(cnames, "\r"))
@@ -2986,6 +2995,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
 
     if( str_detect(str_to_lower(study), "exposure") ){
       filter.var = as.name("term")
+      focal.var = as.name("outcome")
       # get outcome scale -- determines which columns are printed out
       tmp.vec <- case_when(
         get_outcome_scale(focal.variable) == "cont" ~ "ES",
@@ -2999,6 +3009,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
     }
     if(str_detect(str_to_lower(study), "outcome") ){
       filter.var = as.name("outcome")
+      focal.var = as.name("term")
       # get outcome scale -- determines which columns are printed out
       cnames <- c("ES", "RR", "SE", "95% CI", "p-value", "\r", "High (r=0.70)", "Moderate (r=0.55)", "Low (r=0.40)")
       cnames <- c("Outcome",cnames, "\r\r\r", paste0(cnames, "\r"))
@@ -3026,12 +3037,13 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
       outcomewide[i, 1] = paste0("    ",get_outcome_better_name(tbl.row.vec[i], include.name = FALSE, include.fid = TRUE))
 
       if(!is.meta){
-        if ( (str_detect(tbl.row.vec[i],"APPROVE_GOVT") & COUNTRY_LABELS[i] %in% c("China","Egypt") ) |
-             (str_detect(tbl.row.vec[i],"BELIEVE_GOD") & COUNTRY_LABELS[i] %in% c("Egypt") ) |
-             (str_detect(tbl.row.vec[i],"BELONGING") & COUNTRY_LABELS[i] %in% c("China") )   |
-             (str_detect(tbl.row.vec[i],"SAY_IN_GOVT") & COUNTRY_LABELS[i] %in% c("China") )
+        if ( (str_detect(tbl.row.vec[i],"APPROVE_GOVT") & country.i %in% c("China","Egypt") ) |
+             (str_detect(tbl.row.vec[i],"BELIEVE_GOD") & country.i %in% c("Egypt") ) |
+             (str_detect(tbl.row.vec[i],"BELONGING") & country.i %in% c("China") )   |
+             (str_detect(tbl.row.vec[i],"SAY_IN_GOVT") & country.i %in% c("China") )
         ) {
-          outcomewide[i, c(2:6,8:12)] <- "-"
+          outcomewide[i, cols.a] <- "-"
+          outcomewide[i, cols.b] <- "-"
           next
         }
       }
@@ -3047,7 +3059,8 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
       try({
         if(is.meta){
           tmp.a <- df.a %>%
-            filter({{meta.filter.var}} == tbl.row.vec[i])
+            filter({{meta.filter.var}} == tbl.row.vec[i], {{meta.focal.var}} == focal.variable) |>
+            distinct()
           tmp.a <- tmp.a %>%
             mutate(
               est = case_when(
@@ -3061,8 +3074,8 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
                 paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
               } else {NA},
               prop.metric = if(is.cont){
-                paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%")} else if(!is.cont){
-                  paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")} else {NA},
+                paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%")} else if(!is.cont){
+                  paste0(.round(rr.prob.0.90*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(rr.prob.1.10*100, min(0,digits-2), allow.sci = FALSE),"%")} else {NA},
               prop.metric = pad_around_divider(prop.metric, "|"),
               pred.int = if(is.cont){
                 paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
@@ -3114,8 +3127,9 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
             ) |>
             select(est, se, ci, pred.int,prop.metric,tau,global.pvalue,rcor70, rcor55, rcor40)
         } else {
-          tmp.a <- df.a %>%
-            filter({{filter.var}} == tbl.row.vec[i])
+          tmp.a <- df.a |>
+            filter({{filter.var}} == tbl.row.vec[i], {{focal.var}} == focal.variable) |>
+            distinct()
           tmp.a <- tmp.a %>%
             mutate(
               est = case_when(
@@ -3169,8 +3183,9 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
       ## ====== Panel B ======================================= ##
       try({
         if(is.meta){
-          tmp.b <- df.b %>%
-            filter({{meta.filter.var}} == tbl.row.vec[i])
+          tmp.b <- df.b|>
+            filter({{meta.filter.var}} == tbl.row.vec[i], {{meta.focal.var}} == focal.variable) |>
+            distinct()
           tmp.b <- tmp.b  %>%
             mutate(
               est = case_when(
@@ -3184,8 +3199,8 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
                 paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
               } else {NA},
               prop.metric = if(is.cont){
-                paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%")} else if(!is.cont){
-                  paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")} else {NA},
+                paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%")} else if(!is.cont){
+                  paste0(.round(rr.prob.0.90*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(rr.prob.1.10*100, min(0,digits-2), allow.sci = FALSE),"%")} else {NA},
               prop.metric = pad_around_divider(prop.metric, "|"),
               pred.int = if(is.cont){
                 paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
@@ -3239,7 +3254,8 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
 
         } else {
           tmp.b <- df.b %>%
-            filter({{filter.var}} == tbl.row.vec[i])
+            filter({{filter.var}} == tbl.row.vec[i], {{focal.var}} == focal.variable) |>
+            distinct()
           tmp.b <- tmp.b %>%
             mutate(
               est = case_when(
@@ -3299,10 +3315,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           }
           if(str_detect(str_to_lower(study), "outcome")){
             if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
-              outcomewide[i,cols.a[-1]] <- tmp.a
+              outcomewide[i,cols.a[-2]] <- tmp.a
             }
             if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
-              outcomewide[i,cols.a[-2]] <- tmp.a
+              outcomewide[i,cols.a[-1]] <- tmp.a
             }
           }
         }
@@ -3312,10 +3328,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
           }
           if(str_detect(str_to_lower(study), "outcome")){
             if(get_outcome_scale(tbl.row.vec[i]) == "cont"){
-              outcomewide[i,cols.b[-1]] <- tmp.b
+              outcomewide[i,cols.b[-2]] <- tmp.b
             }
             if(get_outcome_scale(tbl.row.vec[i]) != "cont"){
-              outcomewide[i,cols.b[-2]] <- tmp.b
+              outcomewide[i,cols.b[-1]] <- tmp.b
             }
           }
         }
@@ -3518,9 +3534,11 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
   # depending on the study, it changes which variable we use to "filter" within the loop
   if( str_detect(str_to_lower(study), "exposure") ){
     filter.var = as.name("term")
+    focal.var = as.name("outcome")
   }
   if(str_detect(str_to_lower(study), "outcome") ){
     filter.var = as.name("outcome")
+    focal.var = as.name("term")
   }
   evalues <- as.data.frame(matrix(nrow = length(tbl.row.vec), ncol = length(cnames)))
   colnames(evalues) <- cnames
@@ -3556,28 +3574,32 @@ gfs_wave_3_build_supp_tbl_evalues <- function(params, font.name = "Open Sans", f
       }
       ## ====== Primary MI  ====================== ##
       tmp.a <- df.a %>%
-        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        filter({{filter.var}} == tbl.row.vec[i], {{focal.var}} == focal.variable) %>%
+        distinct() %>%
         select(all_of(tmp.vec)) %>%
         dplyr::mutate(
           dplyr::across(where(is.numeric),\(x) .round(x,digits)),
         )
       ## ====== Primary MI - random effects meta - estimates WITH PCs ========================= ##
       tmp.b <- df.b %>%
-        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        filter({{filter.var}} == tbl.row.vec[i], {{focal.var}} == focal.variable) %>%
+        distinct() %>%
         select(all_of(tmp.vec)) %>%
         dplyr::mutate(
           dplyr::across(where(is.numeric),\(x) .round(x,digits)),
         )
       ## ====== Supplement ATTR WGT - random effects meta - estimates withOUT PCs ================= ##
       tmp.c <- df.c %>%
-        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        filter({{filter.var}} == tbl.row.vec[i], {{focal.var}} == focal.variable) %>%
+        distinct() %>%
         select(all_of(tmp.vec)) %>%
         dplyr::mutate(
           dplyr::across(where(is.numeric),\(x) .round(x,digits)),
         )
       ## ====== Supplement ATTR WGT - random effects meta - estimates WITH PCs ==================== ##
       tmp.d <- df.d %>%
-        filter({{filter.var}} == tbl.row.vec[i]) %>%
+        filter({{filter.var}} == tbl.row.vec[i], {{focal.var}} == focal.variable) %>%
+        distinct() %>%
         select(all_of(tmp.vec)) %>%
         dplyr::mutate(
           dplyr::across(where(is.numeric),\(x) .round(x,digits)),
@@ -3907,6 +3929,7 @@ gfs_wave_3_build_supp_wide_tbl <- function(params, font.name = "Open Sans", font
   ## partially depends on study
   if( str_detect(str_to_lower(study), "exposure") ){
     meta.filter.var = as.name("term")
+    meta.focal.var = as.name("outcome")
     # get outcome scale -- determines which columns are printed out
     tmp.vec <- case_when(
       get_outcome_scale(focal.variable) == "cont" ~ "ES",
@@ -3918,6 +3941,7 @@ gfs_wave_3_build_supp_wide_tbl <- function(params, font.name = "Open Sans", font
   }
   if(str_detect(str_to_lower(study), "outcome") ){
     meta.filter.var = as.name("outcome")
+    meta.focal.var = as.name("term")
     # get outcome scale -- determines which columns are printed out
     cnames <- c("Outcome", "ES", "RR", "95% CI", "Pred. Int.", "%-Metric", "\u03c4", "Global p-value")
     tbl.header.width = c(4, 4)
@@ -3943,8 +3967,9 @@ gfs_wave_3_build_supp_wide_tbl <- function(params, font.name = "Open Sans", font
       }
 
       ## ====== Random effects meta ======================================= ##
-      tmp.row <- df.main |>
-        filter({{meta.filter.var}} == tbl.row.vec[i])
+      tmp.row <- df.main  |>
+        filter({{meta.filter.var}} == tbl.row.vec[i], {{meta.focal.var}} == focal.variable) |>
+        distinct()
       tmp.row <- tmp.row %>%
         dplyr::mutate(
           est = case_when(
@@ -3956,8 +3981,8 @@ gfs_wave_3_build_supp_wide_tbl <- function(params, font.name = "Open Sans", font
             !is.cont ~ paste0("(",.round(exp(theta.lb), digits),", ",.round(exp(theta.ub), digits),")")
           ),
           prop.metric = case_when(
-            is.cont ~ paste0(.round(prob.leqneq0.1*100, min(0,digits-2)),"% | ", .round(prob.geq0.1*100, min(0,digits-2)),"%"),
-            !is.cont ~ paste0(.round(rr.prob.0.90*100, min(0,digits-2)),"% | ", .round(rr.prob.1.10*100, min(0,digits-2)),"%")
+            is.cont ~ paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%"),
+            !is.cont ~ paste0(.round(rr.prob.0.90*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(rr.prob.1.10*100, min(0,digits-2), allow.sci = FALSE),"%")
           ),
           prop.metric = pad_around_divider(prop.metric, "|"),
           pred.int = case_when(

@@ -198,7 +198,6 @@ get_tbl_row_vec <- function(study="exposurewide", filetype = "main"){
     out <- c(paste0(out, "_Y2"))
   }
   if(str_detect(stringr::str_to_lower(study),"outcome")){
-    out.labels <- all.labels
     if(filetype == "main"){
       out <- c(
         'blank', "COMPOSITE_FLOURISHING_SECURE", "COMPOSITE_FLOURISHING",
