@@ -209,7 +209,7 @@ quickpred2 <- function(data, mincor = 0.1, minpuc = 0, include = "", exclude = "
     if (is.na(val)) return(NA_character_)
     if ( allow.sci & (abs(val - val.minus) > 10^2 || (abs(val - val.minus) > 0 && abs(val - val.minus) < sci.threshold ) ) ) {
       # Scientific notation with digits significant digits
-      sprintf(paste0("%.", digits, "e"), val)
+      sprintf(paste0("%.1e"), val)
     } else {
       # Fixed-point notation with digits decimal places
       sprintf(paste0("%.", digits, "f"), val)
