@@ -124,13 +124,14 @@ get_tbl_row_vec <- function(study="exposurewide", filetype = "main"){
     "Physical Health & Health Behavior",
     "Socioeconomic Outcomes"
   )
-  out.labels <- all.labels[-1]
-
+  out.labels <- NA
   out <- NA
+
+  if(filetype == "main"){
   out <- c(
       # Flourishing
-      #'blank',
-      #"COMPOSITE_FLOURISHING_SECURE", "COMPOSITE_FLOURISHING", "COMPOSITE_HAPPI_LIFE_SAT", "COMPOSITE_HEALTH", "COMPOSITE_MEANING_PURPOSE", "COMPOSITE_CHARACTER", "COMPOSITE_SUBJECTIVE_SOC_CONN", "COMPOSITE_FINL_MAT_WORRY",
+      'blank',
+      "COMPOSITE_FLOURISHING_SECURE", "COMPOSITE_FLOURISHING",
       # Psychological well-being
       'blank',
       'HAPPY', 'LIFE_SAT', 'WB_TODAY','WB_FIVEYRS', 'EXPECT_GOOD', 'FREEDOM', 'PEACE', 'LIFE_BALANCE', 'CAPABLE', 'WORTHWHILE', 'LIFE_PURPOSE', 'MENTAL_HEALTH',
@@ -156,6 +157,25 @@ get_tbl_row_vec <- function(study="exposurewide", filetype = "main"){
       'blank',
       'EXPENSES', 'WORRY_SAFETY','EDUCATION_3', 'EMPLOYMENT', 'INCOME_FEELINGS', 'OWN_RENT_HOME', 'INCOME_QUINTILE'
     )
+  if(str_detect(stringr::str_to_lower(study),"outcome")){
+
+    out <- c(paste0(out, "_Y3"))
+    out.labels <- all.labels
+  }
+
+    if(str_detect(stringr::str_to_lower(study),"exposure")){
+      # add religious variables as predictors
+      out <- c(out[-c(1:3)],
+               # Religion & Spirituality
+               'blank',
+               'CONNECTED_REL', 'AFTER_DEATH', 'REL_EXPERIENC', 'SACRED_TEXTS', 'PRAY_MEDITATE', 'BELIEVE_GOD', 'LIFE_APPROACH', 'COMFORT_REL', 'LOVED_BY_GOD', 'GOD_PUNISH', 'CRITICAL', 'TELL_BELIEFS'
+      )
+      out <- c(paste0(out, "_Y2"))
+      out.labels <- c(all.labels[-1], "Religion & Spirituality")
+
+    }
+}
+
     if(filetype == "supp"){
       out.labels <- c(all.labels, "Religion & Spirituality")
       out <- c(
@@ -191,27 +211,17 @@ get_tbl_row_vec <- function(study="exposurewide", filetype = "main"){
         'blank',
         'CONNECTED_REL', 'AFTER_DEATH', 'REL_EXPERIENC', 'SACRED_TEXTS', 'PRAY_MEDITATE', 'BELIEVE_GOD', 'LIFE_APPROACH', 'COMFORT_REL', 'LOVED_BY_GOD', 'GOD_PUNISH', 'CRITICAL', 'TELL_BELIEFS'
       )
+
+      if(str_detect(stringr::str_to_lower(study),"outcome")){
+        out <- c('blank',"COMPOSITE_FLOURISHING_SECURE", "COMPOSITE_FLOURISHING", out[-1])
+        out <- c(paste0(out, "_Y3"))
+      }
+
+      if(str_detect(stringr::str_to_lower(study),"exposure")){
+        out <- c(paste0(out, "_Y2"))
+      }
     }
 
-
-  if(str_detect(stringr::str_to_lower(study),"exposure")){
-    out <- c(paste0(out, "_Y2"))
-  }
-  if(str_detect(stringr::str_to_lower(study),"outcome")){
-    if(filetype == "main"){
-      out <- c(
-        'blank', "COMPOSITE_FLOURISHING_SECURE", "COMPOSITE_FLOURISHING",
-        out
-      )
-    }
-    if(filetype == "supp"){
-      out <- c(
-        'blank', "COMPOSITE_FLOURISHING_SECURE", "COMPOSITE_FLOURISHING",
-        out[-1]
-      )
-    }
-    out <- c(paste0(out, "_Y3"))
-  }
 
   list(tbl.row.vec = out, row.labels = out.labels)
 }

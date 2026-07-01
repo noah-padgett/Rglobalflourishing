@@ -738,7 +738,7 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
   #meta.outcomewide <- na.omit(meta.outcomewide)
 
   # footnote information:
-  tb.note.meta.outcomewide <- as_paragraph(tbl.footnote)
+  tb.note.meta.outcomewide <- as_paragraph(as_chunk(tbl.footnote, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
   print.tb <- meta.outcomewide %>%
     flextable() %>%
@@ -850,7 +850,7 @@ gfs_wave_3_build_tbl_3 <- function(params, font.name = "Open Sans", font.size = 
   #meta.outcomewide <- na.omit(meta.outcomewide)
 
   # footnote information:
-  tb.note.meta.outcomewide <- as_paragraph(tbl.footnote)
+  tb.note.meta.outcomewide <- as_paragraph(as_chunk(tbl.footnote, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
   print.tb <- meta.outcomewide %>%
     flextable() %>%
