@@ -232,7 +232,7 @@ gfs_wave_3_generate_main_doc <- function(
   tb.num <- 1
   params.tb1 <- list(
     df.raw.long = df.raw.long,
-    focal.variable0 = focal.variable0,
+    focal.variable0 = focal.variable0[str_detect(focal.variable0,"INCOME_QUINTILE", negate=TRUE)],
     wgt = as.name("WGT0"),
     psu = as.name("PSU"),
     strata = as.name("STRATA"),
@@ -1574,7 +1574,6 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       COUNTRY,
       {{wgt}}, {{psu}}, {{strata}},
       WAVE0,
-      {focal.variable0},
       AGE, RACE,
       any_of(c(focal.variable0, tbl.row.vec0)),
       any_of(c(baseline.pred0)),
@@ -1668,7 +1667,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       params.tb <- list(
         x = as.name("WAVE0"),
         data = df.raw.long,
-        focal.variable0 = focal.variable0,
+        focal.variable0 = focal.variable0[str_detect(focal.variable0,"INCOME_QUINTILE", negate=TRUE)],
         focal.predictor0 = NULL,
         wgt = as.name("WGT0"),
         psu = as.name("PSU"),
@@ -1734,7 +1733,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       params.tb <- list(
         x = as.name("WAVE0"),
         data = df.raw.attr.retained,
-        focal.variable0 = focal.variable0,
+        focal.variable0 = focal.variable0[str_detect(focal.variable0,"INCOME_QUINTILE", negate=TRUE)],
         focal.predictor0 = NULL,
         wgt = as.name("UNITWGT"),
         psu = as.name("PSU"),
@@ -2422,7 +2421,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         params.tb <- list(
           x = as.name("WAVE0"),
           data = df.raw.country.i,
-          focal.variable0 = focal.variable0,
+          focal.variable0 = focal.variable0[str_detect(focal.variable0,"INCOME_QUINTILE", negate=TRUE)],
           focal.predictor0 = NULL,
           wgt = as.name("WGT0"),
           psu = as.name("PSU"),
@@ -2505,7 +2504,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         params.tb <- list(
           x = as.name("WAVE0"),
           data = df.attr.country.i,
-          focal.variable0 = focal.variable0,
+          focal.variable0 = focal.variable0[str_detect(focal.variable0,"INCOME_QUINTILE", negate=TRUE)],
           focal.predictor0 = NULL,
           wgt = as.name("UNITWGT"),
           psu = as.name("PSU"),

@@ -106,7 +106,7 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   print.tb <- sumtab %>%
     as_flex_table() %>%
     autofit() %>%
-    width(j=2:ngrp.cols,width=1.66)%>%
+    width(j=2:ngrp.cols,width=1.75)%>%
     format_flex_table(pg.width = pg.width)  %>%
     add_footer_lines(
       values = tb.note.summarytab, top = FALSE
