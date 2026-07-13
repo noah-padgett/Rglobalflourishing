@@ -565,7 +565,7 @@ gfs_wave_3_coordinated_analysis <- function(
 
           ## ============================================================================ #
           ## ----- Relabel output (helpful for generating documents) ----
-          tryCatch({
+          try({
             varlist <- stringr::str_split_1(paste0(tmp.fit$formula)[[3]], " \\+ ")
           if(pc.rule != "omit"){
             if(any(str_detect(varlist, "PC_"))){
@@ -602,13 +602,11 @@ gfs_wave_3_coordinated_analysis <- function(
                 .default = Category
               )
             )
-          }, error = function(e){
-            message(paste0("[relabel] ERROR in relabeliing line 569. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
           })
 
           ## ============================================================================ #
           ## ----- Compute Evalues ----
-          tryCatch({
+          try({
           tmp.output <- results.pooled %>%
             left_join(sd.pooled, by = c(as.character({{imp.strata}}), "term")) %>%
             ungroup()
@@ -643,14 +641,13 @@ gfs_wave_3_coordinated_analysis <- function(
                       by = c("term" = "original"),
                       relationship = "many-to-many"
             )
-          }, error = function(e){
-            message(paste0("[compute E-Values] ERROR in computing E-Values 'gfs_wave_3.R' ln 527. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
           })
 
           ## ============================================================================ #
           ## ----- Compute standardized estimates -----
-          tryCatch({
-          output <- output %>%
+
+          output <- tryCatch({
+            output %>%
             mutate(
               std.estimate.pooled = estimate.pooled * (predictor.sd / outcome.sd),
               std.se.pooled = se.pooled * (predictor.sd / outcome.sd),
@@ -669,8 +666,9 @@ gfs_wave_3_coordinated_analysis <- function(
 
           ## ============================================================================ #
           ## ----- Rename colnames -----
-          tryCatch({
-          output <- output %>%
+
+          output <- tryCatch({
+            output %>%
             rename(
               est = estimate.pooled,
               se = se.pooled,
@@ -691,8 +689,9 @@ gfs_wave_3_coordinated_analysis <- function(
 
           ## ============================================================================ #
           ## ----- Compute correlations: standardized regression coefficient ------
-          tryCatch({
-          cor.output <- cor.pooled %>%
+
+          cor.output <- tryCatch({
+            cor.pooled %>%
             left_join(sd.pooled, by = c(as.character({{imp.strata}}), "term")) %>%
             ungroup()
           cor.output <- cor.output %>%
@@ -762,8 +761,9 @@ gfs_wave_3_coordinated_analysis <- function(
           # ============================================================================ #
           # ============================================================================ #
           # prepare output -- just some pre- relabeling to make the online supplement easier
-          tryCatch({
-          output <- output %>%
+
+          output <- tryCatch({
+            output %>%
             group_by(Variable) %>%
             fill(Variable) %>%
             ungroup() %>%
@@ -866,15 +866,16 @@ gfs_wave_3_coordinated_analysis <- function(
           )
 
           ## subset the fitted reg moels for outputing
-          tryCatch({
-          fitted.reg.models <- fitted.reg.models |> ungroup() |>
+
+          fitted.reg.models <- tryCatch({
+            fitted.reg.models |> ungroup() |>
             select({{imp.strata}}, imp_num, fit.tidy, residuals, fit.cor, fit.pca.summary, pca.rotation)
           }, error = function(e){
             message(paste0("[outfile] ERROR in creating outfile 'gfs_wave_3.R' ln 870. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
           })
 
           ## load the previously "saved" result and append results for the next country
-          tryCatch({
+          try({
           if(cur.country != country.vec[1]  & file.exists(outfile)){
             load(outfile, env.res <- new.env())
             output <- rbind(output, env.res$output)
@@ -889,8 +890,6 @@ gfs_wave_3_coordinated_analysis <- function(
           } else {
             save( output, file = outfile )
           }
-          }, error = function(e){
-            message(paste0("[saving] ERROR in saving reuslts 'gfs_wave_3.R' ln 878-890. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
           })
 
         }
