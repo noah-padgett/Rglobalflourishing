@@ -160,7 +160,7 @@ gfs_wave_3_coordinated_analysis <- function(
         sort()
 
       if(!is.null(country.subset)){
-        country.vec <- country.subset
+        country.vec <- country.vec[country.vec %in% country.subset]
       }
 
       ##

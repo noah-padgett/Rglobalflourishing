@@ -755,7 +755,7 @@ mixedsort <- function (x, decreasing = FALSE, na.last = TRUE, blank.last = FALSE
   }
   ## check if country is in included country vec
   if(!is.null(country.subset)){
-    if (cur.country %in% country.subset){
+    if (!(cur.country %in% country.subset)){
       out <- FALSE & out
     }
   }
