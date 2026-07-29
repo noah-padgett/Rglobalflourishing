@@ -1462,6 +1462,9 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   w1.n1.print <- df.w1 %>% group_by(COUNTRY) %>% summarize(N=format(n(), big.mark=","))
   w2.n2.print <- df.raw |> filter(CASE_OBSERVED_ALL == 1) %>% group_by(COUNTRY) %>% summarize(N=format(n(), big.mark=","))
 
+  # Full Sample: n1.print, w1.n1.print
+  # CC Sample: n2.print, w2.n2.print
+
 
   focal.variable0 <- focal.variable |> str_remove("_Y1") |> str_remove("_Y2") |> str_remove("_Y3")
   tbl.row.vec0 <- control$tbl.row.vec |> str_remove("_Y2") |> str_remove("_Y3")
@@ -2599,7 +2602,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           }
           if(str_detect(str_to_lower(study), "exposure") ){
 
-            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of well-being and other variables at Wave 2 with ", str_to_lower(focal.better.name[f0]) ," at Wave 3 using the full panel sample (n=",n1.print,") with multiple imputation by analysis model (Model 1 vs. Model 2).")
+            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of well-being and other variables at Wave 2 with ", str_to_lower(focal.better.name[f0]) ," at Wave 3 using the full panel sample (n=",country.n1.print,") with multiple imputation by analysis model (Model 1 vs. Model 2).")
 
             tmp <- ifelse(
               get_outcome_scale(focal.variable[f0]) == "cont",
@@ -2613,7 +2616,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           }
           if(str_detect(str_to_lower(study), "outcome") ){
 
-            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2  with well-being and other variables at Wave 3 using the full panel sample (n=",n1.print,") with multiple imputation by analysis model (Model 1 vs. Model 2).")
+            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2  with well-being and other variables at Wave 3 using the full panel sample (n=",country.n1.print,") with multiple imputation by analysis model (Model 1 vs. Model 2).")
 
             tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
             tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
@@ -2621,7 +2624,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
           }
 
-          fn.txt.i <- paste0("Notes. N(full panel sample)=", n1.print ,"; ", tbl.ft1 ," CI, confidence interval; p-value, test of the null hypothesis that the association is null; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
+          fn.txt.i <- paste0("Notes. N(full panel sample)=", country.n1.print ,"; ", tbl.ft1 ," CI, confidence interval; p-value, test of the null hypothesis that the association is null; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
 
 Reliability corrected estimates (r, reliability) is assessed at three values for the mostly single-item assessed used: high at r=0.70, moderate r=0.55, and low r=0.40. The estimates of effect sizes are disattenuated for unreliability using Fisher's method.
 
@@ -2685,7 +2688,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           }
           if(str_detect(str_to_lower(study), "exposure") ){
 
-            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of well-being and other variables at Wave 2 with ", str_to_lower(focal.better.name[f0]) ," at Wave 3 using only participants who completed all waves (n=",n2.print,", semi-complete-case-analysis) by analysis model (Model 1 vs. Model 2).")
+            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of well-being and other variables at Wave 2 with ", str_to_lower(focal.better.name[f0]) ," at Wave 3 using only participants who completed all waves (n=",country.n2.print,", semi-complete-case-analysis) by analysis model (Model 1 vs. Model 2).")
 
             tmp <- ifelse(
               get_outcome_scale(focal.variable[f0]) == "cont",
@@ -2699,7 +2702,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           }
           if(str_detect(str_to_lower(study), "outcome") ){
 
-            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2 with well-being and other variables at Wave 3 using only participants who completed all waves (n=",n2.print,", semi-complete-case-analysis) by analysis model (Model 1 vs. Model 2).")
+            tb.cap.i <- paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " analyses of the associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2 with well-being and other variables at Wave 3 using only participants who completed all waves (n=",country.n2.print,", semi-complete-case-analysis) by analysis model (Model 1 vs. Model 2).")
 
             tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
             tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
@@ -2707,7 +2710,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
           }
 
-          fn.txt.i <- paste0("Notes. N(complete-case sample)=", n1.print ,"; ", tbl.ft1 ," ES, effect size; SE, standard error; CI, confidence interval; p-value, test of the null hypothesis that the association is null. Flourishing domains, depression symptoms, anxiety symptoms, and religion/spirituality variables included here as supplements results in addition to those reported in the main text.
+          fn.txt.i <- paste0("Notes. N(complete-case sample)=", country.n1.print ,"; ", tbl.ft1 ," ES, effect size; SE, standard error; CI, confidence interval; p-value, test of the null hypothesis that the association is null. Flourishing domains, depression symptoms, anxiety symptoms, and religion/spirituality variables included here as supplements results in addition to those reported in the main text.
 
 Reliability corrected estimates (r, reliability) is assessed at three values for the mostly single-item assessed used: high at r=0.70, moderate r=0.55, and low r=0.40. The estimates of effect sizes are disattenuated for unreliability using Fisher's method. Sensitivity of null effects to unreliability identified by the highest level of reliability needed to make the effect non-null.
 
