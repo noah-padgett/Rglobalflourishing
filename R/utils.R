@@ -92,9 +92,16 @@ keep_variable <- function(x, data, reason = "variance") {
 #' @keywords internal
 pad_around_divider <- function(x, divider = "|", n_left = 5, n_right = 5,
                                pad_left = " ", pad_right = " ") {
-  xspl <- str_split(x, paste0("\\",divider),simplify = TRUE)
-  left  <- str_pad(xspl[1,1], width = n_left, side = "left",  pad = pad_left)
-  right <- str_pad(xspl[1,2], width = n_right, side = "right", pad = pad_right)
+  left <- ""; right <- ""
+  if(length(x) > 0){
+    xspl <- str_split(x, paste0("\\",divider),simplify = TRUE)
+    if(length(dim(xspl)) > 0 ){
+      left  <- str_pad(xspl[1,1], width = n_left, side = "left",  pad = pad_left)
+      right <- str_pad(xspl[1,2], width = n_right, side = "right", pad = pad_right)
+    } else {
+      print(dim(xspl))
+    }
+  }
   paste0(left, divider, right)
 }
 

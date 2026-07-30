@@ -279,6 +279,9 @@ gfs_wave_3_generate_main_doc <- function(
     if(is.null(control$tb.footnote)){
 
       if(str_detect(str_to_lower(study), "exposure") ){
+        if(focal.variable[f0] == "CIGARETTES_Y3"){
+          tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+        }
 
         tmp <- ifelse(
           get_outcome_scale(focal.variable[f0]) == "cont",
@@ -294,6 +297,10 @@ gfs_wave_3_generate_main_doc <- function(
 
       }
       if(str_detect(str_to_lower(study), "outcome") ){
+        if(focal.variable[f0] == "CIGARETTES_Y2"){
+          tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+        }
+
         tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
         tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
         tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
@@ -377,9 +384,17 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(p.bonferro
 
     if(str_detect(str_to_lower(study), "exposure") ){
       tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between well-being and other variables at Wave 2 and ", focal.better.name[f0], " at Wave 3.")
+
+      if(focal.variable[f0] == "CIGARETTES_Y3"){
+        tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+      }
     }
     if(str_detect(str_to_lower(study), "outcome") ){
       tbl.title <- paste0("Table ",tb.num,". E-value sensitivity analysis for unmeasured confounding for the association between ", focal.better.name[f0], " and subsequent well-being and other outcomes.")
+
+      if(focal.variable[f0] == "CIGARETTES_Y2"){
+        tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+      }
     }
 
 
@@ -694,7 +709,7 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
             is.cont ~ paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%"),
             !is.cont ~ paste0(.round(rr.prob.0.90*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(rr.prob.1.10*100, min(0,digits-2), allow.sci = FALSE),"%")
           ),
-          prop.metric = Rglobalflourishing:::pad_around_divider(prop.metric, "|"),
+          prop.metric = pad_around_divider(prop.metric, "|"),
           pred.int = case_when(
             is.cont ~ paste0("(",.round(theta.pred.int.lb, digits, allow.sci = FALSE),", ",.round(theta.pred.int.ub, digits, allow.sci = FALSE),")"),
             !is.cont ~ paste0("(",.round(exp(theta.pred.int.lb), digits, allow.sci = FALSE),", ",.round(exp(theta.pred.int.ub), digits, allow.sci = FALSE),")")
@@ -704,18 +719,18 @@ gfs_wave_3_build_tbl_2 <- function(params, font.name = "Open Sans", font.size = 
             !is.cont ~ rr.tau
           ),
           tau =  case_when(
-            tau < 0.001 ~ "<0.001\u2020",
-            tau >= 0.001 ~ .round(tau,max(digits,3))
+            tau < 0.001 ~ as.character("<0.001\u2020"),
+            tau >= 0.001 ~ as.character(.round(tau,3))
           ),
           dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
             case_when(
-              x < p.bonferroni ~ paste0(.round_p(x),"***"),
-              x < 0.005 ~ paste0(.round_p(x),"**"),
-              x < 0.05 ~ paste0(.round(x,3),"*"),
-              x > 0.05 ~ .round(x,3)
+              x < p.bonferroni ~ as.character(paste0(.round_p(x),"***")),
+              x < 0.005 ~ as.character(paste0(.round_p(x),"**")),
+              x < 0.05 ~ as.character(paste0(.round(x,3),"*")),
+              x > 0.05 ~ as.character(.round(x,3))
             )
           }),
-          dplyr::across(where(is.numeric), \(x) .round(x, digits))
+          dplyr::across(where(is.numeric), \(x) as.character(.round(x, digits)))
         ) |>
         select(est, ci, pred.int, prop.metric, tau, global.pvalue)
       ## ====== Add Results to output object ====================================================== ##
@@ -1831,6 +1846,10 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
           "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
         tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
+        if(focal.variable[f0] == "CIGARETTES_Y3"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+        }
+
       }
       if(str_detect(str_to_lower(study), "outcome") ){
 
@@ -1840,6 +1859,10 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
         tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
         tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
+
+        if(focal.variable[f0] == "CIGARETTES_Y2"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+        }
       }
 
       fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
@@ -1914,6 +1937,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
         tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
+        if(focal.variable[f0] == "CIGARETTES_Y3"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+        }
       }
       if(str_detect(str_to_lower(study), "outcome") ){
 
@@ -1923,6 +1949,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
         tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
         tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
+
+        if(focal.variable[f0] == "CIGARETTES_Y2"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+        }
       }
 
       fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
@@ -1996,6 +2026,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
           tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
+          if(focal.variable[f0] == "CIGARETTES_Y3"){
+            control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+          }
+
         }
         if(str_detect(str_to_lower(study), "outcome") ){
 
@@ -2005,6 +2039,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
           tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
           tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
+
+          if(focal.variable[f0] == "CIGARETTES_Y2"){
+            control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+          }
         }
 
         fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
@@ -2066,9 +2104,17 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       if(str_detect(str_to_lower(study), "exposure") ){
         tbl.ft1 = "exposure at Wave 2"
 
+        if(focal.variable[f0] == "CIGARETTES_Y3"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+        }
+
       }
       if(str_detect(str_to_lower(study), "outcome") ){
         tbl.ft1 = "outcome at Wave 3"
+
+        if(focal.variable[f0] == "CIGARETTES_Y2"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+        }
       }
 
       tb.cap.i = paste0("Table S",tb.num,". Comparing estimated E-values for sensitivity to unmeasured confounding across models and how missingness was handled")
@@ -2140,6 +2186,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           "%-Metric (% < 0.90 | % > 1.10), percent of effect sizes below a lower bound (< 0.90) and above an upper bound (> 1.10)")
         tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
+        if(focal.variable[f0] == "CIGARETTES_Y3"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+        }
+
       }
       if(str_detect(str_to_lower(study), "outcome") ){
 
@@ -2149,6 +2199,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
         tbl.ft2 = "Metric (%<lb | %>ub), percent of effect sizes below a lower bound (<lb) and above an upper bound (>ub), for ES, the bounds are lb=-0.10, ub=0.10, and for RR, the bounds are lb=0.90 and ub=1.10"
         tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES.")
+
+        if(focal.variable[f0] == "CIGARETTES_Y2"){
+          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+        }
       }
 
       fn.txt.i <- paste0("Notes. N(multiple imputation)=", n1.print ,"; N(complete-case)=",n2.print ,"; ", tbl.ft1 ," CI, confidence interval; Pred. Int., a 95% prediction interval for estimated effect size for a new country; ", tbl.ft2,"; \u03c4 (tau, heterogeneity), estimated standard deviation of the distribution of effects; Global p-value, joint test of the null hypothesis that the country-specific Wald tests are null in all countries; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
@@ -2272,6 +2326,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       study <- control[['study']]
 
       tmp.out <- control$tbl.row.vec[str_detect(control$tbl.row.vec, "blank", negate=TRUE)]
+
+      if(focal.variable[f0] %in% c("CIGARETTES_Y2", "CIGARETTES_Y3")){
+        tmp.out[str_detect(tmp.out, "CIGARETTES_BINARY")] <- str_remove(tmp.out[str_detect(tmp.out, "CIGARETTES_BINARY")], "_BINARY")
+      }
 
       iter <- 1
       for(iter in  1:length(tmp.out)){
@@ -2613,6 +2671,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft2 <- ""
             tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
+            if(focal.variable[f0] == "CIGARETTES_Y3"){
+              control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+            }
+
           }
           if(str_detect(str_to_lower(study), "outcome") ){
 
@@ -2622,6 +2684,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
             tbl.ft2 = ""
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
+
+            if(focal.variable[f0] == "CIGARETTES_Y2"){
+              control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+            }
           }
 
           fn.txt.i <- paste0("Notes. N(full panel sample)=", country.n1.print ,"; ", tbl.ft1 ," CI, confidence interval; p-value, test of the null hypothesis that the association is null; (a) item part of the Happiness & Life Satisfaction domain of the Secure Flourishing Index; (b) item part of the Physical & Mental Health domain of the Secure Flourishing Index; (c) item part of the Meaning & Purpose domain of the Secure Flourishing Index; (d) item part of the Character & Virtue domain of the Secure Flourishing Index; (e) item part of the Subjective Social Connectedness domain of the Secure Flourishing Index; (f) item part of the Financial & Material Security domain of the Secure Flourishing Index.
@@ -2699,6 +2765,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft2 <- ""
             tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
+            if(focal.variable[f0] == "CIGARETTES_Y3"){
+              control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+            }
+
           }
           if(str_detect(str_to_lower(study), "outcome") ){
 
@@ -2708,6 +2778,10 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
             tbl.ft2 = ""
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
+
+            if(focal.variable[f0] == "CIGARETTES_Y2"){
+              control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+            }
           }
 
           fn.txt.i <- paste0("Notes. N(complete-case sample)=", country.n1.print ,"; ", tbl.ft1 ," ES, effect size; SE, standard error; CI, confidence interval; p-value, test of the null hypothesis that the association is null. Flourishing domains, depression symptoms, anxiety symptoms, and religion/spirituality variables included here as supplements results in addition to those reported in the main text.
@@ -2779,10 +2853,18 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
 
             tb.cap.i <-  paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " sensitivity analysis of ", str_to_lower(focal.better.name[f0])," exposure-wide results to unmeasured confounding using E-values across models and how missingness at Wave 2 was handled.")
 
+            if(focal.variable[f0] == "CIGARETTES_Y3"){
+              control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+            }
+
           }
           if(str_detect(str_to_lower(study), "outcome") ){
             tbl.ft1 = "outcome at Wave 3"
             tb.cap.i <-  paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " sensitivity analysis of ", str_to_lower(focal.better.name[f0])," outcome-wide results to unmeasured confounding using E-values across models and how missingness at Wave 2 was handled.")
+
+            if(focal.variable[f0] == "CIGARETTES_Y2"){
+              control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+            }
           }
 
           tb.fn.i <- paste0("Notes. EE, E-value for estimate; ECI, E-value for the limit of the confidence interval; Model 1, primary analysis model where all non demographic variable included through the use of principal components analyses; Model 2, supplemental model where wave 1 value of the varying ",tbl.ft1," included explicitly as a control variable and not through the principal components. The formula for calculating E-values can be found in VanderWeele and Ding (2017). E-values for estimate are the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to fully explain away the observed association between the exposure and outcome, conditional on the measured covariates. E-values for the 95% CI closest to the null denote the minimum strength of association on the risk ratio scale that an unmeasured confounder would need to have with both the exposure and the outcome to shift the CI to include the null value, conditional on the measured covariates.")

@@ -41,17 +41,17 @@ Imports:
     cardx,
     broom.helpers (>= 1.17.0),
     flexlsx,
-    openxlsx2
-Suggests:
+    openxlsx2,
     gtsummary,
     EValue,
-    harmonicmeanp,
-    robsurvey,
-    robustbase,
-    knitr,
     flextable,
     officer,
     patchwork,
     future,
+    harmonicmeanp
+Suggests:
+    robsurvey,
+    robustbase,
+    knitr,
     fastDummies,
     ranger
