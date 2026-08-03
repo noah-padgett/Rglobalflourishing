@@ -41,6 +41,6 @@ knitr::opts_chunk$set(
   tab.cap.pre = "", tab.cap.sep = ""
 )
 
-print.tb |> flextable::autofit()
+print.tb
 
 ```

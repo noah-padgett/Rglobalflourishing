@@ -19,7 +19,11 @@ get_defaults_w3 <- function(x, filetype = "main"){
       tb.footnote = NULL,
       study = "exposurewide",
       fig.title = NULL,
-      forest.plots.inc.est = TRUE
+      forest.plots.inc.est = TRUE,
+      bound.es = 3.0,
+      domain.variable = as.name("SUBDOMAIN_FLAG"),
+      domain.subset = NULL,
+      tb.fast = TRUE
     )
   }
   if(filetype == "supp"){
@@ -58,7 +62,11 @@ get_defaults_w3 <- function(x, filetype = "main"){
       fig.num.start = 0,
       tb.start.num = NULL,
       included.countries = NULL,
-      include.mod3 = FALSE
+      include.mod3 = FALSE,
+      bound.es = 2.0,
+      domain.variable = as.name("SUBDOMAIN_FLAG"),
+      domain.subset = NULL,
+      tb.fast = TRUE
     )
   }
 

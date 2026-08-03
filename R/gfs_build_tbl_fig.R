@@ -22,6 +22,8 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  domain.subset = params$domain.subset
+  tb.fast = params$tb.fast
 
   if(!is.null(focal.predictor0)){
     focal.variable0 = focal.predictor0
@@ -31,13 +33,31 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
 
     ## create table
     suppressWarnings({
-
-      sumtab <-  data %>%
-        as_survey_design(
-          #ids = {{psu}},
+      if(tb.fast){
+        tmp.df <- data |>
+          as_survey_design(
+            #ids = {{psu}},
+            strata = {{strata}},
+            weights = {{wgt}}
+          )
+      } else {
+        tmp.df <- data |>
+          as_survey_design(
+          ids = {{psu}},
           strata = {{strata}},
           weights = {{wgt}}
-        ) %>%
+        )
+      }
+      if(!is.null(domain.subset)){
+        tmp.df <- subset(tmp.df, eval(domain.subset))
+        # If using subset, the labels get stripped off (pain...) so need to add back in
+        for(i in 1:ncol(data)){
+          attr(tmp.df$variables[[i]], "label") <- attr(data[[i]], "label")
+        }
+      }
+
+
+      sumtab <- tmp.df  %>%
         tbl_svysummary(
           by = {{x}},
           include = c(
@@ -103,10 +123,13 @@ build_tbl_sample_by_x <- function(params, font.name = "Open Sans", font.size = 1
 
   tb.note.summarytab <- as_paragraph(as_chunk(footnote.text, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
+  tb.dim <- dim(sumtab)
+
   print.tb <- sumtab %>%
     as_flex_table() %>%
     autofit() %>%
-    width(j=2:ngrp.cols,width=1.75)%>%
+    width(j=1,width=2.5)%>%
+    width(j=2:tb.dim[2],width=1.66)%>%
     format_flex_table(pg.width = pg.width)  %>%
     add_footer_lines(
       values = tb.note.summarytab, top = FALSE
@@ -141,6 +164,8 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
   start.time = params$start.time
   ignore.cache = params$ignore.cache
   file.xlsx = params$file.xlsx
+  domain.subset = params$domain.subset
+  tb.fast = params$tb.fast
 
   if(!is.null(OUTCOME.VEC0)){
     included.variables <- OUTCOME.VEC0
@@ -153,12 +178,31 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
 
   ## create table
   suppressWarnings({
-  sumtab <-  data %>%
-    as_survey_design(
-      #ids = {{psu}},
-      strata = {{strata}},
-      weights = {{wgt}}
-    ) %>%
+
+    if(tb.fast){
+      tmp.df <- svydesign(
+        data = data,
+        ids = ~1,  #ids = {{psu}}, # OMITTING SPEEDS IT UP A LOT
+        strata = reformulate(as.character({{strata}})),
+        weights = reformulate(as.character({{wgt}}))
+      )
+    } else {
+      tmp.df <- svydesign(
+        data = data,
+        ids = reformulate(as.character({{psu}})), # OMITTING SPEEDS IT UP A LOT
+        strata = reformulate(as.character({{strata}})),
+        weights = reformulate(as.character({{wgt}}))
+      )
+    }
+    if(!is.null(domain.subset)){
+      tmp.df <- subset(tmp.df, eval(domain.subset))
+      # If using subset, the labels get stripped off (pain...) so need to add back in
+      for(i in 1:ncol(data)){
+        attr(tmp.df$variables[[i]], "label") <- attr(data[[i]], "label")
+      }
+    }
+
+  sumtab <-  tmp.df %>%
     tbl_svysummary(
       by = {{x}},
       include = c(
@@ -196,11 +240,13 @@ build_tbl_outcome_by_x <- function(params, font.name = "Open Sans", font.size = 
 
   tb.note.summarytab <- as_paragraph(as_chunk(footnote.text, props = fp_text_default(font.family = "Open Sans", font.size = 9)))
 
+  tb.dim <- dim(sumtab)
 
 print.tb <- sumtab %>%
   as_flex_table() %>%
   autofit() %>%
-  width(j=2:ngrp.cols,width=1.66)%>%
+  width(j=1,width=2.5)%>%
+  width(j=2:tb.dim[2],width=1.66)%>%
   format_flex_table(pg.width = pg.width)  %>%
   add_footer_lines(
     values = tb.note.summarytab, top = FALSE

@@ -58,6 +58,7 @@ gfs_wave_3_generate_main_doc <- function(
   wgt3 <- control[['wgt3']]
   psu <- control[['psu']]
   strata <- control[['strata']]
+  domain.variable <- control[['domain.variable']]
   ci.bonferroni <- control[['ci.bonferroni']]
   tb.footnote <- control[['tb.footnote']]
   tb.title <- control[['tb.title']]
@@ -133,11 +134,18 @@ gfs_wave_3_generate_main_doc <- function(
 
   df.raw <- gfs_add_variable_labels(df.raw, tbl.row.vec)
 
+  if(!( as.character({{domain.variable}}) %in% colnames(df.raw))){
+    df.raw <- df.raw |>
+      mutate(
+        "{{domain.variable}}" := 0.0
+      )
+  }
+
   # ------- Wave 1
   tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "Y1"]
   tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
   df.w1 <- df.raw %>%
-    select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, contains("_Y1")) %>%
+    select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := {{wgt1}}
     )
@@ -146,7 +154,7 @@ gfs_wave_3_generate_main_doc <- function(
   # ------- Wave 2
   df.w2 <- df.raw %>%
     filter(CASE_OBSERVED_Y2 == 1) %>%
-    select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, GENDER, contains("_Y2"), any_of(tmp00)) %>%
+    select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y2"), any_of(tmp00)) %>%
     mutate(
       "{{wgt}}" := n() * {{wgt2}} / sum( {{wgt2}} )
     )
@@ -156,7 +164,7 @@ gfs_wave_3_generate_main_doc <- function(
   # ------- Wave 3
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1) %>%
-    select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, GENDER, contains("_Y3"), any_of(tmp00)) %>%
+    select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y3"), any_of(tmp00)) %>%
     mutate(
       "{{wgt}}" := n() * {{wgt3}} / sum( {{wgt3}} )
     )
@@ -177,7 +185,7 @@ gfs_wave_3_generate_main_doc <- function(
 
   df.raw.long <- df.raw.long %>%
     select(
-      COUNTRY, {{wgt}}, {{wgt1}}, {{wgt2}}, {{wgt3}}, {{psu}}, {{strata}},
+      COUNTRY, {{wgt}}, {{wgt1}}, {{wgt2}}, {{wgt3}}, {{psu}}, {{strata}},{{domain.variable}},
       WAVE0,
       AGE,
       any_of(c(focal.variable0, tbl.row.vec0)),
@@ -238,7 +246,9 @@ gfs_wave_3_generate_main_doc <- function(
     strata = as.name("STRATA"),
     tb.num = tb.num,
     cache.file = here::here(res.dir, "main-text", paste0("cache-tb-sumtb.RData")),
-    start.time = run.start.time
+    start.time = run.start.time,
+    tb.fast = control$tb.fast,
+    domain.subset = control$domain.subset
   )
   ## build the table
   Rglobalflourishing:::gfs_wave_3_build_tbl_1(params.tb1)
@@ -543,7 +553,7 @@ gfs_wave_3_build_tbl_1 <- function(params, font.name = "Open Sans", font.size = 
 
   set_flextable_defaults(font.family = font.name,font.size = font.size)
 
-  df.raw.long = params$df.raw.long
+  data = params$df.raw.long
   focal.variable0 = params$focal.variable0
   wgt = params$wgt
   psu = params$psu
@@ -551,15 +561,36 @@ gfs_wave_3_build_tbl_1 <- function(params, font.name = "Open Sans", font.size = 
   tb.num = params$tb.num
   cache.file = params$cache.file
   start.time = params$start.time
+  domain.subset = params$domain.subset
+  tb.fast = params$tb.fast
 
   ## create table
   suppressWarnings({
-    sumtab <- df.raw.long %>%
-      as_survey_design(
-        ids = {{psu}},
-        strata = {{strata}},
-        weights = {{wgt}}
-      ) %>%
+    if(tb.fast){
+      tmp.df <- data |>
+        as_survey_design(
+          #ids = {{psu}},
+          strata = {{strata}},
+          weights = {{wgt}}
+        )
+    } else {
+      tmp.df <- data |>
+        as_survey_design(
+          ids = {{psu}},
+          strata = {{strata}},
+          weights = {{wgt}}
+        )
+    }
+    if(!is.null(domain.subset)){
+      tmp.df <- subset(tmp.df, eval(domain.subset))
+      # If using subset, the labels get stripped off (pain...) so need to add back in
+      for(i in 1:ncol(data)){
+        attr(tmp.df$variables[[i]], "label") <- attr(data[[i]], "label")
+      }
+    }
+
+
+    sumtab <- tmp.df  %>%
       tbl_svysummary(
         by = WAVE0,
         include = c(
@@ -1289,6 +1320,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   wgt3 <- control[['wgt3']]
   psu <- control[['psu']]
   strata <- control[['strata']]
+  domain.variable <- control[['domain.variable']]
 
 
   cat("\n **Starting...**\n")
@@ -1432,12 +1464,18 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
     mutate(
       COUNTRY = fct_drop(COUNTRY)
     )
+  if(!( as.character({{domain.variable}}) %in% colnames(df.raw))){
+    df.raw <- df.raw |>
+      mutate(
+        "{{domain.variable}}" := 0.0
+      )
+  }
 
   # ------- Wave 1
   tmp00 <- colnames(df.raw)[get_wave_flag(colnames(df.raw)) == "Y1"]
   tmp00 <- tmp00[(tmp00 %in% control$baseline.pred)]
   df.w1 <- df.raw %>%
-    select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" :=  n() * {{wgt1}} / sum( {{wgt1}} )
     )
@@ -1446,7 +1484,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   # ------- Wave 2
   df.w2 <- df.raw %>%
     filter(CASE_OBSERVED_Y2 == 1) %>%
-    select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y2"), any_of(tmp00)) %>%
+    select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y2"), any_of(tmp00)) %>%
     mutate(
       "{{wgt}}" := n() * {{wgt2}} / sum( {{wgt2}} )
     )
@@ -1456,7 +1494,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   # ------- Wave 3
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1) %>%
-    select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y3"), any_of(tmp00)) %>%
+    select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y3"), any_of(tmp00)) %>%
     mutate(
       "{{wgt}}" := n() * {{wgt3}} / sum( {{wgt3}} )
     )
@@ -1487,7 +1525,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
 
   df.raw.long <- df.raw.long %>%
     select(
-      COUNTRY, {{wgt}}, {{wgt1}}, {{wgt2}}, {{wgt3}}, {{psu}}, {{strata}},
+      COUNTRY, {{wgt}}, {{wgt1}}, {{wgt2}}, {{wgt3}}, {{psu}}, {{strata}}, {{domain.variable}},
       WAVE0,
       AGE,
       any_of(c(focal.variable0, tbl.row.vec0)),
@@ -1546,7 +1584,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   # compare UNWEIGHTED data
   df.w1 <- df.raw %>%
     filter(CASE_OBSERVED_ALL == 1) %>%
-    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
@@ -1555,7 +1593,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
 
   df.w2 <- df.raw %>%
     filter(CASE_OBSERVED_Y2 == 0) %>%
-    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
@@ -1564,7 +1602,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
 
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 0) %>%
-    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
@@ -1573,7 +1611,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
 
   df.w4 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1 & CASE_OBSERVED_Y2 == 0) %>%
-    select(ID, COUNTRY, {{psu}}, {{strata}}, GENDER, RACE, contains("_Y1")) %>%
+    select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
@@ -1590,7 +1628,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   df.raw.attr.retained <- df.raw.attr.retained %>%
     select(
       COUNTRY,
-      {{wgt}}, {{psu}}, {{strata}},
+      {{wgt}}, {{psu}}, {{strata}},{{domain.variable}},
       WAVE0,
       AGE, RACE,
       any_of(c(focal.variable0, tbl.row.vec0)),
@@ -1695,13 +1733,15 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s1.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        tb.fast = control$tb.fast,
+        domain.subset = control$domain.subset
       )
 
-      Rglobalflourishing:::build_tbl_sample_by_x(params.tb)
+      Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width = 8.5)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_25L.Rmd", package = "Rglobalflourishing"), # portrait_long25
+        input = system.file("rmd", "pdf_portrait_25_11.Rmd", package = "Rglobalflourishing"), # portrait_long25
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_1",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1728,13 +1768,15 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s2.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        tb.fast = control$tb.fast,
+        domain.subset = control$domain.subset
       )
 
-      Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
+      Rglobalflourishing:::build_tbl_outcome_by_x(params = params.tb, pg.width = 8.5)
 
       rmarkdown::render(
-        input = system.file("rmd", "pdf_portrait_70L.Rmd", package = "Rglobalflourishing"),
+        input = system.file("rmd", "pdf_portrait_70_11.Rmd", package = "Rglobalflourishing"),
         output_format = c("pdf_document"),
         output_file = "supplement_tbl_2",
         output_dir = here::here(res.dir, "supplement-text"),
@@ -1760,7 +1802,9 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s3.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        tb.fast = control$tb.fast,
+        domain.subset = control$domain.subset
       )
 
       Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width=8.5)
@@ -1793,7 +1837,9 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s4.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
-        file.xlsx = here::here(res.dir, out.file.xlsx)
+        file.xlsx = here::here(res.dir, out.file.xlsx),
+        tb.fast = control$tb.fast,
+        domain.subset = control$domain.subset
       )
 
       Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width=8.5)
@@ -1847,7 +1893,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
         if(focal.variable[f0] == "CIGARETTES_Y3"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
         }
 
       }
@@ -1861,7 +1907,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
 
         if(focal.variable[f0] == "CIGARETTES_Y2"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
         }
       }
 
@@ -1938,7 +1984,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
         if(focal.variable[f0] == "CIGARETTES_Y3"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
         }
       }
       if(str_detect(str_to_lower(study), "outcome") ){
@@ -1951,7 +1997,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
 
         if(focal.variable[f0] == "CIGARETTES_Y2"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
         }
       }
 
@@ -2027,7 +2073,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
           if(focal.variable[f0] == "CIGARETTES_Y3"){
-            control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+            control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
           }
 
         }
@@ -2041,7 +2087,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
 
           if(focal.variable[f0] == "CIGARETTES_Y2"){
-            control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+            control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
           }
         }
 
@@ -2105,7 +2151,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft1 = "exposure at Wave 2"
 
         if(focal.variable[f0] == "CIGARETTES_Y3"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
         }
 
       }
@@ -2113,7 +2159,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft1 = "outcome at Wave 3"
 
         if(focal.variable[f0] == "CIGARETTES_Y2"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
         }
       }
 
@@ -2187,7 +2233,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
         if(focal.variable[f0] == "CIGARETTES_Y3"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
         }
 
       }
@@ -2201,7 +2247,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES.")
 
         if(focal.variable[f0] == "CIGARETTES_Y2"){
-          control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+          control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
         }
       }
 
@@ -2370,7 +2416,8 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-fig-i-",f0,".RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          digits = digits
+          digits = digits,
+          bound.es = control$bound.es
         )
         ## build plot
         #
@@ -2415,7 +2462,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
   #     - Outcome-wide E-values (similar to main text Table 3)
   # ========================= #
   if(control$what == "all" | control$what == "S3"){
-    cat("Starting part 2 -- country-specific results\n")
+    cat("Starting part 3 -- country-specific results\n")
     if(control$what == "S3"){
       tb.num <- 4
     }
@@ -2442,13 +2489,13 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           RACE1 = droplevels(RACE),
           RACE1 = case_when(is.na(RACE1) ~ "    (Missing)", .default = RACE1),
           RACE1 = factor(RACE1, levels = sort(unique(RACE1))),
-          RACE1 = fct_relevel(RACE1, "    (Missing)", after = Inf),
+          #RACE1 = fct_relevel(RACE1, "    (Missing)", after = Inf),
           #INCOME = case_when(INCOME == "(Missing)" ~ "    (Missing)", .default = INCOME),
           #INCOME = factor(INCOME),
           INCOME = droplevels(INCOME),
           INCOME = factor(INCOME, levels = sort(unique(INCOME))),
-          INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME),
-          INCOME = fct_relevel(INCOME, "    (Missing)", after = Inf),
+          INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME)
+          #INCOME = fct_relevel(INCOME, "    (Missing)", after = Inf),
         )
 
       df.attr.country.i <- df.raw.attr.retained %>%
@@ -2459,13 +2506,13 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           RACE1 = droplevels(RACE),
           RACE1 = case_when(is.na(RACE1) ~ "    (Missing)", .default = RACE1),
           RACE1 = factor(RACE1, levels = sort(unique(RACE1))),
-          RACE1 = fct_relevel(RACE1, "    (Missing)", after = Inf),
+          #RACE1 = fct_relevel(RACE1, "    (Missing)", after = Inf),
           #INCOME = case_when(INCOME == "(Missing)" ~ "    (Missing)", .default = INCOME),
           #INCOME = factor(INCOME),
           INCOME = droplevels(INCOME),
           INCOME = factor(INCOME, levels = sort(unique(INCOME))),
-          INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME),
-          INCOME = fct_relevel(INCOME, "    (Missing)", after = Inf),
+          INCOME = case_when(is.na(INCOME) ~ "    (Missing)", .default = INCOME)
+          #INCOME = fct_relevel(INCOME, "    (Missing)", after = Inf),
         )
       ## ======================================================================================== ##
       ## ====== Table Si-a. summary statistics -- demographics variables ======================== ##
@@ -2474,9 +2521,13 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         if(control$num.sequential){
           tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
+          tb.flag <- letters[tb.let]
+          tb.let <- tb.let + 1
         } else {
           tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter])
+          tb.flag <- letters[tb.let]
           tb.let <- tb.let + 1
+
         }
 
         params.tb <- list(
@@ -2492,14 +2543,16 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx)
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          tb.fast = control$tb.fast,
+          domain.subset = control$domain.subset
         )
-        Rglobalflourishing:::build_tbl_sample_by_x(params.tb)
+        Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width = 8.5)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_25L.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_25_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_a"),
+          output_file = paste0("tmp_tbl_",tb.flag),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sia.RData"))
@@ -2514,8 +2567,11 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         if(control$num.sequential){
           tb.cap.i <- paste0("Table S",tb.num,". Weighted summary statistics for outcome variables in ", COUNTRY_LABELS[iter])
           tb.num <- tb.num + 1
+          tb.flag <- letters[tb.let]
+          tb.let <- tb.let + 1
         } else {
           tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Weighted summary statistics for outcome variables  in ", COUNTRY_LABELS[iter])
+          tb.flag <- letters[tb.let]
           tb.let <- tb.let + 1
         }
         params.tb <- list(
@@ -2532,15 +2588,17 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx)
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          tb.fast = control$tb.fast,
+          domain.subset = control$domain.subset
         )
 
-        Rglobalflourishing:::build_tbl_outcome_by_x(params.tb)
+        Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width = 8.5)
 
         rmarkdown::render(
-          input = system.file("rmd", "pdf_portrait_70L.Rmd", package = "Rglobalflourishing"),
+          input = system.file("rmd", "pdf_portrait_70_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_b"),
+          output_file = paste0("tmp_tbl_",tb.flag),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sib.RData"))
@@ -2557,8 +2615,12 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         if(control$num.sequential){
           tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter]," by retention status")
           tb.num <- tb.num + 1
+          tb.flag <- letters[tb.let]
+          tb.let <- tb.let + 1
         } else {
           tb.cap.i <- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for demographic and childhood variables in ", COUNTRY_LABELS[iter]," by retention status")
+
+          tb.flag <- letters[tb.let]
           tb.let <- tb.let + 1
         }
 
@@ -2575,14 +2637,16 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx)
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          tb.fast = control$tb.fast,
+          domain.subset = control$domain.subset
         )
         Rglobalflourishing:::build_tbl_sample_by_x(params.tb, pg.width = 8.5)
 
         rmarkdown::render(
           input = system.file("rmd", "pdf_portrait_25_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_c"),
+          output_file = paste0("tmp_tbl_",tb.flag),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sic.RData"))
@@ -2597,8 +2661,12 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         if(control$num.sequential){
           tb.cap.i <- paste0("Table S",tb.num,". Unweighted summary statistics for Wave 1 outcome variables in ", COUNTRY_LABELS[iter], " by retention status.")
           tb.num <- tb.num + 1
+          tb.flag <- letters[tb.let]
+          tb.let <- tb.let + 1
         } else {
           tb.cap.i<- paste0("Table S",tb.num, letters[tb.let],". Unweighted summary statistics for Wave 1 outcome variables  in ", COUNTRY_LABELS[iter], " by retention status.")
+
+          tb.flag <- letters[tb.let]
           tb.let <- tb.let + 1
         }
         params.tb <- list(
@@ -2615,7 +2683,9 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData")),
           start.time = run.start.time.i,
           ignore.cache = FALSE,
-          file.xlsx = here::here(res.dir, out.file.xlsx)
+          file.xlsx = here::here(res.dir, out.file.xlsx),
+          tb.fast = control$tb.fast,
+          domain.subset = control$domain.subset
         )
 
         Rglobalflourishing:::build_tbl_outcome_by_x(params.tb, pg.width=8.5)
@@ -2623,7 +2693,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
         rmarkdown::render(
           input = system.file("rmd", "pdf_portrait_70_11.Rmd", package = "Rglobalflourishing"),
           output_format = c("pdf_document"),
-          output_file = paste0("tmp_tbl_d"),
+          output_file = paste0("tmp_tbl_",tb.flag),
           output_dir = here::here(res.dir, "supplement-text"),
           params = list(
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sid.RData"))
@@ -2654,8 +2724,12 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           if(control$num.sequential){
             tb.num.i <- tb.num
             tb.num <- tb.num + 1
+            tb.flag <- letters[tb.let]
+            tb.let <- tb.let + 1
           } else {
             tb.num.i <- paste0(tb.num, letters[tb.let])
+
+            tb.flag <- letters[tb.let]
             tb.let <- tb.let + 1
           }
           if(str_detect(str_to_lower(study), "exposure") ){
@@ -2672,7 +2746,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
             if(focal.variable[f0] == "CIGARETTES_Y3"){
-              control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+              control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
             }
 
           }
@@ -2686,7 +2760,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
 
             if(focal.variable[f0] == "CIGARETTES_Y2"){
-              control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+              control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
             }
           }
 
@@ -2733,7 +2807,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           rmarkdown::render(
             input = system.file("rmd", "pdf_19_by_19.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
-            output_file =  paste0("tmp_tbl_e", f0),
+            output_file =  paste0("tmp_tbl_",tb.flag),
             output_dir = here::here(res.dir, "supplement-text"),
             params = list(
               cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie-",f0,".RData"))
@@ -2748,8 +2822,12 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           if(control$num.sequential){
             tb.num.i <- tb.num
             tb.num <- tb.num + 1
+            tb.flag <- letters[tb.let]
+            tb.let <- tb.let + 1
           } else {
             tb.num.i <- paste0(tb.num, letters[tb.let])
+
+            tb.flag <- letters[tb.let]
             tb.let <- tb.let + 1
           }
           if(str_detect(str_to_lower(study), "exposure") ){
@@ -2766,7 +2844,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An exposure-wide analytic approach was used, and a separate model was run for each exposure. ", ifelse(get_outcome_scale(focal.variable[f0]) == "cont", "A weighted linear regression model was used to estimate an ES", "A weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR") ,".")
 
             if(focal.variable[f0] == "CIGARETTES_Y3"){
-              control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+              control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
             }
 
           }
@@ -2780,7 +2858,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tbl.ft3 = paste0("An outcome-wide analytic approach was used, and a separate model was run for each outcome. A different type of model was run depending on the nature of the outcome: (1) for each binary outcome, a weighted generalized linear model (with a log link and Poisson distribution) was used to estimate a RR; and (2) for each continuous outcome, a weighted linear regression model was used to estimate an ES. All effect sizes were standardized.")
 
             if(focal.variable[f0] == "CIGARETTES_Y2"){
-              control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+              control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
             }
           }
 
@@ -2827,7 +2905,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           rmarkdown::render(
             input = system.file("rmd", "pdf_19_by_19.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
-            output_file =  paste0("tmp_tbl_f", f0),
+            output_file =  paste0("tmp_tbl_",tb.flag),
             output_dir = here::here(res.dir, "supplement-text"),
             params = list(
               cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif-",f0,".RData"))
@@ -2843,8 +2921,12 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           if(control$num.sequential){
             tb.num.i <- tb.num
             tb.num <- tb.num + 1
+            tb.flag <- letters[tb.let]
+            tb.let <- tb.let + 1
           } else {
             tb.num.i <- paste0(tb.num, letters[tb.let])
+
+            tb.flag <- letters[tb.let]
             tb.let <- tb.let + 1
           }
 
@@ -2854,7 +2936,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tb.cap.i <-  paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " sensitivity analysis of ", str_to_lower(focal.better.name[f0])," exposure-wide results to unmeasured confounding using E-values across models and how missingness at Wave 2 was handled.")
 
             if(focal.variable[f0] == "CIGARETTES_Y3"){
-              control$tbl.row.vec["CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
+              control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y2"] <- "CIGARETTES_Y2"
             }
 
           }
@@ -2863,7 +2945,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             tb.cap.i <-  paste0("Table S",tb.num.i,". ", COUNTRY_LABELS[iter], " sensitivity analysis of ", str_to_lower(focal.better.name[f0])," outcome-wide results to unmeasured confounding using E-values across models and how missingness at Wave 2 was handled.")
 
             if(focal.variable[f0] == "CIGARETTES_Y2"){
-              control$tbl.row.vec["CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
+              control$tbl.row.vec[control$tbl.row.vec == "CIGARETTES_BINARY_Y3"] <- "CIGARETTES_Y3"
             }
           }
 
@@ -2906,7 +2988,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
           rmarkdown::render(
             input = system.file("rmd", "pdf_19_by_11.Rmd", package = "Rglobalflourishing"),
             output_format = c("pdf_document"),
-            output_file = paste0("tmp_tbl_g", f0),
+            output_file = paste0("tmp_tbl_",tb.flag),
             output_dir = here::here(res.dir, "supplement-text"),
             params = list(
               cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sig-",f0,".RData"))
@@ -3177,10 +3259,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
                 try({
                   case_when(
-                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                    x < 0.005 ~ paste0(.round_p(x),"**"),
-                    x < 0.05 ~ paste0(.round(x,3),"*"),
-                    x > 0.05 ~ .round(x,3)
+                    x < p.bonferroni ~ paste0(as.character(unlist(.round_p(x))),"***"),
+                    x < 0.005 ~ paste0(as.character(unlist(.round_p(x))),"**"),
+                    x < 0.05 ~ paste0(as.character(unlist(.round(x,3))),"*"),
+                    x > 0.05 ~ as.character(unlist(.round(x,3)))
                   )
                 })
               }),
@@ -3229,10 +3311,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               dplyr::across(tidyr::any_of(c("pvalue")),\(x){
                 try({
                   case_when(
-                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                    x < 0.005 ~ paste0(.round_p(x),"**"),
-                    x < 0.05 ~ paste0(.round(x,3),"*"),
-                    x > 0.05 ~ .round(x,3)
+                    x < p.bonferroni ~ paste0(as.character(unlist(.round_p(x))),"***"),
+                    x < 0.005 ~ paste0(as.character(unlist(.round_p(x))),"**"),
+                    x < 0.05 ~ paste0(as.character(unlist(.round(x,3))),"*"),
+                    x > 0.05 ~ as.character(unlist(.round(x,3)))
                   )
                 })
               }),
@@ -3302,10 +3384,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               dplyr::across(tidyr::any_of(c("global.pvalue")),\(x){
                 try({
                   case_when(
-                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                    x < 0.005 ~ paste0(.round_p(x),"**"),
-                    x < 0.05 ~ paste0(.round(x,3),"*"),
-                    x > 0.05 ~ .round(x,3)
+                    x < p.bonferroni ~ paste0(as.character(unlist(.round_p(x))),"***"),
+                    x < 0.005 ~ paste0(as.character(unlist(.round_p(x))),"**"),
+                    x < 0.05 ~ paste0(as.character(unlist(.round(x,3))),"*"),
+                    x > 0.05 ~ as.character(unlist(.round(x,3)))
                   )
                 })
               }),
@@ -3355,10 +3437,10 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               dplyr::across(tidyr::any_of(c("pvalue")),\(x){
                 try({
                   case_when(
-                    x < p.bonferroni ~ paste0(.round_p(x),"***"),
-                    x < 0.005 ~ paste0(.round_p(x),"**"),
-                    x < 0.05 ~ paste0(.round(x,3),"*"),
-                    x > 0.05 ~ .round(x,3)
+                    x < p.bonferroni ~ paste0(as.character(unlist(.round_p(x))),"***"),
+                    x < 0.005 ~ paste0(as.character(unlist(.round_p(x))),"**"),
+                    x < 0.05 ~ paste0(as.character(unlist(.round(x,3))),"*"),
+                    x > 0.05 ~ as.character(unlist(.round(x,3)))
                   )
                 })
               }),
@@ -3756,6 +3838,7 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
   ignore.cache = params$ignore.cache
   digits = params$digits
   fig.num = params$fig.num
+  bound.es = params$bound.es
 
   ALL.COUNTRIES <- c("Australia", "Hong Kong", "India", "Indonesia", "Japan", "Philippines", "Egypt", "Germany", "Israel", "Kenya", "Nigeria", "Poland", "South Africa", "Spain", "Sweden", "Tanzania", "Turkey", "United Kingdom", "United States", "Argentina", "Brazil",    "Mexico",  "China"  )
 
@@ -3806,6 +3889,13 @@ gfs_wave_3_build_supp_forest_plot <- function(params, ...) {
     mutate(
       est_lab = paste0(.round(yi,digits), " (", .round(ci.lb.i,digits), ", ", .round(ci.ub.i,digits), ")")
     )
+  if(bound.es != 0.0){
+    plot_df <- plot_df |>
+      mutate(
+        ci.lb.i = ifelse(ci.lb.i < -bound.es, -bound.es, ci.lb.i),
+        ci.ub.i = ifelse(ci.ub.i > bound.es, bound.es, ci.ub.i)
+      )
+  }
 
   plot_df <- left_join(plot_df,  fit.influence, by = "group") |>
     mutate(
