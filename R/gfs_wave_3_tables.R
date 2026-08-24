@@ -1467,7 +1467,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   if(!( as.character({{domain.variable}}) %in% colnames(df.raw))){
     df.raw <- df.raw |>
       mutate(
-        "{{domain.variable}}" := 0.0
+        "{{domain.variable}}" := 1.0
       )
   }
 
@@ -1509,11 +1509,14 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       full_join(df.w3)
   })
 
-  n1.print <- nrow(df.w1) |> format(big.mark = ",")
-  n2.print <- nrow(df.raw |> filter(CASE_OBSERVED_ALL == 1)) |> format(big.mark = ",")
+  # Need to make sure to account for any domain estimation in these numbers...
 
-  w1.n1.print <- df.w1 %>% group_by(COUNTRY) %>% summarize(N=format(n(), big.mark=","))
-  w2.n2.print <- df.raw |> filter(CASE_OBSERVED_ALL == 1) %>% group_by(COUNTRY) %>% summarize(N=format(n(), big.mark=","))
+
+  n1.print <- df.raw |> filter({{domain.variable}} == 1) |> nrow() |> format(big.mark = ",")
+  n2.print <- df.raw |> filter({{domain.variable}} == 1) |> filter(CASE_OBSERVED_ALL == 1) |> nrow()|> format(big.mark = ",")
+
+  w1.n1.print <- df.raw |> filter({{domain.variable}} == 1) |> group_by(COUNTRY) %>% summarize(N=format(sum({{domain.variable}}, na.rm=TRUE), big.mark=","))
+  w2.n2.print <- df.raw |> filter({{domain.variable}} == 1) |> filter(CASE_OBSERVED_ALL == 1) %>% group_by(COUNTRY) %>% summarize(N=format(sum({{domain.variable}}, na.rm=TRUE), big.mark=","))
 
   # Full Sample: n1.print, w1.n1.print
   # CC Sample: n2.print, w2.n2.print

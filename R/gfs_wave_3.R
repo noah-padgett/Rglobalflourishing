@@ -83,7 +83,7 @@ gfs_wave_3_coordinated_analysis <- function(
   #your.outcome = "LIFE_SAT_Y3"; your.pred = "HAPPY_Y2"; data.dir = "test/ignore/data/recoded"; wgt = as.name("ANNUAL_WEIGHT_R3"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = "COUNTRY"; covariates =  c("MODE_ANNUAL", "COV_AGE_GRP_Y1", "COV_GENDER", "COV_RACE_PLURALITY", "COV_EDUCATION_3_Y1", "COV_EMPLOYMENT_Y1", "COV_MARITAL_STATUS_Y1", "COV_ATTEND_SVCS_Y1", "COV_BORN_COUNTRY_Y1", "COV_REL2_Y1", "COV_PARENTS_12YRS_Y1", "COV_MOTHER_RELATN_Y1", "COV_FATHER_RELATN_Y1", "COV_OUTSIDER_Y1", "COV_ABUSED_Y1","COV_HEALTH_GROWUP_Y1", "COV_INCOME_12YRS_Y1","COV_SVCS_12YRS_Y1", "COV_MOTHER_NA", "COV_FATHER_NA"); pca.variables = pca.variables; pc.rule = "constant"; pc.cutoff = 7; res.dir = "test/ignore/results-primary"; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL; fx=NULL; list.composites=NULL; appnd.txt.to.filename=""
 
   # your.outcome = OUTCOME.VEC[1]; your.pred = "PEACE_Y1"; data.dir = "data"; wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA"); imp.strata = as.name("COUNTRY"); covariates = DEMO.CHILDHOOD.PRED;pca.variables =""; list.composites = get_variable_codes('LIST.COMPOSITES')[[1]]; pc.cutoff = 7; pc.rule = "omit"; res.dir = "results-primary"; appnd.txt.to.filename = "_primary_wopc"; save.all = FALSE; domain.subset = domain.subset = NULL; family = NULL; force.linear = FALSE; force.binary = FALSE; robust.huberM = FALSE; robust.tune = 1; direct.subset = NULL; country.subset = NULL
-  # data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R2"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary"
+  # data.dir = "test/ignore/data";  wgt = as.name("ANNUAL_WEIGHT_R3"); psu = as.name("PSU"); strata = as.name("STRATA");  force.linear = FALSE;  force.binary = FALSE;  robust.huberM = FALSE;  robust.tune = 1;  res.dir = "test/ignore/results-primary"
 
   suppressMessages({
     suppressWarnings({
@@ -164,7 +164,7 @@ gfs_wave_3_coordinated_analysis <- function(
       }
 
       ##
-      #x <- country.vec[1]
+      #x <- country.vec[14]
       #.run_internal_func <- function(x){
       walk(country.vec, \(x){
         cur.country <- x
@@ -229,8 +229,13 @@ gfs_wave_3_coordinated_analysis <- function(
                     keep.pca.variables <- keep_variable(pca.variables, data = x[["variables"]])
                     get_eigenvalues(x, pca.variables[keep.pca.variables])
                   }),
-                  pc.sdev = map(fit.pca, \(x) x$sdev),
-                  pca.rotation = map(fit.pca, \(x) x$rotation), pca.sdev = pc.sdev
+                  pc.sdev = map(fit.pca, \(x){
+                    nconverge = ncol(x$rotation)
+                    ndim = nrow(x$rotation)
+                    ifelse(nconverge < ndim, c(x$sdev, rep(0, ndim - nconverge)), x$sdev)
+                  }),
+                  pca.rotation = map(fit.pca, \(x) x$rotation),
+                  pca.sdev = pc.sdev
                 )
               # get summary of PCA results to save to output file
               fit.pca.summary <- svy.data.imp %>%
@@ -257,7 +262,7 @@ gfs_wave_3_coordinated_analysis <- function(
                 keep.num.pc <- rep(pc.cutoff, length(unique(fit.pca.summary[[as.character({{imp.strata}})]])))
                 names(keep.num.pc) <- unique(fit.pca.summary[[as.character({{imp.strata}})]])
               } else {
-                # number of PCs varies by counry based on the total or individual PC % of the variation in the confounders the set of PC account for.
+                # number of PCs varies by country based on the total or individual PC % of the variation in the confounders the set of PC account for.
                 if (str_to_lower(pc.rule) == "mintotal") {
                   keep.num.pc0 <- fit.pca.summary %>%
                     dplyr::filter(prop.sum >= pc.cutoff) %>%
@@ -285,6 +290,13 @@ gfs_wave_3_coordinated_analysis <- function(
                 }
               }
 
+            } else {
+              svy.data.imp <- svy.data.imp |>
+                mutate(
+                  pca.sdev = NA,
+                  pca.rotation = NA,
+                  fit.pca.summary = NA
+                )
             }
             # ============================================================================================== #
             # RUN REGRESSION ANALYSIS
@@ -378,11 +390,13 @@ gfs_wave_3_coordinated_analysis <- function(
             return(NULL)
           }
           ## extract PCA summary
-          fit.pca.summary <- tryCatch({
-            get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
-          }, error = function(e){
-            message(paste0("[get_pca_summary] ERROR in PCA calculation 'gfs_wave_3.R' ln 382. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
-          })
+          if(pc.rule != "omit"){
+            fit.pca.summary <- tryCatch({
+              get_pca_summary(fit = fitted.reg.models, imp.strata = {{imp.strata}})
+            }, error = function(e){
+              message(paste0("[get_pca_summary] ERROR in PCA calculation 'gfs_wave_3.R' ln 382. Occur for: outcome=", your.outcome, "; predictor=",your.pred,"; in Country=", cur.country))
+            })
+          }
 
           # re-estimate basic model with the max number of PCs used to get the variable names
           tmp.dat <- .get_data(file = country.files[1],
@@ -580,9 +594,10 @@ gfs_wave_3_coordinated_analysis <- function(
             })
             varlist[which(match)]
           })
-          base_variable <- base_variable %>%
-            as.data.frame() %>%
-            pull(.)
+          base_variable <- as.character(base_variable)
+          #base_variable <- base_variable %>%
+          #  as.data.frame() %>%
+          #  pull(.)
           levels <- gsub(paste(unlist(base_variable), collapse = "|"), "", termlist)
           termlabels <- data.frame(
             original = c(rep("(Ref:)", length(termlist)), termlist, "(Intercept)"),
@@ -693,8 +708,7 @@ gfs_wave_3_coordinated_analysis <- function(
           cor.output <- tryCatch({
             cor.pooled %>%
             left_join(sd.pooled, by = c(as.character({{imp.strata}}), "term")) %>%
-            ungroup()
-          cor.output <- cor.output %>%
+            ungroup() %>%
             mutate(
               cor.est = estimate.pooled * (predictor.sd / outcome.sd),
               cor.se = se.pooled * (predictor.sd / outcome.sd),

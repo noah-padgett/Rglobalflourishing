@@ -62,7 +62,7 @@ gfs_svyglm_mi <- function(
         reg.centered = TRUE
       } else {
         fx.char <- as.character(fx)
-        your.outcome <- fx.char[2]
+        your.outcome <- all.vars(fx)[1] ## better way to get outcome in regression model
         covariates <- c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE))
         covariates <- unique(covariates)
         reg.centered = ifelse(any(c(str_split(fx.char[3],pattern = " \\+ ", simplify = TRUE)) == "0"), FALSE, TRUE)
