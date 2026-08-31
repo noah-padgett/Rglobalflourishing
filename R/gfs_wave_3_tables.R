@@ -146,18 +146,20 @@ gfs_wave_3_generate_main_doc <- function(
   tmp00 <- tmp00[(tmp00 %in% baseline.pred)]
   df.w1 <- df.raw %>%
     select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y1")) %>%
+    group_by(COUNTRY) %>%
     mutate(
-      "{{wgt}}" := {{wgt1}}
-    )
+      "{{wgt}}" := n() * {{wgt1}} / sum( {{wgt1}} )
+    ) %>% ungroup()
   colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
   df.w1$WAVE0 <- "Wave 1"
   # ------- Wave 2
   df.w2 <- df.raw %>%
     filter(CASE_OBSERVED_Y2 == 1) %>%
     select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y2"), any_of(tmp00)) %>%
+    group_by(COUNTRY) %>%
     mutate(
       "{{wgt}}" := n() * {{wgt2}} / sum( {{wgt2}} )
-    )
+    ) %>% ungroup()
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
   df.w2$WAVE0 <- "Wave 2"
@@ -165,9 +167,10 @@ gfs_wave_3_generate_main_doc <- function(
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1) %>%
     select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y3"), any_of(tmp00)) %>%
+    group_by(COUNTRY) %>%
     mutate(
       "{{wgt}}" := n() * {{wgt3}} / sum( {{wgt3}} )
-    )
+    ) %>% ungroup()
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y1")
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y2")
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y3")
@@ -1476,28 +1479,31 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   tmp00 <- tmp00[(tmp00 %in% control$baseline.pred)]
   df.w1 <- df.raw %>%
     select(ID, COUNTRY, {{wgt1}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
+    group_by(COUNTRY) %>%
     mutate(
       "{{wgt}}" :=  n() * {{wgt1}} / sum( {{wgt1}} )
-    )
+    ) %>% ungroup()
   colnames(df.w1) <- str_remove(colnames(df.w1), "_Y1")
   df.w1$WAVE0 <- "Wave 1"
   # ------- Wave 2
   df.w2 <- df.raw %>%
     filter(CASE_OBSERVED_Y2 == 1) %>%
-    select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y2"), any_of(tmp00)) %>%
+    select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y2"), any_of(tmp00))%>%
+    group_by(COUNTRY) %>%
     mutate(
-      "{{wgt}}" := n() * {{wgt2}} / sum( {{wgt2}} )
-    )
+      "{{wgt}}" :=  n() * {{wgt2}} / sum( {{wgt2}} )
+    ) %>% ungroup()
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
   df.w2$WAVE0 <- "Wave 2"
   # ------- Wave 3
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1) %>%
-    select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y3"), any_of(tmp00)) %>%
+    select(ID, COUNTRY, {{wgt3}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y3"), any_of(tmp00))%>%
+    group_by(COUNTRY) %>%
     mutate(
-      "{{wgt}}" := n() * {{wgt3}} / sum( {{wgt3}} )
-    )
+      "{{wgt}}" :=  n() * {{wgt3}} / sum( {{wgt3}} )
+    ) %>% ungroup()
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y1")
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y2")
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y3")
@@ -1586,7 +1592,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   ## Reformat to long (of wave 1 variables only) of attr/retained cases to compare wave 1 variables
   # compare UNWEIGHTED data
   df.w1 <- df.raw %>%
-    filter(CASE_OBSERVED_ALL == 1) %>%
+    filter(CASE_OBSERVED_Y1 == 1 &  CASE_OBSERVED_Y1 == 1 & CASE_OBSERVED_Y3 == 1) %>%
     select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
