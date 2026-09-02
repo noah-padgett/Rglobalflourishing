@@ -1592,7 +1592,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   ## Reformat to long (of wave 1 variables only) of attr/retained cases to compare wave 1 variables
   # compare UNWEIGHTED data
   df.w1 <- df.raw %>%
-    filter(CASE_OBSERVED_Y1 == 1 &  CASE_OBSERVED_Y1 == 1 & CASE_OBSERVED_Y3 == 1) %>%
+    filter(CASE_OBSERVED_Y1 == 1 &  CASE_OBSERVED_Y2 == 1 & CASE_OBSERVED_Y3 == 1) %>%
     select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
