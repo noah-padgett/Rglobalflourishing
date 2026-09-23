@@ -3240,13 +3240,13 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
             mutate(
               est = case_when(
                 is.cont ~ .round(theta.rma, digits),
-                !is.cont ~ .round(exp(theta.rma), digits, val.minus=1 )
+                !is.cont ~ .round(exp(theta.rma), digits, val.minus=1,allow.sci = FALSE )
               ),
               se = .round(theta.rma.se, digits),
               ci = if(is.cont){
                 paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")")
               } else if(!is.cont){
-                paste0("(",.round(exp(theta.lb), digits, val.minus=1),", ",.round(exp(theta.ub), digits, val.minus=1),")")
+                paste0("(",.round(exp(theta.lb), digits, val.minus=1,allow.sci = FALSE),", ",.round(exp(theta.ub), digits, val.minus=1,allow.sci = FALSE),")")
               } else {NA},
               prop.metric = if(is.cont){
                 paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%")} else if(!is.cont){
@@ -3255,7 +3255,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               pred.int = if(is.cont){
                 paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
               } else if(!is.cont){
-                paste0("(",.round(exp(theta.pred.int.lb), digits, val.minus=1),", ",.round(exp(theta.pred.int.ub), digits, val.minus=1),")")
+                paste0("(",.round(exp(theta.pred.int.lb), digits, val.minus=1,allow.sci = FALSE),", ",.round(exp(theta.pred.int.ub), digits, val.minus=1,allow.sci = FALSE),")")
               } else {NA},
               tau = case_when(
                 is.cont ~ tau,
@@ -3283,9 +3283,9 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
                               " (", .round(corrected.theta.lb, digits),", ",
                               .round(corrected.theta.ub, digits),")" )
                     } else if(!is.cont){
-                      paste0( .round(exp(corrected.theta), digits, val.minus=1),
-                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1),", ",
-                              .round(exp(corrected.theta.ub), digits, val.minus=1),")" )
+                      paste0( .round(exp(corrected.theta), digits, val.minus=1,allow.sci = FALSE),
+                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1,allow.sci = FALSE),", ",
+                              .round(exp(corrected.theta.ub), digits, val.minus=1,allow.sci = FALSE),")" )
                     } else {NA}
                   )
               }),
@@ -3315,7 +3315,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               ci = if(is.cont){
                 paste0("(",.round(ci.lb.i, digits),", ",.round(ci.ub.i, digits),")")
               } else if(!is.cont){
-                paste0("(",.round(exp(ci.lb.i), digits, val.minus=1),", ",.round(exp(ci.ub.i), digits, val.minus=1),")")
+                paste0("(",.round(exp(ci.lb.i), digits, val.minus=1,allow.sci = FALSE),", ",.round(exp(ci.ub.i), digits, val.minus=1,allow.sci = FALSE),")")
               } else {NA},
               dplyr::across(tidyr::any_of(c("pvalue")),\(x){
                 try({
@@ -3335,9 +3335,9 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
                               " (", .round(corrected.theta.lb, digits),", ",
                               .round(corrected.theta.ub, digits),")" )
                     } else if(!is.cont){
-                      paste0( .round(exp(corrected.theta), digits, val.minus=1),
-                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1),", ",
-                              .round(exp(corrected.theta.ub), digits, val.minus=1),")" )
+                      paste0( .round(exp(corrected.theta), digits, val.minus=1,allow.sci = FALSE),
+                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1,allow.sci = FALSE),", ",
+                              .round(exp(corrected.theta.ub), digits, val.minus=1,allow.sci = FALSE),")" )
                     } else {NA}
                   )
               }),
@@ -3365,13 +3365,13 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
             mutate(
               est = case_when(
                 is.cont ~ .round(theta.rma, digits),
-                !is.cont ~ .round(exp(theta.rma), digits, val.minus=1 )
+                !is.cont ~ .round(exp(theta.rma), digits, val.minus=1 ,allow.sci = FALSE)
               ),
               se = .round(theta.rma.se, digits),
               ci = if(is.cont){
                 paste0("(",.round(theta.lb, digits),", ",.round(theta.ub, digits),")")
               } else if(!is.cont){
-                paste0("(",.round(exp(theta.lb), digits, val.minus=1 ),", ",.round(exp(theta.ub), digits, val.minus=1 ),")")
+                paste0("(",.round(exp(theta.lb), digits, val.minus=1 ,allow.sci = FALSE),", ",.round(exp(theta.ub), digits, val.minus=1,allow.sci = FALSE ),")")
               } else {NA},
               prop.metric = if(is.cont){
                 paste0(.round(prob.leqneq0.1*100, min(0,digits-2), allow.sci = FALSE),"% | ", .round(prob.geq0.1*100, min(0,digits-2), allow.sci = FALSE),"%")} else if(!is.cont){
@@ -3380,7 +3380,7 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
               pred.int = if(is.cont){
                 paste0("(",.round(theta.pred.int.lb, digits),", ",.round(theta.pred.int.ub, digits),")")
               } else if(!is.cont){
-                paste0("(",.round(exp(theta.pred.int.lb), digits, val.minus=1),", ",.round(exp(theta.pred.int.ub), digits, val.minus=1),")")
+                paste0("(",.round(exp(theta.pred.int.lb), digits, val.minus=1,allow.sci = FALSE),", ",.round(exp(theta.pred.int.ub), digits, val.minus=1,allow.sci = FALSE),")")
               } else {NA},
               tau = case_when(
                 is.cont ~ tau,
@@ -3408,9 +3408,9 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
                               " (", .round(corrected.theta.lb, digits),", ",
                               .round(corrected.theta.ub, digits),")" )
                     } else if(!is.cont){
-                      paste0( .round(exp(corrected.theta), digits, val.minus=1),
-                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1),", ",
-                              .round(exp(corrected.theta.ub), digits, val.minus=1),")" )
+                      paste0( .round(exp(corrected.theta), digits, val.minus=1,allow.sci = FALSE),
+                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1,allow.sci = FALSE),", ",
+                              .round(exp(corrected.theta.ub), digits, val.minus=1,allow.sci = FALSE),")" )
                     } else {NA}
                   )
               }),
@@ -3435,13 +3435,13 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
             mutate(
               est = case_when(
                 is.cont ~ .round(yi, digits),
-                !is.cont ~ .round(exp(yi), digits, val.minus=1)
+                !is.cont ~ .round(exp(yi), digits, val.minus=1,allow.sci = FALSE)
               ),
               se = .round(sei, digits),
               ci = if(is.cont){
                 paste0("(",.round(ci.lb.i, digits),", ",.round(ci.ub.i, digits),")")
               } else if(!is.cont){
-                paste0("(",.round(exp(ci.lb.i), digits, val.minus=1),", ",.round(exp(ci.ub.i), digits, val.minus=1),")")
+                paste0("(",.round(exp(ci.lb.i), digits, val.minus=1,allow.sci = FALSE),", ",.round(exp(ci.ub.i), digits, val.minus=1,allow.sci = FALSE),")")
               } else {NA},
               dplyr::across(tidyr::any_of(c("pvalue")),\(x){
                 try({
@@ -3461,9 +3461,9 @@ gfs_wave_3_build_supp_tbl <- function(params, font.name = "Open Sans", font.size
                               " (", .round(corrected.theta.lb, digits),", ",
                               .round(corrected.theta.ub, digits),")" )
                     } else if(!is.cont){
-                      paste0( .round(exp(corrected.theta), digits, val.minus=1),
-                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1),", ",
-                              .round(exp(corrected.theta.ub), digits, val.minus=1),")" )
+                      paste0( .round(exp(corrected.theta), digits, val.minus=1,allow.sci = FALSE),
+                              " (", .round(exp(corrected.theta.lb), digits, val.minus=1,allow.sci = FALSE),", ",
+                              .round(exp(corrected.theta.ub), digits, val.minus=1,allow.sci = FALSE),")" )
                     } else {NA}
                   )
               }),
