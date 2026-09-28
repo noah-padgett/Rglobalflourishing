@@ -2071,7 +2071,7 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
       }
       if(str_detect(str_to_lower(study), "outcome") ){
 
-        tb.cap.i <- paste0("Table S",tb.num,". Supplemental analysis model: explicit control of wave 1 of each outcome--Meta-analyzed associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2  with well-being and other variables at Wave 3 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
+        tb.cap.i <- paste0("Table S",tb.num,". Supplemental analysis model: explicit control of wave 1 value of each outcome--Meta-analyzed associations of  ", str_to_lower(focal.better.name[f0]) ," at Wave 2  with well-being and other variables at Wave 3 by approach to address missingness (multiple imputation vs. complete case with attrition weights).")
 
         tmp <- "ES, effect size measure for standardized regression coefficient, null effect is 0.00; RR, risk-ratio, null effect is 1.00;"
         tbl.ft1 = paste0("Reference for focal predictor: ", focal.variable.reference.value[f0],"; ", tmp )
@@ -2874,8 +2874,8 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             p.bonferroni = control$p.bonferroni,
             p.ci = ifelse(control$ci.bonferroni, control$p.bonferroni, 0.05),
             tb.cap = tb.cap.i,
-            header.a = "Model 1 - implicit control of baseline value of exposure",
-            header.b = "Model 2 - explicit control of baseline value of exposure",
+            header.a = ifelse(str_detect(str_to_lower(study), "outcome"), "Model 1 - implicit control of baseline value of outcome", "Model 1 - implicit control of baseline value of exposure"),
+            header.b = ifelse(str_detect(str_to_lower(study), "outcome"), "Model 2 - explicit control of baseline value of outcome", "Model 2 - explicit control of baseline value of exposure"),
             fn.txt = fn.txt.i,
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sie-",f0,".RData")),
             start.time = run.start.time,
@@ -2972,8 +2972,8 @@ P-value thresholds: p < 0.05*, p < 0.005**, (Bonferroni) p < ",.round(control$p.
             p.bonferroni = control$p.bonferroni,
             p.ci = ifelse(control$ci.bonferroni, control$p.bonferroni, 0.05),
             tb.cap = tb.cap.i,
-            header.a = "Model 1 - implicit control of baseline value of exposure",
-            header.b = "Model 2 - explicit control of baseline value of exposure",
+            hheader.a = ifelse(str_detect(str_to_lower(study), "outcome"), "Model 1 - implicit control of baseline value of outcome", "Model 1 - implicit control of baseline value of exposure"),
+            header.b = ifelse(str_detect(str_to_lower(study), "outcome"), "Model 2 - explicit control of baseline value of outcome", "Model 2 - explicit control of baseline value of exposure"),
             fn.txt = fn.txt.i,
             cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-sif-",f0,".RData")),
             start.time = run.start.time,
