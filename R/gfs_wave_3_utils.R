@@ -23,7 +23,8 @@ get_defaults_w3 <- function(x, filetype = "main"){
       bound.es = 3.0,
       domain.variable = as.name("SUBDOMAIN_FLAG"),
       domain.subset = NULL,
-      tb.fast = TRUE
+      tb.fast = TRUE,
+      is.midyr = FALSE
     )
   }
   if(filetype == "supp"){
@@ -66,7 +67,8 @@ get_defaults_w3 <- function(x, filetype = "main"){
       bound.es = 2.0,
       domain.variable = as.name("SUBDOMAIN_FLAG"),
       domain.subset = NULL,
-      tb.fast = TRUE
+      tb.fast = TRUE,
+      is.midyr = FALSE
     )
   }
 

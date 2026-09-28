@@ -16,7 +16,7 @@
 #' @export
 #' @description
 #' TO-DO
-gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.num.fixed", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", reverse.code.cont = FALSE, to.numeric = FALSE,...) {
+gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, method.income="quintiles.num.fixed", wgt = "ANNUAL_WEIGHT_R2", strata = "STRATA", psu = "PSU", reverse.code.cont = FALSE, to.numeric = FALSE, correct.wgt = TRUE,...) {
   #file =  here::here(data.dir, dataset.name); list.composites = get_variable_codes('LIST.COMPOSITES'); wave = 3; add.whitespace = FALSE; reverse.code.cont = FALSE; wave = 3; method.income="quintiles.num.fixed"; wgt = "ANNUAL_WEIGHT_R3"; strata = "STRATA"; psu = "PSU"; to.numeric=FALSE; reverse.code.cont = FALSE
   # IF SPSS file format
   if (stringr::str_detect(stringr::str_to_lower(file), ".sav")) {
@@ -33,6 +33,15 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
     df.original <- df.original
   }
 
+  # correct the wave 1 sampling weights to scale to wave 1 sample size
+  if(correct.wgt){
+    df.original <- df.original |>
+      group_by(COUNTRY) |>
+      mutate(
+        ANNUAL_WEIGHT_C1 = n() * ANNUAL_WEIGHT_C1 / sum(ANNUAL_WEIGHT_C1)
+      ) |> ungroup()
+  }
+
   ## columns to drop
   cols_to_drop <- c(
     "CNTRY_REL_BUD", "CNTRY_REL_CHI", "CNTRY_REL_CHR",
@@ -42,8 +51,8 @@ gfs_get_labelled_raw_data <- function(file, list.composites = NULL, wave = 2, me
   )
   ##
 
-  wave <- as.numeric(gsub("^[YW]", "", as.character(wave))) 
-  
+  wave <- as.numeric(gsub("^[YW]", "", as.character(wave)))
+
   if(wave == 1){
     df.original <- df.original %>%
       dplyr::mutate(

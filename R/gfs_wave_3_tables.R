@@ -64,17 +64,13 @@ gfs_wave_3_generate_main_doc <- function(
   tb.title <- control[['tb.title']]
   fig.title <- control[['fig.title']]
   forest.plots.inc.est <- control[['forest.plots.inc.est']]
+  is.midyr <- control[['is.midyr']]
 
 
   # dir.meta = "results-primary"; file.wopc = "0_meta_analyzed_results_primary_wopc.rds"; file.wpc = "0_meta_analyzed_results_primary_wpc.rds"; focal.variable = FOCAL_PREDICTOR; focal.better.name = FOCAL_PREDICTOR_BETTER_NAME; focal.variable.reference.value = FOCAL_PREDICTOR_REFERENCE_VALUE; p.bonferroni = NULL; baseline.pred = NULL; tbl.row.vec = NULL; mylabels = NULL; res.dir = "results"; wgt = as.name("WGT0"); wgt1 =  as.name("ANNUAL_WEIGHT_R2"); wgt2 = as.name("AVG.SAMP.ATTR.WGT"); psu =  as.name("PSU"); strata =  as.name("STRATA"); res.dir = "results"; ci.bonferroni = FALSE; forest.plots.inc.est = FALSE;  digits=2; include.cor = FALSE; file.cor = "0_meta_analyzed_cor.rds"
 
   cat("\n **Starting...**\n")
   run.start.time <- Sys.time()
-
-  n.print = df.raw %>%
-    summarize(
-      N = sum({{wgt1}}, na.rm=TRUE)
-    ) %>% as.numeric() %>% round()
 
   if (!dir.exists(here::here(res.dir))) {
     dir.create(here::here(res.dir))
@@ -163,6 +159,20 @@ gfs_wave_3_generate_main_doc <- function(
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
   df.w2$WAVE0 <- "Wave 2"
+  if(is.midyr){
+    # Make sure to add the mid-yr item
+    df.w2 <- df.raw %>%
+      filter(CASE_OBSERVED_Y2 == 1) %>%
+      select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y2"),  any_of(tmp00), any_of(focal.variable)) %>%
+      group_by(COUNTRY) %>%
+      mutate(
+        "{{wgt}}" := n() * {{wgt2}} / sum( {{wgt2}} )
+      ) %>% ungroup()
+    colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
+    colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
+    colnames(df.w2) <- str_remove(colnames(df.w2), "_MY")
+    df.w2$WAVE0 <- "Mid-year"
+  }
   # ------- Wave 3
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1) %>%
@@ -183,6 +193,9 @@ gfs_wave_3_generate_main_doc <- function(
   })
 
   focal.variable0 <- focal.variable |> str_remove("_Y1") |> str_remove("_Y2") |> str_remove("_Y3")
+  if(is.midyr) {
+    focal.variable0 <- str_remove(focal.variable0, "_MY")
+  }
   tbl.row.vec0 <- tbl.row.vec |> str_remove("_Y2")
   baseline.pred0 <- str_remove(baseline.pred,"_Y1")
 
@@ -233,6 +246,17 @@ gfs_wave_3_generate_main_doc <- function(
       })
     }
   }
+
+  if(is.midyr){
+    df.raw.long <- df.raw.long |>
+      mutate(
+        WAVE0 = factor(WAVE0, levels=c("Wave 1", "Mid-year", "Wave 3"), ordered=TRUE),
+        across(any_of(focal.variable0),\(x){
+          case_when(is.na(x) ~ "    (Missing)", .default = x)
+        })
+      )
+  }
+
 
   remove(df.raw, df.w1, df.w2, df.w3)
   gc()
@@ -1324,6 +1348,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   psu <- control[['psu']]
   strata <- control[['strata']]
   domain.variable <- control[['domain.variable']]
+  is.midyr <- control[['is.midyr']]
 
 
   cat("\n **Starting...**\n")
@@ -1496,6 +1521,20 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
   df.w2$WAVE0 <- "Wave 2"
+  if(is.midyr){
+    # Make sure to add the mid-yr item
+    df.w2 <- df.raw %>%
+      filter(CASE_OBSERVED_Y2 == 1) %>%
+      select(ID, COUNTRY, {{wgt2}}, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, contains("_Y2"),  any_of(tmp00), any_of(focal.variable)) %>%
+      group_by(COUNTRY) %>%
+      mutate(
+        "{{wgt}}" := n() * {{wgt2}} / sum( {{wgt2}} )
+      ) %>% ungroup()
+    colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
+    colnames(df.w2) <- str_remove(colnames(df.w2), "_Y2")
+    colnames(df.w2) <- str_remove(colnames(df.w2), "_MY")
+    df.w2$WAVE0 <- "Wave 2/Mid-year"
+  }
   # ------- Wave 3
   df.w3 <- df.raw %>%
     filter(CASE_OBSERVED_Y3 == 1) %>%
@@ -1529,6 +1568,9 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
 
 
   focal.variable0 <- focal.variable |> str_remove("_Y1") |> str_remove("_Y2") |> str_remove("_Y3")
+  if(is.midyr){
+    focal.variable0 <- str_remove(focal.variable0,"_MY")
+  }
   tbl.row.vec0 <- control$tbl.row.vec |> str_remove("_Y2") |> str_remove("_Y3")
   baseline.pred0 <- str_remove(control$baseline.pred,"_Y1")
 
@@ -1589,6 +1631,16 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
       })
     }
   }
+  if(is.midyr){
+    df.raw.long <- df.raw.long |>
+      mutate(
+        WAVE0 = factor(WAVE0, levels=c("Wave 1", "Wave 2/Mid-year", "Wave 3")),
+        across(any_of(focal.variable0),\(x){
+          case_when(is.na(x) ~ "    (Missing)", .default = x)
+        })
+      )
+  }
+
   ## Reformat to long (of wave 1 variables only) of attr/retained cases to compare wave 1 variables
   # compare UNWEIGHTED data
   df.w1 <- df.raw %>%
@@ -1601,31 +1653,39 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
   df.w1$WAVE0 <- "Retained--Observed in All Waves"
 
   df.w2 <- df.raw %>%
-    filter(CASE_OBSERVED_Y2 == 0) %>%
+    filter(CASE_OBSERVED_Y1 == 1 &  CASE_OBSERVED_Y2 == 0 & CASE_OBSERVED_Y3 == 0) %>%
     select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
   colnames(df.w2) <- str_remove(colnames(df.w2), "_Y1")
-  df.w2$WAVE0 <- "Attritors--Not Observed in Wave 2"
+  df.w2$WAVE0 <- "Attritors--Not Observed in Wave 2 or 3"
+  if(is.midyr){
+    df.w2$WAVE0 <- "Attritors--Not Observed in Mid-year or Wave 3"
+  }
 
   df.w3 <- df.raw %>%
-    filter(CASE_OBSERVED_Y3 == 0) %>%
+    filter(CASE_OBSERVED_Y1 == 1 &  CASE_OBSERVED_Y2 == 1 & CASE_OBSERVED_Y3 == 0) %>%
     select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
   colnames(df.w3) <- str_remove(colnames(df.w3), "_Y1")
-  df.w3$WAVE0 <- "Attritors--Not Observed in Wave 3"
-
+  df.w3$WAVE0 <- "Attritors--Observed in Wave 2 but not Wave 3"
+  if(is.midyr){
+    df.w3$WAVE0 <- "Attritors--Observed in Mid-year but not Wave 3"
+  }
   df.w4 <- df.raw %>%
-    filter(CASE_OBSERVED_Y3 == 1 & CASE_OBSERVED_Y2 == 0) %>%
+    filter(CASE_OBSERVED_Y1 == 1 &  CASE_OBSERVED_Y2 == 0 & CASE_OBSERVED_Y3 == 1) %>%
     select(ID, COUNTRY, {{psu}}, {{strata}}, {{domain.variable}}, GENDER, RACE, contains("_Y1")) %>%
     mutate(
       "{{wgt}}" := 1
     )
   colnames(df.w4) <- str_remove(colnames(df.w4), "_Y1")
   df.w4$WAVE0 <- "Attritors--Observed in Wave 3 but not Wave 2"
+  if(is.midyr){
+    df.w4$WAVE0 <- "Attritors--Observed in Wave 3 but not Mid-year"
+  }
 
   suppressMessages({
 
@@ -1698,6 +1758,19 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
     }
   }
 
+  if(is.midyr){
+    df.raw.attr.retained <- df.raw.attr.retained |>
+      mutate(
+        WAVE0 = factor(WAVE0, levels=c("Retained--Observed in All Waves",
+                                       "Attritors--Not Observed in Mid-year or Wave 3",
+                                       "Attritors--Observed in Mid-year but not Wave 3",
+                                       "Attritors--Observed in Wave 3 but not Mid-year")),
+        across(any_of(focal.variable0),\(x){
+          case_when(is.na(x) ~ "    (Missing)", .default = x)
+        })
+      )
+  }
+
 
   remove(df.w1,df.w2, df.w3, df.w4)
   gc()
@@ -1738,7 +1811,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         tb.cap = paste0("Table S",tb.num,". Weighted summary statistics for demographic and childhood variables."),
-        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_C1; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_C2, Wave 3 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_C3.",
+        fn.txt = paste0("Wave 1 characteristics weighted using the Gallup provided sampling weight, ",as.character(wgt1),"; ", ifelse(is.midyr, "Mid-year survey", "Wave 2")," characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ",as.character(wgt2),"; Wave 3 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ",as.character(wgt3),"."),
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s1.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
@@ -1773,7 +1846,7 @@ gfs_wave_3_generate_supplemental_docs <- function(df.raw=NULL, focal.variable = 
         psu = as.name("PSU"),
         strata = as.name("STRATA"),
         tb.cap = paste0("Table S",tb.num,". Weighted summary statistics for outcome variables by Wave."),
-        fn.txt = "Wave 1 characteristics weighted using the Gallup provided sampling weight, ANNUAL_WEIGHT_C1; Wave 2 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_C2, Wave 3 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ANNUAL_WEIGHT_C3.",
+        fn.txt = paste0("Wave 1 characteristics weighted using the Gallup provided sampling weight, ",as.character(wgt1),"; ", ifelse(is.midyr, "Mid-year survey", "Wave 2")," characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ",as.character(wgt2),"; Wave 3 characteristics weighted accounting for attrition by using the adjusted Wave 1 weight, ",as.character(wgt3),"."),
         cache.file = here::here(res.dir, "supplement-text", paste0("cache-tb-s2.RData")),
         start.time = run.start.time,
         ignore.cache = FALSE,
