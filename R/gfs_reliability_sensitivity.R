@@ -27,7 +27,7 @@ reliability_corrected_estimates <- function(theta, se, crit, lambda) {
     mutate(
       corrected.theta = theta / reliability,
       corrected.se = se / reliability,
-      corrected.theta.lb = corrected.theta - crit * se,
-      corrected.theta.ub = corrected.theta + crit * se
+      corrected.theta.lb = corrected.theta - crit * corrected.se,
+      corrected.theta.ub = corrected.theta + crit * corrected.se
     )
 }
